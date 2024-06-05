@@ -33,7 +33,7 @@ export function SiteHeader() {
               alt="Adamik Logo"
             />
           )}
-          <span className="font-bold">Demo Application</span>
+          <span className="font-bold">App</span>
         </div>
         <nav className="flex items-center">
           <ThemeSelector />
