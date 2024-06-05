@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "~/components/ui/sheet";
+import { AdamikLink } from "./AdamikLink";
 import { MenuItem } from "./Menu";
 
 type MobileMenuProps = {
@@ -38,22 +39,25 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="sm:max-w-xs">
-          <nav className="grid gap-6 text-lg font-medium">
-            {menu.map((link) => (
-              <Link
-                key={link.title}
-                href={link.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-                  path === link.href
-                    ? "text-primary bg-muted"
-                    : "text-muted-foreground"
-                }`}
-              >
-                <link.icon className="h-4 w-4" />
-                {link.title}
-              </Link>
-            ))}
-          </nav>
+          <div className="flex h-full max-h-screen justify-between flex-col">
+            <nav className="grid gap-6 text-lg font-medium">
+              {menu.map((link) => (
+                <Link
+                  key={link.title}
+                  href={link.href}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
+                    path === link.href
+                      ? "text-primary bg-muted"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  <link.icon className="h-4 w-4" />
+                  {link.title}
+                </Link>
+              ))}
+            </nav>
+            <AdamikLink />
+          </div>
         </SheetContent>
       </Sheet>
       <div className="container flex h-14 max-w-screen-2xl items-center justify-center">

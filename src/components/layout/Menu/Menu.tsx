@@ -7,7 +7,7 @@ import { MobileMenu } from "./MobileMenu";
 
 const menu = [
   {
-    title: "Chain supported",
+    title: "Supported chains",
     icon: SquareStack,
     href: "/",
   },

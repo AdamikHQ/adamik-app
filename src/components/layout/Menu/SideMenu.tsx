@@ -4,14 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Button } from "~/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { AdamikLink } from "./AdamikLink";
 import { MenuItem } from "./Menu";
 
 type SideMenuProps = {
@@ -68,21 +61,7 @@ export const SideMenu: React.FC<SideMenuProps> = ({ menu, currentTheme }) => {
             ))}
           </nav>
         </div>
-        <div className="mt-auto p-4">
-          <Card x-chunk="dashboard-02-chunk-0">
-            <CardHeader className="p-2 pt-0 md:p-4 w-max-[130px]">
-              <CardTitle>Get an API Key</CardTitle>
-              <CardDescription>
-                Get started with Adamik API for free
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-2 pt-0 md:p-4 md:pt-0">
-              <Button size="sm" className="w-full">
-                Connect
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        <AdamikLink />
       </div>
     </aside>
   );
