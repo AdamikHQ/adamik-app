@@ -1,6 +1,6 @@
 "use server";
 
-import { env, COINGECKO_API_ULR } from "~/env";
+import { env, COINGECKO_API_URL } from "~/env";
 import { CoinGeckoCoin } from "~/lib/types";
 
 export type getCoinGeckoCoinListResponse = Array<CoinGeckoCoin>;
@@ -8,7 +8,7 @@ export type getCoinGeckoCoinListResponse = Array<CoinGeckoCoin>;
 export const getCoinGeckoCoinList =
   async (): Promise<getCoinGeckoCoinListResponse> => {
     const response = await fetch(
-      `${COINGECKO_API_ULR}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1`,
+      `${COINGECKO_API_URL}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1`,
       {
         headers: {
           "Content-Type": "application/json",

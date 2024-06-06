@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -16,15 +17,12 @@ export default function SupportedChains() {
   const { isLoading: isCoinListLoading, data: coinList } =
     useGetCoinGeckoCoinList();
 
-  console.log({ coinList, supportedChains });
   return (
     <main className="flex-1 mx-auto w-full flex flex-col auto-rows-max gap-4 p-4 md:p-8">
       <div className="flex flex-col">
         <Card className="xl:col-span-2 bg-muted/70">
           <CardHeader className="flex flex-row items-center">
-            <div className="grid gap-2">
-              <CardTitle>Supported Chains</CardTitle>
-            </div>
+            <CardTitle>Supported Chains</CardTitle>
           </CardHeader>
           <CardContent>
             {isCoinListLoading || isLoading ? (
@@ -68,7 +66,11 @@ export default function SupportedChains() {
               </div>
             )}
             <div className="flex flex-row justify-center mt-4">
-              <Button>{"Can't find your token, reach out !"}</Button>
+              <Button asChild>
+                <Link href="https://adamik.io/contact">
+                  {"Can't find your token, reach out !"}
+                </Link>
+              </Button>
             </div>
           </CardContent>
         </Card>

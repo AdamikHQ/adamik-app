@@ -10,7 +10,7 @@ const ADAMIK_API_URL =
     : // localhost as a fallback
       "http://localhost:3000/api");
 
-const COINGECKO_API_ULR = "https://api.coingecko.com/api/v3";
+const COINGECKO_API_URL = "https://api.coingecko.com/api/v3";
 
 const env = createEnv({
   /*
@@ -34,4 +34,4 @@ const env = createEnv({
   },
 });
 
-export { env, ADAMIK_API_URL, COINGECKO_API_ULR };
+export { env, ADAMIK_API_URL, COINGECKO_API_URL };
