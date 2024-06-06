@@ -30,9 +30,7 @@ export default function RootLayout({
       >
         <AppProviders>
           <Menu />
-          <main className="flex-1 mx-auto w-full flex flex-col auto-rows-max gap-4 p-4 md:p-8">
-            {children}
-          </main>
+          {children}
         </AppProviders>
       </body>
     </html>
