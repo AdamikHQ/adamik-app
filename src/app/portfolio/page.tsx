@@ -149,8 +149,8 @@ export default function Portfolio() {
         </Card>
       </div>
 
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-        <Card className="xl:col-span-2" x-chunk="dashboard-01-chunk-4">
+      <div className="grid gap-4 md:gap-8 grid-cols-1 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Assets</CardTitle>
             <Button
@@ -160,13 +160,13 @@ export default function Portfolio() {
               Transfer
             </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-2 md:p-6">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[80px]"></TableHead>
+                  <TableHead className="w-[80px] hidden md:block"></TableHead>
                   <TableHead>Asset Name</TableHead>
-                  <TableHead>Balance</TableHead>
+                  <TableHead className="hidden md:block">Balance</TableHead>
                   <TableHead>Amount (USD)</TableHead>
                 </TableRow>
               </TableHeader>
@@ -175,13 +175,13 @@ export default function Portfolio() {
                   assets.map((asset, i) => {
                     return (
                       <TableRow key={`${asset?.chainId}_${i}`}>
-                        <TableCell>
+                        <TableCell className="hidden md:block">
                           <div className="font-medium"></div>
                         </TableCell>
                         <TableCell>
                           <div className="font-medium">{asset?.name}</div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:block">
                           {asset?.balanceMainUnit} {asset?.ticker}
                         </TableCell>
                         <TableCell>{asset?.balanceUSD.toFixed(2)}</TableCell>
@@ -233,7 +233,7 @@ export default function Portfolio() {
         open={openTransaction}
         setOpen={setOpenTransaction}
         modalTitle="Create a Transaction"
-        modalContent={<>Test</>}
+        modalContent={<>WIP</>}
       />
     </main>
   );
