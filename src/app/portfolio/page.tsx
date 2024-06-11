@@ -16,18 +16,18 @@ import { useGetAddressDataBatch } from "~/hooks/useGetAddressDataBatch";
 import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
 import { CoinIdMapperAdamikToCoinGecko, amountToMainUnit } from "~/lib/utils";
 import { Loading } from "./Loading";
-import { showroomAddress } from "./showroomAddress";
 import { useState } from "react";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Modal } from "~/components/ui/modal";
 import { Button } from "~/components/ui/button";
+import { showroomAddresses } from "./showroomAddresses";
 
 export default function Portfolio() {
-  const chainIds = showroomAddress.reduce<string[]>((acc, { chainId }) => {
+  const chainIds = showroomAddresses.reduce<string[]>((acc, { chainId }) => {
     if (acc.includes(chainId)) return acc;
     return [...acc, CoinIdMapperAdamikToCoinGecko(chainId)];
   }, []);
-  const chainIdsAdamik = showroomAddress.reduce<string[]>(
+  const chainIdsAdamik = showroomAddresses.reduce<string[]>(
     (acc, { chainId }) => {
       if (acc.includes(chainId)) return acc;
       return [...acc, chainId];
@@ -39,7 +39,7 @@ export default function Portfolio() {
   const { data: chainsDetails, isLoading: isChainDetailsLoading } =
     useGetChainDetailsBatch(chainIdsAdamik);
   const { data, isLoading: isAddressesLoading } =
-    useGetAddressDataBatch(showroomAddress);
+    useGetAddressDataBatch(showroomAddresses);
   const [hideLowBalance, setHideLowBalance] = useState(true);
   const [openTransaction, setOpenTransaction] = useState(false);
 
