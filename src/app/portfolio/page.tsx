@@ -21,6 +21,7 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Modal } from "~/components/ui/modal";
 import { Button } from "~/components/ui/button";
 import { showroomAddresses } from "./showroomAddresses";
+import { Transaction } from "./Transaction";
 
 export default function Portfolio() {
   const chainIds = showroomAddresses.reduce<string[]>((acc, { chainId }) => {
@@ -233,7 +234,7 @@ export default function Portfolio() {
         open={openTransaction}
         setOpen={setOpenTransaction}
         modalTitle="Create a Transaction"
-        modalContent={<>WIP</>}
+        modalContent={<Transaction />}
       />
     </main>
   );
