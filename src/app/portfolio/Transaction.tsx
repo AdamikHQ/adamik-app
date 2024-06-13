@@ -1,54 +1,44 @@
 "use client";
 
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { Button } from "~/components/ui/button";
+import { Checkbox } from "~/components/ui/checkbox";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
+import { TransactionFormInput, transactionFormSchema } from "~/lib/schema";
+import { TransactionMode } from "~/lib/types";
 
-enum TransactionMode {
-  TRANSFER = "transfer",
-  TRANSFER_TOKEN = "transferToken",
-}
+type TransactionProps = {
+  onNextStep: () => void;
+};
 
-const formSchema = z.object({
-  mode: z.enum([TransactionMode.TRANSFER, TransactionMode.TRANSFER_TOKEN]),
-  chainId: z.string().min(2).max(50),
-  senders: z.array(z.string().min(2).max(50)),
-  recipient: z.array(z.string().min(2).max(50)),
-  amount: z.number(),
-  sendMax: z.boolean(),
-  memo: z.string().min(2).max(50).optional(),
-});
-
-export function Transaction() {
-  // 1. Define your form.
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+export function Transaction({ onNextStep }: TransactionProps) {
+  const form = useForm<TransactionFormInput>({
+    resolver: zodResolver(transactionFormSchema),
     defaultValues: {
+      mode: TransactionMode.TRANSFER,
       chainId: "",
-      senders: [],
-      recipient: [],
+      senders: "",
+      recipients: "",
       amount: 0,
-      sendMax: false,
-      memo: "",
+      useMaxAmount: false,
     },
   });
 
-  // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    console.log(values);
+  function onSubmit(values: TransactionFormInput) {
+    console.log({ values });
+    onNextStep();
   }
+
+  console.log(form.formState.errors);
 
   return (
     <Form {...form}>
@@ -58,17 +48,76 @@ export function Transaction() {
           name="chainId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Username</FormLabel>
+              <FormLabel>Asset</FormLabel>
               <FormControl>
-                <Input placeholder="shadcn" {...field} />
+                <Input placeholder="Asset" {...field} />
               </FormControl>
-              <FormDescription>
-                This is your public display name.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="senders"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Sender</FormLabel>
+              <FormControl>
+                <Input placeholder="Sender" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="recipients"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Recipients</FormLabel>
+              <FormControl>
+                <Input placeholder="Recipient" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="amount"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Amount</FormLabel>
+              <FormControl>
+                <>
+                  <Input type="number" placeholder="amount" {...field} />
+                  <FormField
+                    control={form.control}
+                    name="useMaxAmount"
+                    render={({ field: fieldSendMax }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                          <Checkbox
+                            checked={fieldSendMax.value}
+                            onCheckedChange={fieldSendMax.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Send Max</FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <Button type="submit">Submit</Button>
       </form>
     </Form>

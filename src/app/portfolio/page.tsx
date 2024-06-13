@@ -22,6 +22,8 @@ import { Modal } from "~/components/ui/modal";
 import { Button } from "~/components/ui/button";
 import { showroomAddresses } from "./showroomAddresses";
 import { Transaction } from "./Transaction";
+import { TransactionLoading } from "./TransactionLoading";
+import { ConnectWallet } from "./ConnectWallet";
 
 export default function Portfolio() {
   const chainIds = showroomAddresses.reduce<string[]>((acc, { chainId }) => {
@@ -43,6 +45,8 @@ export default function Portfolio() {
     useGetAddressDataBatch(showroomAddresses);
   const [hideLowBalance, setHideLowBalance] = useState(true);
   const [openTransaction, setOpenTransaction] = useState(false);
+
+  const [stepper, setStepper] = useState(0);
 
   const isLoading =
     isAddressesLoading || isSimplePriceLoading || isChainDetailsLoading;
@@ -98,7 +102,7 @@ export default function Portfolio() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
-        <Card x-chunk="dashboard-01-chunk-0">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Balance</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -117,7 +121,7 @@ export default function Portfolio() {
             </div>
           </CardContent>
         </Card>
-        <Card x-chunk="dashboard-01-chunk-1">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Available Balance
@@ -138,7 +142,7 @@ export default function Portfolio() {
             </div>
           </CardContent>
         </Card>
-        <Card x-chunk="dashboard-01-chunk-2">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Staked Balance
@@ -161,7 +165,7 @@ export default function Portfolio() {
               Transfer
             </Button>
           </CardHeader>
-          <CardContent className="p-2 md:p-6">
+          <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -204,7 +208,7 @@ export default function Portfolio() {
                   htmlFor="hideBalance"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  {`Hide low balance assets (< 1%)`}
+                  {`Hide low balance assets (< 1$)`}
                 </label>
               </div>
             </div>
@@ -234,7 +238,24 @@ export default function Portfolio() {
         open={openTransaction}
         setOpen={setOpenTransaction}
         modalTitle="Create a Transaction"
-        modalContent={<Transaction />}
+        modalContent={
+          // Probably need to rework
+          stepper === 0 ? (
+            <Transaction
+              onNextStep={() => {
+                setStepper(1);
+              }}
+            />
+          ) : stepper === 1 ? (
+            <TransactionLoading
+              onNextStep={() => {
+                setStepper(2);
+              }}
+            />
+          ) : (
+            <ConnectWallet />
+          )
+        }
       />
     </main>
   );

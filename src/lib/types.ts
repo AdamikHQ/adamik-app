@@ -27,3 +27,22 @@ export type CoinGeckoCoin = {
 };
 
 export type PortfolioAddresses = Record<string, string[]>;
+
+export enum TransactionMode {
+  TRANSFER = "transfer",
+  TRANSFER_TOKEN = "transferToken",
+}
+
+export type Transaction = {
+  mode: TransactionMode;
+  senders: string[];
+  recipients: string[];
+  useMaxAmount: boolean;
+  chainId: string;
+  amount: string;
+  fees?: string;
+  gas?: string;
+  format?: string;
+  pubKey?: string;
+  memo?: string;
+};
