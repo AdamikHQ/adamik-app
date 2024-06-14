@@ -4,12 +4,14 @@ type LoadingPorfolioProps = {
   isAddressesLoading: boolean;
   isSimplePriceLoading: boolean;
   isChainDetailsLoading: boolean;
+  isTokenPriceLoading: boolean;
 };
 
 export const Loading = ({
   isAddressesLoading,
   isSimplePriceLoading,
   isChainDetailsLoading,
+  isTokenPriceLoading,
 }: LoadingPorfolioProps) => {
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
@@ -32,6 +34,14 @@ export const Loading = ({
       <div className="flex items-center">
         Get ChainDetails :
         {isChainDetailsLoading ? (
+          <Loader2 className="animate-spin" />
+        ) : (
+          <Check className="text-green-400" />
+        )}
+      </div>
+      <div className="flex items-center">
+        Get Token Price :
+        {isTokenPriceLoading ? (
           <Loader2 className="animate-spin" />
         ) : (
           <Check className="text-green-400" />

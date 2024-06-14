@@ -1,17 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { getAddressData } from "~/api/data";
+import { GetAddressState } from "~/api/addressState";
 
-type GetAddressDataParams = {
+type GetAddressStateParams = {
   chainId: string;
   address: string;
 };
 
-export const useGetAddressData = ({
+export const useGetAddressState = ({
   chainId,
   address,
-}: GetAddressDataParams) => {
+}: GetAddressStateParams) => {
   return useQuery({
     queryKey: ["addressData", chainId, address],
-    queryFn: async () => getAddressData(chainId, address),
+    queryFn: async () => GetAddressState(chainId, address),
   });
 };

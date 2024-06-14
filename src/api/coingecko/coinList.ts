@@ -1,7 +1,7 @@
 "use server";
 
 import { env, COINGECKO_API_URL } from "~/env";
-import { CoinGeckoCoin } from "~/lib/types";
+import { CoinGeckoCoin } from "./types";
 
 export type getCoinGeckoCoinListResponse = Array<CoinGeckoCoin>;
 
