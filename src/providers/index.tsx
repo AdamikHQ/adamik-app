@@ -12,6 +12,7 @@ import {
 } from "chart.js";
 
 ChartJS.register(ArcElement, Tooltip, Legend, Colors);
+ChartJS.defaults.color = "#bdbdbd";
 
 export const AppProviders: React.FC<React.PropsWithChildren> = ({
   children,

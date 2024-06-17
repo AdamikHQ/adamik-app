@@ -17,7 +17,7 @@ export const getMobulaMarketMultiData = async (
     {
       headers: {
         "Content-Type": "application/json",
-        "x-cg-demo-api-key": env.MOBULA_API_KEY,
+        Authorization: env.MOBULA_API_KEY,
       },
       method: "GET",
     }

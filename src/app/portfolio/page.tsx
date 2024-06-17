@@ -3,7 +3,7 @@
 import { DollarSign, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Pie } from "react-chartjs-2";
-import { Button } from "~/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Modal } from "~/components/ui/modal";
@@ -15,31 +15,25 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { useCoinGeckoSimplePrice } from "~/hooks/useCoinGeckoSimplePrice";
 import { useGetAddressDataBatch } from "~/hooks/useGetAddressDataBatch";
 import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
-import { useGetMobulaMarketMultiDataBatch } from "~/hooks/useGetMobulaMarketMultiData";
-import { CoinIdMapperAdamikToCoinGecko, amountToMainUnit } from "~/lib/utils";
+import { useMobulaMarketMultiDataTickers } from "~/hooks/useGetMobulaMarketMultiDataTicker";
 import { ConnectWallet } from "./ConnectWallet";
 import { Loading } from "./Loading";
 import { Transaction } from "./Transaction";
 import { TransactionLoading } from "./TransactionLoading";
 import { showroomAddresses } from "./showroomAddresses";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { useMobulaMarketMultiDataTickers } from "~/hooks/useGetMobulaMarketMultiDataTicker";
+import {
+  calculateAssets,
+  getTickers,
+  getTokenTickers,
+  mergedAssetsById,
+} from "./utils";
+import { useTheme } from "next-themes";
 
 export default function Portfolio() {
-  const chainIds = showroomAddresses.reduce<string[]>((acc, { chainId }) => {
-    if (acc.includes(chainId)) return acc;
-    return [...acc, CoinIdMapperAdamikToCoinGecko(chainId)];
-  }, []);
-  const mainChainTickersIds = showroomAddresses.reduce<string[]>(
-    (acc, { ticker }) => {
-      if (acc.includes(ticker)) return acc;
-      return [...acc, ticker];
-    },
-    []
-  );
+  const { theme, resolvedTheme } = useTheme();
+  const currentTheme = theme === "system" ? resolvedTheme : theme;
   const chainIdsAdamik = showroomAddresses.reduce<string[]>(
     (acc, { chainId }) => {
       if (acc.includes(chainId)) return acc;
@@ -47,35 +41,19 @@ export default function Portfolio() {
     },
     []
   );
-  const {
-    data: simplePriceMainChain,
-    isLoading: isSimplePriceMainChainLoading,
-  } = useMobulaMarketMultiDataTickers(mainChainTickersIds);
   const { data: chainsDetails, isLoading: isChainDetailsLoading } =
     useGetChainDetailsBatch(chainIdsAdamik);
   const { data, isLoading: isAddressesLoading } =
     useGetAddressDataBatch(showroomAddresses);
-  const tokenTickers = data.reduce((acc, accountData) => {
-    if (!accountData) return acc;
-    const chainTokenIds = [
-      ...(accountData.balances.tokens
-        ?.map((token) => token.token.ticker)
-        .filter(Boolean) || []),
-    ];
-    if (!acc[accountData.chainId]) {
-      return {
-        ...acc,
-        [accountData.chainId]: chainTokenIds,
-      };
-    }
-    return {
-      ...acc,
-      [accountData.chainId]: [...acc[accountData.chainId], ...chainTokenIds],
-    };
-  }, {} as Record<string, string[]>);
 
-  const { data: tokenPrices, isLoading: isTokenPriceLoading } =
-    useGetMobulaMarketMultiDataBatch(tokenTickers);
+  const mainChainTickersIds = getTickers(chainsDetails || []);
+  const tokenTickers = getTokenTickers(data || []);
+
+  const { data: mobulaMarketData, isLoading: isAssetDetailsLoading } =
+    useMobulaMarketMultiDataTickers(
+      [...mainChainTickersIds, ...tokenTickers],
+      !isChainDetailsLoading && !isAddressesLoading
+    );
 
   const [hideLowBalance, setHideLowBalance] = useState(true);
   const [openTransaction, setOpenTransaction] = useState(false);
@@ -83,115 +61,28 @@ export default function Portfolio() {
   const [stepper, setStepper] = useState(0);
 
   const isLoading =
-    isAddressesLoading ||
-    isSimplePriceMainChainLoading ||
-    isChainDetailsLoading ||
-    isTokenPriceLoading;
+    isAddressesLoading || isAssetDetailsLoading || isChainDetailsLoading;
 
   if (isLoading) {
     return (
       <Loading
         isAddressesLoading={isAddressesLoading}
-        isSimplePriceLoading={isSimplePriceMainChainLoading}
+        isAssetDetailsLoading={isAssetDetailsLoading}
         isChainDetailsLoading={isChainDetailsLoading}
-        isTokenPriceLoading={isTokenPriceLoading}
       />
     );
   }
 
-  const assets = data
-    .map((accountData) => {
-      if (!accountData) {
-        return null;
-      }
-      const chainDetails = chainsDetails.find(
-        (chainDetail) => chainDetail?.id === accountData.chainId
-      );
+  const assets = calculateAssets(data, chainsDetails, mobulaMarketData);
 
-      if (!chainDetails) {
-        return null;
-      }
-
-      const balanceMainUnit = amountToMainUnit(
-        accountData.balances.native.available,
-        chainDetails!.decimals
-      );
-
-      const balanceUSD =
-        simplePriceMainChain![chainDetails.ticker]?.price *
-        parseFloat(balanceMainUnit as string); // maybe we need us of bignumber here ?
-
-      return {
-        logo: simplePriceMainChain![chainDetails.ticker]?.logo,
-        chainId: accountData.chainId,
-        name: chainDetails?.name,
-        balanceMainUnit,
-        balanceUSD,
-        ticker: chainDetails?.ticker,
-      };
-    })
-    .filter(Boolean);
-
-  const assetTokens = data.reduce((acc, accountData) => {
-    if (!accountData) return acc;
-
-    const tokensList = accountData.balances.tokens
-      ? accountData.balances.tokens.reduce((tokenAcc, tokenAccountData) => {
-          if (!tokenAccountData) return tokenAcc;
-
-          const balanceMainUnit = amountToMainUnit(
-            tokenAccountData.value,
-            tokenAccountData.token.decimals
-          );
-
-          const chainIndex = tokenPrices.findIndex(
-            (tokenPrice) =>
-              tokenPrice?.chainId === tokenAccountData.token.chainId
-          );
-          const balanceUSD =
-            tokenPrices[chainIndex]?.data[tokenAccountData.token.ticker] &&
-            tokenPrices[chainIndex]?.data[tokenAccountData.token.ticker].price
-              ? (tokenPrices[chainIndex]?.data[tokenAccountData.token.ticker]
-                  ?.price || 0) * parseFloat(balanceMainUnit as string)
-              : undefined;
-          return [
-            ...tokenAcc,
-            {
-              logo:
-                tokenPrices[chainIndex]?.data[tokenAccountData.token.ticker]
-                  ?.logo || "",
-              assetId: tokenAccountData.token.id,
-              chainId: tokenAccountData.token.chainId,
-              name: tokenAccountData.token.name,
-              balanceMainUnit: balanceMainUnit,
-              balanceUSD: balanceUSD,
-              ticker: tokenAccountData.token.ticker,
-            },
-          ];
-        }, [] as any[])
-      : [];
-
-    return [...acc, ...tokensList];
-  }, [] as any[]);
-
-  const mergedAssets = [
-    ...Object.values(
-      assets.reduce((acc, asset) => {
-        if (!asset) return acc;
-        if (acc[asset.chainId]) {
-          acc[asset.chainId].balanceUSD += asset.balanceUSD;
-        } else {
-          acc[asset.chainId] = { ...asset, subAssets: [{ ...asset }] };
-        }
-        return acc;
-      }, {} as { [key: string]: any })
-    ),
-    ...assetTokens,
-  ]
-    .filter((asset) => !hideLowBalance || (asset && asset.balanceUSD > 0.1))
+  const mergedAssets = mergedAssetsById(assets)
+    .filter(
+      (asset) =>
+        !hideLowBalance || (asset && asset.balanceUSD && asset.balanceUSD > 0.1)
+    )
     .sort((a, b) => {
       if (!a || !b) return 0;
-      return (b.balanceUSD || -0.01) - (a.balanceUSD || -0.01);
+      return (b.balanceUSD || 0) - (a.balanceUSD || 0);
     });
 
   // Will be remove but useful for debugging because we don't have access to network tabs
@@ -200,9 +91,7 @@ export default function Portfolio() {
     chainsDetails,
     assets,
     mergedAssets,
-    tokenPrices,
-    assetTokens,
-    simplePriceMainChain,
+    mobulaMarketData,
   });
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
@@ -327,8 +216,9 @@ export default function Portfolio() {
             </div>
           </CardContent>
         </Card>
-        <div className="grid gap-8">
+        <div className="grid gap-8 ">
           <Pie
+            color={currentTheme === "light" ? "black" : "white"}
             data={{
               labels: mergedAssets.reduce<string[]>((acc, asset, index) => {
                 if (index > 9) {
