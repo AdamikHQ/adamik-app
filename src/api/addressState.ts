@@ -2,7 +2,7 @@
 
 import { env, ADAMIK_API_URL } from "~/env";
 
-type GetAddressStateResponse = {
+export type GetAddressStateResponse = {
   balances: {
     native: { available: string };
     tokens: {

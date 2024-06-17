@@ -10,7 +10,7 @@ export const useGetMobulaMarketMultiDataBatch = (
     queries: Object.keys(chainTokenIds).map((chainId) => {
       return {
         queryKey: [
-          "getCoinGeckoSimpleTokenPrice",
+          "useGetMobulaMarketMultiDataBatch",
           chainId,
           chainTokenIds[chainId],
         ],
