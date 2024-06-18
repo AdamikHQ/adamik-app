@@ -1,32 +1,39 @@
 "use client";
 
 import { DollarSign, Loader2 } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useState } from "react";
 import { Pie } from "react-chartjs-2";
+import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Modal } from "~/components/ui/modal";
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { useCoinGeckoSimplePrice } from "~/hooks/useCoinGeckoSimplePrice";
-import { useGetAddressDataBatch } from "~/hooks/useGetAddressDataBatch";
 import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
-import { CoinIdMapperAdamikToCoinGecko, amountToMainUnit } from "~/lib/utils";
+import { useMobulaMarketMultiDataTickers } from "~/hooks/useGetMobulaMarketMultiDataTicker";
+import { AssetRow } from "./AssetRow";
+import { ConnectWallet } from "./ConnectWallet";
 import { Loading } from "./Loading";
-import { useState } from "react";
-import { Checkbox } from "~/components/ui/checkbox";
-import { Modal } from "~/components/ui/modal";
-import { Button } from "~/components/ui/button";
+import { Transaction } from "./Transaction";
+import { TransactionLoading } from "./TransactionLoading";
+import {
+  calculateAssets,
+  getTickers,
+  getTokenTickers,
+  mergedAssetsById,
+} from "./helpers";
 import { showroomAddresses } from "./showroomAddresses";
+import { useAddressStateBatch } from "~/hooks/useAddressStateBatch";
 
 export default function Portfolio() {
-  const chainIds = showroomAddresses.reduce<string[]>((acc, { chainId }) => {
-    if (acc.includes(chainId)) return acc;
-    return [...acc, CoinIdMapperAdamikToCoinGecko(chainId)];
-  }, []);
+  const { theme, resolvedTheme } = useTheme();
+  const currentTheme = theme === "system" ? resolvedTheme : theme;
   const chainIdsAdamik = showroomAddresses.reduce<string[]>(
     (acc, { chainId }) => {
       if (acc.includes(chainId)) return acc;
@@ -34,62 +41,58 @@ export default function Portfolio() {
     },
     []
   );
-  const { data: simplePrice, isLoading: isSimplePriceLoading } =
-    useCoinGeckoSimplePrice(chainIds);
   const { data: chainsDetails, isLoading: isChainDetailsLoading } =
     useGetChainDetailsBatch(chainIdsAdamik);
   const { data, isLoading: isAddressesLoading } =
-    useGetAddressDataBatch(showroomAddresses);
+    useAddressStateBatch(showroomAddresses);
+
+  const mainChainTickersIds = getTickers(chainsDetails || []);
+  const tokenTickers = getTokenTickers(data || []);
+
+  const { data: mobulaMarketData, isLoading: isAssetDetailsLoading } =
+    useMobulaMarketMultiDataTickers(
+      [...mainChainTickersIds, ...tokenTickers],
+      !isChainDetailsLoading && !isAddressesLoading
+    );
+
   const [hideLowBalance, setHideLowBalance] = useState(true);
   const [openTransaction, setOpenTransaction] = useState(false);
 
+  const [stepper, setStepper] = useState(0);
+
   const isLoading =
-    isAddressesLoading || isSimplePriceLoading || isChainDetailsLoading;
+    isAddressesLoading || isAssetDetailsLoading || isChainDetailsLoading;
 
   if (isLoading) {
     return (
       <Loading
         isAddressesLoading={isAddressesLoading}
-        isSimplePriceLoading={isSimplePriceLoading}
+        isAssetDetailsLoading={isAssetDetailsLoading}
         isChainDetailsLoading={isChainDetailsLoading}
       />
     );
   }
 
-  const assets = data
-    .map((accountData) => {
-      if (!accountData) {
-        return null;
-      }
-      const chainDetails = chainsDetails.find(
-        (chainDetail) => chainDetail?.id === accountData.chainId
-      );
+  const assets = calculateAssets(data, chainsDetails, mobulaMarketData);
 
-      const balanceMainUnit = amountToMainUnit(
-        accountData.balances.native.available,
-        chainDetails!.decimals
-      );
-
-      const balanceUSD =
-        simplePrice![CoinIdMapperAdamikToCoinGecko(accountData.chainId)]?.usd *
-        parseFloat(balanceMainUnit as string); // maybe we need us of bignumber here ?
-
-      return {
-        chainId: accountData.chainId,
-        name: chainDetails?.name,
-        balanceMainUnit,
-        balanceUSD,
-        ticker: chainDetails?.ticker,
-      };
-    })
-    .filter((asset) => !hideLowBalance || (asset && asset.balanceUSD > 0))
+  const mergedAssets = mergedAssetsById(assets)
+    .filter(
+      (asset) =>
+        !hideLowBalance || (asset && asset.balanceUSD && asset.balanceUSD > 0.1)
+    )
     .sort((a, b) => {
       if (!a || !b) return 0;
-      return b.balanceUSD - a.balanceUSD;
+      return (b.balanceUSD || 0) - (a.balanceUSD || 0);
     });
 
   // Will be remove but useful for debugging because we don't have access to network tabs
-  // console.log({ data, simplePrice, chainsDetails, assets });
+  console.log({
+    data,
+    chainsDetails,
+    assets,
+    mergedAssets,
+    mobulaMarketData,
+  });
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
       <div className="flex items-center">
@@ -97,26 +100,16 @@ export default function Portfolio() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
-        <Card x-chunk="dashboard-01-chunk-0">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Balance</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                assets
-                  .reduce((acc, asset) => {
-                    return acc + (asset?.balanceUSD || 0);
-                  }, 0)
-                  .toFixed(2)
-              )}
-            </div>
+            <div className="text-2xl font-bold">WIP</div>
           </CardContent>
         </Card>
-        <Card x-chunk="dashboard-01-chunk-1">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Available Balance
@@ -128,7 +121,7 @@ export default function Portfolio() {
               {isLoading ? (
                 <Loader2 className="animate-spin" />
               ) : (
-                assets
+                mergedAssets
                   .reduce((acc, asset) => {
                     return acc + (asset?.balanceUSD || 0);
                   }, 0)
@@ -137,7 +130,7 @@ export default function Portfolio() {
             </div>
           </CardContent>
         </Card>
-        <Card x-chunk="dashboard-01-chunk-2">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Staked Balance
@@ -160,33 +153,23 @@ export default function Portfolio() {
               Transfer
             </Button>
           </CardHeader>
-          <CardContent className="p-2 md:p-6">
+          <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[80px] hidden md:block"></TableHead>
-                  <TableHead>Asset Name</TableHead>
-                  <TableHead className="hidden md:block">Balance</TableHead>
+                  <TableHead className="w-[80px] hidden md:table-cell"></TableHead>
+                  <TableHead>Asset</TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    Balance
+                  </TableHead>
                   <TableHead>Amount (USD)</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
-                {assets.length > 0 &&
-                  assets.map((asset, i) => {
-                    return (
-                      <TableRow key={`${asset?.chainId}_${i}`}>
-                        <TableCell className="hidden md:block">
-                          <div className="font-medium"></div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium">{asset?.name}</div>
-                        </TableCell>
-                        <TableCell className="hidden md:block">
-                          {asset?.balanceMainUnit} {asset?.ticker}
-                        </TableCell>
-                        <TableCell>{asset?.balanceUSD.toFixed(2)}</TableCell>
-                      </TableRow>
-                    );
+              <TableBody className="overflow-y-auto max-h-[360px]">
+                {mergedAssets.length > 0 &&
+                  mergedAssets.map((asset, i) => {
+                    if (!asset) return null;
+                    return <AssetRow key={i} asset={asset} />;
                   })}
               </TableBody>
             </Table>
@@ -203,23 +186,38 @@ export default function Portfolio() {
                   htmlFor="hideBalance"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  {`Hide low balance assets (< 1%)`}
+                  {`Hide low balance assets (< 0.1$)`}
                 </label>
               </div>
             </div>
           </CardContent>
         </Card>
-        <div className="grid gap-8">
+        <div className="order-first md:order-last">
           <Pie
+            color={currentTheme === "light" ? "black" : "white"}
             data={{
-              labels: assets.reduce<string[]>((acc, asset) => {
+              labels: mergedAssets.reduce<string[]>((acc, asset, index) => {
+                if (index > 9) {
+                  const newAcc = [...acc];
+                  newAcc[newAcc.length - 1] = "Others";
+                  return newAcc;
+                }
                 if (!acc && !asset) return acc;
                 return [...acc, asset?.name as string];
               }, []),
               datasets: [
                 {
                   label: "Amount (USD)",
-                  data: assets.reduce<string[]>((acc, asset) => {
+                  data: mergedAssets.reduce<string[]>((acc, asset, index) => {
+                    if (asset?.balanceUSD === undefined) return acc;
+                    if (index > 9) {
+                      const newAcc = [...acc];
+                      newAcc[newAcc.length - 1] = (
+                        parseFloat(newAcc[newAcc.length - 1]) +
+                        (asset?.balanceUSD || 0)
+                      ).toFixed(2);
+                      return newAcc;
+                    }
                     return [...acc, asset?.balanceUSD.toFixed(2) as string];
                   }, []),
                   borderWidth: 1,
@@ -233,7 +231,24 @@ export default function Portfolio() {
         open={openTransaction}
         setOpen={setOpenTransaction}
         modalTitle="Create a Transaction"
-        modalContent={<>WIP</>}
+        modalContent={
+          // Probably need to rework
+          stepper === 0 ? (
+            <Transaction
+              onNextStep={() => {
+                setStepper(1);
+              }}
+            />
+          ) : stepper === 1 ? (
+            <TransactionLoading
+              onNextStep={() => {
+                setStepper(2);
+              }}
+            />
+          ) : (
+            <ConnectWallet />
+          )
+        }
       />
     </main>
   );

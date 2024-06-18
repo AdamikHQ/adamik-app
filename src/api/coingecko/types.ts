@@ -25,5 +25,3 @@ export type CoinGeckoCoin = {
   atl_date: string;
   last_updated: string;
 };
-
-export type PortfolioAddresses = Record<string, string[]>;

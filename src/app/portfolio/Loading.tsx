@@ -2,13 +2,13 @@ import { Check, Loader2 } from "lucide-react";
 
 type LoadingPorfolioProps = {
   isAddressesLoading: boolean;
-  isSimplePriceLoading: boolean;
+  isAssetDetailsLoading: boolean;
   isChainDetailsLoading: boolean;
 };
 
 export const Loading = ({
   isAddressesLoading,
-  isSimplePriceLoading,
+  isAssetDetailsLoading,
   isChainDetailsLoading,
 }: LoadingPorfolioProps) => {
   return (
@@ -22,8 +22,8 @@ export const Loading = ({
         )}
       </div>
       <div className="flex items-center">
-        Coin Gecko Counter value :
-        {isSimplePriceLoading ? (
+        Mobula calculate Counter value :
+        {isAssetDetailsLoading ? (
           <Loader2 className="animate-spin" />
         ) : (
           <Check className="text-green-400" />

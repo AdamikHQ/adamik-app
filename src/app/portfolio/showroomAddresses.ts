@@ -3,7 +3,10 @@ export const showroomAddresses = [
     chainId: "ethereum",
     address: "0xfC43f5F9dd45258b3AFf31Bdbe6561D97e8B71de",
   },
-  { chainId: "base", address: "0xfC43f5F9dd45258b3AFf31Bdbe6561D97e8B71de" },
+  {
+    chainId: "base",
+    address: "0xfC43f5F9dd45258b3AFf31Bdbe6561D97e8B71de",
+  },
   {
     chainId: "cosmoshub",
     address: "cosmos1yvuhqg73fdzxvam9sj7mazfa38gpn7ulsavh7s",
@@ -11,10 +14,6 @@ export const showroomAddresses = [
   {
     chainId: "osmosis",
     address: "osmo1yvuhqg73fdzxvam9sj7mazfa38gpn7ulcxl8gz",
-  },
-  {
-    chainId: "algorand",
-    address: "4BMXWZ7B2ATR2MZASRJHMSNCID24M4AJQQFRURIUTDXPAUX5ZJNLZDQLIE",
   },
   {
     chainId: "algorand",

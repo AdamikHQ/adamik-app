@@ -2,19 +2,30 @@
 
 import { env, ADAMIK_API_URL } from "~/env";
 
-type GetAddressDataResponse = {
+export type GetAddressStateResponse = {
   balances: {
     native: { available: string };
-    tokens: { value: string; tokenId: string }[];
+    tokens: {
+      value: string;
+      token: {
+        chainId: string;
+        contractAddress: string;
+        decimals: number;
+        id: string;
+        name: string;
+        ticker: string;
+        type: string;
+      };
+    }[];
   };
   chainId: string;
 };
 
-export const getAddressData = async (
+export const addressState = async (
   chainId: string,
   address: string
-): Promise<GetAddressDataResponse | null> => {
-  const response = await fetch(`${ADAMIK_API_URL}/data/state`, {
+): Promise<GetAddressStateResponse | null> => {
+  const response = await fetch(`${ADAMIK_API_URL}/address/state`, {
     headers: {
       Authorization: env.ADAMIK_API_KEY,
       "Content-Type": "application/json",

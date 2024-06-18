@@ -1,4 +1,4 @@
-import { cn } from "~/lib/utils";
+import { cn } from "~/utils/helper";
 import { AppProviders } from "~/providers";
 import type { Metadata } from "next";
 import { Inter as FontSans } from "next/font/google";
