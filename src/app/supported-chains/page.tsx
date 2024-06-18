@@ -8,7 +8,7 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useGetCoinGeckoCoinList } from "~/hooks/useCoinGeckoCoinList";
 import { useGetSupportedChainsIds } from "~/hooks/useGetSupportedChainsIds";
-import { CoinIdMapperCoinGeckoToAdamik } from "~/lib/utils";
+import { CoinIdMapperCoinGeckoToAdamik } from "~/utils/helper";
 
 const comingSoonIds = ["tron", "the-open-network", "solana"];
 

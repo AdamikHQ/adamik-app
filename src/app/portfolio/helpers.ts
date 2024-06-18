@@ -1,8 +1,8 @@
 import { GetAddressStateResponse } from "~/api/addressState";
 import { getChainDetailsResponse } from "~/api/chainDetails";
 import { MobulaMarketMultiDataTickersResponse } from "~/api/mobula/marketMultiDataTickers";
-import { Asset } from "~/lib/types";
-import { amountToMainUnit } from "~/lib/utils";
+import { Asset } from "~/utils/types";
+import { amountToMainUnit } from "~/utils/helper";
 
 export const getTickers = (
   data: (getChainDetailsResponse | undefined | null)[]
@@ -113,6 +113,7 @@ export const calculateAssets = (
                 mobulaMarketData[tokenAccountData.token.ticker]
                   ? mobulaMarketData?.[tokenAccountData.token.ticker].logo
                   : "",
+              mainChainLogo: mainChainAsset.logo,
               assetId: tokenAccountData.token.id,
               chainId: tokenAccountData.token.chainId,
               name: tokenAccountData.token.name,
@@ -132,25 +133,14 @@ export const calculateAssets = (
 export const mergedAssetsById = (assets: Asset[]) => {
   return Object.values(
     assets.reduce<Record<string, Asset>>((acc, asset) => {
-      const newAcc: Record<string, Asset> = { ...acc };
-      if (asset.assetId) {
-        if (newAcc[asset.assetId]) {
-          newAcc[asset.assetId].balanceUSD =
-            (newAcc[asset.assetId].balanceUSD ?? 0) + (asset.balanceUSD || 0);
-          newAcc[asset.assetId].subAssets!.push(asset);
-        } else {
-          newAcc[asset.assetId] = { ...asset, subAssets: [{ ...asset }] };
-        }
+      if (acc[asset.ticker]) {
+        acc[asset.ticker].balanceUSD =
+          (acc[asset.ticker].balanceUSD || 0) + (asset.balanceUSD || 0);
+        acc[asset.ticker].subAssets!.push(asset);
       } else {
-        if (newAcc[asset.chainId]) {
-          newAcc[asset.chainId].balanceUSD =
-            (newAcc[asset.chainId].balanceUSD || 0) + (asset.balanceUSD || 0);
-          newAcc[asset.chainId].subAssets!.push(asset);
-        } else {
-          newAcc[asset.chainId] = { ...asset, subAssets: [{ ...asset }] };
-        }
+        acc[asset.ticker] = { ...asset, subAssets: [{ ...asset }] };
       }
-      return newAcc;
+      return { ...acc };
     }, {})
   );
 };

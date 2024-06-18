@@ -13,8 +13,8 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import { TransactionFormInput, transactionFormSchema } from "~/lib/schema";
-import { TransactionMode } from "~/lib/types";
+import { TransactionFormInput, transactionFormSchema } from "~/utils/schema";
+import { TransactionMode } from "~/utils/types";
 
 type TransactionProps = {
   onNextStep: () => void;

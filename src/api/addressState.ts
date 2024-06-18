@@ -21,7 +21,7 @@ export type GetAddressStateResponse = {
   chainId: string;
 };
 
-export const GetAddressState = async (
+export const addressState = async (
   chainId: string,
   address: string
 ): Promise<GetAddressStateResponse | null> => {

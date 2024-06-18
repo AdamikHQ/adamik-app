@@ -21,6 +21,7 @@ export type Transaction = {
 
 export type Asset = {
   logo: string;
+  mainChainLogo?: string;
   assetId?: string;
   chainId: string;
   name: string;

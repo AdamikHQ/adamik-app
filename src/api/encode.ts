@@ -1,9 +1,16 @@
 "use server";
 
 import { env, ADAMIK_API_URL } from "~/env";
-import { Transaction } from "~/lib/types";
+import { Transaction } from "~/utils/types";
 
-export const getEncode = async (plainTransaction: Transaction) => {
+export type TransactionEncodeResponse = {
+  plain: Transaction;
+  encoded: string;
+};
+
+export const transactionEncode = async (
+  plainTransaction: Transaction
+): Promise<TransactionEncodeResponse | null> => {
   const response = await fetch(`${ADAMIK_API_URL}/transaction/encode`, {
     headers: {
       Authorization: env.ADAMIK_API_KEY,
@@ -14,9 +21,10 @@ export const getEncode = async (plainTransaction: Transaction) => {
   });
 
   if (response.status === 200) {
-    const data = await response.json();
+    const data: TransactionEncodeResponse = await response.json();
     return data;
   } else {
     console.error("encode - backend error:", response.statusText);
   }
+  return null;
 };

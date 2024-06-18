@@ -1,16 +1,16 @@
 "use client";
 
 import { DollarSign, Loader2 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useState } from "react";
 import { Pie } from "react-chartjs-2";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Modal } from "~/components/ui/modal";
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -18,18 +18,18 @@ import {
 import { useGetAddressDataBatch } from "~/hooks/useGetAddressDataBatch";
 import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
 import { useMobulaMarketMultiDataTickers } from "~/hooks/useGetMobulaMarketMultiDataTicker";
+import { AssetRow } from "./AssetRow";
 import { ConnectWallet } from "./ConnectWallet";
 import { Loading } from "./Loading";
 import { Transaction } from "./Transaction";
 import { TransactionLoading } from "./TransactionLoading";
-import { showroomAddresses } from "./showroomAddresses";
 import {
   calculateAssets,
   getTickers,
   getTokenTickers,
   mergedAssetsById,
-} from "./utils";
-import { useTheme } from "next-themes";
+} from "./helpers";
+import { showroomAddresses } from "./showroomAddresses";
 
 export default function Portfolio() {
   const { theme, resolvedTheme } = useTheme();
@@ -146,12 +146,12 @@ export default function Portfolio() {
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Assets</CardTitle>
-            {/* <Button
+            <Button
               type="submit"
               onClick={() => setOpenTransaction(!openTransaction)}
             >
               Transfer
-            </Button> */}
+            </Button>
           </CardHeader>
           <CardContent>
             <Table>
@@ -168,32 +168,8 @@ export default function Portfolio() {
               <TableBody className="overflow-y-auto max-h-[360px]">
                 {mergedAssets.length > 0 &&
                   mergedAssets.map((asset, i) => {
-                    return (
-                      <TableRow key={`${asset?.chainId}_${i}`}>
-                        <TableCell className="hidden md:block">
-                          <div className="font-medium">
-                            {asset?.logo && (
-                              <Avatar>
-                                <AvatarImage
-                                  src={asset?.logo}
-                                  alt={asset.name}
-                                />
-                                <AvatarFallback>{asset.name}</AvatarFallback>
-                              </Avatar>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium">{asset?.ticker}</div>
-                        </TableCell>
-                        <TableCell className="hidden md:block">
-                          {asset?.balanceMainUnit} {asset?.ticker}
-                        </TableCell>
-                        <TableCell>
-                          {asset?.balanceUSD?.toFixed(2) || "-"}
-                        </TableCell>
-                      </TableRow>
-                    );
+                    if (!asset) return null;
+                    return <AssetRow key={i} asset={asset} />;
                   })}
               </TableBody>
             </Table>
@@ -216,7 +192,7 @@ export default function Portfolio() {
             </div>
           </CardContent>
         </Card>
-        <div className="grid gap-8 ">
+        <div className="order-first md:order-last">
           <Pie
             color={currentTheme === "light" ? "black" : "white"}
             data={{
