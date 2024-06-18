@@ -6,7 +6,7 @@ type GetAddressStateParams = {
   address: string;
 };
 
-export const useGetAddressDataBatch = (
+export const useAddressStateBatch = (
   addressesParams: GetAddressStateParams[]
 ) => {
   return useQueries({

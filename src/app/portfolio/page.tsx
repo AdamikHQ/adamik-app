@@ -15,7 +15,6 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { useGetAddressDataBatch } from "~/hooks/useGetAddressDataBatch";
 import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
 import { useMobulaMarketMultiDataTickers } from "~/hooks/useGetMobulaMarketMultiDataTicker";
 import { AssetRow } from "./AssetRow";
@@ -30,6 +29,7 @@ import {
   mergedAssetsById,
 } from "./helpers";
 import { showroomAddresses } from "./showroomAddresses";
+import { useAddressStateBatch } from "~/hooks/useAddressStateBatch";
 
 export default function Portfolio() {
   const { theme, resolvedTheme } = useTheme();
@@ -44,7 +44,7 @@ export default function Portfolio() {
   const { data: chainsDetails, isLoading: isChainDetailsLoading } =
     useGetChainDetailsBatch(chainIdsAdamik);
   const { data, isLoading: isAddressesLoading } =
-    useGetAddressDataBatch(showroomAddresses);
+    useAddressStateBatch(showroomAddresses);
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
   const tokenTickers = getTokenTickers(data || []);

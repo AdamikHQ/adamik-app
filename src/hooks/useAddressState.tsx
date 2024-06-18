@@ -6,7 +6,7 @@ type GetAddressStateParams = {
   address: string;
 };
 
-export const useGetAddressState = ({
+export const useAddressState = ({
   chainId,
   address,
 }: GetAddressStateParams) => {
