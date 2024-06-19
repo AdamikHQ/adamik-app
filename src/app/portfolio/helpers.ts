@@ -87,6 +87,7 @@ export const calculateAssets = (
       balanceMainUnit,
       balanceUSD,
       ticker: chainDetails?.ticker,
+      address: accountData.address,
     };
 
     const tokenAssets =
@@ -113,13 +114,14 @@ export const calculateAssets = (
                 mobulaMarketData[tokenAccountData.token.ticker]
                   ? mobulaMarketData?.[tokenAccountData.token.ticker].logo
                   : "",
-              mainChainLogo: mainChainAsset.logo,
+              mainChainLogo: mainChainAsset.logo, // FIXME: To be replaced with blockchain Logo and not ticker
               assetId: tokenAccountData.token.id,
               chainId: tokenAccountData.token.chainId,
               name: tokenAccountData.token.name,
               balanceMainUnit: balanceMainUnit,
               balanceUSD: balanceUSD,
               ticker: tokenAccountData.token.ticker,
+              address: mainChainAsset.address,
             },
           ];
         },

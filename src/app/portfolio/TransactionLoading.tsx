@@ -21,7 +21,7 @@ export const TransactionLoading = ({ onNextStep }: TransactionLoadingProps) => {
         />
       </div>
 
-      <div className="">
+      <div className="p-4">
         Your transaction request has been sent to the Adamik API, and processing
         is currently underway!
       </div>

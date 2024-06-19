@@ -28,5 +28,6 @@ export type Asset = {
   balanceMainUnit: string | null;
   balanceUSD: number | undefined;
   ticker: string;
+  address: string;
   subAssets?: Asset[];
 };

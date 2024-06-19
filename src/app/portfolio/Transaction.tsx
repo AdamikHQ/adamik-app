@@ -14,13 +14,15 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { TransactionFormInput, transactionFormSchema } from "~/utils/schema";
-import { TransactionMode } from "~/utils/types";
+import { Asset, TransactionMode } from "~/utils/types";
+import { AssetSelector } from "./AssetSelector";
 
 type TransactionProps = {
   onNextStep: () => void;
+  assets: Asset[];
 };
 
-export function Transaction({ onNextStep }: TransactionProps) {
+export function Transaction({ onNextStep, assets }: TransactionProps) {
   const form = useForm<TransactionFormInput>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
@@ -34,15 +36,12 @@ export function Transaction({ onNextStep }: TransactionProps) {
   });
 
   function onSubmit(values: TransactionFormInput) {
-    console.log({ values });
     onNextStep();
   }
 
-  console.log(form.formState.errors);
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 px-4">
         <FormField
           control={form.control}
           name="chainId"
@@ -50,7 +49,14 @@ export function Transaction({ onNextStep }: TransactionProps) {
             <FormItem>
               <FormLabel>Asset</FormLabel>
               <FormControl>
-                <Input placeholder="Asset" {...field} />
+                <AssetSelector
+                  assets={assets}
+                  onSelect={(asset) => {
+                    form.setValue("chainId", asset.chainId);
+                    form.setValue("senders", asset.address);
+                  }}
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -118,7 +124,9 @@ export function Transaction({ onNextStep }: TransactionProps) {
           )}
         />
 
-        <Button type="submit">Submit</Button>
+        <Button type="submit" className="w-full">
+          Submit
+        </Button>
       </form>
     </Form>
   );
