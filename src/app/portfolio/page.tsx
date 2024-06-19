@@ -235,6 +235,7 @@ export default function Portfolio() {
           // Probably need to rework
           stepper === 0 ? (
             <Transaction
+              assets={mergedAssets}
               onNextStep={() => {
                 setStepper(1);
               }}
@@ -246,7 +247,10 @@ export default function Portfolio() {
               }}
             />
           ) : (
-            <ConnectWallet />
+            <>
+              <ConnectWallet />
+              <Button onClick={() => setStepper(0)}>Step 0 [DEBUG]</Button>
+            </>
           )
         }
       />

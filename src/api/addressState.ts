@@ -18,6 +18,7 @@ export type GetAddressStateResponse = {
       };
     }[];
   };
+  address: string;
   chainId: string;
 };
 

@@ -61,18 +61,14 @@ export function Modal({
     <Drawer open={open} onOpenChange={setOpen}>
       {trigger && <DrawerTrigger asChild>{trigger}</DrawerTrigger>}
       <DrawerContent>
-        <DrawerHeader className="text-left">
+        <DrawerHeader className="text-center">
           <DrawerTitle>{modalTitle}</DrawerTitle>
           {modalTitleDescription && (
             <DrawerDescription>{modalTitleDescription}</DrawerDescription>
           )}
         </DrawerHeader>
         {modalContent}
-        <DrawerFooter className="pt-2">
-          <DrawerClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DrawerClose>
-        </DrawerFooter>
+        <DrawerFooter className="pt-2"></DrawerFooter>
       </DrawerContent>
     </Drawer>
   );
