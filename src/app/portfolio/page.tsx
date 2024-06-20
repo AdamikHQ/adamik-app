@@ -15,7 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { useAddressStateBatch } from "~/hooks/useAddressStateBatch";
 import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
+import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { AssetRow } from "./AssetRow";
 import { ConnectWallet } from "./ConnectWallet";
 import { Loading } from "./Loading";
@@ -24,13 +26,11 @@ import { TransactionLoading } from "./TransactionLoading";
 import {
   calculateAssets,
   getTickers,
-  getTokenContractAddress,
+  getTokenContractAddresses,
   getTokenTickers,
   mergedAssetsById,
 } from "./helpers";
 import { showroomAddresses } from "./showroomAddresses";
-import { useAddressStateBatch } from "~/hooks/useAddressStateBatch";
-import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 
 export default function Portfolio() {
   const { theme, resolvedTheme } = useTheme();
@@ -49,9 +49,7 @@ export default function Portfolio() {
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
   const tokenTickers = getTokenTickers(data || []);
-  const tokenContractAddresses = getTokenContractAddress(data || []);
-
-  console.log({ mainChainTickersIds, tokenTickers, tokenContractAddresses });
+  const tokenContractAddresses = getTokenContractAddresses(data || []);
 
   const { data: mobulaMarketData, isLoading: isAssetDetailsLoading } =
     useMobulaMarketMultiData(
@@ -62,7 +60,7 @@ export default function Portfolio() {
 
   const {
     data: mobulaMarketDataContractAddresses,
-    isLoading: isMobulaMarketDataContractAddresses,
+    isLoading: isMobulaMarketDataLoading,
   } = useMobulaMarketMultiData(
     tokenContractAddresses,
     !isChainDetailsLoading && !isAddressesLoading,
@@ -78,7 +76,7 @@ export default function Portfolio() {
     isAddressesLoading ||
     isAssetDetailsLoading ||
     isChainDetailsLoading ||
-    isMobulaMarketDataContractAddresses;
+    isMobulaMarketDataLoading;
 
   if (isLoading) {
     return (
@@ -86,7 +84,7 @@ export default function Portfolio() {
         isAddressesLoading={isAddressesLoading}
         isAssetDetailsLoading={isAssetDetailsLoading}
         isChainDetailsLoading={isChainDetailsLoading}
-        isContractAddressPriceLoading={isMobulaMarketDataContractAddresses}
+        isContractAddressPriceLoading={isMobulaMarketDataLoading}
       />
     );
   }
@@ -107,14 +105,14 @@ export default function Portfolio() {
     });
 
   // Will be remove but useful for debugging because we don't have access to network tabs
-  console.log({
-    data,
-    chainsDetails,
-    assets,
-    mergedAssets,
-    mobulaMarketData,
-    mobulaMarketDataContractAddresses,
-  });
+  // console.log({
+  //   data,
+  //   chainsDetails,
+  //   assets,
+  //   mergedAssets,
+  //   mobulaMarketData,
+  //   mobulaMarketDataContractAddresses,
+  // });
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
       <div className="flex items-center">

@@ -1,5 +1,5 @@
 import { useQueries } from "@tanstack/react-query";
-import { getMobulaMarketMultiDataTickers } from "~/api/mobula/marketMultiDataTickers";
+import { getMobulaMarketMultiData } from "~/api/mobula/marketMultiData";
 
 function chunkArray<T>(array: T[], chunkSize: number): T[][] {
   const results: T[][] = [];
@@ -18,7 +18,7 @@ export const useMobulaMarketMultiData = (
     console.log({ chunk });
     return {
       queryKey: ["useMobulaMarketMultiData", chunk, type],
-      queryFn: async () => getMobulaMarketMultiDataTickers(chunk, type),
+      queryFn: async () => getMobulaMarketMultiData(chunk, type),
       enabled,
     };
   });
