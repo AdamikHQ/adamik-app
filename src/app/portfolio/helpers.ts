@@ -1,8 +1,8 @@
 import { GetAddressStateResponse } from "~/api/addressState";
 import { getChainDetailsResponse } from "~/api/chainDetails";
-import { MobulaMarketMultiDataTickersResponse } from "~/api/mobula/marketMultiDataTickers";
 import { Asset } from "~/utils/types";
 import { amountToMainUnit } from "~/utils/helper";
+import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 
 export const getTickers = (
   data: (getChainDetailsResponse | undefined | null)[]
@@ -20,9 +20,26 @@ export const getTokenTickers = (
     if (!accountData) return acc;
 
     const chainTokenIds = [
+      ...((accountData.balances.tokens
+        ?.map((token) =>
+          token.token.contractAddress ? undefined : token.token.ticker
+        )
+        .filter(Boolean) || []) as string[]),
+    ];
+    return Array.from(new Set([...acc, ...chainTokenIds])); // remove duplicates
+  }, []);
+};
+
+export const getTokenContractAddresses = (
+  data: (GetAddressStateResponse | undefined | null)[]
+) => {
+  return data.reduce<string[]>((acc, accountData) => {
+    if (!accountData) return acc;
+
+    const chainTokenIds = [
       ...(accountData.balances.tokens
-        ?.map((token) => token.token.ticker)
-        .filter(Boolean) || []),
+        ?.filter((token) => token.token.contractAddress)
+        .map((token) => token.token.contractAddress as string) || []),
     ];
     return Array.from(new Set([...acc, ...chainTokenIds])); // remove duplicates
   }, []);
@@ -54,7 +71,7 @@ export const getTokenTickersSortByChain = (
 export const calculateAssets = (
   data: (GetAddressStateResponse | undefined | null)[],
   chainsDetails: (getChainDetailsResponse | undefined | null)[],
-  mobulaMarketData: MobulaMarketMultiDataTickersResponse | undefined | null
+  mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null
 ): Asset[] => {
   return data.reduce<Asset[]>((acc, accountData) => {
     if (!accountData) return [...acc];
@@ -100,9 +117,13 @@ export const calculateAssets = (
             tokenAccountData.token.decimals
           );
 
+          const tokenIndex =
+            tokenAccountData.token.contractAddress ??
+            tokenAccountData.token.ticker;
+
           const balanceUSD =
-            mobulaMarketData && mobulaMarketData[tokenAccountData.token.ticker]
-              ? mobulaMarketData[tokenAccountData.token.ticker]?.price *
+            mobulaMarketData && mobulaMarketData[tokenIndex]
+              ? mobulaMarketData[tokenIndex]?.price *
                 parseFloat(balanceMainUnit as string)
               : undefined;
 
@@ -110,9 +131,8 @@ export const calculateAssets = (
             ...tokenAcc,
             {
               logo:
-                mobulaMarketData &&
-                mobulaMarketData[tokenAccountData.token.ticker]
-                  ? mobulaMarketData?.[tokenAccountData.token.ticker].logo
+                mobulaMarketData && mobulaMarketData[tokenIndex]
+                  ? mobulaMarketData?.[tokenIndex].logo
                   : "",
               mainChainLogo: mainChainAsset.logo, // FIXME: To be replaced with blockchain Logo and not ticker
               assetId: tokenAccountData.token.id,
