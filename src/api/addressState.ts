@@ -9,7 +9,7 @@ export type GetAddressStateResponse = {
       value: string;
       token: {
         chainId: string;
-        contractAddress: string;
+        contractAddress?: string;
         decimals: number;
         id: string;
         name: string;

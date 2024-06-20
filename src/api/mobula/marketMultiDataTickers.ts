@@ -9,9 +9,10 @@ export type MobulaMarketMultiDataTickersResponse = Record<
 >;
 
 export const getMobulaMarketMultiDataTickers = async (
-  tickers: string[]
+  tickers: string[],
+  type: "assets" | "symbols"
 ): Promise<MobulaMarketMultiDataTickersResponse> => {
-  const url = `${MOBULA_API_URL}/market/multi-data?symbols=${tickers.join(
+  const url = `${MOBULA_API_URL}/market/multi-data?${type}=${tickers.join(
     ","
   )}`;
 

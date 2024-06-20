@@ -16,7 +16,6 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
-import { useMobulaMarketMultiDataTickers } from "~/hooks/useGetMobulaMarketMultiDataTicker";
 import { AssetRow } from "./AssetRow";
 import { ConnectWallet } from "./ConnectWallet";
 import { Loading } from "./Loading";
@@ -25,11 +24,13 @@ import { TransactionLoading } from "./TransactionLoading";
 import {
   calculateAssets,
   getTickers,
+  getTokenContractAddress,
   getTokenTickers,
   mergedAssetsById,
 } from "./helpers";
 import { showroomAddresses } from "./showroomAddresses";
 import { useAddressStateBatch } from "~/hooks/useAddressStateBatch";
+import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 
 export default function Portfolio() {
   const { theme, resolvedTheme } = useTheme();
@@ -48,12 +49,25 @@ export default function Portfolio() {
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
   const tokenTickers = getTokenTickers(data || []);
+  const tokenContractAddresses = getTokenContractAddress(data || []);
+
+  console.log({ mainChainTickersIds, tokenTickers, tokenContractAddresses });
 
   const { data: mobulaMarketData, isLoading: isAssetDetailsLoading } =
-    useMobulaMarketMultiDataTickers(
+    useMobulaMarketMultiData(
       [...mainChainTickersIds, ...tokenTickers],
-      !isChainDetailsLoading && !isAddressesLoading
+      !isChainDetailsLoading && !isAddressesLoading,
+      "symbols"
     );
+
+  const {
+    data: mobulaMarketDataContractAddresses,
+    isLoading: isMobulaMarketDataContractAddresses,
+  } = useMobulaMarketMultiData(
+    tokenContractAddresses,
+    !isChainDetailsLoading && !isAddressesLoading,
+    "assets"
+  );
 
   const [hideLowBalance, setHideLowBalance] = useState(true);
   const [openTransaction, setOpenTransaction] = useState(false);
@@ -61,7 +75,10 @@ export default function Portfolio() {
   const [stepper, setStepper] = useState(0);
 
   const isLoading =
-    isAddressesLoading || isAssetDetailsLoading || isChainDetailsLoading;
+    isAddressesLoading ||
+    isAssetDetailsLoading ||
+    isChainDetailsLoading ||
+    isMobulaMarketDataContractAddresses;
 
   if (isLoading) {
     return (
@@ -69,11 +86,15 @@ export default function Portfolio() {
         isAddressesLoading={isAddressesLoading}
         isAssetDetailsLoading={isAssetDetailsLoading}
         isChainDetailsLoading={isChainDetailsLoading}
+        isContractAddressPriceLoading={isMobulaMarketDataContractAddresses}
       />
     );
   }
 
-  const assets = calculateAssets(data, chainsDetails, mobulaMarketData);
+  const assets = calculateAssets(data, chainsDetails, {
+    ...mobulaMarketData,
+    ...mobulaMarketDataContractAddresses,
+  });
 
   const mergedAssets = mergedAssetsById(assets)
     .filter(
@@ -92,6 +113,7 @@ export default function Portfolio() {
     assets,
     mergedAssets,
     mobulaMarketData,
+    mobulaMarketDataContractAddresses,
   });
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
