@@ -10,21 +10,31 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useGetCoinGeckoCoinList } from "~/hooks/useCoinGeckoCoinList";
 import { useGetSupportedChainsIds } from "~/hooks/useGetSupportedChainsIds";
 import { CoinIdMapperCoinGeckoToAdamik } from "~/utils/helper";
+import { Checkbox } from "~/components/ui/checkbox";
 
 const comingSoonIds = ["tron", "the-open-network", "solana"];
 
 export default function SupportedChains() {
   const { isLoading, data: supportedChains } = useGetSupportedChainsIds();
-  const { isLoading: isCoinListLoading, data: coinList } = useGetCoinGeckoCoinList();
+  const { isLoading: isCoinListLoading, data: coinList } =
+    useGetCoinGeckoCoinList();
   const [showTestnets, setShowTestnets] = useState(false);
 
   const handleCheckboxChange = () => {
     setShowTestnets(!showTestnets);
   };
 
-  const supportedChainIds = supportedChains?.chains?.map(CoinIdMapperCoinGeckoToAdamik) || [];
-  const displayedChainIds = coinList?.map(coin => CoinIdMapperCoinGeckoToAdamik(coin.id)).filter(id => supportedChainIds.includes(id) || comingSoonIds.includes(id)) || [];
-  const additionalChains = supportedChainIds.filter(id => !displayedChainIds.includes(id));
+  const supportedChainIds =
+    supportedChains?.chains?.map(CoinIdMapperCoinGeckoToAdamik) || [];
+  const displayedChainIds =
+    coinList
+      ?.map((coin) => CoinIdMapperCoinGeckoToAdamik(coin.id))
+      .filter(
+        (id) => supportedChainIds.includes(id) || comingSoonIds.includes(id)
+      ) || [];
+  const additionalChains = supportedChainIds.filter(
+    (id) => !displayedChainIds.includes(id)
+  );
 
   return (
     <main className="flex-1 mx-auto w-full flex flex-col auto-rows-max gap-4 p-4 md:p-8">
@@ -81,18 +91,24 @@ export default function SupportedChains() {
               </Button>
             </div>
             <div className="flex flex-row items-center mt-4">
-              <input
-                type="checkbox"
+              <Checkbox
                 id="show-testnets"
                 checked={showTestnets}
-                onChange={handleCheckboxChange}
+                onCheckedChange={handleCheckboxChange}
                 className="mr-2"
               />
-              <label htmlFor="show-testnets">Show testnets</label>
+              <label
+                htmlFor="show-testnets"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Show testnets
+              </label>
             </div>
             {showTestnets && (
               <div className="mt-4">
-                <h2 className="text-lg font-semibold mb-2">Additional Chains (Testnets)</h2>
+                <h2 className="text-lg font-semibold mb-2">
+                  Additional Chains (Testnets)
+                </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4">
                   {additionalChains.map((chain) => (
                     <div
