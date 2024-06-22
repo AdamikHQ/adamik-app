@@ -18,6 +18,8 @@ import {
 import { useAddressStateBatch } from "~/hooks/useAddressStateBatch";
 import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
+import { useWallet } from "~/hooks/useWallet";
+import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
 import { AssetRow } from "./AssetRow";
 import { ConnectWallet } from "./ConnectWallet";
 import { Loading } from "./Loading";
@@ -28,14 +30,17 @@ import {
   getTickers,
   getTokenContractAddresses,
   getTokenTickers,
-  mergedAssetsById,
 } from "./helpers";
 import { showroomAddresses } from "./showroomAddresses";
 
 export default function Portfolio() {
   const { theme, resolvedTheme } = useTheme();
   const currentTheme = theme === "system" ? resolvedTheme : theme;
-  const chainIdsAdamik = showroomAddresses.reduce<string[]>(
+
+  const { addresses } = useWallet();
+
+  const displayAddresses = addresses.length > 0 ? addresses : showroomAddresses;
+  const chainIdsAdamik = displayAddresses.reduce<string[]>(
     (acc, { chainId }) => {
       if (acc.includes(chainId)) return acc;
       return [...acc, chainId];
@@ -45,7 +50,7 @@ export default function Portfolio() {
   const { data: chainsDetails, isLoading: isChainDetailsLoading } =
     useGetChainDetailsBatch(chainIdsAdamik);
   const { data, isLoading: isAddressesLoading } =
-    useAddressStateBatch(showroomAddresses);
+    useAddressStateBatch(displayAddresses);
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
   const tokenTickers = getTokenTickers(data || []);
@@ -94,10 +99,10 @@ export default function Portfolio() {
     ...mobulaMarketDataContractAddresses,
   });
 
-  const mergedAssets = mergedAssetsById(assets)
+  const filteredAssets = assets
     .filter(
       (asset) =>
-        !hideLowBalance || (asset && asset.balanceUSD && asset.balanceUSD > 0.1)
+        !hideLowBalance || (asset && asset.balanceUSD && asset.balanceUSD > 1)
     )
     .sort((a, b) => {
       if (!a || !b) return 0;
@@ -115,8 +120,9 @@ export default function Portfolio() {
   // });
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-      <div className="flex items-center">
+      <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold md:text-2xl">Portfolio</h1>
+        <WalletModalTrigger />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
@@ -141,7 +147,7 @@ export default function Portfolio() {
               {isLoading ? (
                 <Loader2 className="animate-spin" />
               ) : (
-                mergedAssets
+                filteredAssets
                   .reduce((acc, asset) => {
                     return acc + (asset?.balanceUSD || 0);
                   }, 0)
@@ -186,8 +192,8 @@ export default function Portfolio() {
                 </TableRow>
               </TableHeader>
               <TableBody className="overflow-y-auto max-h-[360px]">
-                {mergedAssets.length > 0 &&
-                  mergedAssets.map((asset, i) => {
+                {filteredAssets.length > 0 &&
+                  filteredAssets.map((asset, i) => {
                     if (!asset) return null;
                     return <AssetRow key={i} asset={asset} />;
                   })}
@@ -206,7 +212,7 @@ export default function Portfolio() {
                   htmlFor="hideBalance"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  {`Hide low balance assets (< 0.1$)`}
+                  {`Hide low balance assets (< 1$)`}
                 </label>
               </div>
             </div>
@@ -216,7 +222,7 @@ export default function Portfolio() {
           <Pie
             color={currentTheme === "light" ? "black" : "white"}
             data={{
-              labels: mergedAssets.reduce<string[]>((acc, asset, index) => {
+              labels: filteredAssets.reduce<string[]>((acc, asset, index) => {
                 if (index > 9) {
                   const newAcc = [...acc];
                   newAcc[newAcc.length - 1] = "Others";
@@ -228,7 +234,7 @@ export default function Portfolio() {
               datasets: [
                 {
                   label: "Amount (USD)",
-                  data: mergedAssets.reduce<string[]>((acc, asset, index) => {
+                  data: filteredAssets.reduce<string[]>((acc, asset, index) => {
                     if (asset?.balanceUSD === undefined) return acc;
                     if (index > 9) {
                       const newAcc = [...acc];
@@ -255,7 +261,7 @@ export default function Portfolio() {
           // Probably need to rework
           stepper === 0 ? (
             <Transaction
-              assets={mergedAssets}
+              assets={filteredAssets}
               onNextStep={() => {
                 setStepper(1);
               }}

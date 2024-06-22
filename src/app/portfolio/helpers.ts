@@ -142,6 +142,7 @@ export const calculateAssets = (
               balanceUSD: balanceUSD,
               ticker: tokenAccountData.token.ticker,
               address: mainChainAsset.address,
+              contractAddress: tokenAccountData.token.contractAddress,
             },
           ];
         },
@@ -150,19 +151,4 @@ export const calculateAssets = (
 
     return [...acc, mainChainAsset, ...tokenAssets];
   }, []);
-};
-
-export const mergedAssetsById = (assets: Asset[]) => {
-  return Object.values(
-    assets.reduce<Record<string, Asset>>((acc, asset) => {
-      if (acc[asset.ticker]) {
-        acc[asset.ticker].balanceUSD =
-          (acc[asset.ticker].balanceUSD || 0) + (asset.balanceUSD || 0);
-        acc[asset.ticker].subAssets!.push(asset);
-      } else {
-        acc[asset.ticker] = { ...asset, subAssets: [{ ...asset }] };
-      }
-      return { ...acc };
-    }, {})
-  );
 };

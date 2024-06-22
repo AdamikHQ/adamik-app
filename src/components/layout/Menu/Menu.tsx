@@ -7,19 +7,19 @@ import { MobileMenu } from "./MobileMenu";
 
 const menu = [
   {
-    title: "Supported chains",
-    icon: SquareStack,
-    href: "/",
-  },
-  {
     title: "Portfolio",
     icon: PieChart,
-    href: "/portfolio",
+    href: "/",
   },
   {
     title: "Stake",
     icon: HandCoins,
     href: "/stake",
+  },
+  {
+    title: "Supported chains",
+    icon: SquareStack,
+    href: "/supported-chains",
   },
 ];
 

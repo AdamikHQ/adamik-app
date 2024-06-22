@@ -1,15 +1,9 @@
 "use server";
 
 import { env, ADAMIK_API_URL } from "~/env";
+import { Chain } from "~/utils/types";
 
-export type getChainDetailsResponse = {
-  decimals: number;
-  ticker: string;
-  id: string;
-  name: string;
-  params: any;
-  family: string;
-};
+export type getChainDetailsResponse = Chain;
 
 export const getChainDetails = async (
   chainId: string
