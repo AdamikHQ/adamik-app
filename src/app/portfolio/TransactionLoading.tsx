@@ -15,7 +15,7 @@ export const TransactionLoading = ({ onNextStep }: TransactionLoadingProps) => {
         <Image
           className="animate-spin"
           alt="Adamik logo"
-          src="/adamik-symbol.svg"
+          src="/adamik_symbol.svg"
           width={92}
           height={92}
         />
