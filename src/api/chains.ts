@@ -1,12 +1,13 @@
 "use server";
 
 import { env, ADAMIK_API_URL } from "~/env";
+import { Chain } from "~/utils/types";
 
 export type getSupportedChainsIdsResponse = {
-  chains: string[];
+  chains: Record<string, Chain>;
 };
 
-export const getSupportedChainsIds =
+export const getChains =
   async (): Promise<getSupportedChainsIdsResponse | null> => {
     const response = await fetch(`${ADAMIK_API_URL}/chains`, {
       headers: {

@@ -30,3 +30,56 @@ export type MobulaMarketData = {
   total_supply: string;
   circulating_supply: string;
 };
+
+export interface MobulaBlockchain {
+  name: string;
+  logo: string;
+  chainId: string;
+  evmChainId: number;
+  rpcs: string[];
+  explorer: string;
+  uniswapV3Factory: string[];
+  multicall_contract: string;
+  eth: {
+    name: string;
+    symbol: string;
+    decimals: number;
+    address: string;
+    type: string;
+    logo: string;
+    id: number;
+  };
+  stable: {
+    symbol: string;
+    name: string;
+    logo: string;
+    blockchains: string[];
+    contracts: string[];
+    blockchain: string;
+    address: string;
+    decimals: number;
+    type: string;
+  };
+  routers: Router[];
+  tokens: Token[];
+  supportedProtocols: string[];
+  color: string;
+  dexscreenerChain: string;
+  coingeckoChain: string;
+  coverage: string[];
+}
+
+interface Router {
+  name: string;
+  address: string;
+  factory: string;
+  fee: number;
+}
+
+interface Token {
+  name: string;
+  symbol: string;
+  address: string;
+  decimals: number;
+  type: string;
+}

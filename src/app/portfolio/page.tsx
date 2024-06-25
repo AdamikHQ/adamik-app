@@ -17,10 +17,12 @@ import {
 } from "~/components/ui/table";
 import { useAddressStateBatch } from "~/hooks/useAddressStateBatch";
 import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
+import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
+import { useWallet } from "~/hooks/useWallet";
+import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
 import { AssetRow } from "./AssetRow";
 import { ConnectWallet } from "./ConnectWallet";
-import { Loading } from "./Loading";
 import { Transaction } from "./Transaction";
 import { TransactionLoading } from "./TransactionLoading";
 import {
@@ -28,14 +30,17 @@ import {
   getTickers,
   getTokenContractAddresses,
   getTokenTickers,
-  mergedAssetsById,
 } from "./helpers";
 import { showroomAddresses } from "./showroomAddresses";
 
 export default function Portfolio() {
   const { theme, resolvedTheme } = useTheme();
   const currentTheme = theme === "system" ? resolvedTheme : theme;
-  const chainIdsAdamik = showroomAddresses.reduce<string[]>(
+
+  const { addresses } = useWallet();
+
+  const displayAddresses = addresses.length > 0 ? addresses : showroomAddresses;
+  const chainIdsAdamik = displayAddresses.reduce<string[]>(
     (acc, { chainId }) => {
       if (acc.includes(chainId)) return acc;
       return [...acc, chainId];
@@ -45,7 +50,9 @@ export default function Portfolio() {
   const { data: chainsDetails, isLoading: isChainDetailsLoading } =
     useGetChainDetailsBatch(chainIdsAdamik);
   const { data, isLoading: isAddressesLoading } =
-    useAddressStateBatch(showroomAddresses);
+    useAddressStateBatch(displayAddresses);
+  const { data: blockchainDetails, isLoading: blockchainLoading } =
+    useMobulaBlockchains();
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
   const tokenTickers = getTokenTickers(data || []);
@@ -78,26 +85,20 @@ export default function Portfolio() {
     isChainDetailsLoading ||
     isMobulaMarketDataLoading;
 
-  if (isLoading) {
-    return (
-      <Loading
-        isAddressesLoading={isAddressesLoading}
-        isAssetDetailsLoading={isAssetDetailsLoading}
-        isChainDetailsLoading={isChainDetailsLoading}
-        isContractAddressPriceLoading={isMobulaMarketDataLoading}
-      />
-    );
-  }
+  const assets = calculateAssets(
+    data,
+    chainsDetails,
+    {
+      ...mobulaMarketData,
+      ...mobulaMarketDataContractAddresses,
+    },
+    blockchainDetails
+  );
 
-  const assets = calculateAssets(data, chainsDetails, {
-    ...mobulaMarketData,
-    ...mobulaMarketDataContractAddresses,
-  });
-
-  const mergedAssets = mergedAssetsById(assets)
+  const filteredAssets = assets
     .filter(
       (asset) =>
-        !hideLowBalance || (asset && asset.balanceUSD && asset.balanceUSD > 0.1)
+        !hideLowBalance || (asset && asset.balanceUSD && asset.balanceUSD > 1)
     )
     .sort((a, b) => {
       if (!a || !b) return 0;
@@ -115,8 +116,9 @@ export default function Portfolio() {
   // });
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-      <div className="flex items-center">
+      <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold md:text-2xl">Portfolio</h1>
+        <WalletModalTrigger />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
@@ -141,7 +143,7 @@ export default function Portfolio() {
               {isLoading ? (
                 <Loader2 className="animate-spin" />
               ) : (
-                mergedAssets
+                filteredAssets
                   .reduce((acc, asset) => {
                     return acc + (asset?.balanceUSD || 0);
                   }, 0)
@@ -174,77 +176,90 @@ export default function Portfolio() {
             </Button>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[80px] hidden md:table-cell"></TableHead>
-                  <TableHead>Asset</TableHead>
-                  <TableHead className="hidden md:table-cell">
-                    Balance
-                  </TableHead>
-                  <TableHead>Amount (USD)</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="overflow-y-auto max-h-[360px]">
-                {mergedAssets.length > 0 &&
-                  mergedAssets.map((asset, i) => {
-                    if (!asset) return null;
-                    return <AssetRow key={i} asset={asset} />;
-                  })}
-              </TableBody>
-            </Table>
-            <div className="items-top flex space-x-2">
-              <Checkbox
-                id="hideBalance"
-                checked={hideLowBalance}
-                onClick={() => {
-                  setHideLowBalance(!hideLowBalance);
-                }}
-              />
-              <div className="grid gap-1.5 leading-none">
-                <label
-                  htmlFor="hideBalance"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  {`Hide low balance assets (< 0.1$)`}
-                </label>
-              </div>
-            </div>
+            {!isLoading ? (
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[80px] hidden md:table-cell"></TableHead>
+                      <TableHead>Asset</TableHead>
+                      <TableHead className="hidden md:table-cell">
+                        Balance
+                      </TableHead>
+                      <TableHead>Amount (USD)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody className="overflow-y-auto max-h-[360px]">
+                    {filteredAssets.length > 0 &&
+                      filteredAssets.map((asset, i) => {
+                        if (!asset) return null;
+                        return <AssetRow key={i} asset={asset} />;
+                      })}
+                  </TableBody>
+                </Table>
+                <div className="items-top flex space-x-2">
+                  <Checkbox
+                    id="hideBalance"
+                    checked={hideLowBalance}
+                    onClick={() => {
+                      setHideLowBalance(!hideLowBalance);
+                    }}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="hideBalance"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {`Hide low balance assets (< 1$)`}
+                    </label>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <Loader2 className="animate-spin" />
+            )}
           </CardContent>
         </Card>
         <div className="order-first md:order-last">
-          <Pie
-            color={currentTheme === "light" ? "black" : "white"}
-            data={{
-              labels: mergedAssets.reduce<string[]>((acc, asset, index) => {
-                if (index > 9) {
-                  const newAcc = [...acc];
-                  newAcc[newAcc.length - 1] = "Others";
-                  return newAcc;
-                }
-                if (!acc && !asset) return acc;
-                return [...acc, asset?.name as string];
-              }, []),
-              datasets: [
-                {
-                  label: "Amount (USD)",
-                  data: mergedAssets.reduce<string[]>((acc, asset, index) => {
-                    if (asset?.balanceUSD === undefined) return acc;
-                    if (index > 9) {
-                      const newAcc = [...acc];
-                      newAcc[newAcc.length - 1] = (
-                        parseFloat(newAcc[newAcc.length - 1]) +
-                        (asset?.balanceUSD || 0)
-                      ).toFixed(2);
-                      return newAcc;
-                    }
-                    return [...acc, asset?.balanceUSD.toFixed(2) as string];
-                  }, []),
-                  borderWidth: 1,
-                },
-              ],
-            }}
-          />
+          {!isLoading ? (
+            <Pie
+              color={currentTheme === "light" ? "black" : "white"}
+              data={{
+                labels: filteredAssets.reduce<string[]>((acc, asset, index) => {
+                  if (index > 9) {
+                    const newAcc = [...acc];
+                    newAcc[newAcc.length - 1] = "Others";
+                    return newAcc;
+                  }
+                  if (!acc && !asset) return acc;
+                  return [...acc, asset?.name as string];
+                }, []),
+                datasets: [
+                  {
+                    label: "Amount (USD)",
+                    data: filteredAssets.reduce<string[]>(
+                      (acc, asset, index) => {
+                        if (asset?.balanceUSD === undefined) return acc;
+                        if (index > 9) {
+                          const newAcc = [...acc];
+                          newAcc[newAcc.length - 1] = (
+                            parseFloat(newAcc[newAcc.length - 1]) +
+                            (asset?.balanceUSD || 0)
+                          ).toFixed(2);
+                          return newAcc;
+                        }
+                        return [...acc, asset?.balanceUSD.toFixed(2) as string];
+                      },
+                      []
+                    ),
+                    borderWidth: 1,
+                  },
+                ],
+              }}
+            />
+          ) : (
+            <Loader2 className="animate-spin" />
+          )}
         </div>
       </div>
       <Modal
@@ -255,7 +270,7 @@ export default function Portfolio() {
           // Probably need to rework
           stepper === 0 ? (
             <Transaction
-              assets={mergedAssets}
+              assets={filteredAssets}
               onNextStep={() => {
                 setStepper(1);
               }}

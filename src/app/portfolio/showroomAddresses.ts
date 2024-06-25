@@ -4,19 +4,19 @@ export const showroomAddresses = [
     address: "0xfC43f5F9dd45258b3AFf31Bdbe6561D97e8B71de",
   },
   {
+    chainId: "linea",
+    address: "0x8bc6922Eb94e4858efaF9F433c35Bc241F69e8a6",
+  },
+  {
     chainId: "base",
-    address: "0xfC43f5F9dd45258b3AFf31Bdbe6561D97e8B71de",
+    address: "0x8bc6922Eb94e4858efaF9F433c35Bc241F69e8a6",
   },
   {
-    chainId: "cosmoshub",
-    address: "cosmos1yvuhqg73fdzxvam9sj7mazfa38gpn7ulsavh7s",
+    chainId: "linea",
+    address: "0xd0b838039E28757a7738E036b11d1F9e3Ac9397D",
   },
   {
-    chainId: "osmosis",
-    address: "osmo1yvuhqg73fdzxvam9sj7mazfa38gpn7ulcxl8gz",
-  },
-  {
-    chainId: "algorand",
-    address: "O2ZPSV6NJC32ZXQ7PZ5ID6PXRKAWQE2XWFZK5NK3UFULPZT6OKIOROEAPU",
+    chainId: "base",
+    address: "0xd0b838039E28757a7738E036b11d1F9e3Ac9397D",
   },
 ];

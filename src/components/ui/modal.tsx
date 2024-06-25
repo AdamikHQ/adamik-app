@@ -1,7 +1,6 @@
 import * as React from "react";
 
 import { useMediaQuery } from "usehooks-ts";
-import { Button } from "~/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +11,6 @@ import {
 } from "~/components/ui/dialog";
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerFooter,
@@ -44,7 +42,7 @@ export function Modal({
     return (
       <Dialog open={open} onOpenChange={setOpen}>
         {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] lg:max-w-[660px]">
           <DialogHeader>
             <DialogTitle>{modalTitle}</DialogTitle>
             {modalTitleDescription && (

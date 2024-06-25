@@ -6,26 +6,16 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 const coinIdMapping: { [key: string]: string } = {
-  "cosmos": "cosmoshub",
-  "binancecoin": "bsc",
+  cosmos: "cosmoshub",
+  binancecoin: "bsc",
   "avalanche-2": "avalanche",
-  "matic-network": "polygon"
+  "matic-network": "polygon",
   // TODO: Add mapping for LINEA
 };
 
 export const CoinIdMapperCoinGeckoToAdamik = (coinId: string): string => {
   return coinIdMapping[coinId] || coinId;
 };
-
-// Need to find a way to reverse it
-export const CoinIdMapperAdamikToCoinGecko = (coinId: string) => {
-  switch (coinId) {
-    case "cosmoshub":
-      return "cosmos";
-  }
-  return coinId;
-};
-
 
 // Helpers to convert from/to user-convenient format in main unit, and smallest unit of the chain
 export function amountToSmallestUnit(amount: string, decimals: number): string {

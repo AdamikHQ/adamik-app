@@ -29,5 +29,15 @@ export type Asset = {
   balanceUSD: number | undefined;
   ticker: string;
   address: string;
-  subAssets?: Asset[];
+  contractAddress?: string;
+};
+
+export type Chain = {
+  decimals: number;
+  ticker: string;
+  id: string;
+  name: string;
+  params: any;
+  family: string;
+  isTestNet: boolean;
 };

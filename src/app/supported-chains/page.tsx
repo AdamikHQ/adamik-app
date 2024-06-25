@@ -8,14 +8,14 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useGetCoinGeckoCoinList } from "~/hooks/useCoinGeckoCoinList";
-import { useGetSupportedChainsIds } from "~/hooks/useGetSupportedChainsIds";
 import { CoinIdMapperCoinGeckoToAdamik } from "~/utils/helper";
 import { Checkbox } from "~/components/ui/checkbox";
+import { useChains } from "~/hooks/useChains";
 
 const comingSoonIds = ["tron", "the-open-network", "solana"];
 
 export default function SupportedChains() {
-  const { isLoading, data: supportedChains } = useGetSupportedChainsIds();
+  const { isLoading, data: supportedChains } = useChains();
   const { isLoading: isCoinListLoading, data: coinList } =
     useGetCoinGeckoCoinList();
   const [showTestnets, setShowTestnets] = useState(false);
@@ -25,7 +25,9 @@ export default function SupportedChains() {
   };
 
   const supportedChainIds =
-    supportedChains?.chains?.map(CoinIdMapperCoinGeckoToAdamik) || [];
+    Object.keys(supportedChains?.chains || {}).map(
+      CoinIdMapperCoinGeckoToAdamik
+    ) || [];
   const displayedChainIds =
     coinList
       ?.map((coin) => CoinIdMapperCoinGeckoToAdamik(coin.id))
@@ -53,9 +55,9 @@ export default function SupportedChains() {
                 <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
                   {coinList?.map((coin) => {
                     const isComingSoon = comingSoonIds.includes(coin.id);
-                    const isSupported = supportedChains?.chains?.includes(
-                      CoinIdMapperCoinGeckoToAdamik(coin.id)
-                    );
+                    const isSupported = Object.keys(
+                      supportedChains?.chains || {}
+                    )?.includes(CoinIdMapperCoinGeckoToAdamik(coin.id));
                     if (isSupported || isComingSoon)
                       return (
                         <div

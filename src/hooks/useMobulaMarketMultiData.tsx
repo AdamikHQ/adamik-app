@@ -15,7 +15,6 @@ export const useMobulaMarketMultiData = (
   type: "assets" | "symbols"
 ) => {
   const queries = chunkArray(tickerIds, 200).map((chunk) => {
-    console.log({ chunk });
     return {
       queryKey: ["useMobulaMarketMultiData", chunk, type],
       queryFn: async () => getMobulaMarketMultiData(chunk, type),
