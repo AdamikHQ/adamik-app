@@ -10,12 +10,12 @@ export class MetamaskWallet implements IWallet {
   public icon = "/wallets/Metamask.svg";
   public withoutBroadcast = true;
 
-  private ethereum: any;
+  private metamaskSDK: any;
 
   constructor(SDKProvider: any) {
-    this.ethereum = SDKProvider;
+    this.metamaskSDK = SDKProvider;
 
-    this.ethereum?.on("accountsChanged", (accounts: string[]) => {
+    this.metamaskSDK?.on("accountsChanged", (accounts: string[]) => {
       //Report here new accounts to UI
       console.log("accountsChanged", accounts);
     });
@@ -24,15 +24,15 @@ export class MetamaskWallet implements IWallet {
   }
 
   static async initialize() {
-    const ethereum = await detectEthereumProvider();
+    const metamaskSDK = await detectEthereumProvider();
 
-    return new MetamaskWallet(ethereum);
+    return new MetamaskWallet(metamaskSDK);
   }
 
   async connect() {
-    if (this.isProviderAvailable(this.ethereum)) {
+    if (this.isProviderAvailable(this.metamaskSDK)) {
       try {
-        await this.ethereum.request({ method: "eth_requestAccounts" });
+        await this.metamaskSDK.request({ method: "eth_requestAccounts" });
       } catch (error: any) {
         if (error.code === 4001) {
           console.log("User rejected request");
@@ -44,8 +44,8 @@ export class MetamaskWallet implements IWallet {
   }
 
   async getAddresses(): Promise<string[]> {
-    if (this.isProviderAvailable(this.ethereum)) {
-      const accounts = (await this.ethereum.request({
+    if (this.isProviderAvailable(this.metamaskSDK)) {
+      const accounts = (await this.metamaskSDK.request({
         method: "eth_accounts",
       })) as string[];
       return accounts;
@@ -58,9 +58,9 @@ export class MetamaskWallet implements IWallet {
   }
 
   private isProviderAvailable(
-    ethereum: SDKProvider | undefined | null
-  ): ethereum is SDKProvider {
-    if (!ethereum) {
+    metamaskSDK: SDKProvider | undefined | null
+  ): metamaskSDK is SDKProvider {
+    if (!metamaskSDK) {
       return false;
     }
     return true;
