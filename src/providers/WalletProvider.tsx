@@ -22,7 +22,7 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
         address.chainId === receiveAddress.chainId
     );
     if (!exist) {
-      setAddresses([...addresses, receiveAddress]);
+      setAddresses((oldAddress) => [...oldAddress, receiveAddress]);
     }
   };
 

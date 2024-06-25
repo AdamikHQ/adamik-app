@@ -7,21 +7,26 @@ import detectEthereumProvider from "@metamask/detect-provider";
 export class MetamaskWallet implements IWallet {
   public id = "Metamask";
   public families = ["evm"];
+  public icon = "/wallets/Metamask.svg";
+  public withoutBroadcast = true;
 
-  private ethereum: SDKProvider | null | undefined;
+  private ethereum: any;
 
-  constructor() {
-    this.init();
-  }
+  constructor(SDKProvider: any) {
+    this.ethereum = SDKProvider;
 
-  private async init() {
-    this.ethereum = await detectEthereumProvider();
-
-    this.ethereum?.on("accountsChanged", (accounts) => {
+    this.ethereum?.on("accountsChanged", (accounts: string[]) => {
       //Report here new accounts to UI
       console.log("accountsChanged", accounts);
     });
+
     this.connect();
+  }
+
+  static async initialize() {
+    const ethereum = await detectEthereumProvider();
+
+    return new MetamaskWallet(ethereum);
   }
 
   async connect() {

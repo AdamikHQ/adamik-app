@@ -40,4 +40,5 @@ export type Chain = {
   name: string;
   params: any;
   family: string;
+  isTestNet: boolean;
 };

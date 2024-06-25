@@ -3,6 +3,7 @@ import { getChainDetailsResponse } from "~/api/chainDetails";
 import { Asset } from "~/utils/types";
 import { amountToMainUnit } from "~/utils/helper";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
+import { MobulaBlockchain } from "~/api/mobula/types";
 
 export const getTickers = (
   data: (getChainDetailsResponse | undefined | null)[]
@@ -71,7 +72,8 @@ export const getTokenTickersSortByChain = (
 export const calculateAssets = (
   data: (GetAddressStateResponse | undefined | null)[],
   chainsDetails: (getChainDetailsResponse | undefined | null)[],
-  mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null
+  mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null,
+  mobulaBlockChainData: MobulaBlockchain[] | undefined
 ): Asset[] => {
   return data.reduce<Asset[]>((acc, accountData) => {
     if (!accountData) return [...acc];
@@ -89,16 +91,23 @@ export const calculateAssets = (
     );
 
     const balanceUSD =
-      mobulaMarketData && mobulaMarketData[chainDetails.ticker]
+      !chainDetails.isTestNet &&
+      mobulaMarketData &&
+      mobulaMarketData[chainDetails.ticker]
         ? mobulaMarketData[chainDetails.ticker]?.price *
           parseFloat(balanceMainUnit as string)
         : undefined;
 
     const mainChainAsset = {
       logo:
-        mobulaMarketData && mobulaMarketData[chainDetails.ticker]
+        mobulaBlockChainData?.find(
+          (blockchain) =>
+            blockchain.name.toLocaleLowerCase() ===
+            accountData.chainId.toLocaleLowerCase()
+        )?.logo ||
+        (mobulaMarketData && mobulaMarketData[chainDetails.ticker]
           ? mobulaMarketData?.[chainDetails.ticker].logo
-          : "",
+          : ""),
       chainId: accountData.chainId,
       name: chainDetails?.name,
       balanceMainUnit,
@@ -134,7 +143,12 @@ export const calculateAssets = (
                 mobulaMarketData && mobulaMarketData[tokenIndex]
                   ? mobulaMarketData?.[tokenIndex].logo
                   : "",
-              mainChainLogo: mainChainAsset.logo, // FIXME: To be replaced with blockchain Logo and not ticker
+              mainChainLogo:
+                mobulaBlockChainData?.find(
+                  (blockchain) =>
+                    blockchain.name.toLocaleLowerCase() ===
+                    mainChainAsset?.chainId.toLocaleLowerCase()
+                )?.logo || mainChainAsset.logo, // FIXME: To be replaced with blockchain Logo and not ticker
               assetId: tokenAccountData.token.id,
               chainId: tokenAccountData.token.chainId,
               name: tokenAccountData.token.name,

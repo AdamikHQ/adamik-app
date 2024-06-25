@@ -35,10 +35,23 @@ export const AssetRow: React.FC<{ asset: Asset }> = ({ asset }) => {
                       <p>{asset.name}</p>
                     </TooltipContent>
                   </Tooltip>
-                  {asset.subAssets && asset.subAssets?.length > 1 && (
-                    <div className="absolute inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-2 -end-0 border-primary">
-                      {asset.subAssets.length}
-                    </div>
+                  {asset.mainChainLogo && (
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <div className="absolute w-5 h-5 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-2 end-2">
+                          <Avatar className="h-4 w-4">
+                            <AvatarImage
+                              src={asset.mainChainLogo}
+                              alt={asset.chainId}
+                            />
+                            <AvatarFallback>{asset.chainId}</AvatarFallback>
+                          </Avatar>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{asset.chainId}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
               )}

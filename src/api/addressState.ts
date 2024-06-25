@@ -39,7 +39,7 @@ export const addressState = async (
     const data = await response.json();
     return data;
   } else {
-    console.error("state - backend error:", response.json());
+    console.error("state - backend error");
     return null;
   }
 };
