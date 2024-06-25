@@ -29,7 +29,6 @@ export type Asset = {
   balanceUSD: number | undefined;
   ticker: string;
   address: string;
-  subAssets?: Asset[];
   contractAddress?: string;
 };
 
