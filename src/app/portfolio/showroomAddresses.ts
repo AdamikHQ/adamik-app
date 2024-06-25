@@ -19,4 +19,16 @@ export const showroomAddresses = [
     chainId: "base",
     address: "0xd0b838039E28757a7738E036b11d1F9e3Ac9397D",
   },
+  {
+    chainId: "cosmoshub",
+    address: "cosmos1yvuhqg73fdzxvam9sj7mazfa38gpn7ulsavh7s",
+  },
+  {
+    chainId: "osmosis",
+    address: "osmo1yvuhqg73fdzxvam9sj7mazfa38gpn7ulcxl8gz",
+  },
+  {
+    chainId: "algorand",
+    address: "4BMXWZ7B2ATR2MZASRJHMSNCID24M4AJQQFRURIUTDXPAUX5ZJNLZDQLIE",
+  },
 ];
