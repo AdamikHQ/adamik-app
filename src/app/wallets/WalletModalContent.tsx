@@ -1,27 +1,16 @@
 "use client";
 
 import { LoaderIcon } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { useChains } from "~/hooks/useChains";
 import { useWallet } from "~/hooks/useWallet";
-import { MetamaskWallet } from "./MetamaskWallet";
-import { Address, IWallet } from "./types";
+import { MetamaskConnect } from "./MetamaskConnect";
+import { Address } from "./types";
+import { KeplrConnect } from "./KeplrConnect";
+import { KeplrMobileConnect } from "./KeplrMobileConnect";
 
 export const WalletModalContent = () => {
-  const { addWallet, addAddress, addresses, wallets: asWallets } = useWallet();
+  const { addAddresses } = useWallet();
   const { data: chains, isLoading } = useChains();
-
-  const wallets = [
-    {
-      name: MetamaskWallet.name,
-      icon: "/wallets/Metamask.svg",
-      connect: async (setWalletAddresses: (wallet: IWallet) => void) => {
-        console.log("connect");
-        const metamaskWallet = await MetamaskWallet.initialize();
-        setWalletAddresses(metamaskWallet);
-      },
-    },
-  ];
 
   if (isLoading) {
     return <LoaderIcon className="animate-spin" />;
@@ -39,39 +28,28 @@ export const WalletModalContent = () => {
     };
   }, {});
 
-  const setWalletAddresses = async (wallet: IWallet) => {
-    addWallet(wallet);
-    const walletAddresses = await wallet.getAddresses();
-
+  const setWalletAddresses = async (
+    walletAddresses: string[],
+    chainIds: string[]
+  ) => {
     const addresses = walletAddresses.reduce<Address[]>((acc, address) => {
-      const familyAddresses = families[wallet.families[0]].map((family) => {
+      const familyAddresses = chainIds.map((chainId) => {
         return {
           address,
-          chainId: family,
+          chainId,
         };
       });
       return [...acc, ...familyAddresses];
     }, []);
 
-    addresses.forEach((address) => {
-      addAddress(address);
-    });
+    addAddresses(addresses);
   };
 
   return (
-    <div>
-      {wallets.map((wallet) => {
-        return (
-          <Avatar
-            key={wallet.name}
-            className="cursor-pointer w-24 h-24"
-            onClick={() => wallet.connect(setWalletAddresses)}
-          >
-            <AvatarImage src={wallet.icon} alt={wallet.name} />
-            <AvatarFallback>{wallet.name}</AvatarFallback>
-          </Avatar>
-        );
-      })}
+    <div className="flex flex-row gap-4">
+      <MetamaskConnect setWalletAddresses={setWalletAddresses} />
+      <KeplrConnect setWalletAddresses={setWalletAddresses} />
+      <KeplrMobileConnect setWalletAddresses={setWalletAddresses} />
     </div>
   );
 };

@@ -193,7 +193,9 @@ export default function Portfolio() {
                     {filteredAssets.length > 0 &&
                       filteredAssets.map((asset, i) => {
                         if (!asset) return null;
-                        return <AssetRow key={i} asset={asset} />;
+                        return (
+                          <AssetRow key={`${i}_${asset.name}`} asset={asset} />
+                        );
                       })}
                   </TableBody>
                 </Table>

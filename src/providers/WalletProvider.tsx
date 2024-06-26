@@ -1,6 +1,12 @@
+"use client";
+
 import React, { useState } from "react";
 import { Address, IWallet } from "~/app/wallets/types";
 import { WalletContext } from "~/hooks/useWallet";
+import { MetaMaskProvider } from "@metamask/sdk-react";
+import { ChainProvider } from "@cosmos-kit/react-lite";
+import { chains, assets } from "chain-registry";
+import { wallets as cosmosWallets } from "@cosmos-kit/keplr";
 
 export const WalletProvider: React.FC<React.PropsWithChildren> = ({
   children,
@@ -15,22 +21,50 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
     }
   };
 
-  const addAddress = (receiveAddress: Address) => {
-    const exist = addresses.find(
-      (address) =>
-        address.address === receiveAddress.address &&
-        address.chainId === receiveAddress.chainId
-    );
-    if (!exist) {
-      setAddresses((oldAddress) => [...oldAddress, receiveAddress]);
-    }
+  const addAddresses = (receiveAddresses: Address[]) => {
+    setAddresses((oldAddresses) => {
+      const mergedAddresses = Array.from(
+        new Set([...oldAddresses, ...receiveAddresses])
+      );
+
+      return mergedAddresses;
+    });
   };
 
   return (
-    <WalletContext.Provider
-      value={{ wallets, addWallet, addresses, setAddresses, addAddress }}
+    <MetaMaskProvider
+      sdkOptions={{
+        dappMetadata: {
+          name: "Adamik App",
+          url:
+            typeof window !== "undefined"
+              ? window.location.href
+              : "https://adamik-app.vercel.app/",
+        },
+      }}
     >
-      {children}
-    </WalletContext.Provider>
+      <ChainProvider
+        chains={chains} // supported chains
+        assetLists={assets} // supported asset lists
+        wallets={cosmosWallets} // supported wallets
+        walletConnectOptions={{
+          signClient: {
+            projectId: "6505e88b0c794b2d7534c63addc32567", // TMP: Just to test mobile quickly
+          },
+        }}
+      >
+        <WalletContext.Provider
+          value={{
+            wallets,
+            addWallet,
+            addresses,
+            setAddresses,
+            addAddresses,
+          }}
+        >
+          {children}
+        </WalletContext.Provider>
+      </ChainProvider>
+    </MetaMaskProvider>
   );
 };
