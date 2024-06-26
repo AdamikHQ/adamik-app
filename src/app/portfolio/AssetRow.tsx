@@ -1,13 +1,13 @@
-import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { TableCell, TableRow } from "~/components/ui/table";
-import { Asset } from "~/utils/types";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import { formatAmountUSD } from "~/utils/helper";
+import { Asset } from "~/utils/types";
 
 export const AssetRow: React.FC<{ asset: Asset }> = ({ asset }) => {
   return (
@@ -55,7 +55,9 @@ export const AssetRow: React.FC<{ asset: Asset }> = ({ asset }) => {
           <TableCell className="hidden md:table-cell">
             {asset?.balanceMainUnit} {asset?.ticker}
           </TableCell>
-          <TableCell>{asset?.balanceUSD?.toFixed(2) || "-"}</TableCell>
+          <TableCell>
+            {asset?.balanceUSD ? formatAmountUSD(asset.balanceUSD) : "-"}
+          </TableCell>
         </TableRow>
       </TooltipProvider>
     </>
