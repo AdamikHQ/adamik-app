@@ -32,6 +32,7 @@ import {
   getTokenTickers,
 } from "./helpers";
 import { showroomAddresses } from "./showroomAddresses";
+import { formatAmountUSD } from "~/utils/helper";
 
 export default function Portfolio() {
   const { theme, resolvedTheme } = useTheme();
@@ -115,7 +116,7 @@ export default function Portfolio() {
   //   mobulaMarketDataContractAddresses,
   // });
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+    <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold md:text-2xl">Portfolio</h1>
         <WalletModalTrigger />
@@ -143,11 +144,11 @@ export default function Portfolio() {
               {isLoading ? (
                 <Loader2 className="animate-spin" />
               ) : (
-                filteredAssets
-                  .reduce((acc, asset) => {
+                formatAmountUSD(
+                  filteredAssets.reduce((acc, asset) => {
                     return acc + (asset?.balanceUSD || 0);
                   }, 0)
-                  .toFixed(2)
+                )
               )}
             </div>
           </CardContent>
