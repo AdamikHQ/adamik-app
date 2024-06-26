@@ -15,9 +15,7 @@ const CustomTooltip = ({
 }) => (
   <TooltipProvider>
     <TooltipPrimitive.Root delayDuration={100}>
-      <TooltipPrimitive.Trigger asChild>
-        {children}
-      </TooltipPrimitive.Trigger>
+      <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
       <TooltipPrimitive.Content
         sideOffset={4}
         className={cn(
@@ -48,4 +46,9 @@ const TooltipContent = React.forwardRef<
 ));
 TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
-export { CustomTooltip as Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+export {
+  CustomTooltip as Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+};
