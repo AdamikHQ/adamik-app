@@ -2,14 +2,22 @@
 
 import * as React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-
 import { cn } from "~/utils/helper";
 
 const TooltipProvider = TooltipPrimitive.Provider;
 
-const Tooltip = TooltipPrimitive.Root;
-
-const TooltipTrigger = TooltipPrimitive.Trigger;
+const Tooltip = ({ children, text }: { children: React.ReactNode, text: string }) => (
+  <TooltipProvider>
+    <TooltipPrimitive.Root delayDuration={100}> {/* Set the delay duration to 100ms */}
+      <TooltipPrimitive.Trigger asChild>
+        {children}
+      </TooltipPrimitive.Trigger>
+      <TooltipContent sideOffset={4}>
+        {text}
+      </TooltipContent>
+    </TooltipPrimitive.Root>
+  </TooltipProvider>
+);
 
 const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
@@ -27,4 +35,4 @@ const TooltipContent = React.forwardRef<
 ));
 TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+export { Tooltip };
