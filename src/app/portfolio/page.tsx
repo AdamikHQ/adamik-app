@@ -33,7 +33,7 @@ import {
 } from "./helpers";
 import { showroomAddresses } from "./showroomAddresses";
 import { formatAmountUSD } from "~/utils/helper";
-import { Tooltip } from "~/components/ui/tooltip"; // Import TooltipProvider
+import { Tooltip } from "~/components/ui/tooltip";
 
 export default function Portfolio() {
   const { theme, resolvedTheme } = useTheme();
