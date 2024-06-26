@@ -5,7 +5,7 @@ type WalletContextType = {
   wallets: IWallet[];
   addWallet: (wallet: IWallet) => void;
   addresses: Address[];
-  addAddress: (address: Address) => void;
+  addAddresses: (addresses: Address[]) => void;
   setAddresses: (addresses: Address[]) => void;
 };
 
@@ -13,7 +13,7 @@ export const WalletContext = React.createContext<WalletContextType>({
   wallets: [],
   addWallet: () => {},
   addresses: [],
-  addAddress: () => {},
+  addAddresses: () => {},
   setAddresses: () => {},
 });
 
