@@ -1,6 +1,6 @@
 "use client";
 
-import { DollarSign, Loader2 } from "lucide-react";
+import { DollarSign, Loader2, Info } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { Pie } from "react-chartjs-2";
@@ -33,6 +33,7 @@ import {
 } from "./helpers";
 import { showroomAddresses } from "./showroomAddresses";
 import { formatAmountUSD } from "~/utils/helper";
+import { Tooltip } from "~/components/ui/tooltip"; // Import TooltipProvider
 
 export default function Portfolio() {
   const { theme, resolvedTheme } = useTheme();
@@ -118,7 +119,18 @@ export default function Portfolio() {
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold md:text-2xl">Portfolio</h1>
+        <div className="flex items-center">
+          <h1 className="text-lg font-semibold md:text-2xl">Portfolio</h1>
+          <Tooltip text="Click to view the API documentation for retrieving balances">
+            <a
+              href="https://docs.adamik.io/api-reference/endpoint/post-apiaddressstate"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
+            </a>
+          </Tooltip>
+        </div>
         <WalletModalTrigger />
       </div>
 

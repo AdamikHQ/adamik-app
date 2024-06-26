@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Info } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
@@ -11,6 +11,7 @@ import { useGetCoinGeckoCoinList } from "~/hooks/useCoinGeckoCoinList";
 import { CoinIdMapperCoinGeckoToAdamik } from "~/utils/helper";
 import { Checkbox } from "~/components/ui/checkbox";
 import { useChains } from "~/hooks/useChains";
+import { Tooltip } from "~/components/ui/tooltip"; // Import TooltipProvider
 
 const comingSoonIds = ["tron", "the-open-network", "solana"];
 
@@ -44,46 +45,51 @@ export default function SupportedChains() {
         <Card className="xl:col-span-2 bg-muted/70">
           <CardHeader className="flex flex-row items-center">
             <CardTitle>Supported Chains</CardTitle>
+            <Tooltip text="Click to view the API documentation for retrieving the chains supported">
+              <a
+                href="https://docs.adamik.io/api-reference/endpoint/get-apichains"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
+              </a>
+            </Tooltip>
           </CardHeader>
           <CardContent>
             {isCoinListLoading || isLoading ? (
-              <>
-                <Loader2 />
-              </>
+              <Loader2 />
             ) : (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
-                  {coinList?.map((coin) => {
-                    const isComingSoon = comingSoonIds.includes(coin.id);
-                    const isSupported = Object.keys(
-                      supportedChains?.chains || {}
-                    )?.includes(CoinIdMapperCoinGeckoToAdamik(coin.id));
-                    if (isSupported || isComingSoon)
-                      return (
-                        <div
-                          key={coin.symbol}
-                          className="flex flex-row gap-4 items-center bg-primary/10 p-4 rounded-md"
-                        >
-                          <Avatar>
-                            <AvatarImage src={coin.image} alt={coin.name} />
-                            <AvatarFallback>{coin.symbol}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col">
-                            <h1 className="text-lg font-bold md:text-2xl">
-                              {coin.name}
-                            </h1>
-                            <div className="flex flex-row gap-2 uppercase">
-                              <h2 className="text-md font-semibold">
-                                {coin.symbol}
-                              </h2>
-                              {isComingSoon && <Badge>Coming Soon</Badge>}
-                            </div>
+              <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
+                {coinList?.map((coin) => {
+                  const isComingSoon = comingSoonIds.includes(coin.id);
+                  const isSupported = Object.keys(
+                    supportedChains?.chains || {}
+                  )?.includes(CoinIdMapperCoinGeckoToAdamik(coin.id));
+                  if (isSupported || isComingSoon)
+                    return (
+                      <div
+                        key={coin.symbol}
+                        className="flex flex-row gap-4 items-center bg-primary/10 p-4 rounded-md"
+                      >
+                        <Avatar>
+                          <AvatarImage src={coin.image} alt={coin.name} />
+                          <AvatarFallback>{coin.symbol}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col">
+                          <h1 className="text-lg font-bold md:text-2xl">
+                            {coin.name}
+                          </h1>
+                          <div className="flex flex-row gap-2 uppercase">
+                            <h2 className="text-md font-semibold">
+                              {coin.symbol}
+                            </h2>
+                            {isComingSoon && <Badge>Coming Soon</Badge>}
                           </div>
                         </div>
-                      );
-                  })}
-                </div>
-              </>
+                      </div>
+                    );
+                })}
+              </div>
             )}
             <div className="flex flex-row justify-center mt-4">
               <Button asChild>
