@@ -32,3 +32,16 @@ export function amountToMainUnit(
     ? null
     : (parsedAmount / Math.pow(10, decimals)).toString();
 }
+
+export function formatAmountUSD(amount: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(amount);
+}
+
+export function formatAmount(amount: string, decimals: number) {
+  return new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: decimals,
+  }).format(parseFloat(amount));
+}
