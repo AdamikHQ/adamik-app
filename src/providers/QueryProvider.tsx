@@ -21,7 +21,7 @@ export const QueryProvider: React.FC<React.PropsWithChildren> = ({
   );
 
   const localStoragePersister = createSyncStoragePersister({
-    storage: window.localStorage,
+    storage: typeof window !== "undefined" ? window.localStorage : null,
   });
 
   return (
