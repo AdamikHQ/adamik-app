@@ -13,7 +13,7 @@ export const AssetRow: React.FC<{ asset: Asset }> = ({ asset }) => {
   return (
     <TooltipProvider delayDuration={100}>
       <TableRow>
-        <TableCell className="hidden md:table-cell">
+        <TableCell>
           <div>
             {asset?.logo && (
               <div className="relative">

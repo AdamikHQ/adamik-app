@@ -1,4 +1,6 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { useState } from "react";
 
 export const QueryProvider: React.FC<React.PropsWithChildren> = ({
@@ -12,12 +14,22 @@ export const QueryProvider: React.FC<React.PropsWithChildren> = ({
           queries: {
             staleTime: 1000 * 60 * 60, // 1 hour in ms
             refetchOnWindowFocus: false,
+            gcTime: 1000 * 60 * 60, // 1 hours
           },
         },
       })
   );
 
+  const localStoragePersister = createSyncStoragePersister({
+    storage: typeof window !== "undefined" ? window.localStorage : null,
+  });
+
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister: localStoragePersister }}
+    >
+      {children}
+    </PersistQueryClientProvider>
   );
 };
