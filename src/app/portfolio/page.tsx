@@ -194,7 +194,7 @@ export default function Portfolio() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[80px] hidden md:table-cell"></TableHead>
+                      <TableHead className="w-[80px]"></TableHead>
                       <TableHead>Asset</TableHead>
                       <TableHead className="hidden md:table-cell">
                         Balance
