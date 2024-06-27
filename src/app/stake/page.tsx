@@ -1,7 +1,7 @@
 "use client";
 
+import { Info } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   Table,
@@ -10,16 +10,18 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { Info } from "lucide-react";
 import { Tooltip } from "~/components/ui/tooltip";
 import { useAddressStateBatchStakingBatch } from "~/hooks/useAddressStateStakingBatch";
-import { aggregatedStakingBalances } from "./helpers";
 import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
-import { showroomAddresses } from "./showroomAddresses";
-import { useWallet } from "~/hooks/useWallet";
-import { getTickers } from "../portfolio/helpers";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
+import { useValidatorsBatch } from "~/hooks/useValidatorsBatch";
+import { useWallet } from "~/hooks/useWallet";
 import { formatAmountUSD } from "~/utils/helper";
+import { getTickers } from "../portfolio/helpers";
+import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
+import { ValidatorRow } from "./ValidatorRow";
+import { aggregatedStakingBalances, getAddressValidators } from "./helpers";
+import { showroomAddresses } from "./showroomAddresses";
 
 export default function Stake() {
   const { data } = useAddressStateBatchStakingBatch();
@@ -43,13 +45,20 @@ export default function Stake() {
       !isChainDetailsLoading,
       "symbols"
     );
+
+  const { data: validatorsData } = useValidatorsBatch(chainIdsAdamik);
   const aggregatedBalances = aggregatedStakingBalances(
     data,
     chainsDetails,
     mobulaMarketData
   );
 
-  console.log({ data, aggregatedBalances });
+  const validators = getAddressValidators(
+    data,
+    chainsDetails,
+    mobulaMarketData,
+    validatorsData
+  );
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
@@ -133,7 +142,7 @@ export default function Stake() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[80px] hidden md:table-cell"></TableHead>
+                <TableHead className="w-[80px] md:table-cell"></TableHead>
                 <TableHead>Validator</TableHead>
                 <TableHead>Amount stake</TableHead>
                 <TableHead>Amount (USD)</TableHead>
@@ -141,7 +150,19 @@ export default function Stake() {
                 <TableHead>Claimable rewards</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody></TableBody>
+            <TableBody>
+              {Object.entries(validators)
+                .sort((a, b) => {
+                  return (b[1].amountUSD || 0) - (a[1].amountUSD || 0);
+                })
+                .map(([validatorAddress, validator]) => (
+                  <ValidatorRow
+                    key={validatorAddress}
+                    validator={validator}
+                    validatorAddress={validatorAddress}
+                  />
+                ))}
+            </TableBody>
           </Table>
         </Card>
       </div>

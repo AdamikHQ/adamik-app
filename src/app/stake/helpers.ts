@@ -2,6 +2,7 @@ import { getChainDetailsResponse } from "~/api/chainDetails";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { MobulaBlockchain } from "~/api/mobula/types";
 import { DataAddressStateStaking } from "~/api/staking";
+import { ValidatorResponse } from "~/api/validator";
 import { amountToMainUnit } from "~/utils/helper";
 import { Chain } from "~/utils/types";
 
@@ -12,7 +13,7 @@ type AggregatedBalances = {
   unstakingBalance: number;
 };
 
-const getBalanceToUSD = (
+const getAmountToUSD = (
   amount: string,
   decimals: number,
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null,
@@ -45,28 +46,28 @@ export const aggregatedStakingBalances = (
       );
       if (!chainDetails) return { ...acc };
 
-      const stakedBalance = getBalanceToUSD(
+      const stakedBalance = getAmountToUSD(
         accountData?.balances?.staking?.locked,
         chainDetails!.decimals,
         mobulaMarketData,
         chainDetails
       );
 
-      const unstakingBalance = getBalanceToUSD(
+      const unstakingBalance = getAmountToUSD(
         accountData?.balances?.staking?.unlocking,
         chainDetails!.decimals,
         mobulaMarketData,
         chainDetails
       );
 
-      const availableBalance = getBalanceToUSD(
+      const availableBalance = getAmountToUSD(
         accountData?.balances?.native.available,
         chainDetails!.decimals,
         mobulaMarketData,
         chainDetails
       );
 
-      const claimableRewards = getBalanceToUSD(
+      const claimableRewards = getAmountToUSD(
         accountData?.balances?.staking?.unlocked,
         chainDetails!.decimals,
         mobulaMarketData,
@@ -88,4 +89,71 @@ export const aggregatedStakingBalances = (
       unstakingBalance: 0,
     }
   );
+};
+
+export type Validator = {
+  chainId: string;
+  chainLogo?: string;
+  validatorAddresses: string[];
+  amount: string;
+  amountUSD?: number;
+  status: string;
+  completionDate?: number;
+  rewardAmount?: string;
+  rewardAmountUSD?: number;
+};
+
+export const getAddressValidators = (
+  data: (DataAddressStateStaking | undefined)[],
+  chainsDetails: (getChainDetailsResponse | undefined | null)[],
+  mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null,
+  validatorsData: (ValidatorResponse | undefined)[]
+) => {
+  const validators = data.reduce<Record<string, Validator>>(
+    (acc, accountData) => {
+      const newAcc = { ...acc };
+      if (!accountData) return { ...acc };
+
+      const chainDetails = chainsDetails.find(
+        (chainDetail) => chainDetail?.id === accountData.chainId
+      );
+      if (!chainDetails) return { ...acc };
+
+      accountData?.balances.staking.positions.forEach((position) => {
+        position.validatorAddresses.forEach((validatorAddress) => {
+          newAcc[validatorAddress] = {
+            ...position,
+            chainId: accountData.chainId,
+            chainLogo: mobulaMarketData?.[chainDetails.ticker]?.logo,
+            amountUSD: getAmountToUSD(
+              position.amount,
+              chainDetails.decimals,
+              mobulaMarketData,
+              chainDetails
+            ),
+          };
+        });
+      });
+
+      accountData?.balances.staking.rewards.forEach((reward) => {
+        reward.validatorAddresses.forEach((validatorAddress) => {
+          newAcc[validatorAddress] = {
+            ...(newAcc[validatorAddress] || {}),
+            rewardAmount: reward.amount,
+            rewardAmountUSD: getAmountToUSD(
+              reward.amount,
+              chainDetails.decimals,
+              mobulaMarketData,
+              chainDetails
+            ),
+          };
+        });
+      });
+
+      return newAcc;
+    },
+    {}
+  );
+
+  return validators;
 };
