@@ -155,7 +155,8 @@ export const getAddressValidators = (
             chainId: accountData.chainId,
             chainLogo: mobulaMarketData?.[chainDetails.ticker]?.logo,
             ticker: chainDetails.ticker,
-            amount: amountToMainUnit(position.amount, chainDetails.decimals),
+            amount:
+              amountToMainUnit(position.amount, chainDetails.decimals) || "-",
             amountUSD: getAmountToUSD(
               position.amount,
               chainDetails.decimals,
@@ -169,7 +170,8 @@ export const getAddressValidators = (
       accountData?.balances.staking.rewards.native.forEach((reward) => {
         newAcc[reward.validatorAddress] = {
           ...(newAcc[reward.validatorAddress] || {}),
-          rewardAmount: amountToMainUnit(reward.amount, chainDetails.decimals),
+          rewardAmount:
+            amountToMainUnit(reward.amount, chainDetails.decimals) || "-",
           rewardAmountUSD: getAmountToUSD(
             reward.amount,
             chainDetails.decimals,

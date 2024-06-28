@@ -23,9 +23,14 @@ export function amountToSmallestUnit(amount: string, decimals: number): string {
   return computedAmount.toString();
 }
 
-export function amountToMainUnit(amount: string, decimals: number): string {
+export function amountToMainUnit(
+  amount: string,
+  decimals: number
+): string | null {
   const parsedAmount = parseInt(amount);
-  return (parsedAmount / Math.pow(10, decimals)).toString();
+  return Number.isNaN(parsedAmount)
+    ? null
+    : (parsedAmount / Math.pow(10, decimals)).toString();
 }
 
 export function formatAmountUSD(amount: number) {
