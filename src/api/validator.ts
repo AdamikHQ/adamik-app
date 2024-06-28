@@ -18,16 +18,16 @@ export const getValidators = async (
   const url = new URL(`${ADAMIK_API_URL}/chains/${chainId}/validators`);
   const body: {
     chainId: string;
-    offset?: string;
-    limit?: string;
+    pagination: { offset?: number; limit?: number };
   } = {
     chainId,
+    pagination: {},
   };
-  if (offset) {
-    body.offset = offset.toString();
+  if (offset !== undefined) {
+    body.pagination.offset = offset;
   }
   if (limit) {
-    body.limit = limit.toString();
+    body.pagination.limit = limit;
   }
   const response = await fetch(url, {
     headers: {

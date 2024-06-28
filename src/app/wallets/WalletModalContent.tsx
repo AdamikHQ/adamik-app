@@ -6,7 +6,6 @@ import { useWallet } from "~/hooks/useWallet";
 import { MetamaskConnect } from "./MetamaskConnect";
 import { Address } from "./types";
 import { KeplrConnect } from "./KeplrConnect";
-import { KeplrMobileConnect } from "./KeplrMobileConnect";
 
 export const WalletModalContent = () => {
   const { addAddresses } = useWallet();
@@ -49,7 +48,6 @@ export const WalletModalContent = () => {
     <div className="flex flex-row gap-4">
       <MetamaskConnect setWalletAddresses={setWalletAddresses} />
       <KeplrConnect setWalletAddresses={setWalletAddresses} />
-      <KeplrMobileConnect setWalletAddresses={setWalletAddresses} />
     </div>
   );
 };

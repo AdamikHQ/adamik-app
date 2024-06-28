@@ -18,10 +18,12 @@ export const ValidatorRow: React.FC<{
         <TableCell>
           <div>
             <div className="relative">
-              <Tooltip text={validatorAddress}>
+              <Tooltip text={validator.name || validatorAddress}>
                 <TooltipTrigger>
                   <Avatar className="w-[38px] h-[38px]">
-                    <AvatarFallback>{validatorAddress[0]}</AvatarFallback>
+                    <AvatarFallback>
+                      {validator.name?.[0] || validatorAddress[0]}
+                    </AvatarFallback>
                   </Avatar>
                 </TooltipTrigger>
               </Tooltip>
@@ -43,7 +45,7 @@ export const ValidatorRow: React.FC<{
             </div>
           </div>
         </TableCell>
-        <TableCell>{validator.validatorAddresses}</TableCell>
+        <TableCell>{validator.name || validator.validatorAddresses}</TableCell>
         <TableCell>{validator.amount}</TableCell>
         <TableCell className="hidden md:table-cell">
           {validator.amountUSD ? formatAmountUSD(validator.amountUSD) : "-"}

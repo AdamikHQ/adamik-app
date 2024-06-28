@@ -132,9 +132,13 @@ export default function Stake() {
 
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-5">
         <Button className="col-span-2">Stake</Button>
-        <Button>Unstake</Button>
+        <Tooltip text="Coming Soon">
+          <Button className="opacity-50 cursor-default">Unstake</Button>
+        </Tooltip>
 
-        <Button>Claim</Button>
+        <Tooltip text="Coming Soon">
+          <Button className="opacity-50 cursor-default">Claim</Button>
+        </Tooltip>
       </div>
 
       <div>

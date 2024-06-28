@@ -101,6 +101,27 @@ export type Validator = {
   completionDate?: number;
   rewardAmount?: string;
   rewardAmountUSD?: number;
+  name?: string;
+  commission?: number;
+};
+
+const getValidatorInfo = (
+  validatorsData: (ValidatorResponse | undefined)[],
+  validatorAddress: string
+) => {
+  let validator = null;
+
+  for (const validatorsChainId of validatorsData) {
+    for (const validatorData of validatorsChainId?.validators || []) {
+      if (validatorData?.address === validatorAddress) {
+        validator = validatorData;
+        break;
+      }
+    }
+    if (validator) break;
+  }
+
+  return validator;
 };
 
 export const getAddressValidators = (
@@ -109,6 +130,7 @@ export const getAddressValidators = (
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null,
   validatorsData: (ValidatorResponse | undefined)[]
 ) => {
+  console.log({ validatorsData });
   const validators = data.reduce<Record<string, Validator>>(
     (acc, accountData) => {
       const newAcc = { ...acc };
@@ -121,8 +143,14 @@ export const getAddressValidators = (
 
       accountData?.balances.staking.positions.forEach((position) => {
         position.validatorAddresses.forEach((validatorAddress) => {
+          const validatorInfo = getValidatorInfo(
+            validatorsData,
+            validatorAddress
+          );
           newAcc[validatorAddress] = {
             ...position,
+            name: validatorInfo?.name,
+            commission: validatorInfo?.commission,
             chainId: accountData.chainId,
             chainLogo: mobulaMarketData?.[chainDetails.ticker]?.logo,
             amountUSD: getAmountToUSD(
@@ -135,19 +163,17 @@ export const getAddressValidators = (
         });
       });
 
-      accountData?.balances.staking.rewards.forEach((reward) => {
-        reward.validatorAddresses.forEach((validatorAddress) => {
-          newAcc[validatorAddress] = {
-            ...(newAcc[validatorAddress] || {}),
-            rewardAmount: reward.amount,
-            rewardAmountUSD: getAmountToUSD(
-              reward.amount,
-              chainDetails.decimals,
-              mobulaMarketData,
-              chainDetails
-            ),
-          };
-        });
+      accountData?.balances.staking.rewards.native.forEach((reward) => {
+        newAcc[reward.validatorAddress] = {
+          ...(newAcc[reward.validatorAddress] || {}),
+          rewardAmount: reward.amount,
+          rewardAmountUSD: getAmountToUSD(
+            reward.amount,
+            chainDetails.decimals,
+            mobulaMarketData,
+            chainDetails
+          ),
+        };
       });
 
       return newAcc;
