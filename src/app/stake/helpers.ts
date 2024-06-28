@@ -130,7 +130,6 @@ export const getAddressValidators = (
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null,
   validatorsData: (ValidatorResponse | undefined)[]
 ) => {
-  console.log({ validatorsData });
   const validators = data.reduce<Record<string, Validator>>(
     (acc, accountData) => {
       const newAcc = { ...acc };
