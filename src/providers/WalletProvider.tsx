@@ -46,12 +46,7 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
       <ChainProvider
         chains={chains} // supported chains
         assetLists={assets} // supported asset lists
-        wallets={cosmosWallets} // supported wallets
-        walletConnectOptions={{
-          signClient: {
-            projectId: "6505e88b0c794b2d7534c63addc32567", // TMP: Just to test mobile quickly
-          },
-        }}
+        wallets={cosmosWallets} // supported wallets (only keplr desktop wallet for now)
       >
         <WalletContext.Provider
           value={{

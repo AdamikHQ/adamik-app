@@ -1,12 +1,12 @@
 import { GetAddressStateResponse } from "~/api/addressState";
-import { getChainDetailsResponse } from "~/api/chainDetails";
+import { GetChainDetailsResponse } from "~/api/chainDetails";
 import { Asset } from "~/utils/types";
 import { amountToMainUnit } from "~/utils/helper";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { MobulaBlockchain } from "~/api/mobula/types";
 
 export const getTickers = (
-  data: (getChainDetailsResponse | undefined | null)[]
+  data: (GetChainDetailsResponse | undefined | null)[]
 ) => {
   return data.reduce<string[]>((acc, chainDetail) => {
     if (!chainDetail) return acc;
@@ -71,7 +71,7 @@ export const getTokenTickersSortByChain = (
 
 export const calculateAssets = (
   data: (GetAddressStateResponse | undefined | null)[],
-  chainsDetails: (getChainDetailsResponse | undefined | null)[],
+  chainsDetails: (GetChainDetailsResponse | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null,
   mobulaBlockChainData: MobulaBlockchain[] | undefined
 ): Asset[] => {

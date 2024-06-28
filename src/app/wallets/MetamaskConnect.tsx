@@ -1,5 +1,5 @@
 import { useSDK } from "@metamask/sdk-react";
-import React from "react";
+import React, { useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { useToast } from "~/components/ui/use-toast";
 
@@ -16,7 +16,7 @@ export const MetamaskConnect: React.FC<MetamaskConnectProps> = ({
   const { sdk } = useSDK();
   const { toast } = useToast();
 
-  const connect = async () => {
+  const connect = useCallback(async () => {
     try {
       const accounts = await sdk?.connect();
       setWalletAddresses(accounts, [
@@ -32,7 +32,7 @@ export const MetamaskConnect: React.FC<MetamaskConnectProps> = ({
     } catch (err) {
       console.warn("failed to connect..", err);
     }
-  };
+  }, [sdk, setWalletAddresses, toast]);
 
   return (
     <div className="relative w-24 h-24">
