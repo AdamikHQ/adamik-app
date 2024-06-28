@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { Tooltip } from "~/components/ui/tooltip";
-import { useAddressStateBatchStakingBatch } from "~/hooks/useAddressStateStakingBatch";
+import { useAddressStateBatch } from "~/hooks/useAddressStateBatch";
 import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { useValidatorsBatch } from "~/hooks/useValidatorsBatch";
@@ -24,7 +24,6 @@ import { aggregatedStakingBalances, getAddressValidators } from "./helpers";
 import { showroomAddresses } from "./showroomAddresses";
 
 export default function Stake() {
-  const { data } = useAddressStateBatchStakingBatch();
   const { addresses } = useWallet();
 
   const displayAddresses = addresses.length > 0 ? addresses : showroomAddresses;
@@ -35,16 +34,16 @@ export default function Stake() {
     },
     []
   );
+  const { data } = useAddressStateBatch(displayAddresses);
   const { data: chainsDetails, isLoading: isChainDetailsLoading } =
     useGetChainDetailsBatch(chainIdsAdamik);
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
-  const { data: mobulaMarketData, isLoading: isAssetDetailsLoading } =
-    useMobulaMarketMultiData(
-      [...mainChainTickersIds],
-      !isChainDetailsLoading,
-      "symbols"
-    );
+  const { data: mobulaMarketData } = useMobulaMarketMultiData(
+    [...mainChainTickersIds],
+    !isChainDetailsLoading,
+    "symbols"
+  );
 
   const { data: validatorsData } = useValidatorsBatch(chainIdsAdamik);
   const aggregatedBalances = aggregatedStakingBalances(

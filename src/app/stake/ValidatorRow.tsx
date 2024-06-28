@@ -18,40 +18,33 @@ export const ValidatorRow: React.FC<{
         <TableCell>
           <div>
             <div className="relative">
-              <Tooltip text={validator.name || validatorAddress}>
+              <Tooltip text={validator.chainId}>
                 <TooltipTrigger>
-                  <Avatar className="w-[38px] h-[38px]">
-                    <AvatarFallback>
-                      {validator.name?.[0] || validatorAddress[0]}
-                    </AvatarFallback>
+                  <Avatar>
+                    <AvatarImage
+                      src={validator.chainLogo}
+                      alt={validator.chainId}
+                    />
+                    <AvatarFallback>{validator.chainId}</AvatarFallback>
                   </Avatar>
                 </TooltipTrigger>
               </Tooltip>
-              {validator.chainLogo && (
-                <Tooltip text={validator.chainId}>
-                  <TooltipTrigger>
-                    <div className="absolute w-5 h-5 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-2 end-2">
-                      <Avatar className="h-4 w-4">
-                        <AvatarImage
-                          src={validator.chainLogo}
-                          alt={validator.chainId}
-                        />
-                        <AvatarFallback>{validator.chainId}</AvatarFallback>
-                      </Avatar>
-                    </div>
-                  </TooltipTrigger>
-                </Tooltip>
-              )}
             </div>
           </div>
         </TableCell>
         <TableCell>{validator.name || validator.validatorAddresses}</TableCell>
-        <TableCell>{validator.amount}</TableCell>
+        <TableCell>
+          {validator.amount} {validator.ticker}
+        </TableCell>
         <TableCell className="hidden md:table-cell">
           {validator.amountUSD ? formatAmountUSD(validator.amountUSD) : "-"}
         </TableCell>
         <TableCell>{validator.status}</TableCell>
-        <TableCell>{validator.rewardAmount}</TableCell>
+        <TableCell>
+          {validator.rewardAmount
+            ? `${validator.rewardAmount} ${validator.ticker}`
+            : "-"}
+        </TableCell>
       </TableRow>
     </TooltipProvider>
   );

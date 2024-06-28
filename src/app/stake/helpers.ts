@@ -1,7 +1,6 @@
-import { getChainDetailsResponse } from "~/api/chainDetails";
+import { GetAddressStateResponse } from "~/api/addressState";
+import { GetChainDetailsResponse } from "~/api/chainDetails";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
-import { MobulaBlockchain } from "~/api/mobula/types";
-import { DataAddressStateStaking } from "~/api/staking";
 import { ValidatorResponse } from "~/api/validator";
 import { amountToMainUnit } from "~/utils/helper";
 import { Chain } from "~/utils/types";
@@ -33,8 +32,8 @@ const getAmountToUSD = (
 };
 
 export const aggregatedStakingBalances = (
-  data: (DataAddressStateStaking | undefined)[],
-  chainsDetails: (getChainDetailsResponse | undefined | null)[],
+  data: (GetAddressStateResponse | undefined | null)[],
+  chainsDetails: (GetChainDetailsResponse | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null
 ) => {
   return data?.reduce<AggregatedBalances>(
@@ -68,7 +67,9 @@ export const aggregatedStakingBalances = (
       );
 
       const claimableRewards = getAmountToUSD(
-        accountData?.balances?.staking?.unlocked,
+        accountData?.balances?.staking?.rewards?.native
+          .reduce((acc, reward) => acc + Number(reward.amount), 0)
+          .toString(), // TODO: Remove this after fixing the API
         chainDetails!.decimals,
         mobulaMarketData,
         chainDetails
@@ -77,8 +78,8 @@ export const aggregatedStakingBalances = (
       return {
         ...acc,
         stakedBalance: (acc?.stakedBalance || 0) + stakedBalance,
-        unstakingBalance: (acc?.stakedBalance || 0) + unstakingBalance,
-        claimableRewards: (acc?.stakedBalance || 0) + claimableRewards,
+        unstakingBalance: (acc?.unstakingBalance || 0) + unstakingBalance,
+        claimableRewards: (acc?.claimableRewards || 0) + claimableRewards,
         availableBalance: (acc?.availableBalance || 0) + availableBalance,
       };
     },
@@ -103,6 +104,7 @@ export type Validator = {
   rewardAmountUSD?: number;
   name?: string;
   commission?: number;
+  ticker: string;
 };
 
 const getValidatorInfo = (
@@ -125,8 +127,8 @@ const getValidatorInfo = (
 };
 
 export const getAddressValidators = (
-  data: (DataAddressStateStaking | undefined)[],
-  chainsDetails: (getChainDetailsResponse | undefined | null)[],
+  data: (GetAddressStateResponse | null | undefined)[],
+  chainsDetails: (GetChainDetailsResponse | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null,
   validatorsData: (ValidatorResponse | undefined)[]
 ) => {
@@ -152,6 +154,8 @@ export const getAddressValidators = (
             commission: validatorInfo?.commission,
             chainId: accountData.chainId,
             chainLogo: mobulaMarketData?.[chainDetails.ticker]?.logo,
+            ticker: chainDetails.ticker,
+            amount: amountToMainUnit(position.amount, chainDetails.decimals),
             amountUSD: getAmountToUSD(
               position.amount,
               chainDetails.decimals,
@@ -165,7 +169,7 @@ export const getAddressValidators = (
       accountData?.balances.staking.rewards.native.forEach((reward) => {
         newAcc[reward.validatorAddress] = {
           ...(newAcc[reward.validatorAddress] || {}),
-          rewardAmount: reward.amount,
+          rewardAmount: amountToMainUnit(reward.amount, chainDetails.decimals),
           rewardAmountUSD: getAmountToUSD(
             reward.amount,
             chainDetails.decimals,
