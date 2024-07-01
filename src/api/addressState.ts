@@ -37,12 +37,12 @@ interface Balances {
     total: string;
   };
   tokens: TokenAmount[];
-  staking: {
+  staking?: {
     total: string;
     locked: string;
     unlocking: string;
     unlocked: string;
-    positions: ValidatorPosition[];
+    positions?: ValidatorPosition[];
     rewards: {
       native: Reward[];
       tokens: Reward[];

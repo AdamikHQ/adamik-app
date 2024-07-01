@@ -142,7 +142,7 @@ export const getAddressValidators = (
       );
       if (!chainDetails) return { ...acc };
 
-      accountData?.balances.staking.positions.forEach((position) => {
+      (accountData?.balances.staking?.positions || []).forEach((position) => {
         position.validatorAddresses.forEach((validatorAddress) => {
           const validatorInfo = getValidatorInfo(
             validatorsData,
@@ -167,19 +167,21 @@ export const getAddressValidators = (
         });
       });
 
-      accountData?.balances.staking.rewards.native.forEach((reward) => {
-        newAcc[reward.validatorAddress] = {
-          ...(newAcc[reward.validatorAddress] || {}),
-          rewardAmount:
-            amountToMainUnit(reward.amount, chainDetails.decimals) || "-",
-          rewardAmountUSD: getAmountToUSD(
-            reward.amount,
-            chainDetails.decimals,
-            mobulaMarketData,
-            chainDetails
-          ),
-        };
-      });
+      (accountData?.balances.staking?.rewards.native || []).forEach(
+        (reward) => {
+          newAcc[reward.validatorAddress] = {
+            ...(newAcc[reward.validatorAddress] || {}),
+            rewardAmount:
+              amountToMainUnit(reward.amount, chainDetails.decimals) || "-",
+            rewardAmountUSD: getAmountToUSD(
+              reward.amount,
+              chainDetails.decimals,
+              mobulaMarketData,
+              chainDetails
+            ),
+          };
+        }
+      );
 
       return newAcc;
     },
