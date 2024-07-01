@@ -32,7 +32,7 @@ import {
   getTokenContractAddresses,
   getTokenTickers,
 } from "./helpers";
-import { showroomAddresses } from "./showroomAddresses";
+import { showroomAddresses } from "../../utils/showroomAddresses";
 import { aggregatedStakingBalances } from "../stake/helpers";
 
 export default function Portfolio() {
@@ -103,10 +103,13 @@ export default function Portfolio() {
   );
 
   const filteredAssets = assets
-    .filter(
-      (asset) =>
+    .filter((asset) => {
+      if (asset.balanceUSD === undefined || asset.balanceMainUnit === "0")
+        return false;
+      return (
         !hideLowBalance || (asset && asset.balanceUSD && asset.balanceUSD > 1)
-    )
+      );
+    })
     .sort((a, b) => {
       if (!a || !b) return 0;
       return (b.balanceUSD || 0) - (a.balanceUSD || 0);
