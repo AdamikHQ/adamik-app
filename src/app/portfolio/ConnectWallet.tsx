@@ -5,8 +5,8 @@ export const ConnectWallet = ({ onNextStep }: { onNextStep: () => void }) => {
     <div>
       <h1 className="font-extrabold text-2xl text-center mb-4">HODL ON !</h1>
       <div className="mb-8 text-center">
-        You are in the Adamik showroom. Please add your wallet to sign
-        transactions
+        You are currently using the demo version of the Adamik App. Please add
+        your wallet before signing transactions.
       </div>
       <Button className="w-full" onClick={() => onNextStep()}>
         Add your wallet
