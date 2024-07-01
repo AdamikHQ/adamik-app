@@ -67,7 +67,7 @@ export function AssetSelector({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0">
+        <PopoverContent className="w-[400px] p-0">
           <AssetList
             setOpen={setOpen}
             setSelectedChoice={setSelectedChoice}
@@ -126,9 +126,9 @@ function AssetList({
         <CommandEmpty>No results found.</CommandEmpty>
         <ScrollArea className="h-[240px] overflow-auto">
           <CommandGroup>
-            {assets.map((asset) => (
+            {assets.map((asset, i) => (
               <CommandItem
-                key={asset.ticker}
+                key={`${asset.ticker}_${i}`}
                 value={asset.ticker}
                 onSelect={(value) => {
                   setSelectedChoice(

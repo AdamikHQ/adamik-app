@@ -40,7 +40,7 @@ export default function SupportedChains() {
   );
 
   return (
-    <main className="flex-1 mx-auto w-full flex flex-col auto-rows-max gap-4 p-4 md:p-8">
+    <main className="flex-1 mx-auto w-full flex flex-col auto-rows-max gap-4 p-4 md:p-8 max-h-[100vh] overflow-y-auto">
       <div className="flex flex-col">
         <Card className="xl:col-span-2 bg-muted/70">
           <CardHeader className="flex flex-row items-center">

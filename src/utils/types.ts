@@ -30,6 +30,7 @@ export type Asset = {
   ticker: string;
   address: string;
   contractAddress?: string;
+  decimals: number;
 };
 
 export type Chain = {
