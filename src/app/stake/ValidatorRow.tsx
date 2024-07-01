@@ -5,7 +5,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import { formatAmountUSD } from "~/utils/helper";
+import { formatAmountUSD, formatAmount } from "~/utils/helper";
 import { Validator } from "./helpers";
 
 export const ValidatorRow: React.FC<{
@@ -34,7 +34,8 @@ export const ValidatorRow: React.FC<{
         </TableCell>
         <TableCell>{validator.name || validator.validatorAddresses}</TableCell>
         <TableCell>
-          {validator.amount} {validator.ticker}
+          {validator.amount ? formatAmount(validator.amount, 5) : ""}{" "}
+          {validator.ticker}
         </TableCell>
         <TableCell className="hidden md:table-cell">
           {validator.amountUSD ? formatAmountUSD(validator.amountUSD) : "-"}
@@ -42,7 +43,7 @@ export const ValidatorRow: React.FC<{
         <TableCell>{validator.status}</TableCell>
         <TableCell>
           {validator.rewardAmount
-            ? `${validator.rewardAmount} ${validator.ticker}`
+            ? `${formatAmount(validator.rewardAmount, 5)} ${validator.ticker}`
             : "-"}
         </TableCell>
       </TableRow>

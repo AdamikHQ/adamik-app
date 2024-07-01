@@ -6,7 +6,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "~/components/ui/tooltip";
-import { formatAmountUSD } from "~/utils/helper";
+import { formatAmountUSD, formatAmount } from "~/utils/helper";
 import { Asset } from "~/utils/types";
 
 export const AssetRow: React.FC<{ asset: Asset }> = ({ asset }) => {
@@ -46,7 +46,8 @@ export const AssetRow: React.FC<{ asset: Asset }> = ({ asset }) => {
         </TableCell>
         <TableCell>{asset?.ticker}</TableCell>
         <TableCell className="hidden md:table-cell">
-          {asset?.balanceMainUnit} {asset?.ticker}
+          {asset?.balanceMainUnit ? formatAmount(asset.balanceMainUnit, 5) : ""}{" "}
+          {asset?.ticker}
         </TableCell>
         <TableCell>
           {asset?.balanceUSD ? formatAmountUSD(asset.balanceUSD) : "-"}

@@ -40,8 +40,15 @@ export function formatAmountUSD(amount: number) {
   }).format(amount);
 }
 
-export function formatAmount(amount: string, decimals: number) {
+export function formatAmount(amount: string | number | null, decimals: number) {
+  const parsedAmount =
+    typeof amount === "number" ? amount : parseFloat(amount ?? "0");
+  if (isNaN(parsedAmount)) {
+    return "0";
+  }
+
   return new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  }).format(parseFloat(amount));
+  }).format(parsedAmount);
 }
