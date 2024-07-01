@@ -13,7 +13,7 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
 }) => {
   const [wallets, setWallets] = useState<IWallet[]>([]);
   const [addresses, setAddresses] = useState<Address[]>([]);
-  const [openWalletMenu, setOpenWalletMenu] = useState(false);
+  const [isWalletMenuOpen, setWalletMenuOpen] = useState(false);
 
   const addWallet = (wallet: IWallet) => {
     const exist = wallets.find((w) => w.id === wallet.id);
@@ -56,8 +56,8 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
             addresses,
             setAddresses,
             addAddresses,
-            setOpenWalletMenu,
-            openWalletMenu,
+            setWalletMenuOpen,
+            isWalletMenuOpen,
           }}
         >
           {children}

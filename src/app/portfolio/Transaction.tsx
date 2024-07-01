@@ -83,7 +83,7 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
           Your transaction has been successfully processed by the Adamik API and
           is now ready for signing!
         </h1>
-        <Textarea value={JSON.stringify(encodedTransaction)} />
+        <Textarea readOnly value={JSON.stringify(encodedTransaction)} />
         <Button onClick={onNextStep} className="w-full">
           Sign your Transaction
         </Button>
@@ -125,7 +125,7 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
               <FormItem>
                 <FormLabel>Sender</FormLabel>
                 <FormControl>
-                  <Input placeholder="Sender" {...field} />
+                  <Input readOnly placeholder="Sender" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

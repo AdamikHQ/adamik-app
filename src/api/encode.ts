@@ -7,7 +7,7 @@ export type TransactionEncodeResponse = {
   transaction: {
     plain: Transaction;
     encoded: string;
-    status: { errors: any; warnings: { message: string }[] };
+    status: { errors: { message: string }[]; warnings: { message: string }[] };
   };
 };
 

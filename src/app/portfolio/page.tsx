@@ -38,7 +38,7 @@ export default function Portfolio() {
   const { theme, resolvedTheme } = useTheme();
   const currentTheme = theme === "system" ? resolvedTheme : theme;
 
-  const { addresses, setOpenWalletMenu } = useWallet();
+  const { addresses, setWalletMenuOpen: setWalletMenuOpen } = useWallet();
 
   const displayAddresses = addresses.length > 0 ? addresses : showroomAddresses;
   const chainIdsAdamik = displayAddresses.reduce<string[]>(
@@ -293,7 +293,7 @@ export default function Portfolio() {
               <ConnectWallet
                 onNextStep={() => {
                   setOpenTransaction(false);
-                  setOpenWalletMenu(true);
+                  setWalletMenuOpen(true);
                   setTimeout(() => {
                     setStepper(0);
                   }, 200);

@@ -7,8 +7,8 @@ type WalletContextType = {
   addresses: Address[];
   addAddresses: (addresses: Address[]) => void;
   setAddresses: (addresses: Address[]) => void;
-  setOpenWalletMenu: React.Dispatch<React.SetStateAction<boolean>>;
-  openWalletMenu: boolean;
+  setWalletMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isWalletMenuOpen: boolean;
 };
 
 export const WalletContext = React.createContext<WalletContextType>({
@@ -17,8 +17,8 @@ export const WalletContext = React.createContext<WalletContextType>({
   addresses: [],
   addAddresses: () => {},
   setAddresses: () => {},
-  setOpenWalletMenu: () => {},
-  openWalletMenu: false,
+  setWalletMenuOpen: () => {},
+  isWalletMenuOpen: false,
 });
 
 export const useWallet = () => {
