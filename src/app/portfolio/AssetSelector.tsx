@@ -22,6 +22,7 @@ import {
 } from "~/components/ui/popover";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Asset } from "~/utils/types";
+import { formatAmount } from "~/utils/helper";
 
 type AssetSelectorProps = {
   assets: Asset[];
@@ -35,7 +36,9 @@ export const AssetView = ({ asset }: { asset: Asset }) => {
         <AvatarImage src={asset?.logo} alt={asset.name} />
         <AvatarFallback>{asset.name}</AvatarFallback>
       </Avatar>
-      <div className="flex-1 text-right">{asset.balanceMainUnit}</div>
+      <div className="flex-1 text-right">
+        {asset?.balanceMainUnit ? formatAmount(asset.balanceMainUnit, 5) : ""}
+      </div>
       <div className="font-bold flex-1 text-right">{asset.ticker}</div>
     </div>
   );
