@@ -48,7 +48,6 @@ export function formatAmount(amount: string | number | null, decimals: number) {
   }
 
   return new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(parsedAmount);
 }
