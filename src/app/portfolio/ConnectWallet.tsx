@@ -1,13 +1,16 @@
 import { Button } from "~/components/ui/button";
 
-export const ConnectWallet = () => {
+export const ConnectWallet = ({ onNextStep }: { onNextStep: () => void }) => {
   return (
-    <div className="p-4">
-      <div className="pb-8">
+    <div>
+      <h1 className="font-extrabold text-2xl text-center mb-4">HODL ON !</h1>
+      <div className="mb-8 text-center">
         You are in the Adamik showroom. Please add your wallet to sign
         transactions
       </div>
-      <Button className="w-full">Add your wallet</Button>
+      <Button className="w-full" onClick={() => onNextStep()}>
+        Add your wallet
+      </Button>
     </div>
   );
 };
