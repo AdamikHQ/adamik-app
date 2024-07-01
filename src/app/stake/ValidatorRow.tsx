@@ -37,7 +37,7 @@ export const ValidatorRow: React.FC<{
           {validator.amount ? formatAmount(validator.amount, 5) : ""}{" "}
           {validator.ticker}
         </TableCell>
-        <TableCell className="hidden md:table-cell">
+        <TableCell>
           {validator.amountUSD ? formatAmountUSD(validator.amountUSD) : "-"}
         </TableCell>
         <TableCell>{validator.status}</TableCell>

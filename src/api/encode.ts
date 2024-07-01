@@ -4,8 +4,11 @@ import { env, ADAMIK_API_URL } from "~/env";
 import { Transaction } from "~/utils/types";
 
 export type TransactionEncodeResponse = {
-  plain: Transaction;
-  encoded: string;
+  transaction: {
+    plain: Transaction;
+    encoded: string;
+    status: { errors: { message: string }[]; warnings: { message: string }[] };
+  };
 };
 
 export const transactionEncode = async (
@@ -24,7 +27,8 @@ export const transactionEncode = async (
     const data: TransactionEncodeResponse = await response.json();
     return data;
   } else {
-    console.error("encode - backend error:", response.statusText);
+    const errors = await response.json();
+    console.error("encode - backend error:", JSON.stringify(errors));
   }
   return null;
 };

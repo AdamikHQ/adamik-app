@@ -23,7 +23,7 @@ type ModalProps = {
   trigger?: React.ReactNode;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  modalTitle: React.ReactNode;
+  modalTitle?: React.ReactNode;
   modalTitleDescription?: React.ReactNode;
   modalContent: React.ReactNode;
 };
@@ -44,7 +44,7 @@ export function Modal({
         {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
         <DialogContent className="sm:max-w-[425px] lg:max-w-[660px]">
           <DialogHeader>
-            <DialogTitle>{modalTitle}</DialogTitle>
+            {modalTitle && <DialogTitle>{modalTitle}</DialogTitle>}
             {modalTitleDescription && (
               <DialogDescription>{modalTitleDescription}</DialogDescription>
             )}
@@ -60,7 +60,7 @@ export function Modal({
       {trigger && <DrawerTrigger asChild>{trigger}</DrawerTrigger>}
       <DrawerContent>
         <DrawerHeader className="text-center">
-          <DrawerTitle>{modalTitle}</DrawerTitle>
+          {modalTitle && <DrawerTitle>{modalTitle}</DrawerTitle>}
           {modalTitleDescription && (
             <DrawerDescription>{modalTitleDescription}</DrawerDescription>
           )}

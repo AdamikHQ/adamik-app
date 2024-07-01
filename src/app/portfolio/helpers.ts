@@ -114,6 +114,7 @@ export const calculateAssets = (
       balanceUSD,
       ticker: chainDetails?.ticker,
       address: accountData.address,
+      decimals: chainDetails?.decimals,
     };
 
     const tokenAssets =
@@ -157,6 +158,7 @@ export const calculateAssets = (
               ticker: tokenAccountData.token.ticker,
               address: mainChainAsset.address,
               contractAddress: tokenAccountData.token.contractAddress,
+              decimals: tokenAccountData.token.decimals,
             },
           ];
         },

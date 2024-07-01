@@ -1,6 +1,6 @@
 "use client";
 
-import { DollarSign, Loader2, Info } from "lucide-react";
+import { DollarSign, Info, Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { Pie } from "react-chartjs-2";
@@ -15,16 +15,17 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { Tooltip } from "~/components/ui/tooltip";
 import { useAddressStateBatch } from "~/hooks/useAddressStateBatch";
 import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { useWallet } from "~/hooks/useWallet";
+import { formatAmountUSD } from "~/utils/helper";
 import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
 import { AssetRow } from "./AssetRow";
 import { ConnectWallet } from "./ConnectWallet";
 import { Transaction } from "./Transaction";
-import { TransactionLoading } from "./TransactionLoading";
 import {
   calculateAssets,
   getTickers,
@@ -32,14 +33,12 @@ import {
   getTokenTickers,
 } from "./helpers";
 import { showroomAddresses } from "./showroomAddresses";
-import { formatAmountUSD } from "~/utils/helper";
-import { Tooltip } from "~/components/ui/tooltip";
 
 export default function Portfolio() {
   const { theme, resolvedTheme } = useTheme();
   const currentTheme = theme === "system" ? resolvedTheme : theme;
 
-  const { addresses } = useWallet();
+  const { addresses, setWalletMenuOpen: setWalletMenuOpen } = useWallet();
 
   const displayAddresses = addresses.length > 0 ? addresses : showroomAddresses;
   const chainIdsAdamik = displayAddresses.reduce<string[]>(
@@ -280,7 +279,6 @@ export default function Portfolio() {
       <Modal
         open={openTransaction}
         setOpen={setOpenTransaction}
-        modalTitle="Create a Transaction"
         modalContent={
           // Probably need to rework
           stepper === 0 ? (
@@ -290,16 +288,17 @@ export default function Portfolio() {
                 setStepper(1);
               }}
             />
-          ) : stepper === 1 ? (
-            <TransactionLoading
-              onNextStep={() => {
-                setStepper(2);
-              }}
-            />
           ) : (
             <>
-              <ConnectWallet />
-              <Button onClick={() => setStepper(0)}>Step 0 [DEBUG]</Button>
+              <ConnectWallet
+                onNextStep={() => {
+                  setOpenTransaction(false);
+                  setWalletMenuOpen(true);
+                  setTimeout(() => {
+                    setStepper(0);
+                  }, 200);
+                }}
+              />
             </>
           )
         }
