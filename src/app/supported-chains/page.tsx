@@ -94,7 +94,7 @@ export default function SupportedChains() {
             <div className="flex flex-row justify-center mt-4">
               <Button asChild>
                 <Link href="https://adamik.io/contact">
-                  {"Can't find your token, reach out !"}
+                  {"Can't find your project? Reach out to us!"}
                 </Link>
               </Button>
             </div>
