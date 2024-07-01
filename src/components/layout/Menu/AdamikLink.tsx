@@ -10,7 +10,7 @@ import {
 
 export const AdamikLink = () => {
   return (
-    <div className="mt-auto p-0 md:p-4">
+    <div className="fixed bottom-0 left-0 p-4">
       <div className="flex justify-center gap-4 mb-4">
         <Link href="https://adamik.io" target="_blank" aria-label="Adamik Home">
           <Home />
