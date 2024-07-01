@@ -80,8 +80,8 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
     return (
       <>
         <h1 className="font-bold text-xl text-center">
-          Your transaction has been successfully processed by the Adamik API and
-          is now ready for signing!
+          Your transaction has been successfully processed <br /> by the Adamik
+          API and is now ready for signing.
         </h1>
         <Textarea readOnly value={JSON.stringify(encodedTransaction)} />
         <Button onClick={onNextStep} className="w-full">
