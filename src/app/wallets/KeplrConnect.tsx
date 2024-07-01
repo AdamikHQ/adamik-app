@@ -29,6 +29,21 @@ export const KeplrConnect: React.FC<KeplrConnectProps> = ({
         if (osmoAddress) {
           setWalletAddresses([osmoAddress.address], ["osmosis"]);
         }
+
+        const dydxAddress = await client.getAccount?.("dydx-mainnet-1");
+        if (dydxAddress) {
+          setWalletAddresses([dydxAddress.address], ["dydx"]);
+        }
+
+        const celestiaAddress = await client.getAccount?.("celestia");
+        if (celestiaAddress) {
+          setWalletAddresses([celestiaAddress.address], ["celestia"]);
+        }
+
+        const axelarAddress = await client.getAccount?.("axelar-dojo-1");
+        if (axelarAddress) {
+          setWalletAddresses([axelarAddress.address], ["axelar"]);
+        }
       }
       toast({
         description:

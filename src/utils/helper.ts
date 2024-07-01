@@ -10,6 +10,7 @@ const coinIdMapping: { [key: string]: string } = {
   binancecoin: "bsc",
   "avalanche-2": "avalanche",
   "matic-network": "polygon",
+  "dydx-chain": "dydx",
   // TODO: Add mapping for LINEA
 };
 
