@@ -33,6 +33,7 @@ import {
   getTokenTickers,
 } from "./helpers";
 import { showroomAddresses } from "./showroomAddresses";
+import { aggregatedStakingBalances } from "../stake/helpers";
 
 export default function Portfolio() {
   const { theme, resolvedTheme } = useTheme();
@@ -52,8 +53,7 @@ export default function Portfolio() {
     useGetChainDetailsBatch(chainIdsAdamik);
   const { data, isLoading: isAddressesLoading } =
     useAddressStateBatch(displayAddresses);
-  const { data: blockchainDetails, isLoading: blockchainLoading } =
-    useMobulaBlockchains();
+  const { data: blockchainDetails } = useMobulaBlockchains();
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
   const tokenTickers = getTokenTickers(data || []);
@@ -73,6 +73,12 @@ export default function Portfolio() {
     tokenContractAddresses,
     !isChainDetailsLoading && !isAddressesLoading,
     "assets"
+  );
+
+  const aggregatedBalances = aggregatedStakingBalances(
+    data,
+    chainsDetails,
+    mobulaMarketData
   );
 
   const [hideLowBalance, setHideLowBalance] = useState(true);
@@ -105,6 +111,16 @@ export default function Portfolio() {
       if (!a || !b) return 0;
       return (b.balanceUSD || 0) - (a.balanceUSD || 0);
     });
+
+  const availableBalance = assets.reduce((acc, asset) => {
+    return acc + (asset?.balanceUSD || 0);
+  }, 0);
+
+  const totalBalance =
+    availableBalance +
+    aggregatedBalances.claimableRewards +
+    aggregatedBalances.stakedBalance +
+    aggregatedBalances.unstakingBalance;
 
   // Will be remove but useful for debugging because we don't have access to network tabs
   // console.log({
@@ -140,7 +156,13 @@ export default function Portfolio() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">WIP</div>
+            <div className="text-2xl font-bold">
+              {isLoading ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                formatAmountUSD(totalBalance)
+              )}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -155,11 +177,7 @@ export default function Portfolio() {
               {isLoading ? (
                 <Loader2 className="animate-spin" />
               ) : (
-                formatAmountUSD(
-                  filteredAssets.reduce((acc, asset) => {
-                    return acc + (asset?.balanceUSD || 0);
-                  }, 0)
-                )
+                formatAmountUSD(availableBalance)
               )}
             </div>
           </CardContent>
@@ -171,7 +189,13 @@ export default function Portfolio() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">WIP</div>
+            <div className="text-2xl font-bold">
+              {isLoading ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                formatAmountUSD(aggregatedBalances.stakedBalance)
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

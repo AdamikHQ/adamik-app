@@ -46,21 +46,21 @@ export const aggregatedStakingBalances = (
       if (!chainDetails) return { ...acc };
 
       const stakedBalance = getAmountToUSD(
-        accountData?.balances?.staking?.locked,
+        accountData?.balances?.staking?.locked || "0",
         chainDetails!.decimals,
         mobulaMarketData,
         chainDetails
       );
 
       const unstakingBalance = getAmountToUSD(
-        accountData?.balances?.staking?.unlocking,
+        accountData?.balances?.staking?.unlocking || "0",
         chainDetails!.decimals,
         mobulaMarketData,
         chainDetails
       );
 
       const availableBalance = getAmountToUSD(
-        accountData?.balances?.native.available,
+        accountData?.balances?.native.available || "0",
         chainDetails!.decimals,
         mobulaMarketData,
         chainDetails
@@ -69,7 +69,7 @@ export const aggregatedStakingBalances = (
       const claimableRewards = getAmountToUSD(
         accountData?.balances?.staking?.rewards?.native
           .reduce((acc, reward) => acc + Number(reward.amount), 0)
-          .toString(), // TODO: Remove this after fixing the API
+          .toString() || "0", // TODO: Remove this after fixing the API
         chainDetails!.decimals,
         mobulaMarketData,
         chainDetails

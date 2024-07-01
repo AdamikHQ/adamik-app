@@ -8,10 +8,11 @@ import { MobulaBlockchain } from "~/api/mobula/types";
 export const getTickers = (
   data: (GetChainDetailsResponse | undefined | null)[]
 ) => {
-  return data.reduce<string[]>((acc, chainDetail) => {
+  const reducedArray = data.reduce<string[]>((acc, chainDetail) => {
     if (!chainDetail) return acc;
     return [...acc, chainDetail.ticker];
   }, []);
+  return Array.from(new Set(reducedArray));
 };
 
 export const getTokenTickers = (
@@ -123,7 +124,7 @@ export const calculateAssets = (
           if (!tokenAccountData) return tokenAcc;
 
           const balanceMainUnit = amountToMainUnit(
-            tokenAccountData.value,
+            tokenAccountData.amount,
             tokenAccountData.token.decimals
           );
 
