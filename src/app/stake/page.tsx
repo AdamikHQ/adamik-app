@@ -21,7 +21,7 @@ import { getTickers } from "../portfolio/helpers";
 import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
 import { ValidatorRow } from "./ValidatorRow";
 import { aggregatedStakingBalances, getAddressValidators } from "./helpers";
-import { showroomAddresses } from "./showroomAddresses";
+import { showroomAddresses } from "../../utils/showroomAddresses";
 
 export default function Stake() {
   const { addresses } = useWallet();
