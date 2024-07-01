@@ -6,34 +6,40 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "~/components/ui/card";
 
 export const AdamikLink = () => {
   return (
     <div className="mt-auto p-0 md:p-4">
       <div className="flex justify-center gap-4 mb-4">
-        <Link href="https://adamik.io" target="_blank">
+        <Link href="https://adamik.io" target="_blank" aria-label="Adamik Home">
           <Home />
         </Link>
-        <Link href="https://github.com/AdamikHQ" target="_blank">
+        <Link
+          href="https://github.com/AdamikHQ"
+          target="_blank"
+          aria-label="Adamik GitHub"
+        >
           <Github />
         </Link>
-        <Link href="https://docs.adamik.io" target="_blank">
+        <Link
+          href="https://docs.adamik.io"
+          target="_blank"
+          aria-label="Adamik Documentation"
+        >
           <BookText />
         </Link>
       </div>
       <Card className="p-4">
-        <CardHeader className="p-0 w-max-[130px]">
-          <CardTitle>Get an API Key</CardTitle>
-          <CardDescription>
-            Get started with Adamik API for free
+        <CardHeader className="p-0 flex justify-center">
+          <CardDescription className="whitespace-nowrap text-center">
+            Explore the Adamik API for free
           </CardDescription>
         </CardHeader>
         <CardContent className="py-0 pt-4">
           <Button size="sm" className="w-full" asChild>
             <Link href="https://dashboard.adamik.io/" target="_blank">
-              Connect
+              Get your API Key
             </Link>
           </Button>
         </CardContent>
