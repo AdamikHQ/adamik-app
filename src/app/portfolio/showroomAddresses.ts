@@ -25,7 +25,7 @@ export const showroomAddresses = [
   },
   {
     chainId: "osmosis",
-    address: "osmo1yvuhqg73fdzxvam9sj7mazfa38gpn7ulcxl8gz",
+    address: "osmo1g84934jpu3v5de5yqukkkhxmcvsw3u2a6al3md",
   },
   {
     chainId: "algorand",
