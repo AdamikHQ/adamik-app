@@ -122,7 +122,6 @@ function AssetList({
   assets: Asset[];
   onSelect: (asset: Asset) => void;
 }) {
-  console.log({ assets });
   return (
     <Command>
       <CommandInput placeholder="Filter assets..." />
