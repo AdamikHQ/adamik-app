@@ -132,16 +132,9 @@ function AssetList({
             {assets.map((asset, i) => (
               <CommandItem
                 key={`${asset.address}_${i}`}
-                value={`${asset.address}_${asset.chainId}`}
+                value={i.toString()}
                 onSelect={(value) => {
-                  setSelectedChoice(
-                    assets.find((asset) => {
-                      const [address, chainId] = value.split("_");
-                      return (
-                        asset.address === address && asset.chainId === chainId
-                      );
-                    }) || null
-                  );
+                  setSelectedChoice(assets[Number(value)]);
                   setOpen(false);
                   onSelect(asset);
                 }}
