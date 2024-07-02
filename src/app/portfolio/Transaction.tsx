@@ -21,6 +21,7 @@ import { useState } from "react";
 import { amountToSmallestUnit } from "~/utils/helper";
 import { TransactionLoading } from "./TransactionLoading";
 import { Textarea } from "~/components/ui/textarea";
+import { useTransaction } from "~/hooks/useTransaction";
 
 type TransactionProps = {
   onNextStep: () => void;
@@ -28,12 +29,13 @@ type TransactionProps = {
 };
 
 export function Transaction({ onNextStep, assets }: TransactionProps) {
-  const { mutate, isPending, isSuccess } = useTransactionEncode();
+  const { mutate, isPending, isSuccess, error } = useTransactionEncode();
   const form = useForm<TransactionFormInput>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
       mode: TransactionMode.TRANSFER,
       chainId: "",
+      tokenId: "",
       senders: "",
       recipients: "",
       amount: 0,
@@ -41,7 +43,7 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
     },
   });
   const [decimals, setDecimals] = useState<number>(0);
-  const [encodedTransaction, setEncodedTransaction] = useState<any>({});
+  const { transaction, setTransaction } = useTransaction();
   const [errors, setErrors] = useState("");
 
   function onSubmit(values: TransactionFormInput) {
@@ -58,12 +60,10 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
       {
         onSuccess: (values) => {
           if (values) {
-            setEncodedTransaction(values?.transaction.encoded);
+            setTransaction(values);
           } else {
             setErrors("API ERROR - Please try again later");
           }
-
-          // onNextStep();
         },
         onError: (error) => {
           console.log({ error });
@@ -76,15 +76,15 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
     return <TransactionLoading />;
   }
 
-  if (isSuccess) {
+  if (isSuccess && transaction) {
     return (
       <>
         <h1 className="font-bold text-xl text-center">
           Your transaction has been successfully processed <br /> by the Adamik
           API and is now ready for signing.
         </h1>
-        <Textarea readOnly value={JSON.stringify(encodedTransaction)} />
-        <Button onClick={onNextStep} className="w-full">
+        <Textarea readOnly value={JSON.stringify(transaction)} />
+        <Button onClick={() => onNextStep()} className="w-full">
           Sign your Transaction
         </Button>
       </>
@@ -108,6 +108,10 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
                     onSelect={(asset) => {
                       form.setValue("chainId", asset.chainId);
                       form.setValue("senders", asset.address);
+                      if (asset.isToken) {
+                        form.setValue("mode", TransactionMode.TRANSFER_TOKEN);
+                        form.setValue("tokenId", asset.assetId);
+                      }
                       setDecimals(asset.decimals);
                     }}
                     {...field}
@@ -178,6 +182,10 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
               </FormItem>
             )}
           />
+
+          {error && (
+            <div className="text-red-500 w-full break-all">{error.message}</div>
+          )}
 
           <Button type="submit" className="w-full">
             Submit

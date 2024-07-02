@@ -1,3 +1,6 @@
+import { TransactionEncodeResponse } from "~/api/encode";
+import { Transaction } from "~/utils/types";
+
 export interface IWallet {
   id: string;
   families: string[];
@@ -12,4 +15,19 @@ export interface IWallet {
 export type Address = {
   chainId: string;
   address: string;
+  signer?: string;
+};
+
+export enum WalletName {
+  METAMASK = "metamask",
+  KEPLR = "keplr",
+}
+
+export type WalletConnectorProps = {
+  setWalletAddresses?: (
+    walletAddresses: string[],
+    walletChains: string[],
+    walletName: WalletName
+  ) => void;
+  transactionPayload?: TransactionEncodeResponse;
 };

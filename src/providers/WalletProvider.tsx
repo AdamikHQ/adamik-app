@@ -34,12 +34,15 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
 
   return (
     <MetaMaskProvider
+      debug={false}
       sdkOptions={{
+        checkInstallationImmediately: false,
+        logging: { developerMode: false },
         dappMetadata: {
           name: "Adamik App",
           url:
             typeof window !== "undefined"
-              ? window.location.href
+              ? window.location.host
               : "https://adamik-app.vercel.app/",
         },
       }}
