@@ -21,8 +21,12 @@ import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { useWallet } from "~/hooks/useWallet";
+import { TransactionProvider } from "~/providers/TransactionProvider";
 import { formatAmountUSD } from "~/utils/helper";
+import { showroomAddresses } from "../../utils/showroomAddresses";
+import { aggregatedStakingBalances } from "../stake/helpers";
 import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
+import { WalletSigner } from "../wallets/WalletSigner";
 import { AssetRow } from "./AssetRow";
 import { ConnectWallet } from "./ConnectWallet";
 import { Transaction } from "./Transaction";
@@ -32,8 +36,6 @@ import {
   getTokenContractAddresses,
   getTokenTickers,
 } from "./helpers";
-import { showroomAddresses } from "../../utils/showroomAddresses";
-import { aggregatedStakingBalances } from "../stake/helpers";
 
 export default function Portfolio() {
   const { theme, resolvedTheme } = useTheme();
@@ -136,200 +138,224 @@ export default function Portfolio() {
   // });
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <h1 className="text-lg font-semibold md:text-2xl">Portfolio</h1>
-          <Tooltip text="Click to view the API documentation for retrieving balances">
-            <a
-              href="https://docs.adamik.io/api-reference/endpoint/post-apiaddressstate"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
-            </a>
-          </Tooltip>
+      <TransactionProvider>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <h1 className="text-lg font-semibold md:text-2xl">Portfolio</h1>
+            <Tooltip text="Click to view the API documentation for retrieving balances">
+              <a
+                href="https://docs.adamik.io/api-reference/endpoint/post-apiaddressstate"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
+              </a>
+            </Tooltip>
+          </div>
+          <WalletModalTrigger />
         </div>
-        <WalletModalTrigger />
-      </div>
 
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Balance</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                formatAmountUSD(totalBalance)
-              )}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Available Balance
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                formatAmountUSD(availableBalance)
-              )}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Staked Balance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                formatAmountUSD(aggregatedBalances.stakedBalance)
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total Balance
+              </CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {isLoading ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  formatAmountUSD(totalBalance)
+                )}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Available Balance
+              </CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {isLoading ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  formatAmountUSD(availableBalance)
+                )}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Staked Balance
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {isLoading ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  formatAmountUSD(aggregatedBalances.stakedBalance)
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-      <div className="grid gap-4 md:gap-8 grid-cols-1 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Assets</CardTitle>
-            <Button
-              type="submit"
-              onClick={() => setOpenTransaction(!openTransaction)}
-            >
-              Transfer
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {!isLoading ? (
-              <>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[80px]"></TableHead>
-                      <TableHead>Asset</TableHead>
-                      <TableHead className="hidden md:table-cell">
-                        Balance
-                      </TableHead>
-                      <TableHead>Amount (USD)</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody className="overflow-y-auto max-h-[360px]">
-                    {filteredAssets.length > 0 &&
-                      filteredAssets.map((asset, i) => {
-                        if (!asset) return null;
-                        return (
-                          <AssetRow key={`${i}_${asset.name}`} asset={asset} />
-                        );
-                      })}
-                  </TableBody>
-                </Table>
-                <div className="items-top flex space-x-2">
-                  <Checkbox
-                    id="hideBalance"
-                    checked={hideLowBalance}
-                    onClick={() => {
-                      setHideLowBalance(!hideLowBalance);
-                    }}
-                  />
-                  <div className="grid gap-1.5 leading-none">
-                    <label
-                      htmlFor="hideBalance"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {`Hide low balance assets (< 1$)`}
-                    </label>
+        <div className="grid gap-4 md:gap-8 grid-cols-1 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Assets</CardTitle>
+              <Button
+                type="submit"
+                onClick={() => setOpenTransaction(!openTransaction)}
+              >
+                Transfer
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {!isLoading ? (
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[80px]"></TableHead>
+                        <TableHead>Asset</TableHead>
+                        <TableHead className="hidden md:table-cell">
+                          Balance
+                        </TableHead>
+                        <TableHead>Amount (USD)</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody className="overflow-y-auto max-h-[360px]">
+                      {filteredAssets.length > 0 &&
+                        filteredAssets.map((asset, i) => {
+                          if (!asset) return null;
+                          return (
+                            <AssetRow
+                              key={`${i}_${asset.name}`}
+                              asset={asset}
+                            />
+                          );
+                        })}
+                    </TableBody>
+                  </Table>
+                  <div className="items-top flex space-x-2">
+                    <Checkbox
+                      id="hideBalance"
+                      checked={hideLowBalance}
+                      onClick={() => {
+                        setHideLowBalance(!hideLowBalance);
+                      }}
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                      <label
+                        htmlFor="hideBalance"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {`Hide low balance assets (< 1$)`}
+                      </label>
+                    </div>
                   </div>
-                </div>
-              </>
+                </>
+              ) : (
+                <Loader2 className="animate-spin" />
+              )}
+            </CardContent>
+          </Card>
+          <div className="order-first md:order-last">
+            {!isLoading ? (
+              <Pie
+                color={currentTheme === "light" ? "black" : "white"}
+                data={{
+                  labels: filteredAssets.reduce<string[]>(
+                    (acc, asset, index) => {
+                      if (index > 9) {
+                        const newAcc = [...acc];
+                        newAcc[newAcc.length - 1] = "Others";
+                        return newAcc;
+                      }
+                      if (!acc && !asset) return acc;
+                      return [...acc, asset?.name as string];
+                    },
+                    []
+                  ),
+                  datasets: [
+                    {
+                      label: "Amount (USD)",
+                      data: filteredAssets.reduce<string[]>(
+                        (acc, asset, index) => {
+                          if (asset?.balanceUSD === undefined) return acc;
+                          if (index > 9) {
+                            const newAcc = [...acc];
+                            newAcc[newAcc.length - 1] = (
+                              parseFloat(newAcc[newAcc.length - 1]) +
+                              (asset?.balanceUSD || 0)
+                            ).toFixed(2);
+                            return newAcc;
+                          }
+                          return [
+                            ...acc,
+                            asset?.balanceUSD.toFixed(2) as string,
+                          ];
+                        },
+                        []
+                      ),
+                      borderWidth: 1,
+                    },
+                  ],
+                }}
+              />
             ) : (
               <Loader2 className="animate-spin" />
             )}
-          </CardContent>
-        </Card>
-        <div className="order-first md:order-last">
-          {!isLoading ? (
-            <Pie
-              color={currentTheme === "light" ? "black" : "white"}
-              data={{
-                labels: filteredAssets.reduce<string[]>((acc, asset, index) => {
-                  if (index > 9) {
-                    const newAcc = [...acc];
-                    newAcc[newAcc.length - 1] = "Others";
-                    return newAcc;
-                  }
-                  if (!acc && !asset) return acc;
-                  return [...acc, asset?.name as string];
-                }, []),
-                datasets: [
-                  {
-                    label: "Amount (USD)",
-                    data: filteredAssets.reduce<string[]>(
-                      (acc, asset, index) => {
-                        if (asset?.balanceUSD === undefined) return acc;
-                        if (index > 9) {
-                          const newAcc = [...acc];
-                          newAcc[newAcc.length - 1] = (
-                            parseFloat(newAcc[newAcc.length - 1]) +
-                            (asset?.balanceUSD || 0)
-                          ).toFixed(2);
-                          return newAcc;
-                        }
-                        return [...acc, asset?.balanceUSD.toFixed(2) as string];
-                      },
-                      []
-                    ),
-                    borderWidth: 1,
-                  },
-                ],
-              }}
-            />
-          ) : (
-            <Loader2 className="animate-spin" />
-          )}
+          </div>
         </div>
-      </div>
-      <Modal
-        open={openTransaction}
-        setOpen={setOpenTransaction}
-        modalContent={
-          // Probably need to rework
-          stepper === 0 ? (
-            <Transaction
-              assets={filteredAssets}
-              onNextStep={() => {
-                setStepper(1);
-              }}
-            />
-          ) : (
-            <>
-              <ConnectWallet
+        <Modal
+          open={openTransaction}
+          setOpen={setOpenTransaction}
+          modalContent={
+            // Probably need to rework
+            stepper === 0 ? (
+              <Transaction
+                assets={filteredAssets}
                 onNextStep={() => {
-                  setOpenTransaction(false);
-                  setWalletMenuOpen(true);
-                  setTimeout(() => {
-                    setStepper(0);
-                  }, 200);
+                  setStepper(1);
                 }}
               />
-            </>
-          )
-        }
-      />
+            ) : (
+              <>
+                {addresses ? (
+                  <WalletSigner
+                    onNextStep={() => {
+                      setOpenTransaction(false);
+                      setTimeout(() => {
+                        setStepper(0);
+                      }, 200);
+                    }}
+                  />
+                ) : (
+                  <ConnectWallet
+                    onNextStep={() => {
+                      setOpenTransaction(false);
+                      setWalletMenuOpen(true);
+                      setTimeout(() => {
+                        setStepper(0);
+                      }, 200);
+                    }}
+                  />
+                )}
+              </>
+            )
+          }
+        />
+      </TransactionProvider>
     </main>
   );
 }

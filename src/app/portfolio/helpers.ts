@@ -92,9 +92,8 @@ export const calculateAssets = (
     );
 
     const balanceUSD =
-      !chainDetails.isTestNet &&
-      mobulaMarketData &&
-      mobulaMarketData[chainDetails.ticker]
+      // !chainDetails.isTestNet && TMP: Just to usetestnet for test
+      mobulaMarketData && mobulaMarketData[chainDetails.ticker]
         ? mobulaMarketData[chainDetails.ticker]?.price *
           parseFloat(balanceMainUnit as string)
         : undefined;
@@ -116,6 +115,7 @@ export const calculateAssets = (
       ticker: chainDetails?.ticker,
       address: accountData.address,
       decimals: chainDetails?.decimals,
+      isToken: false,
     };
 
     const tokenAssets =
@@ -160,6 +160,7 @@ export const calculateAssets = (
               address: mainChainAsset.address,
               contractAddress: tokenAccountData.token.contractAddress,
               decimals: tokenAccountData.token.decimals,
+              isToken: true,
             },
           ];
         },

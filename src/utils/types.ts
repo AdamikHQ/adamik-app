@@ -31,6 +31,7 @@ export type Asset = {
   address: string;
   contractAddress?: string;
   decimals: number;
+  isToken: boolean;
 };
 
 export type Chain = {
@@ -41,4 +42,5 @@ export type Chain = {
   params: any;
   family: string;
   isTestNet: boolean;
+  nativeId: string;
 };

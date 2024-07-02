@@ -2,15 +2,9 @@ import { useWalletClient } from "@cosmos-kit/react-lite";
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { useToast } from "~/components/ui/use-toast";
+import { WalletConnectorProps, WalletName } from "./types";
 
-type KeplrConnectProps = {
-  setWalletAddresses: (
-    walletAddresses: string[],
-    walletFamilies: string[]
-  ) => void;
-};
-
-export const KeplrConnect: React.FC<KeplrConnectProps> = ({
+export const KeplrConnect: React.FC<WalletConnectorProps> = ({
   setWalletAddresses,
 }) => {
   const { status, client } = useWalletClient("keplr-extension");
@@ -18,31 +12,47 @@ export const KeplrConnect: React.FC<KeplrConnectProps> = ({
 
   const connect = async () => {
     try {
-      if (status === "Done" && client) {
+      if (status === "Done" && client && setWalletAddresses) {
         await client.enable?.(["cosmoshub-4"]);
         const address = await client.getAccount?.("cosmoshub-4");
         if (address) {
-          setWalletAddresses([address.address], ["cosmoshub"]);
+          setWalletAddresses(
+            [address.address],
+            ["cosmoshub"],
+            WalletName.KEPLR
+          );
         }
 
         const osmoAddress = await client.getAccount?.("osmosis");
         if (osmoAddress) {
-          setWalletAddresses([osmoAddress.address], ["osmosis"]);
+          setWalletAddresses(
+            [osmoAddress.address],
+            ["osmosis"],
+            WalletName.KEPLR
+          );
         }
 
         const dydxAddress = await client.getAccount?.("dydx-mainnet-1");
         if (dydxAddress) {
-          setWalletAddresses([dydxAddress.address], ["dydx"]);
+          setWalletAddresses([dydxAddress.address], ["dydx"], WalletName.KEPLR);
         }
 
         const celestiaAddress = await client.getAccount?.("celestia");
         if (celestiaAddress) {
-          setWalletAddresses([celestiaAddress.address], ["celestia"]);
+          setWalletAddresses(
+            [celestiaAddress.address],
+            ["celestia"],
+            WalletName.KEPLR
+          );
         }
 
         const axelarAddress = await client.getAccount?.("axelar-dojo-1");
         if (axelarAddress) {
-          setWalletAddresses([axelarAddress.address], ["axelar"]);
+          setWalletAddresses(
+            [axelarAddress.address],
+            ["axelar"],
+            WalletName.KEPLR
+          );
         }
       }
       toast({

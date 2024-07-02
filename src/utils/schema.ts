@@ -9,6 +9,7 @@ export const transactionFormSchema = z
     recipients: z.string().min(2).max(50),
     amount: z.coerce.number().min(0),
     useMaxAmount: z.boolean(),
+    tokenId: z.string().optional(),
   })
   .superRefine(({ useMaxAmount }) => {
     if (useMaxAmount) return z.object({ amount: z.literal(0) });

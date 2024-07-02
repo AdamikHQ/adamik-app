@@ -131,11 +131,16 @@ function AssetList({
           <CommandGroup>
             {assets.map((asset, i) => (
               <CommandItem
-                key={`${asset.ticker}_${i}`}
-                value={asset.ticker}
+                key={`${asset.address}_${i}`}
+                value={`${asset.address}_${asset.chainId}`}
                 onSelect={(value) => {
                   setSelectedChoice(
-                    assets.find((asset) => asset.ticker === value) || null
+                    assets.find((asset) => {
+                      const [address, chainId] = value.split("_");
+                      return (
+                        asset.address === address && asset.chainId === chainId
+                      );
+                    }) || null
                   );
                   setOpen(false);
                   onSelect(asset);
