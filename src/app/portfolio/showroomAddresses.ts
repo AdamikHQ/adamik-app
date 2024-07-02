@@ -16,10 +16,6 @@ export const showroomAddresses = [
     address: "0xfc43f5f9dd45258b3aff31bdbe6561d97e8b71de",
   },
   {
-    chainId: "base",
-    address: "0xd0b838039E28757a7738E036b11d1F9e3Ac9397D",
-  },
-  {
     chainId: "cosmoshub",
     address: "cosmos1g84934jpu3v5de5yqukkkhxmcvsw3u2ajxvpdl",
   },
