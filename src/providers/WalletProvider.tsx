@@ -24,11 +24,15 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
 
   const addAddresses = (receiveAddresses: Address[]) => {
     setAddresses((oldAddresses) => {
-      const mergedAddresses = Array.from(
-        new Set([...oldAddresses, ...receiveAddresses])
-      );
+      const mergedAddresses = [...oldAddresses, ...receiveAddresses];
 
-      return mergedAddresses;
+      return mergedAddresses.filter(
+        (value, index, self) =>
+          index ===
+          self.findIndex(
+            (t) => t.address === value.address && t.chainId === value.chainId
+          )
+      );
     });
   };
 

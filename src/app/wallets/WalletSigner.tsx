@@ -1,15 +1,21 @@
 "use client";
 
-import { useTransaction } from "~/hooks/useTransaction";
-import { MetamaskConnect } from "./MetamaskConnect";
-import { KeplrConnect } from "./KeplrConnect";
-import { useWallet } from "~/hooks/useWallet";
-import { WalletName } from "./types";
 import { Rocket } from "lucide-react";
 import { Button } from "~/components/ui/button";
+import { useTransaction } from "~/hooks/useTransaction";
+import { useWallet } from "~/hooks/useWallet";
+import { KeplrConnect } from "./KeplrConnect";
+import { MetamaskConnect } from "./MetamaskConnect";
+import { WalletName } from "./types";
+import { Broadcast } from "./Broadcast";
 
 export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
-  const { transaction, transactionHash } = useTransaction();
+  const {
+    transaction,
+    transactionHash,
+    setTransactionHash,
+    signedTransaction,
+  } = useTransaction();
   const { addresses } = useWallet();
 
   const signer = addresses.find(
@@ -40,9 +46,20 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
         </div>
         <div className="break-all">{transactionHash}</div>
 
-        <Button onClick={() => onNextStep()}>Close</Button>
+        <Button
+          onClick={() => {
+            onNextStep();
+            setTransactionHash(undefined);
+          }}
+        >
+          Close
+        </Button>
       </div>
     );
+  }
+
+  if (signedTransaction) {
+    return <Broadcast onNextStep={() => onNextStep()} />;
   }
 
   return (
