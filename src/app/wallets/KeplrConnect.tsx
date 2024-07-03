@@ -2,18 +2,31 @@ import { useWalletClient } from "@cosmos-kit/react-lite";
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { useToast } from "~/components/ui/use-toast";
+import { useChainDetails } from "~/hooks/useChainDetails";
+import { useTransaction } from "~/hooks/useTransaction";
 import { WalletConnectorProps, WalletName } from "./types";
 
 export const KeplrConnect: React.FC<WalletConnectorProps> = ({
   setWalletAddresses,
+  transactionPayload,
 }) => {
   const { status, client } = useWalletClient("keplr-extension");
   const { toast } = useToast();
+  const { data } = useChainDetails(
+    transactionPayload?.transaction.plain.chainId
+  );
+  const { setSignedTransaction } = useTransaction();
 
   const connect = async () => {
     try {
       if (status === "Done" && client && setWalletAddresses) {
-        await client.enable?.(["cosmoshub-4"]);
+        await client.enable?.([
+          "cosmoshub-4",
+          "osmosis",
+          "dydx-mainnet-1",
+          "celestia",
+          "axelar-dojo-1",
+        ]);
         const address = await client.getAccount?.("cosmoshub-4");
         if (address) {
           setWalletAddresses(
@@ -64,9 +77,24 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
     }
   };
 
+  const sign = async () => {
+    if (client && data && transactionPayload) {
+      const signedTransaction = await client.signAmino?.(
+        data?.nativeId,
+        transactionPayload.transaction.plain.senders[0],
+        transactionPayload.transaction.encoded as any
+      );
+
+      setSignedTransaction(signedTransaction?.signature.signature);
+    }
+  };
+
   return (
     <div className="relative w-24 h-24">
-      <Avatar className="cursor-pointer w-24 h-24" onClick={() => connect()}>
+      <Avatar
+        className="cursor-pointer w-24 h-24"
+        onClick={transactionPayload ? () => sign() : () => connect()}
+      >
         <AvatarImage src={"/wallets/Keplr.svg"} alt={"Keplr"} />
         <AvatarFallback>Keplr</AvatarFallback>
       </Avatar>

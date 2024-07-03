@@ -12,14 +12,19 @@ export const TransactionProvider: React.FC<React.PropsWithChildren> = ({
   >();
 
   const [transactionHash, setTransactionHash] = useState<string | undefined>();
+  const [signedTransaction, setSignedTransaction] = useState<
+    string | undefined
+  >();
 
   return (
     <TransactionContext.Provider
       value={{
         transaction,
         transactionHash,
+        signedTransaction,
         setTransaction,
         setTransactionHash,
+        setSignedTransaction,
       }}
     >
       {children}

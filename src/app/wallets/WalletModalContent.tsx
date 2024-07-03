@@ -1,19 +1,12 @@
 "use client";
 
-import { LoaderIcon } from "lucide-react";
-import { useChains } from "~/hooks/useChains";
 import { useWallet } from "~/hooks/useWallet";
+import { KeplrConnect } from "./KeplrConnect";
 import { MetamaskConnect } from "./MetamaskConnect";
 import { Address } from "./types";
-import { KeplrConnect } from "./KeplrConnect";
 
 export const WalletModalContent = () => {
   const { addAddresses } = useWallet();
-  const { data: chains, isLoading } = useChains();
-
-  if (isLoading) {
-    return <LoaderIcon className="animate-spin" />;
-  }
 
   const setWalletAddresses = async (
     walletAddresses: string[],

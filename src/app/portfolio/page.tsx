@@ -214,7 +214,10 @@ export default function Portfolio() {
               <CardTitle>Assets</CardTitle>
               <Button
                 type="submit"
-                onClick={() => setOpenTransaction(!openTransaction)}
+                onClick={() => {
+                  setStepper(0);
+                  setOpenTransaction(!openTransaction);
+                }}
               >
                 Transfer
               </Button>

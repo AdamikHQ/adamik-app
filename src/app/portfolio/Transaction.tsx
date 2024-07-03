@@ -43,7 +43,12 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
     },
   });
   const [decimals, setDecimals] = useState<number>(0);
-  const { transaction, setTransaction } = useTransaction();
+  const {
+    transaction,
+    setTransaction,
+    setSignedTransaction,
+    setTransactionHash,
+  } = useTransaction();
   const [errors, setErrors] = useState("");
 
   function onSubmit(values: TransactionFormInput) {
@@ -56,6 +61,7 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
         amount: values.useMaxAmount
           ? ""
           : amountToSmallestUnit(values.amount.toString(), decimals),
+        format: "json",
       },
       {
         onSuccess: (values) => {
@@ -66,6 +72,8 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
             ) {
               setErrors(values.transaction.status.errors[0].message);
             } else {
+              setSignedTransaction(undefined);
+              setTransactionHash(undefined);
               setTransaction(values);
             }
           } else {
@@ -90,7 +98,11 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
           Your transaction has been successfully processed <br /> by the Adamik
           API and is now ready for signing.
         </h1>
-        <Textarea readOnly value={JSON.stringify(transaction)} />
+        <Textarea
+          readOnly
+          value={JSON.stringify(transaction)}
+          className="h-32"
+        />
         <Button onClick={() => onNextStep()} className="w-full">
           Sign your Transaction
         </Button>
