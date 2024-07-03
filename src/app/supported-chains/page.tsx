@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Info } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
@@ -14,6 +14,24 @@ import { useChains } from "~/hooks/useChains";
 import { Tooltip } from "~/components/ui/tooltip"; // Import TooltipProvider
 
 const comingSoonIds = ["tron", "the-open-network", "solana"];
+
+const Timer = ({ isLoading }: { isLoading: boolean }) => {
+  const [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (isLoading) {
+      interval = setInterval(() => {
+        setSeconds((prev) => prev + 1);
+      }, 1000);
+    } else if (!isLoading && seconds !== 0) {
+      clearInterval(interval!);
+    }
+    return () => clearInterval(interval!);
+  }, [isLoading]);
+
+  return <span className="ml-2 text-sm text-gray-500">({seconds}s)</span>;
+};
 
 export default function SupportedChains() {
   const { isLoading, data: supportedChains } = useChains();
@@ -57,7 +75,10 @@ export default function SupportedChains() {
           </CardHeader>
           <CardContent>
             {isCoinListLoading || isLoading ? (
-              <Loader2 />
+              <div className="flex items-center">
+                <Loader2 className="animate-spin" />
+                <Timer isLoading={isCoinListLoading || isLoading} />
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
                 {coinList?.map((coin) => {

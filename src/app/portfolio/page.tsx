@@ -2,7 +2,7 @@
 
 import { DollarSign, Info, Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pie } from "react-chartjs-2";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -36,6 +36,24 @@ import {
   getTokenContractAddresses,
   getTokenTickers,
 } from "./helpers";
+
+const Timer = ({ isLoading }: { isLoading: boolean }) => {
+  const [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (isLoading) {
+      interval = setInterval(() => {
+        setSeconds((prev) => prev + 1);
+      }, 1000);
+    } else if (!isLoading && seconds !== 0) {
+      clearInterval(interval!);
+    }
+    return () => clearInterval(interval!);
+  }, [isLoading]);
+
+  return <span className="ml-2 text-sm text-gray-500">({seconds}s)</span>;
+};
 
 export default function Portfolio() {
   const { theme, resolvedTheme } = useTheme();
@@ -127,15 +145,6 @@ export default function Portfolio() {
     aggregatedBalances.stakedBalance +
     aggregatedBalances.unstakingBalance;
 
-  // Will be remove but useful for debugging because we don't have access to network tabs
-  // console.log({
-  //   data,
-  //   chainsDetails,
-  //   assets,
-  //   mergedAssets,
-  //   mobulaMarketData,
-  //   mobulaMarketDataContractAddresses,
-  // });
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
       <TransactionProvider>
@@ -166,7 +175,10 @@ export default function Portfolio() {
             <CardContent>
               <div className="text-2xl font-bold">
                 {isLoading ? (
-                  <Loader2 className="animate-spin" />
+                  <>
+                    <Loader2 className="animate-spin" />
+                    <Timer isLoading={isLoading} />
+                  </>
                 ) : (
                   formatAmountUSD(totalBalance)
                 )}
@@ -183,7 +195,10 @@ export default function Portfolio() {
             <CardContent>
               <div className="text-2xl font-bold">
                 {isLoading ? (
-                  <Loader2 className="animate-spin" />
+                  <>
+                    <Loader2 className="animate-spin" />
+                    <Timer isLoading={isLoading} />
+                  </>
                 ) : (
                   formatAmountUSD(availableBalance)
                 )}
@@ -199,7 +214,10 @@ export default function Portfolio() {
             <CardContent>
               <div className="text-2xl font-bold">
                 {isLoading ? (
-                  <Loader2 className="animate-spin" />
+                  <>
+                    <Loader2 className="animate-spin" />
+                    <Timer isLoading={isLoading} />
+                  </>
                 ) : (
                   formatAmountUSD(aggregatedBalances.stakedBalance)
                 )}
@@ -207,7 +225,6 @@ export default function Portfolio() {
             </CardContent>
           </Card>
         </div>
-
         <div className="grid gap-4 md:gap-8 grid-cols-1 lg:grid-cols-3">
           <Card className="lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -265,7 +282,10 @@ export default function Portfolio() {
                   </div>
                 </>
               ) : (
-                <Loader2 className="animate-spin" />
+                <>
+                  <Loader2 className="animate-spin" />
+                  <Timer isLoading={isLoading} />
+                </>
               )}
             </CardContent>
           </Card>
@@ -313,7 +333,10 @@ export default function Portfolio() {
                 }}
               />
             ) : (
-              <Loader2 className="animate-spin" />
+              <>
+                <Loader2 className="animate-spin" />
+                <Timer isLoading={isLoading} />
+              </>
             )}
           </div>
         </div>
@@ -321,7 +344,6 @@ export default function Portfolio() {
           open={openTransaction}
           setOpen={setOpenTransaction}
           modalContent={
-            // Probably need to rework
             stepper === 0 ? (
               <Transaction
                 assets={filteredAssets}
