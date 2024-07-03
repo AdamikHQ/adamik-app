@@ -27,8 +27,8 @@ export const transactionEncode = async (
     const data: TransactionEncodeResponse = await response.json();
     return data;
   } else {
-    const errors = await response.json();
-    console.error("encode - backend error:", JSON.stringify(errors));
-    throw new Error(JSON.stringify(errors));
+    const data: TransactionEncodeResponse = await response.json();
+    console.error("encode - backend error:", JSON.stringify(data));
+    return data;
   }
 };

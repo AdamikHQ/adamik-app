@@ -331,7 +331,7 @@ export default function Portfolio() {
               />
             ) : (
               <>
-                {addresses ? (
+                {addresses && addresses.length > 0 ? (
                   <WalletSigner
                     onNextStep={() => {
                       setOpenTransaction(false);

@@ -29,7 +29,7 @@ type TransactionProps = {
 };
 
 export function Transaction({ onNextStep, assets }: TransactionProps) {
-  const { mutate, isPending, isSuccess, error } = useTransactionEncode();
+  const { mutate, isPending, isSuccess } = useTransactionEncode();
   const form = useForm<TransactionFormInput>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
@@ -60,7 +60,14 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
       {
         onSuccess: (values) => {
           if (values) {
-            setTransaction(values);
+            if (
+              values.transaction.status.errors &&
+              values.transaction.status.errors.length > 0
+            ) {
+              setErrors(values.transaction.status.errors[0].message);
+            } else {
+              setTransaction(values);
+            }
           } else {
             setErrors("API ERROR - Please try again later");
           }
@@ -110,7 +117,10 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
                       form.setValue("senders", asset.address);
                       if (asset.isToken) {
                         form.setValue("mode", TransactionMode.TRANSFER_TOKEN);
-                        form.setValue("tokenId", asset.assetId);
+                        form.setValue(
+                          "tokenId",
+                          asset.contractAddress || asset.assetId
+                        );
                       }
                       setDecimals(asset.decimals);
                     }}
@@ -183,8 +193,8 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
             )}
           />
 
-          {error && (
-            <div className="text-red-500 w-full break-all">{error.message}</div>
+          {errors && (
+            <div className="text-red-500 w-full break-all">{errors}</div>
           )}
 
           <Button type="submit" className="w-full">

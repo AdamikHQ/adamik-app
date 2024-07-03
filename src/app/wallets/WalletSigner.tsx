@@ -45,5 +45,15 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
     );
   }
 
-  return <div className="flex flex-row gap-4">{getSignerComponent()}</div>;
+  return (
+    <div>
+      <h1 className="font-extrabold text-2xl text-center mb-4">
+        Sign with your wallet
+      </h1>
+      <div className="mb-8 text-center">
+        Click on your wallet to start the signing process.
+      </div>
+      <div className="flex flex-row gap-4">{getSignerComponent()}</div>
+    </div>
+  );
 };
