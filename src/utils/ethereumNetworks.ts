@@ -138,4 +138,16 @@ export const etherumNetworkConfig: Record<string, any> = {
     },
     isTestnet: true,
   },
+  bsc: {
+    adamikChainId: "bsc",
+    chainId: "0x38",
+    chainName: "BNB Smart Chain",
+    rpcUrls: ["https://bsc-dataseed.binance.org/"],
+    explorerUrl: (hash: string) => `https://bscscan.com/tx/${hash}`,
+    nativeCurrency: {
+      name: "BNB",
+      symbol: "BNB",
+      decimals: 18,
+    },
+  },
 };
