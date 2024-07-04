@@ -150,4 +150,27 @@ export const etherumNetworkConfig: Record<string, any> = {
       decimals: 18,
     },
   },
-};
+  fantom: {
+    adamikChainId: "fantom",
+    chainId: "0xFA",
+    chainName: "Fantom",
+    rpcUrls: ["https://rpcapi.fantom.network"],
+    explorerUrl: (hash: string) => `https://ftmscan.com/tx/${hash}`,
+    nativeCurrency: {
+      name: "Fantom",
+      symbol: "FTM",
+      decimals: 18,
+    },
+  },
+  polygon: {
+    adamikChainId: "polygon",
+    chainId: "0x89",
+    chainName: "Polygon",
+    rpcUrls: ["https://polygon-rpc.com"],
+    explorerUrl: (hash: string) => `https://polygonscan.com//tx/${hash}`,
+    nativeCurrency: {
+      name: "MATIC",
+      symbol: "MATIC",
+      decimals: 18,
+    }
+  };
