@@ -7,8 +7,10 @@ type GetAddressStateParams = {
   address: string;
 };
 
-export const isAddressStateCache = (chainId: string, address: string) => {
-  return queryCache.find({ queryKey: ["addressState", chainId, address] });
+export const isAddressStateCache = (addresses: GetAddressStateParams[]) => {
+  return addresses.every(({ chainId, address }) => {
+    return queryCache.find({ queryKey: ["addressState", chainId, address] });
+  });
 };
 
 export const useAddressStateBatch = (
