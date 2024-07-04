@@ -65,6 +65,8 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
       },
       {
         onSuccess: (values) => {
+          setSignedTransaction(undefined);
+          setTransactionHash(undefined);
           if (values) {
             if (
               values.transaction.status.errors &&
@@ -72,8 +74,6 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
             ) {
               setErrors(values.transaction.status.errors[0].message);
             } else {
-              setSignedTransaction(undefined);
-              setTransactionHash(undefined);
               setTransaction(values);
             }
           } else {
