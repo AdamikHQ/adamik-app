@@ -22,7 +22,7 @@ export const LoadingModal = () => {
           </h1>
           <Loader className="animate-spin h-12 w-12" />
           <div>
-            {`Did you know that Adamik : ${
+            {`Did you know that: ${
               tipsList[randomIntFromInterval(0, tipsList.length - 1)]
             }`}
           </div>
