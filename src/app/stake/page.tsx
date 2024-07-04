@@ -1,8 +1,10 @@
 "use client";
 
 import { Info } from "lucide-react";
+import { LoadingModal } from "~/components/layout/LoadingModal";
+import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   Table,
   TableBody,
@@ -20,14 +22,12 @@ import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { useValidatorsBatch } from "~/hooks/useValidatorsBatch";
 import { useWallet } from "~/hooks/useWallet";
-import { formatAmountUSD } from "~/utils/helper";
+import { showroomAddresses } from "../../utils/showroomAddresses";
 import { getTickers } from "../portfolio/helpers";
 import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
+import { StakingBalances } from "./StakingBalances";
 import { ValidatorRow } from "./ValidatorRow";
 import { aggregateStakingBalances, getAddressValidators } from "./helpers";
-import { showroomAddresses } from "../../utils/showroomAddresses";
-import { LoadingModal } from "~/components/layout/LoadingModal";
-import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 
 export default function Stake() {
   const { addresses, isShowroom } = useWallet();
@@ -95,56 +95,7 @@ export default function Stake() {
 
       {isShowroom ? <ShowroomBanner /> : null}
 
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-5">
-        <Card className="col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Available balance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatAmountUSD(aggregatedBalances.availableBalance)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Staked Balance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatAmountUSD(aggregatedBalances.stakedBalance)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Claimable Rewards
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatAmountUSD(aggregatedBalances.claimableRewards)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Unstaking Balance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatAmountUSD(aggregatedBalances.unstakingBalance)}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <StakingBalances aggregatedBalances={aggregatedBalances} />
 
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-5">
         <Button className="col-span-2">Stake</Button>
@@ -159,6 +110,9 @@ export default function Stake() {
 
       <div>
         <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Validators</CardTitle>
+          </CardHeader>
           <Table>
             <TableHeader>
               <TableRow>
