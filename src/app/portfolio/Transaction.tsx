@@ -15,7 +15,7 @@ import {
 import { Input } from "~/components/ui/input";
 import { TransactionFormInput, transactionFormSchema } from "~/utils/schema";
 import { Asset, TransactionMode } from "~/utils/types";
-import { AssetSelector } from "./AssetSelector";
+import { AssetsSelector } from "./AssetsSelector";
 import { useTransactionEncode } from "~/hooks/useTransactionEncode";
 import { useState } from "react";
 import { amountToSmallestUnit } from "~/utils/helper";
@@ -103,7 +103,7 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
               <FormItem>
                 <FormLabel>Asset</FormLabel>
                 <FormControl>
-                  <AssetSelector
+                  <AssetsSelector
                     assets={assets}
                     onSelect={(asset) => {
                       form.setValue("chainId", asset.chainId);

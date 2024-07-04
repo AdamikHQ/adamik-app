@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import * as React from "react";
 
 import { useMediaQuery } from "usehooks-ts";
@@ -24,7 +23,7 @@ import { ScrollArea } from "~/components/ui/scroll-area";
 import { Asset } from "~/utils/types";
 import { formatAmount } from "~/utils/helper";
 
-type AssetSelectorProps = {
+type AssetsSelectorProps = {
   assets: Asset[];
   onSelect: (asset: Asset) => void;
 };
@@ -44,10 +43,10 @@ export const AssetView = ({ asset }: { asset: Asset }) => {
   );
 };
 
-export function AssetSelector({
+export function AssetsSelector({
   assets,
   onSelect,
-}: AssetSelectorProps): React.ReactNode {
+}: AssetsSelectorProps): React.ReactNode {
   const [open, setOpen] = React.useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [selectedChoice, setSelectedChoice] = React.useState<Asset | null>(
@@ -71,7 +70,7 @@ export function AssetSelector({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[400px] p-0">
-          <AssetList
+          <AssetsSelectorList
             setOpen={setOpen}
             setSelectedChoice={setSelectedChoice}
             assets={assets}
@@ -99,7 +98,7 @@ export function AssetSelector({
       </DrawerTrigger>
       <DrawerContent>
         <div className="mt-4 border-t">
-          <AssetList
+          <AssetsSelectorList
             setOpen={setOpen}
             setSelectedChoice={setSelectedChoice}
             assets={assets}
@@ -111,7 +110,7 @@ export function AssetSelector({
   );
 }
 
-function AssetList({
+function AssetsSelectorList({
   setOpen,
   setSelectedChoice,
   assets,
