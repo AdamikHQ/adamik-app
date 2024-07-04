@@ -1,7 +1,11 @@
 "use client";
 
+import { Info } from "lucide-react";
 import { useMemo, useState } from "react";
+import { LoadingModal } from "~/components/layout/LoadingModal";
+import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { Modal } from "~/components/ui/modal";
+import { Tooltip } from "~/components/ui/tooltip";
 import {
   isAddressStateCache,
   useAddressStateBatch,
@@ -10,9 +14,14 @@ import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { useWallet } from "~/hooks/useWallet";
+import { TransactionProvider } from "~/providers/TransactionProvider";
+import { showroomAddresses } from "../../utils/showroomAddresses";
+import { aggregateStakingBalances } from "../stake/helpers";
+import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
+import { WalletSigner } from "../wallets/WalletSigner";
 import { AssetsBalances } from "./AssetsBalances";
-import { AssetsList } from "./AssetsList";
 import { AssetsBreakdown } from "./AssetsBreakdown";
+import { AssetsList } from "./AssetsList";
 import { ConnectWallet } from "./ConnectWallet";
 import { Transaction } from "./Transaction";
 import {
@@ -21,15 +30,6 @@ import {
   getTokenContractAddresses,
   getTokenTickers,
 } from "./helpers";
-import { showroomAddresses } from "../../utils/showroomAddresses";
-import { aggregateStakingBalances } from "../stake/helpers";
-import { LoadingModal } from "~/components/layout/LoadingModal";
-import { TransactionProvider } from "~/providers/TransactionProvider";
-import { WalletSigner } from "../wallets/WalletSigner";
-import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
-import { Tooltip } from "~/components/ui/tooltip";
-import { Info } from "lucide-react";
-import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
 
 export default function Portfolio() {
   const {

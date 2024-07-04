@@ -22,10 +22,9 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
     const localDataAddresses = localStorage?.getItem("AdamikClientAddresses");
     setAddresses(localDataAddresses ? JSON.parse(localDataAddresses) : []);
 
-    const localDataShowroom = localStorage?.getItem("AdamikClientState");
-    setShowroom(
-      localDataShowroom ? JSON.parse(localDataShowroom).isShowroom : false
-    );
+    const localDataClientState = localStorage?.getItem("AdamikClientState");
+    const localDataClientStateParsed = JSON.parse(localDataClientState || "{}");
+    setShowroom(localDataClientStateParsed?.isShowroom || false);
   }, []);
 
   const addWallet = (wallet: IWallet) => {
@@ -87,9 +86,11 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
             isWalletMenuOpen,
             isShowroom,
             setShowroom: (isShowroom: boolean) => {
+              const localData = localStorage?.getItem("AdamikClientState");
+              const oldLocalData = JSON.parse(localData || "{}");
               localStorage?.setItem(
                 "AdamikClientState",
-                JSON.stringify({ isShowroom: isShowroom })
+                JSON.stringify({ ...oldLocalData, isShowroom: isShowroom })
               );
               setShowroom(isShowroom);
             },
