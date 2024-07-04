@@ -25,11 +25,16 @@ export const LoadingModal = () => {
       modalContent={
         <div className="flex items-center flex-col gap-4">
           <h1 className="text-2xl font-semibold text-center">
-            Adamik is updating your assets, <br />
-            it should not take more than 30 seconds
+            Adamik is updating your assets
           </h1>
-          <Loader className="animate-spin h-12 w-12" />
-          <div>{`Did you know that: ${tipsList[randomIndex]}`}</div>
+          <p className="text-center text-sm text-gray-400">
+            This should only take about 30 seconds.
+          </p>
+          <Loader className="animate-spin h-12 w-12 text-blue-500" />
+          <div className="mt-4 p-4 border-t border-gray-600 w-full text-center text-sm bg-gray-800 rounded-lg">
+            <span className="font-semibold">Did you know?</span> <br />
+            {tipsList[randomIndex]}
+          </div>
         </div>
       }
     />
