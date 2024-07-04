@@ -4,7 +4,7 @@ import { wallets as cosmosWallets } from "@cosmos-kit/keplr";
 import { ChainProvider } from "@cosmos-kit/react-lite";
 import { MetaMaskProvider } from "@metamask/sdk-react";
 import { assets, chains } from "chain-registry";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Address, IWallet } from "~/app/wallets/types";
 import { WalletContext } from "~/hooks/useWallet";
 
@@ -14,15 +14,19 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
   children,
 }) => {
   const [wallets, setWallets] = useState<IWallet[]>([]);
-  const [addresses, setAddresses] = useState<Address[]>(() => {
-    const localData = localStorage?.getItem("AdamikClientAddresses");
-    return localData ? JSON.parse(localData) : [];
-  });
-  const [isShowroom, setShowroom] = useState<boolean>(() => {
-    const localData = localStorage?.getItem("AdamikClientState");
-    return localData ? JSON.parse(localData).isShowroom : false;
-  });
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [isShowroom, setShowroom] = useState<boolean>(false);
   const [isWalletMenuOpen, setWalletMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const localDataAddresses = localStorage?.getItem("AdamikClientAddresses");
+    setAddresses(localDataAddresses ? JSON.parse(localDataAddresses) : []);
+
+    const localDataShowroom = localStorage?.getItem("AdamikClientState");
+    setShowroom(
+      localDataShowroom ? JSON.parse(localDataShowroom).isShowroom : false
+    );
+  }, []);
 
   const addWallet = (wallet: IWallet) => {
     const exist = wallets.find((w) => w.id === wallet.id);
