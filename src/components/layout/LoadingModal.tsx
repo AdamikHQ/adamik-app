@@ -3,13 +3,12 @@ import { Modal } from "../ui/modal";
 import { useState } from "react";
 
 const tipsList: string[] = [
-  "Adamik allows you to stake your assets on multiple chains",
-  "Adamik test message 1",
-  "Adamik test message 2",
-  "Adamik test message 3",
-  "Adamik test message 4",
-  "Adamik test message 5",
-  "Adamik test message 6",
+  "Adamik allows you to stake assets on multiple chains.",
+  "Adamik does not store your account information.",
+  "Adamik simplifies reading data from multiple blockchains.",
+  "Adamik makes developing multichain applications easier.",
+  "Adamik does not have access to your keys. You remain in control.",
+  "Adamik translates your intent into a blockchain transaction.",
 ];
 
 function randomIntFromInterval(min: number, max: number) {
