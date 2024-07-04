@@ -21,9 +21,8 @@ const getAmountToUSD = (
   const amountInMainUnit = amountToMainUnit(amount, decimals);
 
   const balanceUSD =
-    !chainDetails.isTestNet &&
-    mobulaMarketData &&
-    mobulaMarketData[chainDetails.ticker]
+    // !chainDetails.isTestNet &&  TMP: Just to usetestnet for test
+    mobulaMarketData && mobulaMarketData[chainDetails.ticker]
       ? mobulaMarketData[chainDetails.ticker]?.price *
         parseFloat(amountInMainUnit as string)
       : 0;

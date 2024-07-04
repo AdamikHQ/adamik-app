@@ -21,6 +21,7 @@ import { useState } from "react";
 import { amountToSmallestUnit } from "~/utils/helper";
 import { TransactionLoading } from "./TransactionLoading";
 import { Textarea } from "~/components/ui/textarea";
+import { useTransaction } from "~/hooks/useTransaction";
 
 type TransactionProps = {
   onNextStep: () => void;
@@ -34,6 +35,7 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
     defaultValues: {
       mode: TransactionMode.TRANSFER,
       chainId: "",
+      tokenId: "",
       senders: "",
       recipients: "",
       amount: 0,
@@ -41,32 +43,50 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
     },
   });
   const [decimals, setDecimals] = useState<number>(0);
-  const [encodedTransaction, setEncodedTransaction] = useState<any>({});
+  const {
+    transaction,
+    setTransaction,
+    setSignedTransaction,
+    setTransactionHash,
+  } = useTransaction();
   const [errors, setErrors] = useState("");
 
   function onSubmit(values: TransactionFormInput) {
     mutate(
       {
-        ...values,
+        mode: values.mode,
         chainId: values.chainId,
         recipients: [values.recipients],
         senders: [values.senders],
         amount: values.useMaxAmount
           ? ""
           : amountToSmallestUnit(values.amount.toString(), decimals),
+        useMaxAmount: values.useMaxAmount,
+        format: "json",
       },
       {
-        onSuccess: (values) => {
+        onSettled: (values) => {
+          setTransaction(undefined);
+          setSignedTransaction(undefined);
+          setTransactionHash(undefined);
           if (values) {
-            setEncodedTransaction(values?.transaction.encoded);
+            if (
+              values.transaction.status.errors &&
+              values.transaction.status.errors.length > 0
+            ) {
+              setErrors(values.transaction.status.errors[0].message);
+            } else {
+              setTransaction(values);
+            }
           } else {
             setErrors("API ERROR - Please try again later");
           }
-
-          // onNextStep();
         },
         onError: (error) => {
-          console.log({ error });
+          setTransaction(undefined);
+          setSignedTransaction(undefined);
+          setTransactionHash(undefined);
+          setErrors("API ERROR - Please try again later :" + error.message);
         },
       }
     );
@@ -76,15 +96,19 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
     return <TransactionLoading />;
   }
 
-  if (isSuccess) {
+  if (isSuccess && transaction) {
     return (
       <>
         <h1 className="font-bold text-xl text-center">
           Your transaction has been successfully processed <br /> by the Adamik
           API and is now ready for signing.
         </h1>
-        <Textarea readOnly value={JSON.stringify(encodedTransaction)} />
-        <Button onClick={onNextStep} className="w-full">
+        <Textarea
+          readOnly
+          value={JSON.stringify(transaction)}
+          className="h-32"
+        />
+        <Button onClick={() => onNextStep()} className="w-full">
           Sign your Transaction
         </Button>
       </>
@@ -105,9 +129,22 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
                 <FormControl>
                   <AssetsSelector
                     assets={assets}
-                    onSelect={(asset) => {
+                    selectedValue={
+                      form.getValues().assetIndex
+                        ? assets[form.getValues().assetIndex as number]
+                        : undefined
+                    }
+                    onSelect={(asset, index) => {
+                      form.setValue("assetIndex", index);
                       form.setValue("chainId", asset.chainId);
                       form.setValue("senders", asset.address);
+                      if (asset.isToken) {
+                        form.setValue("mode", TransactionMode.TRANSFER_TOKEN);
+                        form.setValue(
+                          "tokenId",
+                          asset.contractAddress || asset.assetId
+                        );
+                      }
                       setDecimals(asset.decimals);
                     }}
                     {...field}
@@ -178,6 +215,10 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
               </FormItem>
             )}
           />
+
+          {errors && (
+            <div className="text-red-500 w-full break-all">{errors}</div>
+          )}
 
           <Button type="submit" className="w-full">
             Submit

@@ -2,7 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { Modal } from "~/components/ui/modal";
-import { useAddressStateBatch } from "~/hooks/useAddressStateBatch";
+import {
+  isAddressStateCache,
+  useAddressStateBatch,
+} from "~/hooks/useAddressStateBatch";
 import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
@@ -20,6 +23,9 @@ import {
 } from "./helpers";
 import { showroomAddresses } from "../../utils/showroomAddresses";
 import { aggregateStakingBalances } from "../stake/helpers";
+import { LoadingModal } from "~/components/layout/LoadingModal";
+import { TransactionProvider } from "~/providers/TransactionProvider";
+import { WalletSigner } from "../wallets/WalletSigner";
 
 export default function Portfolio() {
   const { addresses, setWalletMenuOpen: setWalletMenuOpen } = useWallet();
@@ -37,6 +43,8 @@ export default function Portfolio() {
   const { data, isLoading: isAddressesLoading } =
     useAddressStateBatch(displayAddresses);
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
+  const [openTransaction, setOpenTransaction] = useState(false);
+  const [stepper, setStepper] = useState(0);
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
   const tokenTickers = getTokenTickers(data || []);
@@ -62,10 +70,6 @@ export default function Portfolio() {
     () => aggregateStakingBalances(data, chainsDetails, mobulaMarketData),
     [chainsDetails, data, mobulaMarketData]
   );
-
-  const [openTransaction, setOpenTransaction] = useState(false);
-
-  const [stepper, setStepper] = useState(0);
 
   const isLoading =
     isAddressesLoading ||
@@ -119,55 +123,71 @@ export default function Portfolio() {
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
-      <AssetsBalances
-        isLoading={isLoading}
-        totalBalance={totalBalance}
-        availableBalance={availableBalance}
-        stakingBalances={stakingBalances}
-      />
-
-      <div className="grid gap-4 md:gap-8 grid-cols-1 lg:grid-cols-3">
-        <AssetsList
+      {isLoading && !isAddressStateCache(displayAddresses) ? (
+        <LoadingModal />
+      ) : null}
+      <TransactionProvider>
+        <AssetsBalances
           isLoading={isLoading}
-          assets={assets}
-          openTransaction={openTransaction}
-          setOpenTransaction={setOpenTransaction}
-        />
-
-        <AssetsBreakdown
-          isLoading={isLoading}
-          assets={assets}
           totalBalance={totalBalance}
+          availableBalance={availableBalance}
+          stakingBalances={stakingBalances}
         />
-      </div>
 
-      <Modal
-        open={openTransaction}
-        setOpen={setOpenTransaction}
-        modalContent={
-          // Probably need to rework
-          stepper === 0 ? (
-            <Transaction
-              assets={assets}
-              onNextStep={() => {
-                setStepper(1);
-              }}
-            />
-          ) : (
-            <>
-              <ConnectWallet
+        <div className="grid gap-4 md:gap-8 grid-cols-1 lg:grid-cols-3">
+          <AssetsList
+            isLoading={isLoading}
+            assets={assets}
+            openTransaction={openTransaction}
+            setOpenTransaction={setOpenTransaction}
+          />
+
+          <AssetsBreakdown
+            isLoading={isLoading}
+            assets={assets}
+            totalBalance={totalBalance}
+          />
+        </div>
+
+        <Modal
+          open={openTransaction}
+          setOpen={setOpenTransaction}
+          modalContent={
+            // Probably need to rework
+            stepper === 0 ? (
+              <Transaction
+                assets={assets}
                 onNextStep={() => {
-                  setOpenTransaction(false);
-                  setWalletMenuOpen(true);
-                  setTimeout(() => {
-                    setStepper(0);
-                  }, 200);
+                  setStepper(1);
                 }}
               />
-            </>
-          )
-        }
-      />
+            ) : (
+              <>
+                {addresses && addresses.length > 0 ? (
+                  <WalletSigner
+                    onNextStep={() => {
+                      setOpenTransaction(false);
+                      setTimeout(() => {
+                        setStepper(0);
+                      }, 200);
+                    }}
+                  />
+                ) : (
+                  <ConnectWallet
+                    onNextStep={() => {
+                      setOpenTransaction(false);
+                      setWalletMenuOpen(true);
+                      setTimeout(() => {
+                        setStepper(0);
+                      }, 200);
+                    }}
+                  />
+                )}
+              </>
+            )
+          }
+        />
+      </TransactionProvider>
     </main>
   );
 }

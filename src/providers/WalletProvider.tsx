@@ -24,22 +24,29 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
 
   const addAddresses = (receiveAddresses: Address[]) => {
     setAddresses((oldAddresses) => {
-      const mergedAddresses = Array.from(
-        new Set([...oldAddresses, ...receiveAddresses])
-      );
+      const mergedAddresses = [...oldAddresses, ...receiveAddresses];
 
-      return mergedAddresses;
+      return mergedAddresses.filter(
+        (value, index, self) =>
+          index ===
+          self.findIndex(
+            (t) => t.address === value.address && t.chainId === value.chainId
+          )
+      );
     });
   };
 
   return (
     <MetaMaskProvider
+      debug={false}
       sdkOptions={{
+        checkInstallationImmediately: false,
+        logging: { developerMode: false },
         dappMetadata: {
           name: "Adamik App",
           url:
             typeof window !== "undefined"
-              ? window.location.href
+              ? window.location.host
               : "https://adamik-app.vercel.app/",
         },
       }}

@@ -6,12 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   Table,
   TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
 import { Tooltip } from "~/components/ui/tooltip";
-import { useAddressStateBatch } from "~/hooks/useAddressStateBatch";
+import {
+  isAddressStateCache,
+  useAddressStateBatch,
+} from "~/hooks/useAddressStateBatch";
 import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { useValidatorsBatch } from "~/hooks/useValidatorsBatch";
@@ -22,6 +26,7 @@ import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
 import { ValidatorRow } from "./ValidatorRow";
 import { aggregateStakingBalances, getAddressValidators } from "./helpers";
 import { showroomAddresses } from "../../utils/showroomAddresses";
+import { LoadingModal } from "~/components/layout/LoadingModal";
 
 export default function Stake() {
   const { addresses } = useWallet();
@@ -34,7 +39,8 @@ export default function Stake() {
     },
     []
   );
-  const { data } = useAddressStateBatch(displayAddresses);
+  const { data, isLoading: isAddressStateLoading } =
+    useAddressStateBatch(displayAddresses);
   const { data: chainsDetails, isLoading: isChainDetailsLoading } =
     useGetChainDetailsBatch(chainIdsAdamik);
 
@@ -45,7 +51,12 @@ export default function Stake() {
     "symbols"
   );
 
-  const { data: validatorsData } = useValidatorsBatch(chainIdsAdamik);
+  const { data: validatorsData, isLoading: validatorLoading } =
+    useValidatorsBatch(chainIdsAdamik);
+
+  const isLoading =
+    validatorLoading || isChainDetailsLoading || isAddressStateLoading;
+
   const aggregatedBalances = aggregateStakingBalances(
     data,
     chainsDetails,
@@ -61,6 +72,9 @@ export default function Stake() {
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
+      {isLoading && !isAddressStateCache(displayAddresses) ? (
+        <LoadingModal />
+      ) : null}
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <h1 className="text-lg font-semibold md:text-2xl">Staking Portal</h1>
@@ -154,17 +168,25 @@ export default function Stake() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Object.entries(validators)
-                .sort((a, b) => {
-                  return (b[1].amountUSD || 0) - (a[1].amountUSD || 0);
-                })
-                .map(([validatorAddress, validator]) => (
-                  <ValidatorRow
-                    key={validatorAddress}
-                    validator={validator}
-                    validatorAddress={validatorAddress}
-                  />
-                ))}
+              {Object.keys(validators).length > 0 ? (
+                Object.entries(validators)
+                  .sort((a, b) => {
+                    return (b[1].amountUSD || 0) - (a[1].amountUSD || 0);
+                  })
+                  .map(([validatorAddress, validator]) => (
+                    <ValidatorRow
+                      key={validatorAddress}
+                      validator={validator}
+                      validatorAddress={validatorAddress}
+                    />
+                  ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center">
+                    No validator found
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </Card>

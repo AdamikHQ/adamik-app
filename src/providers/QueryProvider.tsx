@@ -1,7 +1,9 @@
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
-import { QueryClient } from "@tanstack/react-query";
+import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { useState } from "react";
+
+export const queryCache = new QueryCache();
 
 export const QueryProvider: React.FC<React.PropsWithChildren> = ({
   children,
