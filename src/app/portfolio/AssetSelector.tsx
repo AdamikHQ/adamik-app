@@ -23,6 +23,7 @@ import {
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Asset } from "~/utils/types";
 import { formatAmount } from "~/utils/helper";
+import { Tooltip, TooltipTrigger } from "~/components/ui/tooltip";
 
 type AssetSelectorProps = {
   assets: Asset[];
@@ -32,10 +33,33 @@ type AssetSelectorProps = {
 export const AssetView = ({ asset }: { asset: Asset }) => {
   return (
     <div className="flex items-center justify-between w-full">
-      <Avatar className="w-[32px] h-[32px] mr-6">
-        <AvatarImage src={asset?.logo} alt={asset.name} />
-        <AvatarFallback>{asset.name}</AvatarFallback>
-      </Avatar>
+      {asset?.logo && (
+        <div className="relative">
+          <Tooltip text={asset.name}>
+            <TooltipTrigger>
+              <Avatar className="w-[32px] h-[32px]">
+                <AvatarImage src={asset?.logo} alt={asset.name} />
+                <AvatarFallback>{asset.name}</AvatarFallback>
+              </Avatar>
+            </TooltipTrigger>
+          </Tooltip>
+          {asset.mainChainLogo && (
+            <Tooltip text={asset.chainId}>
+              <TooltipTrigger>
+                <div className="absolute w-4 h-4 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-[6px] -end-1">
+                  <Avatar className="h-3 w-3">
+                    <AvatarImage
+                      src={asset.mainChainLogo}
+                      alt={asset.chainId}
+                    />
+                    <AvatarFallback>{asset.chainId}</AvatarFallback>
+                  </Avatar>
+                </div>
+              </TooltipTrigger>
+            </Tooltip>
+          )}
+        </div>
+      )}
       <div className="flex-1 text-right">
         {asset?.balanceMainUnit ? formatAmount(asset.balanceMainUnit, 5) : ""}
       </div>

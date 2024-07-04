@@ -4,9 +4,8 @@ import {
   Tooltip,
   TooltipProvider,
   TooltipTrigger,
-  TooltipContent,
 } from "~/components/ui/tooltip";
-import { formatAmountUSD, formatAmount } from "~/utils/helper";
+import { formatAmount, formatAmountUSD } from "~/utils/helper";
 import { Asset } from "~/utils/types";
 
 export const AssetRow: React.FC<{ asset: Asset }> = ({ asset }) => {

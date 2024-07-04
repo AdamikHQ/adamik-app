@@ -64,7 +64,8 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
         format: "json",
       },
       {
-        onSuccess: (values) => {
+        onSettled: (values) => {
+          setTransaction(undefined);
           setSignedTransaction(undefined);
           setTransactionHash(undefined);
           if (values) {
@@ -81,7 +82,10 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
           }
         },
         onError: (error) => {
-          console.log({ error });
+          setTransaction(undefined);
+          setSignedTransaction(undefined);
+          setTransactionHash(undefined);
+          setErrors("API ERROR - Please try again later :" + error.message);
         },
       }
     );
