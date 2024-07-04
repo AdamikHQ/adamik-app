@@ -4,7 +4,12 @@ import { useState } from "react";
 
 const tipsList: string[] = [
   "Adamik allows you to stake your assets on multiple chains",
-  "Adamik test message",
+  "Adamik test message 1",
+  "Adamik test message 2",
+  "Adamik test message 3",
+  "Adamik test message 4",
+  "Adamik test message 5",
+  "Adamik test message 6",
 ];
 
 function randomIntFromInterval(min: number, max: number) {
