@@ -24,7 +24,7 @@ import { Tooltip, TooltipTrigger } from "~/components/ui/tooltip";
 import { formatAmount } from "~/utils/helper";
 import { Asset } from "~/utils/types";
 
-type AssetSelectorProps = {
+type AssetsSelectorProps = {
   assets: Asset[];
   selectedValue: Asset | undefined;
   onSelect: (asset: Asset, index: number) => void;
@@ -68,11 +68,11 @@ export const AssetView = ({ asset }: { asset: Asset }) => {
   );
 };
 
-export function AssetSelector({
+export function AssetsSelector({
   assets,
   selectedValue,
   onSelect,
-}: AssetSelectorProps): React.ReactNode {
+}: AssetsSelectorProps): React.ReactNode {
   const [open, setOpen] = React.useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [selectedChoice, setSelectedChoice] = React.useState<Asset | undefined>(
@@ -96,7 +96,7 @@ export function AssetSelector({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[400px] p-0">
-          <AssetList
+          <AssetsSelectorList
             setOpen={setOpen}
             setSelectedChoice={setSelectedChoice}
             assets={assets}
@@ -124,7 +124,7 @@ export function AssetSelector({
       </DrawerTrigger>
       <DrawerContent>
         <div className="mt-4 border-t">
-          <AssetList
+          <AssetsSelectorList
             setOpen={setOpen}
             setSelectedChoice={setSelectedChoice}
             assets={assets}
@@ -136,7 +136,7 @@ export function AssetSelector({
   );
 }
 
-function AssetList({
+function AssetsSelectorList({
   setOpen,
   setSelectedChoice,
   assets,

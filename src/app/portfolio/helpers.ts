@@ -170,3 +170,25 @@ export const calculateAssets = (
     return [...acc, mainChainAsset, ...tokenAssets];
   }, []);
 };
+
+export const filterAndSortAssets = (
+  assets: Asset[],
+  hideLowBalance: boolean
+) => {
+  return (
+    assets
+      // Remove empty items
+      .filter(Boolean)
+      // Apply low balances filter if necessary
+      .filter((asset) => {
+        return (
+          asset?.balanceUSD !== undefined &&
+          !(hideLowBalance && asset.balanceUSD <= 1)
+        );
+      })
+      .sort((a, b) => {
+        // Highest to lowest USD balance
+        return (b.balanceUSD || 0) - (a.balanceUSD || 0);
+      })
+  );
+};

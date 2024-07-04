@@ -5,7 +5,7 @@ import { ValidatorResponse } from "~/api/validator";
 import { amountToMainUnit } from "~/utils/helper";
 import { Chain } from "~/utils/types";
 
-type AggregatedBalances = {
+export type AggregatedBalances = {
   availableBalance: number;
   stakedBalance: number;
   claimableRewards: number;
@@ -30,11 +30,11 @@ const getAmountToUSD = (
   return balanceUSD;
 };
 
-export const aggregatedStakingBalances = (
+export const aggregateStakingBalances = (
   data: (GetAddressStateResponse | undefined | null)[],
   chainsDetails: (GetChainDetailsResponse | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null
-) => {
+): AggregatedBalances => {
   return data?.reduce<AggregatedBalances>(
     (acc, accountData) => {
       if (!accountData) return { ...acc };

@@ -24,7 +24,7 @@ import { formatAmountUSD } from "~/utils/helper";
 import { getTickers } from "../portfolio/helpers";
 import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
 import { ValidatorRow } from "./ValidatorRow";
-import { aggregatedStakingBalances, getAddressValidators } from "./helpers";
+import { aggregateStakingBalances, getAddressValidators } from "./helpers";
 import { showroomAddresses } from "../../utils/showroomAddresses";
 import { LoadingModal } from "~/components/layout/LoadingModal";
 
@@ -57,7 +57,7 @@ export default function Stake() {
   const isLoading =
     validatorLoading || isChainDetailsLoading || isAddressStateLoading;
 
-  const aggregatedBalances = aggregatedStakingBalances(
+  const aggregatedBalances = aggregateStakingBalances(
     data,
     chainsDetails,
     mobulaMarketData
@@ -161,7 +161,7 @@ export default function Stake() {
               <TableRow>
                 <TableHead className="w-[80px] md:table-cell"></TableHead>
                 <TableHead>Validator</TableHead>
-                <TableHead>Amount stake</TableHead>
+                <TableHead>Amount staked</TableHead>
                 <TableHead>Amount (USD)</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Claimable rewards</TableHead>
