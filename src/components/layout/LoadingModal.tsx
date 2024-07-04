@@ -27,7 +27,7 @@ export const LoadingModal = () => {
             Adamik is updating your assets
           </h1>
           <p className="text-center text-sm text-gray-400">
-            This should only take about 30 seconds.
+            This may take up to 15 seconds.
           </p>
           <Loader className="animate-spin h-12 w-12 text-blue-500" />
           <div className="mt-4 p-4 border-t border-gray-600 w-full text-center text-sm bg-gray-800 rounded-lg">
