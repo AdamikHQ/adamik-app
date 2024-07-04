@@ -54,13 +54,14 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
   function onSubmit(values: TransactionFormInput) {
     mutate(
       {
-        ...values,
+        mode: values.mode,
         chainId: values.chainId,
         recipients: [values.recipients],
         senders: [values.senders],
         amount: values.useMaxAmount
           ? ""
           : amountToSmallestUnit(values.amount.toString(), decimals),
+        useMaxAmount: values.useMaxAmount,
         format: "json",
       },
       {
@@ -128,7 +129,13 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
                 <FormControl>
                   <AssetSelector
                     assets={assets}
-                    onSelect={(asset) => {
+                    selectedValue={
+                      form.getValues().assetIndex
+                        ? assets[form.getValues().assetIndex as number]
+                        : undefined
+                    }
+                    onSelect={(asset, index) => {
+                      form.setValue("assetIndex", index);
                       form.setValue("chainId", asset.chainId);
                       form.setValue("senders", asset.address);
                       if (asset.isToken) {

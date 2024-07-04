@@ -10,6 +10,7 @@ export const transactionFormSchema = z
     amount: z.coerce.number().min(0),
     useMaxAmount: z.boolean(),
     tokenId: z.string().optional(),
+    assetIndex: z.number().optional(),
   })
   .superRefine(({ useMaxAmount }) => {
     if (useMaxAmount) return z.object({ amount: z.literal(0) });

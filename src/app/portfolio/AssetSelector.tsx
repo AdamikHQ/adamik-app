@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import * as React from "react";
 
 import { useMediaQuery } from "usehooks-ts";
@@ -21,13 +20,14 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover";
 import { ScrollArea } from "~/components/ui/scroll-area";
-import { Asset } from "~/utils/types";
-import { formatAmount } from "~/utils/helper";
 import { Tooltip, TooltipTrigger } from "~/components/ui/tooltip";
+import { formatAmount } from "~/utils/helper";
+import { Asset } from "~/utils/types";
 
 type AssetSelectorProps = {
   assets: Asset[];
-  onSelect: (asset: Asset) => void;
+  selectedValue: Asset | undefined;
+  onSelect: (asset: Asset, index: number) => void;
 };
 
 export const AssetView = ({ asset }: { asset: Asset }) => {
@@ -70,12 +70,13 @@ export const AssetView = ({ asset }: { asset: Asset }) => {
 
 export function AssetSelector({
   assets,
+  selectedValue,
   onSelect,
 }: AssetSelectorProps): React.ReactNode {
   const [open, setOpen] = React.useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
-  const [selectedChoice, setSelectedChoice] = React.useState<Asset | null>(
-    null
+  const [selectedChoice, setSelectedChoice] = React.useState<Asset | undefined>(
+    selectedValue
   );
 
   if (isDesktop) {
@@ -142,9 +143,9 @@ function AssetList({
   onSelect,
 }: {
   setOpen: (open: boolean) => void;
-  setSelectedChoice: (choice: Asset | null) => void;
+  setSelectedChoice: (choice: Asset | undefined) => void;
   assets: Asset[];
-  onSelect: (asset: Asset) => void;
+  onSelect: (asset: Asset, index: number) => void;
 }) {
   return (
     <Command>
@@ -160,7 +161,7 @@ function AssetList({
                 onSelect={(value) => {
                   setSelectedChoice(assets[Number(value)]);
                   setOpen(false);
-                  onSelect(asset);
+                  onSelect(asset, i);
                 }}
               >
                 <AssetView asset={asset} />
