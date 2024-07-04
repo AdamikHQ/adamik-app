@@ -3,13 +3,12 @@ import { Modal } from "../ui/modal";
 import { useState } from "react";
 
 const tipsList: string[] = [
-  "Adamik allows you to stake your assets on multiple chains",
-  "Adamik test message 1",
-  "Adamik test message 2",
-  "Adamik test message 3",
-  "Adamik test message 4",
-  "Adamik test message 5",
-  "Adamik test message 6",
+  "Adamik allows you to stake assets on multiple chains.",
+  "Adamik does not store your account information.",
+  "Adamik simplifies reading data from multiple blockchains.",
+  "Adamik makes developing multichain applications easier.",
+  "Adamik does not have access to your keys. You remain in control.",
+  "Adamik translates your intent into a blockchain transaction.",
 ];
 
 function randomIntFromInterval(min: number, max: number) {
@@ -25,11 +24,16 @@ export const LoadingModal = () => {
       modalContent={
         <div className="flex items-center flex-col gap-4">
           <h1 className="text-2xl font-semibold text-center">
-            Adamik is updating your assets, <br />
-            it should not take more than 30 seconds
+            Adamik is updating your assets
           </h1>
-          <Loader className="animate-spin h-12 w-12" />
-          <div>{`Did you know that: ${tipsList[randomIndex]}`}</div>
+          <p className="text-center text-sm text-gray-400">
+            This may take up to 15 seconds.
+          </p>
+          <Loader className="animate-spin h-12 w-12 text-blue-500" />
+          <div className="mt-4 p-4 border-t border-gray-600 w-full text-center text-sm bg-gray-800 rounded-lg">
+            <span className="font-semibold">Did you know?</span> <br />
+            {tipsList[randomIndex]}
+          </div>
         </div>
       }
     />
