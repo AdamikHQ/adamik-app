@@ -1,3 +1,4 @@
+import _ from "lodash";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
@@ -76,7 +77,8 @@ export const AssetsBreakdown: React.FC<{
 
   const filteredAggregatedAssets = useMemo(() => {
     // Group assets by chainId
-    const assetsPerChain = Object.groupBy(
+    // FIXME Replace with Object.groupBy() when Node.js 21 becomes supported by Vercel
+    const assetsPerChain = _.groupBy(
       assets,
       (asset) => asset.chainId
     ) as Record<string, Asset[]>;

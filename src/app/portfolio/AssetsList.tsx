@@ -12,7 +12,6 @@ import {
 } from "~/components/ui/table";
 import { AssetRow } from "./AssetRow";
 import { filterAndSortAssets } from "./helpers";
-import { showroomAddresses } from "../../utils/showroomAddresses";
 import { Asset } from "~/utils/types";
 
 export const AssetsList: React.FC<{

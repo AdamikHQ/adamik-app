@@ -111,16 +111,6 @@ export default function Portfolio() {
     stakingBalances.stakedBalance +
     stakingBalances.unstakingBalance;
 
-  // Will be remove but useful for debugging because we don't have access to network tabs
-  // console.log({
-  //   data,
-  //   chainsDetails,
-  //   assets,
-  //   mergedAssets,
-  //   mobulaMarketData,
-  //   mobulaMarketDataContractAddresses,
-  // });
-
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
       {isLoading && !isAddressStateCache(displayAddresses) ? (
