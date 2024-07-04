@@ -172,5 +172,6 @@ export const etherumNetworkConfig: Record<string, any> = {
       name: "MATIC",
       symbol: "MATIC",
       decimals: 18,
-    }
-  };
+    },
+  },
+};
