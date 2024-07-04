@@ -36,6 +36,7 @@ import {
   getTokenContractAddresses,
   getTokenTickers,
 } from "./helpers";
+import { LoadingModal } from "~/components/layout/LoadingModal";
 
 export default function Portfolio() {
   const { theme, resolvedTheme } = useTheme();
@@ -56,6 +57,9 @@ export default function Portfolio() {
   const { data, isLoading: isAddressesLoading } =
     useAddressStateBatch(displayAddresses);
   const { data: blockchainDetails } = useMobulaBlockchains();
+  const [hideLowBalance, setHideLowBalance] = useState(true);
+  const [openTransaction, setOpenTransaction] = useState(false);
+  const [stepper, setStepper] = useState(0);
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
   const tokenTickers = getTokenTickers(data || []);
@@ -82,11 +86,6 @@ export default function Portfolio() {
     chainsDetails,
     mobulaMarketData
   );
-
-  const [hideLowBalance, setHideLowBalance] = useState(true);
-  const [openTransaction, setOpenTransaction] = useState(false);
-
-  const [stepper, setStepper] = useState(0);
 
   const isLoading =
     isAddressesLoading ||
@@ -127,17 +126,9 @@ export default function Portfolio() {
     aggregatedBalances.stakedBalance +
     aggregatedBalances.unstakingBalance;
 
-  // Will be remove but useful for debugging because we don't have access to network tabs
-  // console.log({
-  //   data,
-  //   chainsDetails,
-  //   assets,
-  //   mergedAssets,
-  //   mobulaMarketData,
-  //   mobulaMarketDataContractAddresses,
-  // });
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
+      {isLoading ? <LoadingModal /> : null}
       <TransactionProvider>
         <div className="flex items-center justify-between">
           <div className="flex items-center">

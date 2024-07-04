@@ -22,7 +22,7 @@ import {
 type ModalProps = {
   trigger?: React.ReactNode;
   open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   modalTitle?: React.ReactNode;
   modalTitleDescription?: React.ReactNode;
   modalContent: React.ReactNode;
