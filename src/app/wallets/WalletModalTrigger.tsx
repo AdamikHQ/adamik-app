@@ -5,12 +5,23 @@ import { WalletModalContent } from "./WalletModalContent";
 import { Button } from "~/components/ui/button";
 import { Wallet } from "lucide-react";
 import { useWallet } from "~/hooks/useWallet";
+import { Switch } from "~/components/ui/switch";
+import { Label } from "~/components/ui/label";
 
 export const WalletModalTrigger = () => {
-  const { isWalletMenuOpen, setWalletMenuOpen } = useWallet();
+  const { isWalletMenuOpen, setWalletMenuOpen, setShowroom, isShowroom } =
+    useWallet();
 
   return (
-    <div>
+    <div className="flex flex-row gap-6">
+      <div
+        className="flex items-center space-x-2"
+        onClick={() => setShowroom(!isShowroom)}
+      >
+        <Switch id="toggle-showroom" checked={isShowroom} />
+        <Label htmlFor="toggle-showroom">Demo</Label>
+      </div>
+
       <Button className="" onClick={() => setWalletMenuOpen(true)}>
         <Wallet className="mr-2 h-4 w-4" /> Connect Wallet
       </Button>

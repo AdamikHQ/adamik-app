@@ -27,11 +27,12 @@ import { ValidatorRow } from "./ValidatorRow";
 import { aggregateStakingBalances, getAddressValidators } from "./helpers";
 import { showroomAddresses } from "../../utils/showroomAddresses";
 import { LoadingModal } from "~/components/layout/LoadingModal";
+import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 
 export default function Stake() {
-  const { addresses } = useWallet();
+  const { addresses, isShowroom } = useWallet();
 
-  const displayAddresses = addresses.length > 0 ? addresses : showroomAddresses;
+  const displayAddresses = isShowroom ? showroomAddresses : addresses;
   const chainIdsAdamik = displayAddresses.reduce<string[]>(
     (acc, { chainId }) => {
       if (acc.includes(chainId)) return acc;
@@ -91,6 +92,8 @@ export default function Stake() {
 
         <WalletModalTrigger />
       </div>
+
+      {isShowroom ? <ShowroomBanner /> : null}
 
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-5">
         <Card className="col-span-2">

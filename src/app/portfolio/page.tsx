@@ -26,11 +26,19 @@ import { aggregateStakingBalances } from "../stake/helpers";
 import { LoadingModal } from "~/components/layout/LoadingModal";
 import { TransactionProvider } from "~/providers/TransactionProvider";
 import { WalletSigner } from "../wallets/WalletSigner";
+import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
+import { Tooltip } from "~/components/ui/tooltip";
+import { Info } from "lucide-react";
+import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
 
 export default function Portfolio() {
-  const { addresses, setWalletMenuOpen: setWalletMenuOpen } = useWallet();
+  const {
+    addresses,
+    setWalletMenuOpen: setWalletMenuOpen,
+    isShowroom,
+  } = useWallet();
 
-  const displayAddresses = addresses.length > 0 ? addresses : showroomAddresses;
+  const displayAddresses = isShowroom ? showroomAddresses : addresses;
   const chainIdsAdamik = displayAddresses.reduce<string[]>(
     (acc, { chainId }) => {
       if (acc.includes(chainId)) return acc;
@@ -117,6 +125,24 @@ export default function Portfolio() {
         <LoadingModal />
       ) : null}
       <TransactionProvider>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <h1 className="text-lg font-semibold md:text-2xl">Portfolio</h1>
+            <Tooltip text="Click to view the API documentation for retrieving balances">
+              <a
+                href="https://docs.adamik.io/api-reference/endpoint/post-apiaddressstate"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
+              </a>
+            </Tooltip>
+          </div>
+          <WalletModalTrigger />
+        </div>
+
+        {isShowroom ? <ShowroomBanner /> : null}
+
         <AssetsBalances
           isLoading={isLoading}
           totalBalance={totalBalance}
