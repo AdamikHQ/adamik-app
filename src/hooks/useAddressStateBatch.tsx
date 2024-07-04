@@ -1,9 +1,14 @@
 import { useQueries } from "@tanstack/react-query";
 import { addressState } from "~/api/addressState";
+import { queryCache } from "~/providers/QueryProvider";
 
 type GetAddressStateParams = {
   chainId: string;
   address: string;
+};
+
+export const isAddressStateCache = (chainId: string, address: string) => {
+  return queryCache.find({ queryKey: ["addressState", chainId, address] });
 };
 
 export const useAddressStateBatch = (

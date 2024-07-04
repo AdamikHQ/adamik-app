@@ -4,6 +4,7 @@ import { DollarSign, Info, Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { Pie } from "react-chartjs-2";
+import { LoadingModal } from "~/components/layout/LoadingModal";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
@@ -16,7 +17,10 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { Tooltip } from "~/components/ui/tooltip";
-import { useAddressStateBatch } from "~/hooks/useAddressStateBatch";
+import {
+  isAddressStateCache,
+  useAddressStateBatch,
+} from "~/hooks/useAddressStateBatch";
 import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
@@ -36,7 +40,6 @@ import {
   getTokenContractAddresses,
   getTokenTickers,
 } from "./helpers";
-import { LoadingModal } from "~/components/layout/LoadingModal";
 
 export default function Portfolio() {
   const { theme, resolvedTheme } = useTheme();
@@ -128,7 +131,9 @@ export default function Portfolio() {
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
-      {isLoading ? <LoadingModal /> : null}
+      {isLoading && !isAddressStateCache(displayAddresses) ? (
+        <LoadingModal />
+      ) : null}
       <TransactionProvider>
         <div className="flex items-center justify-between">
           <div className="flex items-center">
