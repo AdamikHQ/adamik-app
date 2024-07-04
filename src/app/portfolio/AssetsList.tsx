@@ -6,6 +6,7 @@ import { Checkbox } from "~/components/ui/checkbox";
 import {
   Table,
   TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -54,32 +55,44 @@ export const AssetsList: React.FC<{
                   </TableRow>
                 </TableHeader>
                 <TableBody className="overflow-y-auto max-h-[360px]">
-                  {filteredAssets.length > 0 &&
+                  {filteredAssets.length > 0 ? (
                     filteredAssets.map((asset, i) => {
                       if (!asset) return null;
                       return (
                         <AssetRow key={`${i}_${asset.name}`} asset={asset} />
                       );
-                    })}
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5}>
+                        No asset has been found. Please make sure you have
+                        assets in your wallet.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  <TableRow>
+                    <TableCell colSpan={5}>
+                      <div className="items-top flex space-x-2">
+                        <Checkbox
+                          id="hideBalance"
+                          checked={hideLowBalance}
+                          onClick={() => {
+                            setHideLowBalance(!hideLowBalance);
+                          }}
+                        />
+                        <div className="grid gap-1.5 leading-none">
+                          <label
+                            htmlFor="hideBalance"
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {`Hide low balance assets (< 1$)`}
+                          </label>
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
-              <div className="items-top flex space-x-2">
-                <Checkbox
-                  id="hideBalance"
-                  checked={hideLowBalance}
-                  onClick={() => {
-                    setHideLowBalance(!hideLowBalance);
-                  }}
-                />
-                <div className="grid gap-1.5 leading-none">
-                  <label
-                    htmlFor="hideBalance"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {`Hide low balance assets (< 1$)`}
-                  </label>
-                </div>
-              </div>
             </>
           ) : (
             <Loader2 className="animate-spin" />

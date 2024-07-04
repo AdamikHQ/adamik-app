@@ -1,8 +1,6 @@
-import { DollarSign, Info, Loader2 } from "lucide-react";
+import { DollarSign, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Tooltip } from "~/components/ui/tooltip";
 import { formatAmountUSD } from "~/utils/helper";
-import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
 import { AggregatedBalances } from "../stake/helpers";
 
 export const AssetsBalances: React.FC<{
@@ -13,22 +11,6 @@ export const AssetsBalances: React.FC<{
 }> = ({ isLoading, totalBalance, availableBalance, stakingBalances }) => {
   return (
     <>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <h1 className="text-lg font-semibold md:text-2xl">Portfolio</h1>
-          <Tooltip text="Click to view the API documentation for retrieving balances">
-            <a
-              href="https://docs.adamik.io/api-reference/endpoint/post-apiaddressstate"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
-            </a>
-          </Tooltip>
-        </div>
-        <WalletModalTrigger />
-      </div>
-
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

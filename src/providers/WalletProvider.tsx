@@ -1,19 +1,32 @@
 "use client";
 
-import React, { useState } from "react";
+import { wallets as cosmosWallets } from "@cosmos-kit/keplr";
+import { ChainProvider } from "@cosmos-kit/react-lite";
+import { MetaMaskProvider } from "@metamask/sdk-react";
+import { assets, chains } from "chain-registry";
+import React, { useEffect, useState } from "react";
 import { Address, IWallet } from "~/app/wallets/types";
 import { WalletContext } from "~/hooks/useWallet";
-import { MetaMaskProvider } from "@metamask/sdk-react";
-import { ChainProvider } from "@cosmos-kit/react-lite";
-import { chains, assets } from "chain-registry";
-import { wallets as cosmosWallets } from "@cosmos-kit/keplr";
+
+const localStorage = typeof window !== "undefined" ? window.localStorage : null;
 
 export const WalletProvider: React.FC<React.PropsWithChildren> = ({
   children,
 }) => {
   const [wallets, setWallets] = useState<IWallet[]>([]);
   const [addresses, setAddresses] = useState<Address[]>([]);
+  const [isShowroom, setShowroom] = useState<boolean>(false);
   const [isWalletMenuOpen, setWalletMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const localDataAddresses = localStorage?.getItem("AdamikClientAddresses");
+    setAddresses(localDataAddresses ? JSON.parse(localDataAddresses) : []);
+
+    const localDataShowroom = localStorage?.getItem("AdamikClientState");
+    setShowroom(
+      localDataShowroom ? JSON.parse(localDataShowroom).isShowroom : false
+    );
+  }, []);
 
   const addWallet = (wallet: IWallet) => {
     const exist = wallets.find((w) => w.id === wallet.id);
@@ -26,13 +39,20 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
     setAddresses((oldAddresses) => {
       const mergedAddresses = [...oldAddresses, ...receiveAddresses];
 
-      return mergedAddresses.filter(
+      const uniqueAddresses = mergedAddresses.filter(
         (value, index, self) =>
           index ===
           self.findIndex(
             (t) => t.address === value.address && t.chainId === value.chainId
           )
       );
+
+      localStorage?.setItem(
+        "AdamikClientAddresses",
+        JSON.stringify(uniqueAddresses)
+      );
+
+      return uniqueAddresses;
     });
   };
 
@@ -65,6 +85,14 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
             addAddresses,
             setWalletMenuOpen,
             isWalletMenuOpen,
+            isShowroom,
+            setShowroom: (isShowroom: boolean) => {
+              localStorage?.setItem(
+                "AdamikClientState",
+                JSON.stringify({ isShowroom: isShowroom })
+              );
+              setShowroom(isShowroom);
+            },
           }}
         >
           {children}

@@ -6,7 +6,7 @@ import { MetamaskConnect } from "./MetamaskConnect";
 import { Address } from "./types";
 
 export const WalletModalContent = () => {
-  const { addAddresses } = useWallet();
+  const { addAddresses, setShowroom } = useWallet();
 
   const setWalletAddresses = async (
     walletAddresses: string[],
@@ -24,6 +24,7 @@ export const WalletModalContent = () => {
       return [...acc, ...familyAddresses];
     }, []);
 
+    setShowroom(false);
     addAddresses(addresses);
   };
 
