@@ -17,7 +17,6 @@ As a truly open-source project licensed under the MIT License, Adamik encourages
 - [Getting Started](#getting-started)
 - [Prerequisites](#project-structure)
 - [Installation](#installation)
-- [Project Structure](#project-structure)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -70,18 +69,6 @@ pnpm dev
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-## Project Structure
-
-A brief description of the project's structure:
-
-- **/api**: API-related files and functions.
-- **/app**: Main application folder, including higher-order components and primary application setup.
-- **/components**: React components used throughout the application.
-- **/hooks**: Custom React hooks for state and effect management.
-- **/providers**: Context providers for state management across the application.
-- **/utils**: Utility functions and helper methods.
-- **/env.ts**: Environment variable definitions and configurations.
 
 ## Contributing
 
