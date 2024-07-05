@@ -105,6 +105,7 @@ export const LoadingModal = () => {
   return (
     <Modal
       open={true}
+      displayCloseButton={false}
       modalContent={
         <div className="flex items-center flex-col gap-4">
           <h1 className="text-2xl font-semibold text-center">
