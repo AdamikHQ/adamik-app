@@ -73,7 +73,7 @@ export default function Stake() {
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <h1 className="text-lg font-semibold md:text-2xl">Staking Portal</h1>
-          <Tooltip text="Click to view the API documentation for retrieving balances">
+          <Tooltip text="View the API documentation for retrieving staking data">
             <a
               href="https://docs.adamik.io/api-reference/endpoint/post-apiaddressstate"
               target="_blank"
@@ -103,6 +103,58 @@ export default function Stake() {
       </div>
 
       <StakingPositionsList stakingPositions={stakingPositions} />
+
+      <div>
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center">
+              <CardTitle>Validators</CardTitle>
+              <Tooltip text="View the API documentation for retrieving validators">
+                <a
+                  href="https://docs.adamik.io/api-reference/endpoint/post-apichains-chainid-validators"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
+                </a>
+              </Tooltip>
+            </div>
+          </CardHeader>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[80px] md:table-cell"></TableHead>
+                <TableHead>Validator</TableHead>
+                <TableHead>Amount staked</TableHead>
+                <TableHead>Amount (USD)</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Claimable rewards</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Object.keys(validators).length > 0 ? (
+                Object.entries(validators)
+                  .sort((a, b) => {
+                    return (b[1].amountUSD || 0) - (a[1].amountUSD || 0);
+                  })
+                  .map(([validatorAddress, validator]) => (
+                    <ValidatorRow
+                      key={validatorAddress}
+                      validator={validator}
+                      validatorAddress={validatorAddress}
+                    />
+                  ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center">
+                    No validator found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </Card>
+      </div>
     </main>
   );
 }
