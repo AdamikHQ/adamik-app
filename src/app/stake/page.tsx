@@ -79,7 +79,7 @@ export default function Stake() {
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <h1 className="text-lg font-semibold md:text-2xl">Staking Portal</h1>
-          <Tooltip text="View the API documencation for retrieving staking data">
+          <Tooltip text="View the API documentation for retrieving staking data">
             <a
               href="https://docs.adamik.io/api-reference/endpoint/post-apiaddressstate"
               target="_blank"
