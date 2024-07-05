@@ -131,7 +131,7 @@ export const AssetsBreakdown: React.FC<{
                 })}
               <div className="items-top flex space-x-2">
                 <Checkbox
-                  id="hideBalance"
+                  id="hideBalanceAssetsBreakdown"
                   checked={hideLowBalance}
                   onClick={() => {
                     setHideLowBalance(!hideLowBalance);
@@ -139,7 +139,7 @@ export const AssetsBreakdown: React.FC<{
                 />
                 <div className="grid gap-1.5 leading-none">
                   <label
-                    htmlFor="hideBalance"
+                    htmlFor="hideBalanceAssetsBreakdown"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
                     {`Hide low balance assets (< 1$)`}
