@@ -66,7 +66,7 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
           url:
             typeof window !== "undefined"
               ? window.location.host
-              : "https://adamik-app.vercel.app/",
+              : "https://app.adamik.io/",
         },
       }}
     >
