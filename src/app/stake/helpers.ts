@@ -2,7 +2,7 @@ import { GetAddressStateResponse } from "~/api/addressState";
 import { GetChainDetailsResponse } from "~/api/chainDetails";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { ValidatorResponse } from "~/api/validator";
-import { amountToMainUnit } from "~/utils/helper";
+import { amountToMainUnit, resolveLogo } from "~/utils/helper";
 import { Chain } from "~/utils/types";
 
 export type AggregatedBalances = {
@@ -93,6 +93,7 @@ export const aggregateStakingBalances = (
 
 export type StakingPosition = {
   chainId: string;
+  chainName: string;
   chainLogo?: string;
   addresses: string[];
   validatorName?: string;
@@ -155,7 +156,11 @@ export const getAddressStakingPositions = (
             validatorName: validatorInfo?.name,
             commission: validatorInfo?.commission,
             chainId: accountData.chainId,
-            chainLogo: mobulaMarketData?.[chainDetails.ticker]?.logo,
+            chainLogo: resolveLogo({
+              asset: { name: chainDetails.name, ticker: chainDetails.ticker },
+              mobulaMarketData,
+            }),
+            chainName: chainDetails.name,
             ticker: chainDetails.ticker,
             amount:
               amountToMainUnit(position.amount, chainDetails.decimals) || "-",
