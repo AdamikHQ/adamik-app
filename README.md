@@ -48,12 +48,12 @@ Make sure you have the following installed on your development machine:
    ```
 
 3. [Get your API key](https://dashboard.adamik.io/) if you don't already have one and set it in a file named `.env.local` at the root of the project.
-   You will also need a Mobula API key to retrieve the price and
+
+   You will also need a Mobula API key to retrieve the prices, logos and tickers of assets.
 
    ```
    NEXT_PUBLIC_ADAMIK_API_TEST_URL="https://api.adamik.io/api"
    ADAMIK_API_KEY="<your Adamik API key>"
-   COINGECKO_API_KEY="<your CoinGecko API key>"
    MOBULA_API_KEY=""<your Mobula API key>"
    ```
 
