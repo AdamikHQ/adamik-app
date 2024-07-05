@@ -2,13 +2,97 @@ import { Loader } from "lucide-react";
 import { Modal } from "../ui/modal";
 import { useState } from "react";
 
-const tipsList: string[] = [
-  "Adamik allows you to stake assets on multiple chains.",
-  "Adamik does not store your account information.",
-  "Adamik simplifies reading data from multiple blockchains.",
-  "Adamik makes developing multichain applications easier.",
-  "Adamik does not have access to your keys. You remain in control.",
-  "Adamik translates your intent into a blockchain transaction.",
+const tipsList: JSX.Element[] = [
+  <span>
+    Adamik does not store your blockchain information.{" "}
+    <a
+      href="https://docs.adamik.io"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ textDecoration: "underline" }}
+    >
+      Learn more ⤴
+    </a>
+  </span>,
+  <span>
+    Adamik simplifies reading data from multiple blockchains.{" "}
+    <a
+      href="https://docs.adamik.io"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ textDecoration: "underline" }}
+    >
+      Learn more ⤴
+    </a>
+  </span>,
+  <span>
+    Adamik makes developing multichain applications easier.{" "}
+    <a
+      href="https://docs.adamik.io"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ textDecoration: "underline" }}
+    >
+      Learn more ⤴
+    </a>
+  </span>,
+  <span>
+    Adamik does not have access to your keys. You remain in control.{" "}
+    <a
+      href="https://docs.adamik.io"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ textDecoration: "underline" }}
+    >
+      Learn more ⤴
+    </a>
+  </span>,
+  <span>
+    Adamik translates your intent into a blockchain transaction.{" "}
+    <a
+      href="https://docs.adamik.io"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ textDecoration: "underline" }}
+    >
+      Learn more ⤴
+    </a>
+  </span>,
+  <span>
+    Adamik application is entirely open source. Check out our{" "}
+    <a
+      href="https://github.com/AdamikHQ/"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ textDecoration: "underline" }}
+    >
+      GitHub ⤴
+    </a>
+    .
+  </span>,
+  <span>
+    Adamik application is powered by the Adamik API. Explore our{" "}
+    <a
+      href="https://docs.adamik.io"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ textDecoration: "underline" }}
+    >
+      documentation ⤴
+    </a>
+    .
+  </span>,
+  <span>
+    You can explore Adamik API for free.{" "}
+    <a
+      href="https://dashboard.adamik.io"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ textDecoration: "underline" }}
+    >
+      Get your API key ⤴
+    </a>
+  </span>,
 ];
 
 function randomIntFromInterval(min: number, max: number) {
