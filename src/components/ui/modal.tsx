@@ -1,8 +1,10 @@
+import { X } from "lucide-react";
 import * as React from "react";
 
 import { useMediaQuery } from "usehooks-ts";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -26,6 +28,7 @@ type ModalProps = {
   modalTitle?: React.ReactNode;
   modalTitleDescription?: React.ReactNode;
   modalContent: React.ReactNode;
+  displayCloseButton?: boolean;
 };
 
 export function Modal({
@@ -35,6 +38,7 @@ export function Modal({
   modalTitle,
   modalTitleDescription,
   modalContent,
+  displayCloseButton = true,
 }: ModalProps) {
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
@@ -42,7 +46,10 @@ export function Modal({
     return (
       <Dialog open={open} onOpenChange={setOpen}>
         {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-        <DialogContent className="sm:max-w-[425px] lg:max-w-[660px]">
+        <DialogContent
+          className="sm:max-w-[425px] lg:max-w-[660px]"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             {modalTitle && <DialogTitle>{modalTitle}</DialogTitle>}
             {modalTitleDescription && (
@@ -50,6 +57,12 @@ export function Modal({
             )}
           </DialogHeader>
           {modalContent}
+          {displayCloseButton && (
+            <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </DialogClose>
+          )}
         </DialogContent>
       </Dialog>
     );
