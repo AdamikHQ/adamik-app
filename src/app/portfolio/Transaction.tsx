@@ -27,6 +27,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 
 type TransactionProps = {
   onNextStep: () => void;
@@ -105,21 +106,26 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
     return (
       <>
         <h1 className="font-bold text-xl text-center">
-          Your transaction has been successfully processed <br /> by the Adamik
-          API and is now ready for signing.
+          Your transaction is ready
         </h1>
+        <p className="text-center text-sm text-gray-400">
+          Adamik has converted your intent into a blockchain transaction. <br />
+          Review your transaction details before signing
+        </p>
         <Button onClick={() => onNextStep()} className="w-full mt-8">
           Sign your Transaction
         </Button>
         <Collapsible>
-          <CollapsibleTrigger className="text-sm text-gray-500 text-center mx-auto block">
-            View unsigned transaction
+          <CollapsibleTrigger className="text-sm text-gray-500 text-center mx-auto block flex items-center justify-center">
+            <ChevronDown className="mr-2" size={16} />
+            Show unsigned transaction
+            <ChevronDown className="ml-2" size={16} />
           </CollapsibleTrigger>
           <CollapsibleContent>
             <Textarea
               readOnly
               value={JSON.stringify(transaction)}
-              className="h-32 text-xs text-gray-500"
+              className="h-32 text-xs text-gray-500 mt-4"
             />
           </CollapsibleContent>
         </Collapsible>

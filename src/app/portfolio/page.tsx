@@ -134,7 +134,7 @@ export default function Portfolio() {
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <h1 className="text-lg font-semibold md:text-2xl">Portfolio</h1>
-            <Tooltip text="Click to view the API documentation for retrieving balances">
+            <Tooltip text="View the API documentation for retrieving balances">
               <a
                 href="https://docs.adamik.io/api-reference/endpoint/post-apiaddressstate"
                 target="_blank"
