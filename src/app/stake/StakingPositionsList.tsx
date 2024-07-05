@@ -1,5 +1,13 @@
+import { Card, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { TableCell, TableRow } from "~/components/ui/table";
 import {
   TableCellWithTooltip,
   Tooltip,
@@ -9,7 +17,7 @@ import {
 import { formatAmountUSD, formatAmount } from "~/utils/helper";
 import { StakingPosition } from "./helpers";
 
-export const StakingPositionRow: React.FC<{
+const StakingPositionsListRow: React.FC<{
   position: StakingPosition;
 }> = ({ position }) => {
   const formattedAddresses = position.addresses.toString().replace(",", "\n");
@@ -57,5 +65,51 @@ export const StakingPositionRow: React.FC<{
         </TableCellWithTooltip>
       </TableRow>
     </TooltipProvider>
+  );
+};
+
+export const StakingPositionsList = ({
+  stakingPositions,
+}: {
+  stakingPositions: Record<string, StakingPosition>;
+}) => {
+  return (
+    <Card className="lg:col-span-2">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Positions</CardTitle>
+      </CardHeader>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[80px] md:table-cell"></TableHead>
+            <TableHead>Validator</TableHead>
+            <TableHead>Amount staked</TableHead>
+            <TableHead>Amount (USD)</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Claimable rewards</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Object.keys(stakingPositions).length > 0 ? (
+            Object.entries(stakingPositions)
+              .sort((a, b) => {
+                return (b[1].amountUSD || 0) - (a[1].amountUSD || 0);
+              })
+              .map(([validatorAddress, position]) => (
+                <StakingPositionsListRow
+                  key={validatorAddress}
+                  position={position}
+                />
+              ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center">
+                No validator found
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </Card>
   );
 };
