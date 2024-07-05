@@ -65,7 +65,6 @@ export interface MobulaBlockchain {
   supportedProtocols: string[];
   color: string;
   dexscreenerChain: string;
-  coingeckoChain: string;
   coverage: string[];
 }
 

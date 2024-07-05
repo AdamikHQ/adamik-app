@@ -7,7 +7,6 @@ const ADAMIK_API_URL =
   // Prod URL when running in a Vercel deployment
   `https://api.adamik.io/api`;
 
-const COINGECKO_API_URL = "https://api.coingecko.com/api/v3";
 const MOBULA_API_URL = "https://api.mobula.io/api/1";
 
 const env = createEnv({
@@ -17,7 +16,6 @@ const env = createEnv({
    */
   server: {
     ADAMIK_API_KEY: z.string().min(1),
-    COINGECKO_API_KEY: z.string().min(1),
     MOBULA_API_KEY: z.string().min(1),
   },
 
@@ -29,9 +27,8 @@ const env = createEnv({
    */
   runtimeEnv: {
     ADAMIK_API_KEY: process.env.ADAMIK_API_KEY,
-    COINGECKO_API_KEY: process.env.COINGECKO_API_KEY,
     MOBULA_API_KEY: process.env.MOBULA_API_KEY,
   },
 });
 
-export { env, ADAMIK_API_URL, COINGECKO_API_URL, MOBULA_API_URL };
+export { env, ADAMIK_API_URL, MOBULA_API_URL };
