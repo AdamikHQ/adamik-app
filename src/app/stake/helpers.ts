@@ -91,9 +91,11 @@ export const aggregateStakingBalances = (
   );
 };
 
-export type Validator = {
+export type StakingPosition = {
   chainId: string;
   chainLogo?: string;
+  addresses: string[];
+  validatorName?: string;
   validatorAddresses: string[];
   amount: string;
   amountUSD?: number;
@@ -101,7 +103,6 @@ export type Validator = {
   completionDate?: number;
   rewardAmount?: string;
   rewardAmountUSD?: number;
-  name?: string;
   commission?: number;
   ticker: string;
 };
@@ -125,13 +126,13 @@ const getValidatorInfo = (
   return validator;
 };
 
-export const getAddressValidators = (
+export const getAddressStakingPositions = (
   data: (GetAddressStateResponse | null | undefined)[],
   chainsDetails: (GetChainDetailsResponse | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null,
   validatorsData: (ValidatorResponse | undefined)[]
 ) => {
-  const validators = data.reduce<Record<string, Validator>>(
+  const positions = data.reduce<Record<string, StakingPosition>>(
     (acc, accountData) => {
       const newAcc = { ...acc };
       if (!accountData) return { ...acc };
@@ -147,9 +148,11 @@ export const getAddressValidators = (
             validatorsData,
             validatorAddress
           );
+          const currentAddresses = newAcc[validatorAddress]?.addresses || [];
           newAcc[validatorAddress] = {
             ...position,
-            name: validatorInfo?.name,
+            addresses: [accountData.address].concat(currentAddresses),
+            validatorName: validatorInfo?.name,
             commission: validatorInfo?.commission,
             chainId: accountData.chainId,
             chainLogo: mobulaMarketData?.[chainDetails.ticker]?.logo,
@@ -187,5 +190,5 @@ export const getAddressValidators = (
     {}
   );
 
-  return validators;
+  return positions;
 };

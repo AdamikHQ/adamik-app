@@ -4,15 +4,6 @@ import { Info } from "lucide-react";
 import { LoadingModal } from "~/components/layout/LoadingModal";
 import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { Button } from "~/components/ui/button";
-import { Card, CardHeader, CardTitle } from "~/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "~/components/ui/table";
 import { Tooltip } from "~/components/ui/tooltip";
 import {
   isAddressStateCache,
@@ -26,8 +17,11 @@ import { showroomAddresses } from "../../utils/showroomAddresses";
 import { getTickers } from "../portfolio/helpers";
 import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
 import { StakingBalances } from "./StakingBalances";
-import { ValidatorRow } from "./ValidatorRow";
-import { aggregateStakingBalances, getAddressValidators } from "./helpers";
+import {
+  aggregateStakingBalances,
+  getAddressStakingPositions,
+} from "./helpers";
+import { StakingPositionsList } from "./StakingPositionsList";
 
 export default function Stake() {
   const { addresses, isShowroom } = useWallet();
@@ -64,7 +58,7 @@ export default function Stake() {
     mobulaMarketData
   );
 
-  const validators = getAddressValidators(
+  const stakingPositions = getAddressStakingPositions(
     data,
     chainsDetails,
     mobulaMarketData,
@@ -108,46 +102,7 @@ export default function Stake() {
         </Tooltip>
       </div>
 
-      <div>
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Validators</CardTitle>
-          </CardHeader>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[80px] md:table-cell"></TableHead>
-                <TableHead>Validator</TableHead>
-                <TableHead>Amount staked</TableHead>
-                <TableHead>Amount (USD)</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Claimable rewards</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {Object.keys(validators).length > 0 ? (
-                Object.entries(validators)
-                  .sort((a, b) => {
-                    return (b[1].amountUSD || 0) - (a[1].amountUSD || 0);
-                  })
-                  .map(([validatorAddress, validator]) => (
-                    <ValidatorRow
-                      key={validatorAddress}
-                      validator={validator}
-                      validatorAddress={validatorAddress}
-                    />
-                  ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center">
-                    No validator found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </Card>
-      </div>
+      <StakingPositionsList stakingPositions={stakingPositions} />
     </main>
   );
 }

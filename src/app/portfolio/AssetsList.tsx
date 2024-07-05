@@ -11,7 +11,67 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { Asset } from "~/utils/types";
-import { AssetRow } from "./AssetRow";
+import {
+  TableCellWithTooltip,
+  Tooltip,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { formatAmount, formatAmountUSD } from "~/utils/helper";
+
+const AssetsListRow: React.FC<{ asset: Asset }> = ({ asset }) => {
+  return (
+    <TooltipProvider delayDuration={100}>
+      <TableRow>
+        <TableCell>
+          <div>
+            {asset?.logo && (
+              <div className="relative">
+                <Tooltip text={asset.name}>
+                  <TooltipTrigger>
+                    <Avatar className="w-[38px] h-[38px]">
+                      <AvatarImage src={asset?.logo} alt={asset.name} />
+                      <AvatarFallback>{asset.name}</AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                </Tooltip>
+                {asset.mainChainLogo && (
+                  <Tooltip text={asset.chainId}>
+                    <TooltipTrigger>
+                      <div className="absolute w-5 h-5 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-2 end-2">
+                        <Avatar className="h-4 w-4">
+                          <AvatarImage
+                            src={asset.mainChainLogo}
+                            alt={asset.chainId}
+                          />
+                          <AvatarFallback>{asset.chainId}</AvatarFallback>
+                        </Avatar>
+                      </div>
+                    </TooltipTrigger>
+                  </Tooltip>
+                )}
+              </div>
+            )}
+          </div>
+        </TableCell>
+
+        <TableCellWithTooltip text={asset.address}>
+          {asset?.ticker}
+        </TableCellWithTooltip>
+
+        <TableCellWithTooltip text={asset.address}>
+          {asset?.balanceMainUnit ? formatAmount(asset.balanceMainUnit, 5) : ""}{" "}
+          {asset?.ticker}
+        </TableCellWithTooltip>
+
+        <TableCellWithTooltip text={asset.address}>
+          {asset?.balanceUSD ? formatAmountUSD(asset.balanceUSD) : "-"}
+        </TableCellWithTooltip>
+      </TableRow>
+    </TooltipProvider>
+  );
+};
 
 export const AssetsList: React.FC<{
   isLoading: boolean;
@@ -59,7 +119,10 @@ export const AssetsList: React.FC<{
                     assets.map((asset, i) => {
                       if (!asset) return null;
                       return (
-                        <AssetRow key={`${i}_${asset.name}`} asset={asset} />
+                        <AssetsListRow
+                          key={`${i}_${asset.name}`}
+                          asset={asset}
+                        />
                       );
                     })
                   ) : (
