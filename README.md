@@ -10,7 +10,7 @@ As a truly open-source project licensed under the MIT License, Adamik-Client enc
 
 - [Adamik website](https://adamik.io)
 - [Adamik Developer Documentation](https://docs.adamik.io)
-- [Adamik Application Demo](https://app.adamik.io)
+- [Adamik Demo Application](https://app.adamik.io)
 - [Discord](https://discord.com/invite/gsZJR2JfMR)
 
 ## Table of Contents
