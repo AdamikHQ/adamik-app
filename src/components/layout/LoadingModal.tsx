@@ -3,7 +3,7 @@ import { Modal } from "../ui/modal";
 import { useState } from "react";
 
 const tipsList: JSX.Element[] = [
-  <span>
+  <span key="tip-1">
     Adamik does not store your blockchain information.{" "}
     <a
       href="https://docs.adamik.io"
@@ -14,7 +14,7 @@ const tipsList: JSX.Element[] = [
       Learn more ⤴
     </a>
   </span>,
-  <span>
+  <span key="tip-2">
     Adamik simplifies reading data from multiple blockchains.{" "}
     <a
       href="https://docs.adamik.io"
@@ -25,7 +25,7 @@ const tipsList: JSX.Element[] = [
       Learn more ⤴
     </a>
   </span>,
-  <span>
+  <span key="tip-3">
     Adamik makes developing multichain applications easier.{" "}
     <a
       href="https://docs.adamik.io"
@@ -36,7 +36,7 @@ const tipsList: JSX.Element[] = [
       Learn more ⤴
     </a>
   </span>,
-  <span>
+  <span key="tip-4">
     Adamik does not have access to your keys. You remain in control.{" "}
     <a
       href="https://docs.adamik.io"
@@ -47,7 +47,7 @@ const tipsList: JSX.Element[] = [
       Learn more ⤴
     </a>
   </span>,
-  <span>
+  <span key="tip-5">
     Adamik translates your intent into a blockchain transaction.{" "}
     <a
       href="https://docs.adamik.io"
@@ -58,7 +58,7 @@ const tipsList: JSX.Element[] = [
       Learn more ⤴
     </a>
   </span>,
-  <span>
+  <span key="tip-6">
     Adamik application is entirely open source. Check out our{" "}
     <a
       href="https://github.com/AdamikHQ/"
@@ -70,7 +70,7 @@ const tipsList: JSX.Element[] = [
     </a>
     .
   </span>,
-  <span>
+  <span key="tip-7">
     Adamik application is powered by the Adamik API. Explore our{" "}
     <a
       href="https://docs.adamik.io"
@@ -82,7 +82,7 @@ const tipsList: JSX.Element[] = [
     </a>
     .
   </span>,
-  <span>
+  <span key="tip-8">
     You can explore Adamik API for free.{" "}
     <a
       href="https://dashboard.adamik.io"
