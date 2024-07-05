@@ -1,7 +1,7 @@
 import { GetAddressStateResponse } from "~/api/addressState";
 import { GetChainDetailsResponse } from "~/api/chainDetails";
 import { Asset } from "~/utils/types";
-import { amountToMainUnit } from "~/utils/helper";
+import { amountToMainUnit, formatAmount } from "~/utils/helper";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { MobulaBlockchain } from "~/api/mobula/types";
 
@@ -181,11 +181,18 @@ export const filterAndSortAssets = (
       .filter(Boolean)
       // Apply low balances filter if necessary
       .filter((asset) => {
-        return (
-          asset?.balanceUSD !== undefined &&
-          !(hideLowBalance && asset.balanceUSD <= 1)
-        );
+        return !(hideLowBalance && (asset?.balanceUSD || 0) <= 1);
       })
+      // Hide all asset without logo (mostly spam coins for EVM)
+      .filter((asset) => {
+        return asset?.logo !== "";
+      })
+      // Remove 0.0000 balances
+      // formatAmount return (0) in case of truncase 0.00000
+      .filter((asset) => {
+        return formatAmount(asset?.balanceMainUnit, 5) !== "0";
+      })
+
       .sort((a, b) => {
         // Highest to lowest USD balance
         return (b.balanceUSD || 0) - (a.balanceUSD || 0);

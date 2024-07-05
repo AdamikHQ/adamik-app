@@ -1,5 +1,4 @@
 import { Loader2 } from "lucide-react";
-import { useMemo, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
@@ -11,23 +10,24 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { AssetRow } from "./AssetRow";
-import { filterAndSortAssets } from "./helpers";
 import { Asset } from "~/utils/types";
+import { AssetRow } from "./AssetRow";
 
 export const AssetsList: React.FC<{
   isLoading: boolean;
   assets: Asset[];
   openTransaction: boolean;
-  setOpenTransaction: (value: boolean) => void; // TODO
-}> = ({ isLoading, assets, openTransaction, setOpenTransaction }) => {
-  const [hideLowBalance, setHideLowBalance] = useState(true);
-
-  const filteredAssets = useMemo(
-    () => filterAndSortAssets(assets, hideLowBalance),
-    [assets, hideLowBalance]
-  );
-
+  setOpenTransaction: (value: boolean) => void;
+  hideLowBalance: boolean;
+  setHideLowBalance: (value: boolean) => void;
+}> = ({
+  isLoading,
+  assets,
+  openTransaction,
+  setOpenTransaction,
+  hideLowBalance,
+  setHideLowBalance,
+}) => {
   return (
     <>
       <Card className="lg:col-span-2">
@@ -55,8 +55,8 @@ export const AssetsList: React.FC<{
                   </TableRow>
                 </TableHeader>
                 <TableBody className="overflow-y-auto max-h-[360px]">
-                  {filteredAssets.length > 0 ? (
-                    filteredAssets.map((asset, i) => {
+                  {assets.length > 0 ? (
+                    assets.map((asset, i) => {
                       if (!asset) return null;
                       return (
                         <AssetRow key={`${i}_${asset.name}`} asset={asset} />
@@ -85,7 +85,7 @@ export const AssetsList: React.FC<{
                             htmlFor="hideBalanceAssetsList"
                             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                           >
-                            {`Hide low balance assets (< 1$)`}
+                            {`Hide low balances (< 1$)`}
                           </label>
                         </div>
                       </div>

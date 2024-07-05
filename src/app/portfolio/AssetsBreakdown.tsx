@@ -72,9 +72,15 @@ export const AssetsBreakdown: React.FC<{
   isLoading: boolean;
   assets: Asset[];
   totalBalance: number;
-}> = ({ isLoading, assets, totalBalance }) => {
-  const [hideLowBalance, setHideLowBalance] = useState(true);
-
+  hideLowBalance: boolean;
+  setHideLowBalance: (value: boolean) => void;
+}> = ({
+  isLoading,
+  assets,
+  totalBalance,
+  hideLowBalance,
+  setHideLowBalance,
+}) => {
   const filteredAggregatedAssets = useMemo(() => {
     // Group assets by chainId
     // FIXME Replace with Object.groupBy() when Node.js 21 becomes supported by Vercel
@@ -142,7 +148,7 @@ export const AssetsBreakdown: React.FC<{
                     htmlFor="hideBalanceAssetsBreakdown"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    {`Hide low balance assets (< 1$)`}
+                    {`Hide low balances (< 1$)`}
                   </label>
                 </div>
               </div>

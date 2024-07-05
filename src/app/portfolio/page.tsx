@@ -26,6 +26,7 @@ import { ConnectWallet } from "./ConnectWallet";
 import { Transaction } from "./Transaction";
 import {
   calculateAssets,
+  filterAndSortAssets,
   getTickers,
   getTokenContractAddresses,
   getTokenTickers,
@@ -52,6 +53,7 @@ export default function Portfolio() {
     useAddressStateBatch(displayAddresses);
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
   const [openTransaction, setOpenTransaction] = useState(false);
+  const [hideLowBalance, setHideLowBalance] = useState(true);
   const [stepper, setStepper] = useState(0);
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
@@ -87,14 +89,17 @@ export default function Portfolio() {
 
   const assets = useMemo(
     () =>
-      calculateAssets(
-        data,
-        chainsDetails,
-        {
-          ...mobulaMarketData,
-          ...mobulaMarketDataContractAddresses,
-        },
-        mobulaBlockchainDetails
+      filterAndSortAssets(
+        calculateAssets(
+          data,
+          chainsDetails,
+          {
+            ...mobulaMarketData,
+            ...mobulaMarketDataContractAddresses,
+          },
+          mobulaBlockchainDetails
+        ),
+        hideLowBalance
       ),
     [
       mobulaBlockchainDetails,
@@ -102,6 +107,7 @@ export default function Portfolio() {
       data,
       mobulaMarketData,
       mobulaMarketDataContractAddresses,
+      hideLowBalance,
     ]
   );
 
@@ -156,12 +162,16 @@ export default function Portfolio() {
             assets={assets}
             openTransaction={openTransaction}
             setOpenTransaction={setOpenTransaction}
+            hideLowBalance={hideLowBalance}
+            setHideLowBalance={setHideLowBalance}
           />
 
           <AssetsBreakdown
             isLoading={isLoading}
             assets={assets}
             totalBalance={totalBalance}
+            hideLowBalance={hideLowBalance}
+            setHideLowBalance={setHideLowBalance}
           />
         </div>
 
