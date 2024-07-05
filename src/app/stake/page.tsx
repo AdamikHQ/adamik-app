@@ -4,6 +4,15 @@ import { Info } from "lucide-react";
 import { LoadingModal } from "~/components/layout/LoadingModal";
 import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { Button } from "~/components/ui/button";
+import { Card, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
 import { Tooltip } from "~/components/ui/tooltip";
 import {
   isAddressStateCache,
@@ -17,11 +26,8 @@ import { showroomAddresses } from "../../utils/showroomAddresses";
 import { getTickers } from "../portfolio/helpers";
 import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
 import { StakingBalances } from "./StakingBalances";
-import {
-  aggregateStakingBalances,
-  getAddressStakingPositions,
-} from "./helpers";
-import { StakingPositionsList } from "./StakingPositionsList";
+import { ValidatorRow } from "./ValidatorRow";
+import { aggregateStakingBalances, getAddressValidators } from "./helpers";
 
 export default function Stake() {
   const { addresses, isShowroom } = useWallet();
@@ -58,7 +64,7 @@ export default function Stake() {
     mobulaMarketData
   );
 
-  const stakingPositions = getAddressStakingPositions(
+  const validators = getAddressValidators(
     data,
     chainsDetails,
     mobulaMarketData,
@@ -101,6 +107,7 @@ export default function Stake() {
           <Button className="opacity-50 cursor-default">Claim</Button>
         </Tooltip>
       </div>
+
       <div>
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
@@ -152,7 +159,6 @@ export default function Stake() {
           </Table>
         </Card>
       </div>
-      <StakingPositionsList stakingPositions={stakingPositions} />
     </main>
   );
 }
