@@ -79,7 +79,7 @@ export default function Stake() {
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <h1 className="text-lg font-semibold md:text-2xl">Staking Portal</h1>
-          <Tooltip text="Click to view the API documentation for retrieving balances">
+          <Tooltip text="View the API documencation for retrieving staking data">
             <a
               href="https://docs.adamik.io/api-reference/endpoint/post-apiaddressstate"
               target="_blank"
@@ -111,7 +111,18 @@ export default function Stake() {
       <div>
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Validators</CardTitle>
+            <div className="flex items-center">
+              <CardTitle>Validators</CardTitle>
+              <Tooltip text="View the API documentation for retrieving validators">
+                <a
+                  href="https://docs.adamik.io/api-reference/endpoint/post-apichains-chainid-validators"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
+                </a>
+              </Tooltip>
+            </div>
           </CardHeader>
           <Table>
             <TableHeader>

@@ -15,8 +15,11 @@ export const TransactionLoading = () => {
   if (!mounted) return null; // Ensures theme is mounted before rendering
 
   return (
-    <div>
-      <div className="flex h-[120px] w-[120px] items-center m-auto">
+    <div className="flex flex-col items-center justify-center h-full">
+      <h1 className="font-bold text-xl text-center">
+        Your intent is being processed
+      </h1>
+      <div className="flex items-center justify-center h-[120px] w-[120px]">
         <Image
           className="animate-spin"
           alt="Adamik logo"
@@ -29,10 +32,9 @@ export const TransactionLoading = () => {
           height={64}
         />
       </div>
-      <div className="p-4">
-        Your transaction request has been sent to the Adamik API, and processing
-        is currently underway!
-      </div>
+      <p className="text-center text-sm text-gray-400">
+        Adamik is converting your intent into a blockchain transaction
+      </p>
     </div>
   );
 };
