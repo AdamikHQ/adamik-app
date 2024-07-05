@@ -15,7 +15,7 @@ As a truly open-source project licensed under the MIT License, Adamik encourages
 ## Table of Contents
 
 - [Getting Started](#getting-started)
-- [Prerequisites](#project-structure)
+- [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Contributing](#contributing)
 - [License](#license)
