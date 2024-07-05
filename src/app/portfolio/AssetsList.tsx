@@ -12,26 +12,13 @@ import {
 } from "~/components/ui/table";
 import { Asset } from "~/utils/types";
 import {
+  TableCellWithTooltip,
   Tooltip,
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { formatAmount, formatAmountUSD } from "~/utils/helper";
-
-const TableCellWithTooltip = ({
-  children,
-  text,
-}: {
-  children: React.ReactNode;
-  text: string;
-}) => (
-  <TableCell>
-    <Tooltip text={text}>
-      <TooltipTrigger>{children}</TooltipTrigger>
-    </Tooltip>
-  </TableCell>
-);
 
 const AssetsListRow: React.FC<{ asset: Asset }> = ({ asset }) => {
   return (

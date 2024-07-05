@@ -1,51 +1,60 @@
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { TableCell, TableRow } from "~/components/ui/table";
 import {
+  TableCellWithTooltip,
   Tooltip,
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { formatAmountUSD, formatAmount } from "~/utils/helper";
-import { Validator } from "./helpers";
+import { StakingPosition } from "./helpers";
 
-export const ValidatorRow: React.FC<{
-  validator: Validator;
-  validatorAddress: string;
-}> = ({ validator, validatorAddress }) => {
+export const StakingPositionRow: React.FC<{
+  position: StakingPosition;
+}> = ({ position }) => {
+  const formattedAddresses = position.addresses.toString().replace(",", "\n");
   return (
     <TooltipProvider delayDuration={100}>
       <TableRow>
         <TableCell>
           <div>
             <div className="relative">
-              <Tooltip text={validator.chainId}>
+              <Tooltip text={position.chainId}>
                 <TooltipTrigger>
                   <Avatar>
                     <AvatarImage
-                      src={validator.chainLogo}
-                      alt={validator.chainId}
+                      src={position.chainLogo}
+                      alt={position.chainId}
                     />
-                    <AvatarFallback>{validator.chainId}</AvatarFallback>
+                    <AvatarFallback>{position.chainId}</AvatarFallback>
                   </Avatar>
                 </TooltipTrigger>
               </Tooltip>
             </div>
           </div>
         </TableCell>
-        <TableCell>{validator.name || validator.validatorAddresses}</TableCell>
         <TableCell>
-          {validator.amount ? formatAmount(validator.amount, 5) : ""}{" "}
-          {validator.ticker}
+          {position.validatorName || position.validatorAddresses}
         </TableCell>
-        <TableCell>
-          {validator.amountUSD ? formatAmountUSD(validator.amountUSD) : "-"}
-        </TableCell>
-        <TableCell>{validator.status}</TableCell>
-        <TableCell>
-          {validator.rewardAmount
-            ? `${formatAmount(validator.rewardAmount, 5)} ${validator.ticker}`
+
+        <TableCellWithTooltip text={formattedAddresses}>
+          {position.amount ? formatAmount(position.amount, 5) : ""}{" "}
+          {position.ticker}
+        </TableCellWithTooltip>
+
+        <TableCellWithTooltip text={formattedAddresses}>
+          {position.amountUSD ? formatAmountUSD(position.amountUSD) : "-"}
+        </TableCellWithTooltip>
+
+        <TableCellWithTooltip text={formattedAddresses}>
+          {position.status}
+        </TableCellWithTooltip>
+
+        <TableCellWithTooltip text={formattedAddresses}>
+          {position.rewardAmount
+            ? `${formatAmount(position.rewardAmount, 5)} ${position.ticker}`
             : "-"}
-        </TableCell>
+        </TableCellWithTooltip>
       </TableRow>
     </TooltipProvider>
   );

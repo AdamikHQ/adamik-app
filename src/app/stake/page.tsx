@@ -26,8 +26,11 @@ import { showroomAddresses } from "../../utils/showroomAddresses";
 import { getTickers } from "../portfolio/helpers";
 import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
 import { StakingBalances } from "./StakingBalances";
-import { ValidatorRow } from "./ValidatorRow";
-import { aggregateStakingBalances, getAddressValidators } from "./helpers";
+import { StakingPositionRow } from "./ValidatorRow";
+import {
+  aggregateStakingBalances,
+  getAddressStakingPositions,
+} from "./helpers";
 
 export default function Stake() {
   const { addresses, isShowroom } = useWallet();
@@ -64,7 +67,7 @@ export default function Stake() {
     mobulaMarketData
   );
 
-  const validators = getAddressValidators(
+  const stakingPositions = getAddressStakingPositions(
     data,
     chainsDetails,
     mobulaMarketData,
@@ -111,7 +114,7 @@ export default function Stake() {
       <div>
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Validators</CardTitle>
+            <CardTitle>Positions</CardTitle>
           </CardHeader>
           <Table>
             <TableHeader>
@@ -125,16 +128,15 @@ export default function Stake() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Object.keys(validators).length > 0 ? (
-                Object.entries(validators)
+              {Object.keys(stakingPositions).length > 0 ? (
+                Object.entries(stakingPositions)
                   .sort((a, b) => {
                     return (b[1].amountUSD || 0) - (a[1].amountUSD || 0);
                   })
-                  .map(([validatorAddress, validator]) => (
-                    <ValidatorRow
+                  .map(([validatorAddress, position]) => (
+                    <StakingPositionRow
                       key={validatorAddress}
-                      validator={validator}
-                      validatorAddress={validatorAddress}
+                      position={position}
                     />
                   ))
               ) : (
