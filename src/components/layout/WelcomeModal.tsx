@@ -38,13 +38,17 @@ export const WelcomeModal = () => {
               <p key={index}>{line}</p>
             ))}
           </div>
-          <div className="flex items-center justify-between w-[60%] mt-6">
-            {" "}
-            {/* Added margin-top here */}
-            <Button onClick={() => handleShowroomMode(true)}>
+          <div className="flex flex-col sm:flex-row sm:gap-4 gap-2 w-full mt-6">
+            <Button
+              className="w-full sm:w-auto sm:flex-1"
+              onClick={() => handleShowroomMode(true)}
+            >
               Enter Adamik Demo
             </Button>
-            <Button onClick={() => handleShowroomMode(false)}>
+            <Button
+              className="w-full sm:w-auto sm:flex-1"
+              onClick={() => handleShowroomMode(false)}
+            >
               Add Wallet
             </Button>
           </div>
