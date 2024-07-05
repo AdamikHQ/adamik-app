@@ -4,53 +4,49 @@ import { useWallet } from "~/hooks/useWallet";
 import { Button } from "../ui/button";
 
 export const WelcomeModal = () => {
-  // Hydration to trick Server Rendering to be the same as Client Rendering on initial load
-  const [delayOpen, setDelayOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { setShowroom } = useWallet();
 
   useEffect(() => {
-    setDelayOpen(true);
+    setIsModalOpen(true);
   }, []);
 
-  const setShowroommode = (isShowroom: boolean) => {
-    setDelayOpen(false);
+  const handleShowroomMode = (isShowroom: boolean) => {
+    setIsModalOpen(false);
     setShowroom(isShowroom);
   };
 
+  const WELCOME_MESSAGE = "Welcome to the Adamik App!";
+  const DESCRIPTION_LINES = [
+    "This application showcases the multi-chain capabilities of the Adamik API.",
+    "You can explore Adamik in 'demo' mode or with your real accounts.",
+    "To try the demo, select 'Enter Adamik Demo'.",
+    "To fully leverage Adamik's power, select 'Add Wallet'.",
+  ];
+
   return (
     <Modal
-      open={delayOpen}
+      open={isModalOpen}
       displayCloseButton={false}
       modalContent={
-        <div className="flex items-center flex-col gap-10">
+        <div className="flex items-center flex-col gap-4">
           <h1 className="text-2xl font-semibold text-center">
-            Welcome to the Adamik App!
+            {WELCOME_MESSAGE}
           </h1>
-          <div className="flex flex-col gap-2">
-            <p className="text-gray-400">
-              This application demonstrates the multi-chain capabilities of the
-              Adamik API.
-            </p>
-            <p className="text-gray-400">
-              You can experience Adamik with a “showroom” mode, or with your
-              real accounts.
-            </p>
-            <p className="text-gray-400">
-              To experience the showroom, select Enter Adamik Showroom.
-            </p>
-            <p className="text-gray-400">
-              Ready to fully leverage Adamik power, select “Add Wallet”.
-            </p>
-            <p className="text-gray-400">
-              If you want to interact with the Adamik app hands-on, select “Add
-              Wallet.”
-            </p>
+          <div className="flex flex-col gap-2 text-center text-sm text-gray-400">
+            {DESCRIPTION_LINES.map((line, index) => (
+              <p key={index}>{line}</p>
+            ))}
           </div>
-          <div className="flex items-center justify-between w-[60%]">
-            <Button onClick={() => setShowroommode(true)}>
-              Enter Adamik Showroom
+          <div className="flex items-center justify-between w-[60%] mt-6">
+            {" "}
+            {/* Added margin-top here */}
+            <Button onClick={() => handleShowroomMode(true)}>
+              Enter Adamik Demo
             </Button>
-            <Button onClick={() => setShowroommode(false)}>Add Wallet</Button>
+            <Button onClick={() => handleShowroomMode(false)}>
+              Add Wallet
+            </Button>
           </div>
         </div>
       }
