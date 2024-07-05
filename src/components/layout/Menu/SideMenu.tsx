@@ -41,7 +41,7 @@ export const SideMenu: React.FC<SideMenuProps> = ({ menu, currentTheme }) => {
                 alt="Adamik Logo"
               />
             )}
-            <span className="font-bold">App</span>
+            <span className="font-bold"></span>
           </Link>
           <ThemeSelector />
         </div>
