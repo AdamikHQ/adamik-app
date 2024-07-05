@@ -1,6 +1,6 @@
 ## Introduction
 
-The Adamik-Client application is a boilerplate implementation of the main Adamik API endpoints. It serves as a starting point for developers looking to integrate with the Adamik API, providing essential functionalities and example usages of the API.
+The Adamik application is a boilerplate implementation of the main Adamik API endpoints. It serves as a starting point for developers looking to integrate with the Adamik API, providing essential functionalities and example usages of the API.
 As a truly open-source project licensed under the MIT License, Adamik-Client encourages community contributions and collaboration to enhance and expand its capabilities.
 
 ### Useful links
