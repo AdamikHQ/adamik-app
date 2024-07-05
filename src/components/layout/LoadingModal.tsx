@@ -109,14 +109,19 @@ export const LoadingModal = () => {
       modalContent={
         <div className="flex items-center flex-col gap-4">
           <h1 className="text-2xl font-semibold text-center">
-            Adamik is updating your assets
+            Loading blockchain data
           </h1>
           <p className="text-center text-sm text-gray-400">
+            Please wait while Adamik processes your request. <br />
             This may take up to 15 seconds.
           </p>
           <Loader className="animate-spin h-12 w-12 text-blue-500" />
-          <div className="mt-4 p-4 border-t border-gray-600 w-full text-center text-sm bg-gray-800 rounded-lg">
+          <div
+            className="mt-4 p-4 border-t border-gray-600 w-full text-center text-sm bg-gray-800 rounded-lg"
+            aria-live="polite"
+          >
             <span className="font-semibold">Did you know?</span> <br />
+            <br />
             {tipsList[randomIndex]}
           </div>
         </div>
