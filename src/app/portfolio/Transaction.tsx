@@ -22,6 +22,11 @@ import { amountToSmallestUnit } from "~/utils/helper";
 import { TransactionLoading } from "./TransactionLoading";
 import { Textarea } from "~/components/ui/textarea";
 import { useTransaction } from "~/hooks/useTransaction";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "~/components/ui/collapsible";
 
 type TransactionProps = {
   onNextStep: () => void;
@@ -103,14 +108,21 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
           Your transaction has been successfully processed <br /> by the Adamik
           API and is now ready for signing.
         </h1>
-        <Textarea
-          readOnly
-          value={JSON.stringify(transaction)}
-          className="h-32"
-        />
-        <Button onClick={() => onNextStep()} className="w-full">
+        <Button onClick={() => onNextStep()} className="w-full mt-8">
           Sign your Transaction
         </Button>
+        <Collapsible>
+          <CollapsibleTrigger className="text-sm text-gray-500 text-center mx-auto block">
+            View unsigned transaction
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <Textarea
+              readOnly
+              value={JSON.stringify(transaction)}
+              className="h-32 text-xs text-gray-500"
+            />
+          </CollapsibleContent>
+        </Collapsible>
       </>
     );
   }
