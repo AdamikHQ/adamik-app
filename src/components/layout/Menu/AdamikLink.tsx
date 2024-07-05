@@ -13,21 +13,21 @@ export const AdamikLink = () => {
     <div className="fixed bottom-0 left-0 p-4">
       <div className="flex justify-center gap-4 mb-4">
         <Link href="https://adamik.io" target="_blank" aria-label="Adamik Home">
-          <Home className="w-5 h-5" />
+          <Home />
         </Link>
         <Link
           href="https://github.com/AdamikHQ"
           target="_blank"
           aria-label="Adamik GitHub"
         >
-          <Github className="w-5 h-5" />
+          <Github />
         </Link>
         <Link
           href="https://docs.adamik.io"
           target="_blank"
           aria-label="Adamik Documentation"
         >
-          <BookText className="w-5 h-5" />
+          <BookText />
         </Link>
       </div>
       <Card className="p-4">
