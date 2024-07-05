@@ -4,6 +4,11 @@ import { Button } from "~/components/ui/button";
 import { Textarea } from "~/components/ui/textarea";
 import { useBroadcastMutation } from "~/hooks/useBroadcastMutation";
 import { useTransaction } from "~/hooks/useTransaction";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "~/components/ui/collapsible";
 
 type BroadcastProps = {
   onNextStep: () => void;
@@ -47,45 +52,58 @@ export const Broadcast = ({ onNextStep }: BroadcastProps) => {
       <div className="text-center text-xl">Broadcast with Adamik</div>
       {isPending && <Loader2 className="animate-spin" height={32} width={32} />}
       {error && <div className="text-red-500">{error}</div>}
-      <Textarea readOnly value={signedTransaction} className="h-32" />
 
-      <Button
-        variant="default"
-        disabled={isPending}
-        onClick={() => {
-          mutate(
-            {
-              transaction: transaction.transaction.plain,
-              encodedTransaction: transaction.transaction.encoded,
-              signature: signedTransaction,
-            },
-            {
-              onSuccess: (values) => {
-                console.log({ values });
-                if (values.error) {
-                  setError(values.error.message);
-                } else {
-                  setTransactionHash(values.hash);
-                  setSignedTransaction(undefined);
-                }
+      <div className="flex gap-6">
+        <Button
+          variant="default"
+          disabled={isPending}
+          onClick={() => {
+            mutate(
+              {
+                transaction: transaction.transaction.plain,
+                encodedTransaction: transaction.transaction.encoded,
+                signature: signedTransaction,
               },
-            }
-          );
-        }}
-      >
-        Broadcast
-      </Button>
-      <Button
-        disabled={isPending}
-        variant="secondary"
-        onClick={() => {
-          onNextStep();
-          setTransactionHash(undefined);
-          setSignedTransaction(undefined);
-        }}
-      >
-        Cancel
-      </Button>
+              {
+                onSuccess: (values) => {
+                  if (values.error) {
+                    setError(values.error.message);
+                  } else {
+                    setTransactionHash(values.hash);
+                    setSignedTransaction(undefined);
+                  }
+                },
+              }
+            );
+          }}
+        >
+          Broadcast
+        </Button>
+        <Button
+          disabled={isPending}
+          variant="secondary"
+          onClick={() => {
+            onNextStep();
+            setTransactionHash(undefined);
+            setSignedTransaction(undefined);
+          }}
+        >
+          Cancel
+        </Button>
+      </div>
+
+      <Collapsible>
+        <CollapsibleTrigger className="text-sm text-gray-500 text-center mx-auto block">
+          View signed transaction
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <Textarea
+            readOnly
+            value={JSON.stringify(signedTransaction)}
+            className="w-full text-xs text-gray-500"
+          />
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 };
