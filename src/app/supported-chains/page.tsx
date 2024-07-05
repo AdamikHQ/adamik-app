@@ -45,7 +45,7 @@ export default function SupportedChains() {
         <Card className="xl:col-span-2 bg-muted/70">
           <CardHeader className="flex flex-row items-center">
             <CardTitle>Supported Chains</CardTitle>
-            <Tooltip text="Click to view the API documentation for retrieving the chains supported">
+            <Tooltip text="View the API documentation for fetching the supported chains list">
               <a
                 href="https://docs.adamik.io/api-reference/endpoint/get-apichains"
                 target="_blank"
