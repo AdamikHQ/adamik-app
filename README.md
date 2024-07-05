@@ -1,3 +1,6 @@
+
+![banner](https://github.com/AdamikHQ/adamik-app/assets/159912605/ee5cb89d-6a96-4b16-84d7-1ba5b943928f)
+
 ## Introduction
 
 The Adamik application is a boilerplate implementation of the main Adamik API endpoints. It serves as a starting point for developers looking to integrate with the Adamik API, providing essential functionalities and example usages of the API.
