@@ -37,13 +37,13 @@ Make sure you have the following installed on your development machine:
 1. Clone the repo
 
    ```bash
-   git clone https://github.com/your-username/adamik-client.git
+   git clone https://github.com/your-username/adamik-app.git
    ```
 
 2. Install dependencies
 
    ```bash
-   cd adamik-client
+   cd adamik-app
    pnpm install
    ```
 
