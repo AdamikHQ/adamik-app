@@ -1,21 +1,19 @@
-import { type ClassValue, clsx } from "clsx";
+import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
+import { MobulaBlockchain } from "~/api/mobula/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-const coinIdMapping: { [key: string]: string } = {
-  cosmos: "cosmoshub",
-  binancecoin: "bsc",
-  "avalanche-2": "avalanche",
-  "matic-network": "polygon",
-  "dydx-chain": "dydx",
-  // TODO: Add mapping for LINEA
+const mobulaNameMapper: Record<string, string> = {
+  optimism: "optimistic",
+  "arbitrum one": "arbitrum",
 };
 
-export const CoinIdMapperCoinGeckoToAdamik = (coinId: string): string => {
-  return coinIdMapping[coinId] || coinId;
+export const getMobulaName = (name: string) => {
+  return mobulaNameMapper[name] || name;
 };
 
 // Helpers to convert from/to user-convenient format in main unit, and smallest unit of the chain
@@ -52,3 +50,50 @@ export function formatAmount(amount: string | number | null, decimals: number) {
     maximumFractionDigits: decimals,
   }).format(parsedAmount);
 }
+
+const getSelfHostedLogo = (ticker: string) => {
+  switch (ticker) {
+    case "DYDX":
+      return "/assets/dydx.svg";
+  }
+  return "";
+};
+
+type RetrieveLogoFromSourceProps = {
+  asset: {
+    name: string;
+    ticker: string;
+  };
+  mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null;
+  mobulaBlockChainData?: MobulaBlockchain[] | undefined;
+};
+
+export const resolveLogo = ({
+  asset: { name, ticker },
+  mobulaMarketData,
+  mobulaBlockChainData,
+}: RetrieveLogoFromSourceProps) => {
+  const byBlockchainName = mobulaBlockChainData?.find((mobulaBlockchain) => {
+    return (
+      mobulaBlockchain.name.toLowerCase() ===
+      getMobulaName(name.toLowerCase()).toLowerCase()
+    );
+  });
+
+  if (byBlockchainName) {
+    return byBlockchainName.logo;
+  }
+
+  const byTicker = mobulaMarketData && mobulaMarketData?.[ticker]?.logo;
+  if (byTicker) {
+    return byTicker;
+  }
+
+  // Temporary solution for missing logo in Mobula
+  const selfHosted = getSelfHostedLogo(ticker);
+  if (selfHosted) {
+    return selfHosted;
+  }
+
+  return "";
+};

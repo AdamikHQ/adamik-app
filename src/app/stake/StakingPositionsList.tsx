@@ -27,14 +27,14 @@ const StakingPositionsListRow: React.FC<{
         <TableCell>
           <div>
             <div className="relative">
-              <Tooltip text={position.chainId}>
+              <Tooltip text={position.chainName}>
                 <TooltipTrigger>
                   <Avatar>
                     <AvatarImage
                       src={position.chainLogo}
                       alt={position.chainId}
                     />
-                    <AvatarFallback>{position.chainId}</AvatarFallback>
+                    <AvatarFallback>{position.chainName}</AvatarFallback>
                   </Avatar>
                 </TooltipTrigger>
               </Tooltip>

@@ -22,8 +22,9 @@ export type Transaction = {
 export type Asset = {
   logo: string;
   mainChainLogo?: string;
-  assetId?: string;
+  mainChainName?: string;
   chainId: string;
+  assetId?: string;
   name: string;
   balanceMainUnit: string | null;
   balanceUSD: number | undefined;
@@ -43,4 +44,8 @@ export type Chain = {
   family: string;
   isTestNet: boolean;
   nativeId: string;
+};
+
+export type SupportedBlockchain = Chain & {
+  logo?: string;
 };

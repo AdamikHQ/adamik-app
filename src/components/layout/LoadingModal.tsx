@@ -117,7 +117,7 @@ export const LoadingModal = () => {
           </p>
           <Loader className="animate-spin h-12 w-12 text-blue-500" />
           <div
-            className="mt-4 p-4 border-t border-gray-600 w-full text-center text-sm bg-gray-800 rounded-lg"
+            className="mt-4 p-4 border-t border-gray-400 dark:border-gray-600 w-full text-center text-sm bg-gray-300 dark:bg-gray-800 rounded-lg"
             aria-live="polite"
           >
             <span className="font-semibold">Did you know?</span> <br />

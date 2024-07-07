@@ -37,7 +37,7 @@ const AssetsListRow: React.FC<{ asset: Asset }> = ({ asset }) => {
                   </TooltipTrigger>
                 </Tooltip>
                 {asset.mainChainLogo && (
-                  <Tooltip text={asset.chainId}>
+                  <Tooltip text={asset.mainChainName || asset.chainId}>
                     <TooltipTrigger>
                       <div className="absolute w-5 h-5 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-2 end-2">
                         <Avatar className="h-4 w-4">
