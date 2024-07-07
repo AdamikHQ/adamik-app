@@ -25,9 +25,6 @@ export const WalletModalContent = () => {
       return [...acc, ...familyAddresses];
     }, []);
 
-    // FIXME DEBUG TBR
-    console.log("XXX - addresses:", addresses);
-
     setShowroom(false);
     addAddresses(addresses);
   };
