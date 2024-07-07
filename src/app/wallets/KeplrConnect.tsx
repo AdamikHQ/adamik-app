@@ -1,5 +1,5 @@
 import { useWalletClient } from "@cosmos-kit/react-lite";
-import React from "react";
+import React, { useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { useToast } from "~/components/ui/use-toast";
 import { useChainDetails } from "~/hooks/useChainDetails";
@@ -17,7 +17,7 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
   );
   const { setSignedTransaction } = useTransaction();
 
-  const connect = async () => {
+  const getAddresses = useCallback(async () => {
     try {
       if (status === "Done" && client && setWalletAddresses) {
         await client.enable?.([
@@ -75,9 +75,9 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
     } catch (err) {
       console.warn("failed to connect..", err);
     }
-  };
+  }, [client, setWalletAddresses, status, toast]);
 
-  const sign = async () => {
+  const sign = useCallback(async () => {
     if (client && data && transactionPayload) {
       const signedTransaction = await client.signAmino?.(
         data?.nativeId,
@@ -87,13 +87,13 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
 
       setSignedTransaction(signedTransaction?.signature.signature);
     }
-  };
+  }, [client, data, setSignedTransaction, transactionPayload]);
 
   return (
     <div className="relative w-24 h-24">
       <Avatar
         className="cursor-pointer w-24 h-24"
-        onClick={transactionPayload ? () => sign() : () => connect()}
+        onClick={transactionPayload ? () => sign() : () => getAddresses()}
       >
         <AvatarImage src={"/wallets/Keplr.svg"} alt={"Keplr"} />
         <AvatarFallback>Keplr</AvatarFallback>

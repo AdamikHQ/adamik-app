@@ -1,5 +1,4 @@
 import { TransactionEncodeResponse } from "~/api/encode";
-import { Transaction } from "~/utils/types";
 
 export interface IWallet {
   id: string;
@@ -21,6 +20,7 @@ export type Address = {
 export enum WalletName {
   METAMASK = "metamask",
   KEPLR = "keplr",
+  PERA = "pera",
 }
 
 export type WalletConnectorProps = {
