@@ -24,7 +24,7 @@ export const MetamaskConnect: React.FC<WalletConnectorProps> = ({
       if (accounts && setWalletAddresses) {
         setWalletAddresses(
           accounts,
-          ["ethereum", "bsc", "optimism", "arbitrum", "base", "polygon"],
+          ["ethereum", "optimism", "arbitrum", "base"],
           WalletName.METAMASK
         );
         toast({
