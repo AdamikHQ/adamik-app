@@ -6,6 +6,7 @@ import { useTransaction } from "~/hooks/useTransaction";
 import { useWallet } from "~/hooks/useWallet";
 import { KeplrConnect } from "./KeplrConnect";
 import { MetamaskConnect } from "./MetamaskConnect";
+import { PeraConnect } from "./PeraConnect";
 import { WalletName } from "./types";
 import { Broadcast } from "./Broadcast";
 
@@ -30,6 +31,8 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
         return <KeplrConnect transactionPayload={transaction} />;
       case WalletName.METAMASK:
         return <MetamaskConnect transactionPayload={transaction} />;
+      case WalletName.PERA:
+        return <PeraConnect transactionPayload={transaction} />;
       default:
         return null;
     }

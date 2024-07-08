@@ -3,6 +3,7 @@
 import { useWallet } from "~/hooks/useWallet";
 import { KeplrConnect } from "./KeplrConnect";
 import { MetamaskConnect } from "./MetamaskConnect";
+import { PeraConnect } from "./PeraConnect";
 import { Address } from "./types";
 
 export const WalletModalContent = () => {
@@ -32,6 +33,7 @@ export const WalletModalContent = () => {
     <div className="flex flex-row gap-4">
       <MetamaskConnect setWalletAddresses={setWalletAddresses} />
       <KeplrConnect setWalletAddresses={setWalletAddresses} />
+      <PeraConnect setWalletAddresses={setWalletAddresses} />
     </div>
   );
 };
