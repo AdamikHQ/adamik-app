@@ -48,9 +48,9 @@ export const WelcomeModal = () => {
                   </a>
                 </p>
                 <img
-                  src="../../../../public/intro.png"
-                  //alt="Adamik Introduction"
-                  className="w-full h-auto"
+                  src="/intro.svg"
+                  alt="Adamik Introduction"
+                  className="w-[80%] h-auto mx-auto"
                 />
               </div>
               <div className="w-full flex justify-end mt-6 pr-4">
@@ -75,18 +75,18 @@ export const WelcomeModal = () => {
                 <p>Explore Adamik in 'demo' mode or with your real accounts</p>
                 <video
                   className="w-full h-auto mt-4"
-                  controls
-                  src="path-to-your-video.mp4" // Replace with the video file path
-                >
-                  Your browser does not support the video tag.
-                </video>
+                  src="/toggle.mp4" // Replace with the video file path
+                  autoPlay
+                  loop
+                  muted
+                />
               </div>
               <div className="flex justify-center gap-4 w-full mt-6">
                 <Button
                   className="w-48"
                   onClick={() => handleShowroomMode(true)}
                 >
-                  Enter Adamik Demo
+                  Enter Demo
                 </Button>
                 <Button
                   className="w-48"

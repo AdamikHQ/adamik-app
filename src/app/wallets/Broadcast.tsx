@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Textarea } from "~/components/ui/textarea";
@@ -55,6 +55,17 @@ export const Broadcast = ({ onNextStep }: BroadcastProps) => {
 
       <div className="flex gap-6">
         <Button
+          disabled={isPending}
+          variant="secondary"
+          onClick={() => {
+            onNextStep();
+            setTransactionHash(undefined);
+            setSignedTransaction(undefined);
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
           variant="default"
           disabled={isPending}
           onClick={() => {
@@ -79,28 +90,19 @@ export const Broadcast = ({ onNextStep }: BroadcastProps) => {
         >
           Broadcast
         </Button>
-        <Button
-          disabled={isPending}
-          variant="secondary"
-          onClick={() => {
-            onNextStep();
-            setTransactionHash(undefined);
-            setSignedTransaction(undefined);
-          }}
-        >
-          Cancel
-        </Button>
       </div>
 
       <Collapsible>
-        <CollapsibleTrigger className="text-sm text-gray-500 text-center mx-auto block">
+        <CollapsibleTrigger className="text-sm text-gray-500 text-center mx-auto block flex items-center justify-center">
+          <ChevronDown className="mr-2" size={16} />
           View signed transaction
+          <ChevronDown className="ml-2" size={16} />
         </CollapsibleTrigger>
         <CollapsibleContent>
           <Textarea
             readOnly
             value={JSON.stringify(signedTransaction)}
-            className="w-full text-xs text-gray-500"
+            className="h-32 text-xs text-gray-500 mt-4"
           />
         </CollapsibleContent>
       </Collapsible>
