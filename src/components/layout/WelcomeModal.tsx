@@ -5,7 +5,8 @@ import { Button } from "../ui/button";
 
 export const WelcomeModal = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { setShowroom } = useWallet();
+  const [currentStep, setCurrentStep] = useState(1);
+  const { setShowroom, setWalletMenuOpen } = useWallet();
 
   useEffect(() => {
     setIsModalOpen(true);
@@ -14,15 +15,16 @@ export const WelcomeModal = () => {
   const handleShowroomMode = (isShowroom: boolean) => {
     setIsModalOpen(false);
     setShowroom(isShowroom);
+    setWalletMenuOpen(!isShowroom);
   };
 
-  const WELCOME_MESSAGE = "Welcome to the Adamik App!";
-  const DESCRIPTION_LINES = [
-    "This application showcases the multi-chain capabilities of the Adamik API.",
-    "You can explore Adamik in 'demo' mode or with your real accounts.",
-    "To try the demo, select 'Enter Adamik Demo'.",
-    "To fully leverage Adamik's power, select 'Add Wallet'.",
-  ];
+  const handleNextStep = () => {
+    setCurrentStep((prevStep) => prevStep + 1);
+  };
+
+  const handlePreviousStep = () => {
+    setCurrentStep((prevStep) => prevStep - 1);
+  };
 
   return (
     <Modal
@@ -30,28 +32,72 @@ export const WelcomeModal = () => {
       displayCloseButton={false}
       modalContent={
         <div className="flex items-center flex-col gap-4">
-          <h1 className="text-2xl font-semibold text-center">
-            {WELCOME_MESSAGE}
-          </h1>
-          <div className="flex flex-col gap-2 text-center text-sm text-gray-400">
-            {DESCRIPTION_LINES.map((line, index) => (
-              <p key={index}>{line}</p>
-            ))}
-          </div>
-          <div className="flex justify-center gap-4 w-full mt-6">
-            <Button
-              className="w-48" // Fixed width
-              onClick={() => handleShowroomMode(true)}
-            >
-              Enter Adamik Demo
-            </Button>
-            <Button
-              className="w-48" // Fixed width
-              onClick={() => handleShowroomMode(false)}
-            >
-              Add Wallet
-            </Button>
-          </div>
+          {currentStep === 1 && (
+            <>
+              <h1 className="text-2xl font-semibold text-center">
+                Welcome to the Adamik App!
+              </h1>
+              <div className="flex flex-col gap-2 text-center text-sm text-gray-400">
+                <p>
+                  Adamik is an open source multichain application powered by the{" "}
+                  <a
+                    href="https://docs.adamik.io"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Adamik API
+                  </a>
+                </p>
+                <img
+                  src="/intro.svg"
+                  alt="Adamik Introduction"
+                  className="w-[80%] h-auto mx-auto"
+                />
+              </div>
+              <div className="w-full flex justify-end mt-6 pr-4">
+                <Button onClick={handleNextStep}>Next</Button>
+              </div>
+            </>
+          )}
+          {currentStep === 2 && (
+            <>
+              <div className="w-full flex justify-start pl-4">
+                <button
+                  className="text-sm text-gray-400 hover:text-gray-600"
+                  onClick={handlePreviousStep}
+                >
+                  <span className="mr-1">{"<"}</span>Go Back
+                </button>
+              </div>
+              <h1 className="text-2xl font-semibold text-center">
+                Select your experience
+              </h1>
+              <div className="flex flex-col gap-2 text-center text-sm text-gray-400">
+                <p>Explore Adamik in demo mode or with your real accounts</p>
+                <video
+                  className="w-full h-auto mt-4 rounded-lg" // Added rounded-lg for border radius
+                  src="/toggle.mp4" // Replace with the video file path
+                  autoPlay
+                  loop
+                  muted
+                />
+              </div>
+              <div className="flex justify-center gap-4 w-full mt-6">
+                <Button
+                  className="w-48"
+                  onClick={() => handleShowroomMode(true)}
+                >
+                  Enter Demo
+                </Button>
+                <Button
+                  className="w-48"
+                  onClick={() => handleShowroomMode(false)}
+                >
+                  Add Wallet
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       }
     />
