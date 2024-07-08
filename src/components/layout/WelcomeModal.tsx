@@ -6,7 +6,7 @@ import { Button } from "../ui/button";
 export const WelcomeModal = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  const { setShowroom } = useWallet();
+  const { setShowroom, setWalletMenuOpen } = useWallet();
 
   useEffect(() => {
     setIsModalOpen(true);
@@ -15,6 +15,7 @@ export const WelcomeModal = () => {
   const handleShowroomMode = (isShowroom: boolean) => {
     setIsModalOpen(false);
     setShowroom(isShowroom);
+    setWalletMenuOpen(!isShowroom);
   };
 
   const handleNextStep = () => {
@@ -74,7 +75,7 @@ export const WelcomeModal = () => {
               <div className="flex flex-col gap-2 text-center text-sm text-gray-400">
                 <p>Explore Adamik in 'demo' mode or with your real accounts</p>
                 <video
-                  className="w-full h-auto mt-4"
+                  className="w-full h-auto mt-4 rounded-lg" // Added rounded-lg for border radius
                   src="/toggle.mp4" // Replace with the video file path
                   autoPlay
                   loop
