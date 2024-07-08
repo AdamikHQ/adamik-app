@@ -4,9 +4,9 @@ import { TransactionMode } from "./types";
 export const transactionFormSchema = z
   .object({
     mode: z.enum([TransactionMode.TRANSFER, TransactionMode.TRANSFER_TOKEN]),
-    chainId: z.string().min(2).max(50),
-    senders: z.string().min(2).max(50),
-    recipients: z.string().min(2).max(50),
+    chainId: z.string().min(1),
+    senders: z.string().min(1),
+    recipients: z.string().min(1),
     amount: z.coerce.number().min(0),
     useMaxAmount: z.boolean(),
     tokenId: z.string().optional(),

@@ -18,7 +18,7 @@ export const MetamaskConnect: React.FC<WalletConnectorProps> = ({
     transactionPayload?.transaction.plain.chainId
   );
 
-  const connect = useCallback(async () => {
+  const getAddresses = useCallback(async () => {
     try {
       const accounts = await sdk?.connect();
       if (accounts && setWalletAddresses) {
@@ -86,7 +86,7 @@ export const MetamaskConnect: React.FC<WalletConnectorProps> = ({
     <div className="relative w-24 h-24">
       <Avatar
         className="cursor-pointer w-24 h-24"
-        onClick={transactionPayload ? () => sign() : () => connect()}
+        onClick={transactionPayload ? () => sign() : () => getAddresses()}
       >
         <AvatarImage src={"/wallets/Metamask.svg"} alt={"metamask"} />
         <AvatarFallback>Metamask</AvatarFallback>
