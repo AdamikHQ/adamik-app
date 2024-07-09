@@ -104,8 +104,6 @@ export default function Stake() {
     [mobulaBlockchainDetails, chainsDetails, data, mobulaMarketData]
   );
 
-  console.log({ assets });
-
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
       {isLoading && !isAddressStateCache(displayAddresses) ? (

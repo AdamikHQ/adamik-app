@@ -98,7 +98,6 @@ export const calculateAssets = (
           parseFloat(balanceMainUnit as string)
         : undefined;
 
-    console.log({ chainDetails });
     const mainChainAsset = {
       logo: resolveLogo({
         asset: {
