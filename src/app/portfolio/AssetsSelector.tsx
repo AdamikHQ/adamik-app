@@ -157,9 +157,10 @@ function AssetsSelectorList({
             {assets.map((asset, i) => (
               <CommandItem
                 key={`${asset.address}_${i}`}
-                value={i.toString()}
+                value={`${asset.name}_${i.toString()}`}
                 onSelect={(value) => {
-                  setSelectedChoice(assets[Number(value)]);
+                  const [name, index] = value.split("_");
+                  setSelectedChoice(assets[Number(index)]);
                   setOpen(false);
                   onSelect(asset, i);
                 }}
