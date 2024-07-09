@@ -14,7 +14,6 @@ import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { useWallet } from "~/hooks/useWallet";
-import { TransactionProvider } from "~/providers/TransactionProvider";
 import { showroomAddresses } from "../../utils/showroomAddresses";
 import { aggregateStakingBalances } from "../stake/helpers";
 import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
@@ -130,90 +129,88 @@ export default function Portfolio() {
       {isLoading && !isAddressStateCache(displayAddresses) ? (
         <LoadingModal />
       ) : null}
-      <TransactionProvider>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <h1 className="text-lg font-semibold md:text-2xl">Portfolio</h1>
-            <Tooltip text="View the API documentation for retrieving balances">
-              <a
-                href="https://docs.adamik.io/api-reference/endpoint/post-apiaddressstate"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
-              </a>
-            </Tooltip>
-          </div>
-          <WalletModalTrigger />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <h1 className="text-lg font-semibold md:text-2xl">Portfolio</h1>
+          <Tooltip text="View the API documentation for retrieving balances">
+            <a
+              href="https://docs.adamik.io/api-reference/endpoint/post-apiaddressstate"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
+            </a>
+          </Tooltip>
         </div>
+        <WalletModalTrigger />
+      </div>
 
-        {isShowroom ? <ShowroomBanner /> : null}
+      {isShowroom ? <ShowroomBanner /> : null}
 
-        <AssetsBalances
+      <AssetsBalances
+        isLoading={isLoading}
+        totalBalance={totalBalance}
+        availableBalance={availableBalance}
+        stakingBalances={stakingBalances}
+      />
+
+      <div className="grid gap-4 md:gap-8 grid-cols-1 lg:grid-cols-3">
+        <AssetsList
           isLoading={isLoading}
+          assets={assets}
+          openTransaction={openTransaction}
+          setOpenTransaction={setOpenTransaction}
+          hideLowBalance={hideLowBalance}
+          setHideLowBalance={setHideLowBalance}
+        />
+
+        <AssetsBreakdown
+          isLoading={isLoading}
+          assets={assets}
           totalBalance={totalBalance}
-          availableBalance={availableBalance}
-          stakingBalances={stakingBalances}
+          hideLowBalance={hideLowBalance}
+          setHideLowBalance={setHideLowBalance}
         />
+      </div>
 
-        <div className="grid gap-4 md:gap-8 grid-cols-1 lg:grid-cols-3">
-          <AssetsList
-            isLoading={isLoading}
-            assets={assets}
-            openTransaction={openTransaction}
-            setOpenTransaction={setOpenTransaction}
-            hideLowBalance={hideLowBalance}
-            setHideLowBalance={setHideLowBalance}
-          />
-
-          <AssetsBreakdown
-            isLoading={isLoading}
-            assets={assets}
-            totalBalance={totalBalance}
-            hideLowBalance={hideLowBalance}
-            setHideLowBalance={setHideLowBalance}
-          />
-        </div>
-
-        <Modal
-          open={openTransaction}
-          setOpen={setOpenTransaction}
-          modalContent={
-            // Probably need to rework
-            stepper === 0 ? (
-              <Transaction
-                assets={assets}
-                onNextStep={() => {
-                  setStepper(1);
-                }}
-              />
-            ) : (
-              <>
-                {addresses && addresses.length > 0 ? (
-                  <WalletSigner
-                    onNextStep={() => {
-                      setOpenTransaction(false);
-                      setTimeout(() => {
-                        setStepper(0);
-                      }, 200);
-                    }}
-                  />
-                ) : (
-                  <ConnectWallet
-                    onNextStep={() => {
-                      setOpenTransaction(false);
-                      setWalletMenuOpen(true);
-                      setTimeout(() => {
-                        setStepper(0);
-                      }, 200);
-                    }}
-                  />
-                )}
-              </>
-            )
-          }
-        />
-      </TransactionProvider>
+      <Modal
+        open={openTransaction}
+        setOpen={setOpenTransaction}
+        modalContent={
+          // Probably need to rework
+          stepper === 0 ? (
+            <Transaction
+              assets={assets}
+              onNextStep={() => {
+                setStepper(1);
+              }}
+            />
+          ) : (
+            <>
+              {addresses && addresses.length > 0 ? (
+                <WalletSigner
+                  onNextStep={() => {
+                    setOpenTransaction(false);
+                    setTimeout(() => {
+                      setStepper(0);
+                    }, 200);
+                  }}
+                />
+              ) : (
+                <ConnectWallet
+                  onNextStep={() => {
+                    setOpenTransaction(false);
+                    setWalletMenuOpen(true);
+                    setTimeout(() => {
+                      setStepper(0);
+                    }, 200);
+                  }}
+                />
+              )}
+            </>
+          )
+        }
+      />
     </main>
   );
 }

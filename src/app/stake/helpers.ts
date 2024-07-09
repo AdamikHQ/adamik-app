@@ -3,7 +3,7 @@ import { GetChainDetailsResponse } from "~/api/chainDetails";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { ValidatorResponse } from "~/api/validator";
 import { amountToMainUnit, resolveLogo } from "~/utils/helper";
-import { Chain } from "~/utils/types";
+import { Chain, Validator } from "~/utils/types";
 
 export type AggregatedBalances = {
   availableBalance: number;
@@ -196,4 +196,41 @@ export const getAddressStakingPositions = (
   );
 
   return positions;
+};
+
+export const createValidatorList = (
+  validatorData: (ValidatorResponse | undefined)[],
+  chainsDetails: (GetChainDetailsResponse | undefined | null)[],
+  mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null
+): Validator[] => {
+  return validatorData.reduce<Validator[]>((acc, current) => {
+    const chainDetails = chainsDetails.find(
+      (chainDetails) => chainDetails?.id === current?.chainId
+    );
+    if (!chainDetails) return acc;
+
+    const validators = current?.validators.reduce<Validator[]>(
+      (subAcc, validator) => {
+        return [
+          ...subAcc,
+          {
+            ...validator,
+            chainId: current.chainId,
+            chainName: chainDetails.name,
+            chainLogo: resolveLogo({
+              asset: { name: chainDetails.name, ticker: chainDetails.ticker },
+              mobulaMarketData,
+            }),
+            decimals: chainDetails.decimals,
+            ticker: chainDetails.ticker,
+          },
+        ];
+      },
+      []
+    );
+
+    if (!validators) return acc;
+
+    return [...acc, ...validators];
+  }, []);
 };
