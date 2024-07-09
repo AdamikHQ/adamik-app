@@ -11,6 +11,7 @@ export type Transaction = {
   senders: string[];
   recipients?: string[];
   validatorAddress?: string;
+  tokenId?: string;
   useMaxAmount: boolean;
   chainId: string;
   amount: string;
