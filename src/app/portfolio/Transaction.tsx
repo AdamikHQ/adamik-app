@@ -62,6 +62,7 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
       {
         mode: values.mode,
         chainId: values.chainId,
+        tokenId: values.tokenId,
         recipients: values.recipients ? [values.recipients] : [],
         senders: [values.senders],
         amount: values.useMaxAmount
