@@ -153,9 +153,11 @@ export default function Stake() {
         stakingPositions={stakingPositions}
         refreshPositions={() => {
           toast({ description: "Refreshing..." });
-          clearAddressStateCache({
-            chainId: "cosmoshub",
-            address: "",
+          assets.forEach((asset) => {
+            clearAddressStateCache({
+              chainId: asset.chainId,
+              address: asset.address,
+            });
           });
         }}
       />
