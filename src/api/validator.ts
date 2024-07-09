@@ -3,6 +3,7 @@
 import { env, ADAMIK_API_URL } from "~/env";
 
 export type ValidatorResponse = {
+  chainId: string;
   validators: {
     address: string;
     name: string;

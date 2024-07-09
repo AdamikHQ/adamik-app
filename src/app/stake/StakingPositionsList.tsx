@@ -16,6 +16,8 @@ import {
 } from "~/components/ui/tooltip";
 import { formatAmountUSD, formatAmount } from "~/utils/helper";
 import { StakingPosition } from "./helpers";
+import { RefreshCw } from "lucide-react";
+import { Button } from "~/components/ui/button";
 
 const StakingPositionsListRow: React.FC<{
   position: StakingPosition;
@@ -70,13 +72,24 @@ const StakingPositionsListRow: React.FC<{
 
 export const StakingPositionsList = ({
   stakingPositions,
+  refreshPositions,
 }: {
   stakingPositions: Record<string, StakingPosition>;
+  refreshPositions: () => void;
 }) => {
   return (
     <Card className="lg:col-span-2">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Positions</CardTitle>
+        <CardTitle>
+          <div className="flex items-center gap-6">
+            Positions
+            <Tooltip text="Refresh">
+              <Button onClick={() => refreshPositions()} className="p-2">
+                <RefreshCw className="hover:animate-spin w-4" />
+              </Button>
+            </Tooltip>
+          </div>
+        </CardTitle>
       </CardHeader>
       <Table>
         <TableHeader>

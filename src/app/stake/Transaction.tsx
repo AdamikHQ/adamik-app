@@ -25,25 +25,30 @@ import { useTransaction } from "~/hooks/useTransaction";
 import { useTransactionEncode } from "~/hooks/useTransactionEncode";
 import { amountToSmallestUnit } from "~/utils/helper";
 import { TransactionFormInput, transactionFormSchema } from "~/utils/schema";
-import { Asset, TransactionMode } from "~/utils/types";
-import { AssetsSelector } from "./AssetsSelector";
-import { TransactionLoading } from "./TransactionLoading";
+import { Asset, TransactionMode, Validator } from "~/utils/types";
+import { TransactionLoading } from "../portfolio/TransactionLoading";
+import { ValidatorSelector } from "./ValidatorSelector";
+import { AssetsSelector } from "../portfolio/AssetsSelector";
 
 type TransactionProps = {
   onNextStep: () => void;
   assets: Asset[];
+  validators: Validator[];
 };
 
-export function Transaction({ onNextStep, assets }: TransactionProps) {
+export function Transaction({
+  onNextStep,
+  validators,
+  assets,
+}: TransactionProps) {
   const { mutate, isPending, isSuccess } = useTransactionEncode();
   const form = useForm<TransactionFormInput>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
-      mode: TransactionMode.TRANSFER,
+      mode: TransactionMode.DELEGATE,
       chainId: "",
-      tokenId: "",
       senders: "",
-      recipients: "",
+      validatorAddress: "",
       amount: 0,
       useMaxAmount: false,
     },
@@ -56,15 +61,16 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
     setTransactionHash,
   } = useTransaction();
   const [errors, setErrors] = useState("");
+  // const chainId = form.watch("chainId");
 
   function onSubmit(values: TransactionFormInput) {
     mutate(
       {
-        mode: values.mode,
+        mode: TransactionMode.DELEGATE,
         chainId: values.chainId,
-        tokenId: values.tokenId,
-        recipients: values.recipients ? [values.recipients] : [],
         senders: [values.senders],
+        recipients: [],
+        validatorAddress: values.validatorAddress ?? "",
         amount: values.useMaxAmount
           ? ""
           : amountToSmallestUnit(values.amount.toString(), decimals),
@@ -73,7 +79,6 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
       },
       {
         onSettled: (values) => {
-          setTransaction(undefined);
           setSignedTransaction(undefined);
           setTransactionHash(undefined);
           if (values) {
@@ -82,15 +87,16 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
               values.transaction.status.errors.length > 0
             ) {
               setErrors(values.transaction.status.errors[0].message);
+              setTransaction(undefined);
             } else {
               setTransaction(values);
             }
           } else {
+            setTransaction(undefined);
             setErrors("API ERROR - Please try again later");
           }
         },
         onError: (error) => {
-          setTransaction(undefined);
           setSignedTransaction(undefined);
           setTransactionHash(undefined);
           setErrors("API ERROR - Please try again later :" + error.message);
@@ -157,13 +163,8 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
                       form.setValue("assetIndex", index);
                       form.setValue("chainId", asset.chainId);
                       form.setValue("senders", asset.address);
-                      if (asset.isToken) {
-                        form.setValue("mode", TransactionMode.TRANSFER_TOKEN);
-                        form.setValue(
-                          "tokenId",
-                          asset.contractAddress || asset.assetId
-                        );
-                      }
+                      form.resetField("validatorIndex");
+                      form.resetField("validatorAddress");
                       setDecimals(asset.decimals);
                     }}
                     {...field}
@@ -190,14 +191,37 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
 
           <FormField
             control={form.control}
-            name="recipients"
+            name="validatorAddress"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Recipients</FormLabel>
-                <FormControl>
-                  <Input placeholder="Recipient" {...field} />
-                </FormControl>
-                <FormMessage />
+                <>
+                  <FormLabel>Validators</FormLabel>
+                  <FormControl>
+                    <ValidatorSelector
+                      validators={validators.filter((validator) => {
+                        const chainId = form.watch("chainId");
+                        return chainId === ""
+                          ? true
+                          : validator.chainId === chainId;
+                      })}
+                      selectedValue={
+                        form.getValues().validatorIndex
+                          ? validators[
+                              form.getValues().validatorIndex as number
+                            ]
+                          : undefined
+                      }
+                      onSelect={(validator, index) => {
+                        form.setValue("validatorIndex", index);
+                        form.setValue("chainId", validator.chainId);
+                        form.setValue("validatorAddress", validator.address);
+                        setDecimals(validator.decimals);
+                      }}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </>
               </FormItem>
             )}
           />

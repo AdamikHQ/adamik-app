@@ -1,6 +1,6 @@
 import { GetAddressStateResponse } from "~/api/addressState";
 import { GetChainDetailsResponse } from "~/api/chainDetails";
-import { Asset } from "~/utils/types";
+import { Asset, Feature } from "~/utils/types";
 import { amountToMainUnit, formatAmount, resolveLogo } from "~/utils/helper";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { MobulaBlockchain } from "~/api/mobula/types";
@@ -115,6 +115,9 @@ export const calculateAssets = (
       address: accountData.address,
       decimals: chainDetails.decimals,
       isToken: false,
+      isStakable: chainDetails.supportedFeatures.includes(
+        Feature.BALANCES_STAKING
+      ),
     };
 
     const tokenAssets =
