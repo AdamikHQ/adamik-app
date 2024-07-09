@@ -43,7 +43,7 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
   if (transactionHash) {
     toast({
       description:
-        "Transaction has been successfully broadcast. It will take some times to refetch your transactions",
+        "Transaction has been successfully broadcasted. Your balance will be updated in a few moments",
     });
 
     return (
