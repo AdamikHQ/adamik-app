@@ -8,6 +8,11 @@ export const showroomAddresses = [
     address: "0x88dcb12740fc8f500cd714e17f505179c6ec82f2",
   },
   {
+    chainId: "linea",
+    address: "0x0ab15480627a44f9ae058b741a5ec46c765b7400",
+  },
+
+  {
     chainId: "arbitrum",
     address: "0xc674f77b81d8B37C72Bbe33e681412cd500D860A",
   },
