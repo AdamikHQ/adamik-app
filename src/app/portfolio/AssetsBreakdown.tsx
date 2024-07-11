@@ -1,7 +1,9 @@
 import _ from "lodash";
 import { Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Checkbox } from "~/components/ui/checkbox";
 import {
   Tooltip,
   TooltipProvider,
@@ -9,8 +11,6 @@ import {
 } from "~/components/ui/tooltip";
 import { formatAmountUSD } from "~/utils/helper";
 import { Asset } from "~/utils/types";
-import { useMemo, useState } from "react";
-import { Checkbox } from "~/components/ui/checkbox";
 import { filterAndSortAssets } from "./helpers";
 
 const AssetsBreakdownRow: React.FC<{

@@ -4,12 +4,11 @@ import { Rocket } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { useTransaction } from "~/hooks/useTransaction";
 import { useWallet } from "~/hooks/useWallet";
+import { Broadcast } from "./Broadcast";
 import { KeplrConnect } from "./KeplrConnect";
 import { MetamaskConnect } from "./MetamaskConnect";
 import { PeraConnect } from "./PeraConnect";
 import { WalletName } from "./types";
-import { Broadcast } from "./Broadcast";
-import { useToast } from "~/components/ui/use-toast";
 
 export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
   const {
@@ -19,7 +18,6 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
     signedTransaction,
   } = useTransaction();
   const { addresses } = useWallet();
-  const { toast } = useToast();
 
   const signer = addresses.find(
     (address) =>
@@ -41,11 +39,6 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
   };
 
   if (transactionHash) {
-    toast({
-      description:
-        "Transaction has been successfully broadcasted. Your balance will be updated in a few moments",
-    });
-
     return (
       <div className="p-12 py-2 flex flex-col gap-6 items-center">
         <div className="text-center text-xl">

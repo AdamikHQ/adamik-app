@@ -9,6 +9,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
+import { useToast } from "~/components/ui/use-toast";
 
 type BroadcastProps = {
   onNextStep: () => void;
@@ -22,6 +23,7 @@ export const Broadcast = ({ onNextStep }: BroadcastProps) => {
     setSignedTransaction,
   } = useTransaction();
   const { mutate, isPending } = useBroadcastMutation();
+  const { toast } = useToast();
   const [error, setError] = useState<string | undefined>();
 
   if (!transaction || !signedTransaction) {
@@ -81,6 +83,10 @@ export const Broadcast = ({ onNextStep }: BroadcastProps) => {
                     setError(values.error.message);
                   } else {
                     setTransactionHash(values.hash);
+                    toast({
+                      description:
+                        "Transaction has been successfully broadcasted. Your balance will be updated in a few moments",
+                    });
                     setSignedTransaction(undefined);
                   }
                 },
