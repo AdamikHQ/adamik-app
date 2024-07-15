@@ -52,11 +52,11 @@ export function formatAmount(amount: string | number | null, decimals: number) {
 }
 
 const getSelfHostedLogo = (ticker: string) => {
-  switch (ticker) {
-    case "DYDX":
-      return "/assets/dydx.svg";
-    case "PALM":
-      return "/assets/palm.svg";
+  //Define the list of ticker (uppercase) we use local icons for
+  const supportedTickers = ["DYDX", "PALM"];
+
+  if (supportedTickers.includes(ticker)) {
+    return `/assets/${ticker.toLowerCase()}.svg`;
   }
   return "";
 };
