@@ -51,7 +51,9 @@ export const Broadcast = ({ onNextStep }: BroadcastProps) => {
 
   return (
     <div className="p-12 py-2 flex flex-col gap-6 items-center">
-      <div className="text-center text-xl">Broadcast with Adamik</div>
+      <h1 className="font-extrabold text-2xl text-center mb-4">
+        Broadcast with Adamik{" "}
+      </h1>
       {isPending && <Loader2 className="animate-spin" height={32} width={32} />}
       {error && <div className="text-red-500">{error}</div>}
 

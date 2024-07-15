@@ -52,9 +52,11 @@ export function formatAmount(amount: string | number | null, decimals: number) {
 }
 
 const getSelfHostedLogo = (ticker: string) => {
-  switch (ticker) {
-    case "DYDX":
-      return "/assets/dydx.svg";
+  //Define the list of ticker (uppercase) we use local icons for
+  const supportedTickers = ["DYDX", "PALM"];
+
+  if (supportedTickers.includes(ticker)) {
+    return `/assets/${ticker.toLowerCase()}.svg`;
   }
   return "";
 };
@@ -73,6 +75,13 @@ export const resolveLogo = ({
   mobulaMarketData,
   mobulaBlockChainData,
 }: RetrieveLogoFromSourceProps) => {
+  // First, try to find a self-hosted logo
+  const selfHosted = getSelfHostedLogo(ticker);
+  if (selfHosted) {
+    return selfHosted;
+  }
+
+  // If not found, try to find the logo in mobulaBlockChainData by matching the name
   const byBlockchainName = mobulaBlockChainData?.find((mobulaBlockchain) => {
     return (
       mobulaBlockchain.name.toLowerCase() ===
@@ -84,16 +93,12 @@ export const resolveLogo = ({
     return byBlockchainName.logo;
   }
 
+  // If still not found, try to find the logo in mobulaMarketData by ticker
   const byTicker = mobulaMarketData && mobulaMarketData?.[ticker]?.logo;
   if (byTicker) {
     return byTicker;
   }
 
-  // Temporary solution for missing logo in Mobula
-  const selfHosted = getSelfHostedLogo(ticker);
-  if (selfHosted) {
-    return selfHosted;
-  }
-
+  // If no logo is found, return an empty string
   return "";
 };
