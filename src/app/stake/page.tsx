@@ -9,7 +9,6 @@ import {
   isAddressStateCache,
   useAddressStateBatch,
 } from "~/hooks/useAddressStateBatch";
-import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { useValidatorsBatch } from "~/hooks/useValidatorsBatch";
 import { useWallet } from "~/hooks/useWallet";
@@ -19,7 +18,7 @@ import {
   filterAndSortAssets,
   getTickers,
 } from "../portfolio/helpers";
-import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
+import { WalletSelection } from "../wallets/WalletSelection";
 import { StakingBalances } from "./StakingBalances";
 import {
   aggregateStakingBalances,
@@ -36,6 +35,7 @@ import { clearAddressStateCache } from "~/hooks/useAddressState";
 import { useToast } from "~/components/ui/use-toast";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useTransaction } from "~/hooks/useTransaction";
+import { useChains } from "~/hooks/useChains";
 
 export default function Stake() {
   const { addresses, isShowroom, setWalletMenuOpen } = useWallet();
@@ -45,48 +45,54 @@ export default function Stake() {
   const { toast } = useToast();
 
   const displayAddresses = isShowroom ? showroomAddresses : addresses;
-  const chainIdsAdamik = displayAddresses.reduce<string[]>(
+  const addressesChainIds = displayAddresses.reduce<string[]>(
     (acc, { chainId }) => {
       if (acc.includes(chainId)) return acc;
       return [...acc, chainId];
     },
     []
   );
+  const { isLoading: isSupportedChainsLoading, data: supportedChains } =
+    useChains();
+  const chainsDetails =
+    supportedChains &&
+    Object.values(supportedChains).filter((chain) =>
+      addressesChainIds.includes(chain.id)
+    );
+
   const { data, isLoading: isAddressStateLoading } =
     useAddressStateBatch(displayAddresses);
-  const { data: chainsDetails, isLoading: isChainDetailsLoading } =
-    useGetChainDetailsBatch(chainIdsAdamik);
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
   const { data: mobulaMarketData } = useMobulaMarketMultiData(
     [...mainChainTickersIds],
-    !isChainDetailsLoading,
+    !isSupportedChainsLoading,
     "symbols"
   );
 
   const { data: validatorsData, isLoading: validatorLoading } =
-    useValidatorsBatch(chainIdsAdamik);
+    useValidatorsBatch(addressesChainIds);
 
   const isLoading =
-    validatorLoading || isChainDetailsLoading || isAddressStateLoading;
+    validatorLoading || isSupportedChainsLoading || isAddressStateLoading;
 
   const aggregatedBalances = aggregateStakingBalances(
     data,
-    chainsDetails,
+    chainsDetails || [],
     mobulaMarketData
   );
 
   const stakingPositions = getAddressStakingPositions(
     data,
-    chainsDetails,
+    chainsDetails || [],
     mobulaMarketData,
     validatorsData
   );
 
   const validators = createValidatorList(
     validatorsData,
-    chainsDetails,
+    chainsDetails || [],
     mobulaMarketData
   );
 
@@ -95,7 +101,7 @@ export default function Stake() {
       filterAndSortAssets(
         calculateAssets(
           data,
-          chainsDetails,
+          chainsDetails || [],
           mobulaMarketData,
           mobulaBlockchainDetails
         ),
@@ -123,7 +129,7 @@ export default function Stake() {
           </Tooltip>
         </div>
 
-        <WalletModalTrigger />
+        <WalletSelection />
       </div>
 
       {isShowroom ? <ShowroomBanner /> : null}

@@ -11,9 +11,11 @@ export interface IWallet {
   changeAddressEvent?: (callback: (address: string) => void) => void;
 }
 
+// FIXME Name is confusing, address should not contain address :)
 export type Address = {
   chainId: string;
   address: string;
+  pubKey?: string;
   signer?: string;
 };
 
@@ -24,10 +26,5 @@ export enum WalletName {
 }
 
 export type WalletConnectorProps = {
-  setWalletAddresses?: (
-    walletAddresses: string[],
-    walletChains: string[],
-    walletName: WalletName
-  ) => void;
   transactionPayload?: TransactionEncodeResponse;
 };

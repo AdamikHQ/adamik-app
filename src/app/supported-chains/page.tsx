@@ -24,7 +24,7 @@ export default function SupportedChains() {
   const [showTestnets, setShowTestnets] = useState(false);
   const { isLoading: mobulaBlockchainLoading, data: mobulaBlockchains } =
     useMobulaBlockchains();
-  const tickers = Object.values(supportedChains?.chains || {}).reduce<string[]>(
+  const tickers = Object.values(supportedChains || {}).reduce<string[]>(
     (acc, chain) => [...acc, chain.ticker],
     []
   );
@@ -42,7 +42,7 @@ export default function SupportedChains() {
     return null;
   }
 
-  const chainsWithInfo = Object.values(supportedChains?.chains)
+  const chainsWithInfo = Object.values(supportedChains)
     .reduce<SupportedBlockchain[]>((acc, chain) => {
       if (chain.isTestNet) {
         return acc;
@@ -59,13 +59,14 @@ export default function SupportedChains() {
     }, [])
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  const additionalChains = Object.values(supportedChains?.chains).reduce<
-    string[]
-  >((acc, chain) => {
-    return chain.isTestNet && !acc.includes(chain.name)
-      ? [...acc, chain.id]
-      : acc;
-  }, []);
+  const additionalChains = Object.values(supportedChains).reduce<string[]>(
+    (acc, chain) => {
+      return chain.isTestNet && !acc.includes(chain.name)
+        ? [...acc, chain.id]
+        : acc;
+    },
+    []
+  );
 
   const handleCheckboxChange = () => {
     setShowTestnets(!showTestnets);

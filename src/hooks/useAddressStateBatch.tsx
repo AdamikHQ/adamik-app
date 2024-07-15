@@ -13,6 +13,7 @@ export const isAddressStateCache = (addresses: GetAddressStateParams[]) => {
   });
 };
 
+// TODO Response should be typed
 export const useAddressStateBatch = (
   addressesParams: GetAddressStateParams[]
 ) => {

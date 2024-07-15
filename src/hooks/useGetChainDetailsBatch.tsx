@@ -1,6 +1,8 @@
 import { useQueries } from "@tanstack/react-query";
 import { getChainDetails } from "~/api/chainDetails";
 
+// NOTE - DEPRECATED - useChains should be used instead
+
 export const useGetChainDetailsBatch = (chainIds: string[]) => {
   return useQueries({
     queries: chainIds.map((chainId) => {

@@ -71,12 +71,12 @@ export const getTokenTickersSortByChain = (
 };
 
 export const calculateAssets = (
-  data: (GetAddressStateResponse | undefined | null)[],
+  addressData: (GetAddressStateResponse | undefined | null)[],
   chainsDetails: (GetChainDetailsResponse | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null,
   mobulaBlockChainData: MobulaBlockchain[] | undefined
 ): Asset[] => {
-  return data.reduce<Asset[]>((acc, accountData) => {
+  return addressData.reduce<Asset[]>((acc, accountData) => {
     if (!accountData) return [...acc];
 
     const chainDetails = chainsDetails.find(
@@ -113,6 +113,7 @@ export const calculateAssets = (
       balanceUSD,
       ticker: chainDetails.ticker,
       address: accountData.address,
+      //pubKey: accountData.pubKey,
       decimals: chainDetails.decimals,
       isToken: false,
       isStakable: chainDetails.supportedFeatures.includes(

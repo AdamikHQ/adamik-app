@@ -33,6 +33,7 @@ export type Asset = {
   balanceUSD: number | undefined;
   ticker: string;
   address: string;
+  pubKey?: string;
   contractAddress?: string;
   decimals: number;
   isToken: boolean;

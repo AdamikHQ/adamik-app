@@ -27,6 +27,12 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
     setShowroom(localDataClientStateParsed?.isShowroom || false);
   }, []);
 
+  useEffect(() => {
+    if (addresses.length > 0) {
+      setShowroom(false);
+    }
+  }, [addresses]);
+
   const addWallet = (wallet: IWallet) => {
     const exist = wallets.find((w) => w.id === wallet.id);
     if (!exist) {
@@ -34,9 +40,9 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
     }
   };
 
-  const addAddresses = (receiveAddresses: Address[]) => {
+  const addAddresses = (newAddresses: Address[]) => {
     setAddresses((oldAddresses) => {
-      const mergedAddresses = [...oldAddresses, ...receiveAddresses];
+      const mergedAddresses = [...oldAddresses, ...newAddresses];
 
       const uniqueAddresses = mergedAddresses.filter(
         (value, index, self) =>
