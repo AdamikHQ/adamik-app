@@ -68,10 +68,10 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
   return (
     <div>
       <h1 className="font-extrabold text-2xl text-center mb-4">
-        Sign in with your wallet
+        Sign with your wallet
       </h1>
       <div className="mb-8 text-center">
-        Exit demo mode and use your real wallet to sign transactions
+        Please verify your transaction before approving
       </div>
       <div className="flex flex-row gap-4">{getSignerComponent()}</div>
     </div>
