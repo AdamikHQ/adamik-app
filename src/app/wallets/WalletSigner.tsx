@@ -38,6 +38,19 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
     }
   };
 
+  const handleCopyToClipboard = () => {
+    if (transactionHash) {
+      navigator.clipboard.writeText(transactionHash).then(
+        () => {
+          alert(`Transaction hash copied to clipboard: ${transactionHash}`);
+        },
+        (err) => {
+          console.error("Could not copy text: ", err);
+        }
+      );
+    }
+  };
+
   if (transactionHash) {
     return (
       <div className="p-12 py-2 flex flex-col gap-6 items-center">
@@ -47,16 +60,17 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
         <div>
           <Rocket height={32} width={32} />
         </div>
-        <div className="break-all">{transactionHash}</div>
-
-        <Button
-          onClick={() => {
-            onNextStep();
-            setTransactionHash(undefined);
-          }}
-        >
-          Close
-        </Button>
+        <div className="flex gap-4">
+          <Button onClick={handleCopyToClipboard}>Copy Tx Hash</Button>
+          <Button
+            onClick={() => {
+              onNextStep();
+              setTransactionHash(undefined);
+            }}
+          >
+            Close
+          </Button>
+        </div>
       </div>
     );
   }
