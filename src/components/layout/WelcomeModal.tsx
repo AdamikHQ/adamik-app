@@ -73,7 +73,7 @@ export const WelcomeModal = () => {
                 Select your experience
               </h1>
               <div className="flex flex-col gap-2 text-center text-sm text-gray-400">
-                <p>Explore Adamik in demo mode or with your real accounts</p>
+                <p>Switch between modes using the toggle</p>
                 <video
                   className="w-full h-auto mt-4 rounded-lg" // Added rounded-lg for border radius
                   src="/toggle.mp4" // Replace with the video file path
