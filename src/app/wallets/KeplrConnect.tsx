@@ -56,7 +56,7 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
             addAddresses([
               {
                 address: account.address,
-                pubKey: Buffer.from(account.pubkey).toString(),
+                pubKey: Buffer.from(account.pubkey).toString("hex"),
                 chainId,
                 signer: WalletName.KEPLR,
               },

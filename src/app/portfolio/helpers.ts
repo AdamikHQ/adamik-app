@@ -4,6 +4,7 @@ import { Asset, Feature } from "~/utils/types";
 import { amountToMainUnit, formatAmount, resolveLogo } from "~/utils/helper";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { MobulaBlockchain } from "~/api/mobula/types";
+import { Address } from "../wallets/types";
 
 export const getTickers = (
   data: (GetChainDetailsResponse | undefined | null)[]
@@ -70,20 +71,26 @@ export const getTokenTickersSortByChain = (
   }, {} as Record<string, string[]>);
 };
 
+// TODO Probably need to refacto a bit the model, to handle all the different data sources in a simpler way
 export const calculateAssets = (
-  addressData: (GetAddressStateResponse | undefined | null)[],
+  walletAddresses: Address[],
+  addressesData: (GetAddressStateResponse | undefined | null)[],
   chainsDetails: (GetChainDetailsResponse | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null,
   mobulaBlockChainData: MobulaBlockchain[] | undefined
 ): Asset[] => {
-  return addressData.reduce<Asset[]>((acc, accountData) => {
+  return addressesData.reduce<Asset[]>((acc, accountData) => {
     if (!accountData) return [...acc];
 
     const chainDetails = chainsDetails.find(
       (chainDetail) => chainDetail?.id === accountData.chainId
     );
 
-    if (!chainDetails) {
+    const walletAddress = walletAddresses.find(
+      (address) => address.address === accountData.address
+    );
+
+    if (!chainDetails || !walletAddress) {
       return [...acc];
     }
     const balanceMainUnit = amountToMainUnit(
@@ -113,7 +120,7 @@ export const calculateAssets = (
       balanceUSD,
       ticker: chainDetails.ticker,
       address: accountData.address,
-      //pubKey: accountData.pubKey,
+      pubKey: walletAddress.pubKey,
       decimals: chainDetails.decimals,
       isToken: false,
       isStakable: chainDetails.supportedFeatures.includes(
@@ -155,6 +162,7 @@ export const calculateAssets = (
               mainChainLogo: mainChainAsset.logo,
               mainChainName: mainChainAsset.name || mainChainAsset.chainId,
               address: mainChainAsset.address,
+              pubKey: walletAddress.pubKey,
               assetId: tokenAccountData.token.id,
               chainId: tokenAccountData.token.chainId,
               name: tokenAccountData.token.name,

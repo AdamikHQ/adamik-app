@@ -18,8 +18,10 @@ export type Transaction = {
   fees?: string;
   gas?: string;
   format?: string;
-  pubKey?: string;
   memo?: string;
+  params: {
+    pubKey?: string;
+  };
 };
 
 export type Asset = {

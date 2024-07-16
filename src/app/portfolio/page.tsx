@@ -33,12 +33,12 @@ import {
 
 export default function Portfolio() {
   const {
-    addresses,
+    addresses: walletAddresses,
     setWalletMenuOpen: setWalletMenuOpen,
     isShowroom,
   } = useWallet();
 
-  const displayAddresses = isShowroom ? showroomAddresses : addresses;
+  const displayAddresses = isShowroom ? showroomAddresses : walletAddresses;
   const addressesChainIds = displayAddresses.reduce<string[]>(
     (acc, { chainId }) => {
       if (acc.includes(chainId)) return acc;
@@ -55,7 +55,7 @@ export default function Portfolio() {
       addressesChainIds.includes(chain.id)
     );
 
-  const { data: addressData, isLoading: isAddressesLoading } =
+  const { data: addressesData, isLoading: isAddressesLoading } =
     useAddressStateBatch(displayAddresses);
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
   const [openTransaction, setOpenTransaction] = useState(false);
@@ -63,8 +63,8 @@ export default function Portfolio() {
   const [stepper, setStepper] = useState(0);
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
-  const tokenTickers = getTokenTickers(addressData || []);
-  const tokenContractAddresses = getTokenContractAddresses(addressData || []);
+  const tokenTickers = getTokenTickers(addressesData || []);
+  const tokenContractAddresses = getTokenContractAddresses(addressesData || []);
 
   const { data: mobulaMarketData, isLoading: isAssetDetailsLoading } =
     useMobulaMarketMultiData(
@@ -85,11 +85,11 @@ export default function Portfolio() {
   const stakingBalances = useMemo(
     () =>
       aggregateStakingBalances(
-        addressData,
+        addressesData,
         chainsDetails || [],
         mobulaMarketData
       ),
-    [chainsDetails, addressData, mobulaMarketData]
+    [chainsDetails, addressesData, mobulaMarketData]
   );
 
   const isLoading =
@@ -99,12 +99,10 @@ export default function Portfolio() {
     isMobulaMarketDataLoading;
 
   const assets = useMemo(() => {
-    // TODO Here need to inject 'pubKey' from 'addresses' into appropriate addresses in 'addressData'
-    // Probably need to refacto a bit the model, to handle all the different data sources in a simpler way
-
     return filterAndSortAssets(
       calculateAssets(
-        addressData,
+        displayAddresses,
+        addressesData,
         chainsDetails || [],
         {
           ...mobulaMarketData,
@@ -117,7 +115,8 @@ export default function Portfolio() {
   }, [
     mobulaBlockchainDetails,
     chainsDetails,
-    addressData,
+    addressesData,
+    displayAddresses,
     mobulaMarketData,
     mobulaMarketDataContractAddresses,
     hideLowBalance,
@@ -193,6 +192,7 @@ export default function Portfolio() {
           // Probably need to rework
           stepper === 0 ? (
             <Transaction
+              // FIXME non-filtered assets should be used here
               assets={assets}
               onNextStep={() => {
                 setStepper(1);
@@ -200,7 +200,7 @@ export default function Portfolio() {
             />
           ) : (
             <>
-              {addresses && addresses.length > 0 ? (
+              {walletAddresses && walletAddresses.length > 0 ? (
                 <WalletSigner
                   onNextStep={() => {
                     setOpenTransaction(false);
