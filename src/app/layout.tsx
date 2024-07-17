@@ -1,15 +1,9 @@
 import { cn } from "~/utils/helper";
 import { AppProviders } from "~/providers";
 import type { Metadata } from "next";
-import { Inter as FontSans } from "next/font/google";
 import "./globals.css";
 import { Menu } from "~/components/layout/Menu/Menu";
 import { Toaster } from "~/components/ui/toaster";
-
-const fontSans = FontSans({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
 
 export const metadata: Metadata = {
   title: "Adamik App",
@@ -25,8 +19,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          "min-h-screen bg-secondary font-sans antialiased flex flex-col md:flex-row",
-          fontSans.variable
+          "min-h-screen bg-secondary font-sans antialiased flex flex-col md:flex-row"
         )}
       >
         <AppProviders>
