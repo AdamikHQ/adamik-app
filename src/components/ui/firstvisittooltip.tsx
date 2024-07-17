@@ -1,0 +1,63 @@
+import * as React from "react";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import { cn } from "~/utils/helper";
+
+const TooltipProvider = TooltipPrimitive.Provider;
+const TooltipTrigger = TooltipPrimitive.Trigger;
+const TooltipContent = TooltipPrimitive.Content;
+
+const FirstVisitTooltip = ({
+  children,
+  text,
+  showOnFirstVisit = false,
+}: {
+  children: React.ReactNode;
+  text: string;
+  showOnFirstVisit?: boolean;
+}) => {
+  const [shouldRenderTooltip, setShouldRenderTooltip] = React.useState(false);
+
+  React.useEffect(() => {
+    const tooltipShown = localStorage.getItem("tooltipShown") === "true";
+    console.log(
+      `Initial tooltipShown value from localStorage: ${tooltipShown}`
+    );
+
+    if (showOnFirstVisit && !tooltipShown) {
+      setShouldRenderTooltip(true);
+      console.log("Tooltip set to show on first visit");
+    }
+  }, [showOnFirstVisit]);
+
+  const handleDismiss = () => {
+    console.log("Dismissing tooltip");
+    localStorage.setItem("tooltipShown", "true");
+    setShouldRenderTooltip(false);
+    console.log("Tooltip state saved to localStorage: true");
+  };
+
+  if (!shouldRenderTooltip) {
+    return <>{children}</>;
+  }
+
+  return (
+    <TooltipProvider>
+      <TooltipPrimitive.Root open={true} delayDuration={100}>
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipContent
+          sideOffset={4}
+          className={cn(
+            "whitespace-pre-line z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+          )}
+        >
+          {text}
+          <button onClick={handleDismiss} className="ml-2 text-blue-500">
+            Got it
+          </button>
+        </TooltipContent>
+      </TooltipPrimitive.Root>
+    </TooltipProvider>
+  );
+};
+
+export { FirstVisitTooltip };
