@@ -8,6 +8,7 @@ export type ValidatorResponse = {
     address: string;
     name: string;
     commission: number;
+    stakedAmount: string; // Added the stakedAmount field
   }[];
 };
 
@@ -43,5 +44,6 @@ export const getValidators = async (
     console.error("validators - backend error:", response.statusText);
   }
 
-  return response.json();
+  const data = await response.json();
+  return data as ValidatorResponse; // Ensure the response is correctly typed
 };

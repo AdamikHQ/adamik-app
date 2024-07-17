@@ -203,14 +203,16 @@ export const createValidatorList = (
   chainsDetails: (GetChainDetailsResponse | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null
 ): Validator[] => {
-  return validatorData.reduce<Validator[]>((acc, current) => {
+  let validators = validatorData.reduce<Validator[]>((acc, current) => {
     const chainDetails = chainsDetails.find(
       (chainDetails) => chainDetails?.id === current?.chainId
     );
     if (!chainDetails) return acc;
 
-    const validators = current?.validators.reduce<Validator[]>(
+    const chainValidators = current?.validators.reduce<Validator[]>(
       (subAcc, validator) => {
+        const stakedAmount = validator.stakedAmount || "0";
+
         return [
           ...subAcc,
           {
@@ -223,14 +225,22 @@ export const createValidatorList = (
             }),
             decimals: chainDetails.decimals,
             ticker: chainDetails.ticker,
+            stakedAmount: parseFloat(stakedAmount),
           },
         ];
       },
       []
     );
 
-    if (!validators) return acc;
+    if (!chainValidators) return acc;
 
-    return [...acc, ...validators];
+    return [...acc, ...chainValidators];
   }, []);
+
+  // Sort validators by staked amount in descending order
+  validators = validators.sort(
+    (a, b) => (b.stakedAmount || 0) - (a.stakedAmount || 0)
+  );
+
+  return validators;
 };
