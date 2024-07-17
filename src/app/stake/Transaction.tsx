@@ -142,7 +142,7 @@ export function Transaction({
 
   return (
     <>
-      <h1 className="font-bold text-xl text-center">Transfer</h1>
+      <h1 className="font-bold text-xl text-center">Stake</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 px-4">
           <FormField
