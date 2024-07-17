@@ -19,7 +19,7 @@ export type Transaction = {
   gas?: string;
   format?: string;
   memo?: string;
-  params: {
+  params?: {
     pubKey?: string;
   };
 };

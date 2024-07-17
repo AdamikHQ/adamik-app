@@ -60,7 +60,7 @@ export default function Stake() {
       addressesChainIds.includes(chain.id)
     );
 
-  const { data, isLoading: isAddressStateLoading } =
+  const { data: addressesData, isLoading: isAddressStateLoading } =
     useAddressStateBatch(displayAddresses);
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
 
@@ -78,13 +78,13 @@ export default function Stake() {
     validatorLoading || isSupportedChainsLoading || isAddressStateLoading;
 
   const aggregatedBalances = aggregateStakingBalances(
-    data,
+    addressesData,
     chainsDetails || [],
     mobulaMarketData
   );
 
   const stakingPositions = getAddressStakingPositions(
-    data,
+    addressesData,
     chainsDetails || [],
     mobulaMarketData,
     validatorsData
@@ -100,14 +100,21 @@ export default function Stake() {
     () =>
       filterAndSortAssets(
         calculateAssets(
-          data,
+          displayAddresses,
+          addressesData,
           chainsDetails || [],
           mobulaMarketData,
           mobulaBlockchainDetails
         ),
         false
       ).filter((asset) => asset.isStakable),
-    [mobulaBlockchainDetails, chainsDetails, data, mobulaMarketData]
+    [
+      displayAddresses,
+      addressesData,
+      mobulaBlockchainDetails,
+      chainsDetails,
+      mobulaMarketData,
+    ]
   );
 
   return (
