@@ -30,11 +30,11 @@ export const WalletSelection = () => {
     <div className="flex flex-row gap-6">
       {/* Tooltip component to show instructions on first visit */}
       <FirstVisitTooltip
-        text="Use this toggle to switch between demo and wallet mode."
+        text="Use the toggle to switch between demo and wallet mode."
         showOnFirstVisit
       >
         <div
-          className="flex items-center space-x-2"
+          className="flex items-center space-x-2 cursor-pointer"
           id="toggle-showroom"
           onClick={() => setShowroom(!isShowroom)}
         >
