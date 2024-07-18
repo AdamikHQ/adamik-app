@@ -1,3 +1,5 @@
+"use-client";
+
 import { FirstVisitTooltip } from "~/components/ui/firstvisittooltip"; // Ensure the correct import path
 import { useWallet } from "~/hooks/useWallet";
 import { Modal } from "~/components/ui/modal";

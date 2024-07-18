@@ -19,21 +19,15 @@ const FirstVisitTooltip = ({
 
   React.useEffect(() => {
     const tooltipShown = localStorage.getItem("tooltipShown") === "true";
-    console.log(
-      `Initial tooltipShown value from localStorage: ${tooltipShown}`
-    );
 
     if (showOnFirstVisit && !tooltipShown) {
       setShouldRenderTooltip(true);
-      console.log("Tooltip set to show on first visit");
     }
   }, [showOnFirstVisit]);
 
   const handleDismiss = () => {
-    console.log("Dismissing tooltip");
     localStorage.setItem("tooltipShown", "true");
     setShouldRenderTooltip(false);
-    console.log("Tooltip state saved to localStorage: true");
   };
 
   if (!shouldRenderTooltip) {
