@@ -50,7 +50,7 @@ export const WelcomeModal = () => {
                   <div className="h-4"></div> {/* Extra space */}
                 </p>
                 <img
-                  src="/intro.svg"
+                  src="/intro.png"
                   alt="Adamik Introduction"
                   className="w-[80%] h-auto mx-auto"
                 />
