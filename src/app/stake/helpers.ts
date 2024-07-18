@@ -203,37 +203,39 @@ export const createValidatorList = (
   chainsDetails: (GetChainDetailsResponse | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null
 ): Validator[] => {
-  return validatorData.reduce<Validator[]>((acc, current) => {
-    const chainDetails = chainsDetails.find(
-      (chainDetails) => chainDetails?.id === current?.chainId
-    );
-    if (!chainDetails) return acc;
+  return validatorData
+    .reduce<Validator[]>((acc, current) => {
+      const chainDetails = chainsDetails.find(
+        (chainDetails) => chainDetails?.id === current?.chainId
+      );
+      if (!chainDetails) return acc;
 
-    const chainValidators = current?.validators.reduce<Validator[]>(
-      (subAcc, validator) => {
-        const stakedAmount = validator.stakedAmount || "0";
+      const chainValidators = current?.validators.reduce<Validator[]>(
+        (subAcc, validator) => {
+          const stakedAmount = validator.stakedAmount || "0";
 
-        return [
-          ...subAcc,
-          {
-            ...validator,
-            chainId: current.chainId,
-            chainName: chainDetails.name,
-            chainLogo: resolveLogo({
-              asset: { name: chainDetails.name, ticker: chainDetails.ticker },
-              mobulaMarketData,
-            }),
-            decimals: chainDetails.decimals,
-            ticker: chainDetails.ticker,
-            stakedAmount: parseFloat(stakedAmount),
-          },
-        ];
-      },
-      []
-    );
+          return [
+            ...subAcc,
+            {
+              ...validator,
+              chainId: current.chainId,
+              chainName: chainDetails.name,
+              chainLogo: resolveLogo({
+                asset: { name: chainDetails.name, ticker: chainDetails.ticker },
+                mobulaMarketData,
+              }),
+              decimals: chainDetails.decimals,
+              ticker: chainDetails.ticker,
+              stakedAmount: parseFloat(stakedAmount),
+            },
+          ];
+        },
+        []
+      );
 
-    if (!chainValidators) return acc;
+      if (!chainValidators) return acc;
 
-    return [...acc, ...chainValidators];
-  }, []);
+      return [...acc, ...chainValidators];
+    }, [])
+    .sort((a, b) => b.stakedAmount - a.stakedAmount);
 };
