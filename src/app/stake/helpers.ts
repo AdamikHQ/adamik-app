@@ -154,7 +154,7 @@ export const getAddressStakingPositions = (
             ...position,
             addresses: [accountData.address].concat(currentAddresses),
             validatorName: validatorInfo?.name,
-            commission: validatorInfo?.commission,
+            commission: Number(validatorInfo?.commission),
             chainId: accountData.chainId,
             chainLogo: resolveLogo({
               asset: { name: chainDetails.name, ticker: chainDetails.ticker },
@@ -218,6 +218,7 @@ export const createValidatorList = (
             ...subAcc,
             {
               ...validator,
+              commission: Number(validator.commission),
               chainId: current.chainId,
               chainName: chainDetails.name,
               chainLogo: resolveLogo({
@@ -226,7 +227,7 @@ export const createValidatorList = (
               }),
               decimals: chainDetails.decimals,
               ticker: chainDetails.ticker,
-              stakedAmount: parseFloat(stakedAmount),
+              stakedAmount: Number(stakedAmount),
             },
           ];
         },

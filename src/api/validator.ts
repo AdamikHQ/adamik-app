@@ -7,7 +7,7 @@ export type ValidatorResponse = {
   validators: {
     address: string;
     name: string;
-    commission: number;
+    commission: string;
     stakedAmount: string;
   }[];
 };
