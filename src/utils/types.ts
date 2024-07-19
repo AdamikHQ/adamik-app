@@ -66,6 +66,7 @@ export type Chain = {
 };
 
 export type Validator = {
+  stakedAmount: number;
   address: string;
   name: string;
   commission: number;
