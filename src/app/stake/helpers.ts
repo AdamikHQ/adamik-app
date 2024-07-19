@@ -154,7 +154,7 @@ export const getAddressStakingPositions = (
             ...position,
             addresses: [accountData.address].concat(currentAddresses),
             validatorName: validatorInfo?.name,
-            commission: validatorInfo?.commission,
+            commission: Number(validatorInfo?.commission),
             chainId: accountData.chainId,
             chainLogo: resolveLogo({
               asset: { name: chainDetails.name, ticker: chainDetails.ticker },
@@ -203,34 +203,40 @@ export const createValidatorList = (
   chainsDetails: (GetChainDetailsResponse | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null
 ): Validator[] => {
-  return validatorData.reduce<Validator[]>((acc, current) => {
-    const chainDetails = chainsDetails.find(
-      (chainDetails) => chainDetails?.id === current?.chainId
-    );
-    if (!chainDetails) return acc;
+  return validatorData
+    .reduce<Validator[]>((acc, current) => {
+      const chainDetails = chainsDetails.find(
+        (chainDetails) => chainDetails?.id === current?.chainId
+      );
+      if (!chainDetails) return acc;
 
-    const validators = current?.validators.reduce<Validator[]>(
-      (subAcc, validator) => {
-        return [
-          ...subAcc,
-          {
-            ...validator,
-            chainId: current.chainId,
-            chainName: chainDetails.name,
-            chainLogo: resolveLogo({
-              asset: { name: chainDetails.name, ticker: chainDetails.ticker },
-              mobulaMarketData,
-            }),
-            decimals: chainDetails.decimals,
-            ticker: chainDetails.ticker,
-          },
-        ];
-      },
-      []
-    );
+      const chainValidators = current?.validators.reduce<Validator[]>(
+        (subAcc, validator) => {
+          const stakedAmount = validator.stakedAmount || "0";
 
-    if (!validators) return acc;
+          return [
+            ...subAcc,
+            {
+              ...validator,
+              commission: Number(validator.commission),
+              chainId: current.chainId,
+              chainName: chainDetails.name,
+              chainLogo: resolveLogo({
+                asset: { name: chainDetails.name, ticker: chainDetails.ticker },
+                mobulaMarketData,
+              }),
+              decimals: chainDetails.decimals,
+              ticker: chainDetails.ticker,
+              stakedAmount: Number(stakedAmount),
+            },
+          ];
+        },
+        []
+      );
 
-    return [...acc, ...validators];
-  }, []);
+      if (!chainValidators) return acc;
+
+      return [...acc, ...chainValidators];
+    }, [])
+    .sort((a, b) => b.stakedAmount - a.stakedAmount);
 };
