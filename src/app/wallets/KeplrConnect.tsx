@@ -48,7 +48,7 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
         }
       }
 
-      // For each supported (Adamik) chain ID, get its address from Keplr
+      // For each supported (Adamik) chain ID, get its (single) address from Keplr
       cosmosChainIdsMapping.forEach(async (nativeId, chainId) => {
         try {
           const account = await client.getAccount?.(nativeId);
