@@ -3,6 +3,8 @@
 import { env, ADAMIK_API_URL } from "~/env";
 import { Chain } from "~/utils/types";
 
+// NOTE - DEPRECATED - getChains should be used instead
+
 export type GetChainDetailsResponse = Chain;
 
 export const getChainDetails = async (

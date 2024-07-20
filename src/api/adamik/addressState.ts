@@ -70,8 +70,7 @@ export const addressState = async (
   });
 
   if (response.status === 200) {
-    const data = await response.json();
-    return data;
+    return await response.json();
   } else {
     console.error("state - backend error");
     return null;

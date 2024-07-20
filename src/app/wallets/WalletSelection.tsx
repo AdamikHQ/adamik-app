@@ -1,14 +1,27 @@
 "use client";
 
 import { Modal } from "~/components/ui/modal";
-import { WalletModalContent } from "./WalletModalContent";
 import { Button } from "~/components/ui/button";
 import { Wallet } from "lucide-react";
 import { useWallet } from "~/hooks/useWallet";
 import { Switch } from "~/components/ui/switch";
 import { Label } from "~/components/ui/label";
 
-export const WalletModalTrigger = () => {
+import { KeplrConnect } from "./KeplrConnect";
+import { MetamaskConnect } from "./MetamaskConnect";
+import { PeraConnect } from "./PeraConnect";
+
+const WalletModalContent = () => {
+  return (
+    <div className="flex flex-row gap-4">
+      <MetamaskConnect />
+      <KeplrConnect />
+      <PeraConnect />
+    </div>
+  );
+};
+
+export const WalletSelection = () => {
   const { isWalletMenuOpen, setWalletMenuOpen, setShowroom, isShowroom } =
     useWallet();
 

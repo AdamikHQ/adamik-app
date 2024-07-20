@@ -49,6 +49,7 @@ export const AssetsBalances: React.FC<{
             <CardTitle className="text-sm font-medium">
               Staked Balance
             </CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">

@@ -58,6 +58,11 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
   const [errors, setErrors] = useState("");
 
   function onSubmit(values: TransactionFormInput) {
+    // FIXME Hack to be able to provide the pubKey, probably better to refacto
+    const pubKey = assets.find(
+      (asset) => asset.address === values.senders
+    )?.pubKey;
+
     mutate(
       {
         mode: values.mode,
@@ -70,6 +75,9 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
           : amountToSmallestUnit(values.amount.toString(), decimals),
         useMaxAmount: values.useMaxAmount,
         format: "json",
+        params: {
+          pubKey,
+        },
       },
       {
         onSettled: (values) => {

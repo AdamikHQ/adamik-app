@@ -1,29 +1,43 @@
 import algosdk from "algosdk";
 import { PeraWalletConnect } from "@perawallet/connect";
-import { WalletConnectorProps, WalletName } from "./types";
-import { useCallback, useMemo } from "react";
+import { Address, WalletConnectorProps, WalletName } from "./types";
+import { useCallback } from "react";
 import { useTransaction } from "~/hooks/useTransaction";
 import { useToast } from "~/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { useWallet } from "~/hooks/useWallet";
 
+/**
+ * Pera:
+ * - Returns more than 1 address
+ * - Only valid chain ID for all addresses is 'algorand'
+ */
 export const PeraConnect: React.FC<WalletConnectorProps> = ({
-  setWalletAddresses,
   transactionPayload,
 }) => {
   const { toast } = useToast();
   const { setSignedTransaction } = useTransaction();
+  const { addAddresses } = useWallet();
 
   const getAddresses = useCallback(async () => {
     const peraWallet = new PeraWalletConnect();
 
     try {
-      let addresses = await peraWallet.reconnectSession();
-      if (addresses.length === 0) {
-        addresses = await peraWallet.connect();
+      let peraAddresses = await peraWallet.reconnectSession();
+      if (peraAddresses.length === 0) {
+        peraAddresses = await peraWallet.connect();
       }
 
-      setWalletAddresses &&
-        setWalletAddresses(addresses, ["algorand"], WalletName.PERA);
+      const addresses: Address[] = [];
+      for (const address of peraAddresses) {
+        addresses.push({
+          address,
+          chainId: "algorand",
+          signer: WalletName.PERA,
+        });
+      }
+
+      addAddresses(addresses);
 
       toast({
         description:
@@ -38,7 +52,7 @@ export const PeraConnect: React.FC<WalletConnectorProps> = ({
       peraWallet?.disconnect();
       throw e;
     }
-  }, [toast, setWalletAddresses]);
+  }, [toast, addAddresses]);
 
   const sign = useCallback(async () => {
     if (!transactionPayload) {

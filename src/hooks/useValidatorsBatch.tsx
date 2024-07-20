@@ -1,5 +1,5 @@
 import { useQueries, useQueryClient } from "@tanstack/react-query";
-import { getValidators } from "~/api/validator";
+import { getValidators } from "~/api/adamik/validators";
 
 export const useValidatorsBatch = (chainIds: string[]) => {
   return useQueries({

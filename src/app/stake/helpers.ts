@@ -1,7 +1,7 @@
-import { GetAddressStateResponse } from "~/api/addressState";
-import { GetChainDetailsResponse } from "~/api/chainDetails";
+import { GetAddressStateResponse } from "~/api/adamik/addressState";
+import { GetChainDetailsResponse } from "~/api/adamik/chainDetails";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
-import { ValidatorResponse } from "~/api/validator";
+import { ValidatorResponse } from "~/api/adamik/validators";
 import { amountToMainUnit, resolveLogo } from "~/utils/helper";
 import { Chain, Validator } from "~/utils/types";
 

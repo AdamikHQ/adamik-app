@@ -1,93 +1,98 @@
 import { useWalletClient } from "@cosmos-kit/react-lite";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { useToast } from "~/components/ui/use-toast";
-import { useChainDetails } from "~/hooks/useChainDetails";
 import { useTransaction } from "~/hooks/useTransaction";
 import { WalletConnectorProps, WalletName } from "./types";
+import { useChains } from "~/hooks/useChains";
+import { useWallet } from "~/hooks/useWallet";
 
+const cosmosChainIdsMapping = new Map<string, string>();
+
+/**
+ * Keplr:
+ * - Returns 1 single address for each chain ID
+ */
 export const KeplrConnect: React.FC<WalletConnectorProps> = ({
-  setWalletAddresses,
   transactionPayload,
 }) => {
   const { status, client } = useWalletClient("keplr-extension");
   const { toast } = useToast();
-  const { data } = useChainDetails(
-    transactionPayload?.transaction.plain.chainId
-  );
+  const { data: chains } = useChains();
+  const { addAddresses } = useWallet();
+
+  // Build a mapping table of: adamik chain IDs <> cosmos native chain IDs
+  useEffect(() => {
+    chains &&
+      Object.values(chains)
+        .filter((chain) => chain.family === "cosmos")
+        .forEach((chain) =>
+          cosmosChainIdsMapping.set(chain.id, chain.nativeId)
+        );
+  }, [chains]);
+
   const { setSignedTransaction } = useTransaction();
 
   const getAddresses = useCallback(async () => {
-    try {
-      if (status === "Done" && client && setWalletAddresses) {
-        await client.enable?.([
-          "cosmoshub-4",
-          "osmosis",
-          "dydx-mainnet-1",
-          "celestia",
-          "axelar-dojo-1",
-        ]);
-        const address = await client.getAccount?.("cosmoshub-4");
-        if (address) {
-          setWalletAddresses(
-            [address.address],
-            ["cosmoshub"],
-            WalletName.KEPLR
-          );
-        }
+    if (status === "Done" && client) {
+      const nativeIds = Array.from(cosmosChainIdsMapping.values());
 
-        const osmoAddress = await client.getAccount?.("osmosis");
-        if (osmoAddress) {
-          setWalletAddresses(
-            [osmoAddress.address],
-            ["osmosis"],
-            WalletName.KEPLR
-          );
-        }
-
-        const dydxAddress = await client.getAccount?.("dydx-mainnet-1");
-        if (dydxAddress) {
-          setWalletAddresses([dydxAddress.address], ["dydx"], WalletName.KEPLR);
-        }
-
-        const celestiaAddress = await client.getAccount?.("celestia");
-        if (celestiaAddress) {
-          setWalletAddresses(
-            [celestiaAddress.address],
-            ["celestia"],
-            WalletName.KEPLR
-          );
-        }
-
-        const axelarAddress = await client.getAccount?.("axelar-dojo-1");
-        if (axelarAddress) {
-          setWalletAddresses(
-            [axelarAddress.address],
-            ["axelar"],
-            WalletName.KEPLR
-          );
+      // Try to enable Keplr client with all known native chain IDs
+      for (const nativeId of nativeIds) {
+        try {
+          await client.enable?.(nativeId);
+        } catch (err) {
+          console.warn("Failed to connect to Keplr wallet...", err);
+          // Remove the unsupported ones
+          cosmosChainIdsMapping.delete(nativeId);
         }
       }
+
+      // For each supported (Adamik) chain ID, get its (single) address from Keplr
+      cosmosChainIdsMapping.forEach(async (nativeId, chainId) => {
+        try {
+          const account = await client.getAccount?.(nativeId);
+          if (account) {
+            addAddresses([
+              {
+                address: account.address,
+                pubKey: Buffer.from(account.pubkey).toString("hex"),
+                chainId,
+                signer: WalletName.KEPLR,
+              },
+            ]);
+          }
+        } catch (err) {
+          console.warn("Failed to connect to Keplr wallet...", err);
+          return;
+        }
+      });
+
       toast({
         description:
           "Connected to Keplr, please check portfolio page to see your assets",
       });
-    } catch (err) {
-      console.warn("failed to connect..", err);
     }
-  }, [client, setWalletAddresses, status, toast]);
+  }, [status, client, addAddresses, toast]);
 
   const sign = useCallback(async () => {
-    if (client && data && transactionPayload) {
+    if (client && chains && transactionPayload) {
+      const chainId = transactionPayload.transaction.plain.chainId;
+      const chain = Object.values(chains).find((chain) => chain.id === chainId);
+
+      if (!chain) {
+        throw new Error(`${chainId} is not supported by Keplr wallet`);
+      }
+
       const signedTransaction = await client.signAmino?.(
-        data?.nativeId,
+        chain.nativeId,
         transactionPayload.transaction.plain.senders[0],
         transactionPayload.transaction.encoded as any
       );
 
       setSignedTransaction(signedTransaction?.signature.signature);
     }
-  }, [client, data, setSignedTransaction, transactionPayload]);
+  }, [client, chains, setSignedTransaction, transactionPayload]);
 
   return (
     <div className="relative w-24 h-24">

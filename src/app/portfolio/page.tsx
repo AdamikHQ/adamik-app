@@ -10,13 +10,13 @@ import {
   isAddressStateCache,
   useAddressStateBatch,
 } from "~/hooks/useAddressStateBatch";
-import { useGetChainDetailsBatch } from "~/hooks/useGetChainDetailsBatch";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { useWallet } from "~/hooks/useWallet";
+import { useChains } from "~/hooks/useChains";
 import { showroomAddresses } from "../../utils/showroomAddresses";
 import { aggregateStakingBalances } from "../stake/helpers";
-import { WalletModalTrigger } from "../wallets/WalletModalTrigger";
+import { WalletSelection } from "../wallets/WalletSelection";
 import { WalletSigner } from "../wallets/WalletSigner";
 import { AssetsBalances } from "./AssetsBalances";
 import { AssetsBreakdown } from "./AssetsBreakdown";
@@ -33,22 +33,29 @@ import {
 
 export default function Portfolio() {
   const {
-    addresses,
+    addresses: walletAddresses,
     setWalletMenuOpen: setWalletMenuOpen,
     isShowroom,
   } = useWallet();
 
-  const displayAddresses = isShowroom ? showroomAddresses : addresses;
-  const chainIdsAdamik = displayAddresses.reduce<string[]>(
+  const displayAddresses = isShowroom ? showroomAddresses : walletAddresses;
+  const addressesChainIds = displayAddresses.reduce<string[]>(
     (acc, { chainId }) => {
       if (acc.includes(chainId)) return acc;
       return [...acc, chainId];
     },
     []
   );
-  const { data: chainsDetails, isLoading: isChainDetailsLoading } =
-    useGetChainDetailsBatch(chainIdsAdamik);
-  const { data, isLoading: isAddressesLoading } =
+
+  const { isLoading: isSupportedChainsLoading, data: supportedChains } =
+    useChains();
+  const chainsDetails =
+    supportedChains &&
+    Object.values(supportedChains).filter((chain) =>
+      addressesChainIds.includes(chain.id)
+    );
+
+  const { data: addressesData, isLoading: isAddressesLoading } =
     useAddressStateBatch(displayAddresses);
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
   const [openTransaction, setOpenTransaction] = useState(false);
@@ -56,13 +63,13 @@ export default function Portfolio() {
   const [stepper, setStepper] = useState(0);
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
-  const tokenTickers = getTokenTickers(data || []);
-  const tokenContractAddresses = getTokenContractAddresses(data || []);
+  const tokenTickers = getTokenTickers(addressesData || []);
+  const tokenContractAddresses = getTokenContractAddresses(addressesData || []);
 
   const { data: mobulaMarketData, isLoading: isAssetDetailsLoading } =
     useMobulaMarketMultiData(
       [...mainChainTickersIds, ...tokenTickers],
-      !isChainDetailsLoading && !isAddressesLoading,
+      !isSupportedChainsLoading && !isAddressesLoading,
       "symbols"
     );
 
@@ -71,44 +78,49 @@ export default function Portfolio() {
     isLoading: isMobulaMarketDataLoading,
   } = useMobulaMarketMultiData(
     tokenContractAddresses,
-    !isChainDetailsLoading && !isAddressesLoading,
+    !isSupportedChainsLoading && !isAddressesLoading,
     "assets"
   );
 
   const stakingBalances = useMemo(
-    () => aggregateStakingBalances(data, chainsDetails, mobulaMarketData),
-    [chainsDetails, data, mobulaMarketData]
+    () =>
+      aggregateStakingBalances(
+        addressesData,
+        chainsDetails || [],
+        mobulaMarketData
+      ),
+    [chainsDetails, addressesData, mobulaMarketData]
   );
 
   const isLoading =
     isAddressesLoading ||
     isAssetDetailsLoading ||
-    isChainDetailsLoading ||
+    isSupportedChainsLoading ||
     isMobulaMarketDataLoading;
 
-  const assets = useMemo(
-    () =>
-      filterAndSortAssets(
-        calculateAssets(
-          data,
-          chainsDetails,
-          {
-            ...mobulaMarketData,
-            ...mobulaMarketDataContractAddresses,
-          },
-          mobulaBlockchainDetails
-        ),
-        hideLowBalance
+  const assets = useMemo(() => {
+    return filterAndSortAssets(
+      calculateAssets(
+        displayAddresses,
+        addressesData,
+        chainsDetails || [],
+        {
+          ...mobulaMarketData,
+          ...mobulaMarketDataContractAddresses,
+        },
+        mobulaBlockchainDetails
       ),
-    [
-      mobulaBlockchainDetails,
-      chainsDetails,
-      data,
-      mobulaMarketData,
-      mobulaMarketDataContractAddresses,
-      hideLowBalance,
-    ]
-  );
+      hideLowBalance
+    );
+  }, [
+    mobulaBlockchainDetails,
+    chainsDetails,
+    addressesData,
+    displayAddresses,
+    mobulaMarketData,
+    mobulaMarketDataContractAddresses,
+    hideLowBalance,
+  ]);
 
   const availableBalance = useMemo(
     () =>
@@ -142,7 +154,7 @@ export default function Portfolio() {
             </a>
           </Tooltip>
         </div>
-        <WalletModalTrigger />
+        <WalletSelection />
       </div>
 
       {isShowroom ? <ShowroomBanner /> : null}
@@ -180,6 +192,7 @@ export default function Portfolio() {
           // Probably need to rework
           stepper === 0 ? (
             <Transaction
+              // FIXME non-filtered assets should be used here
               assets={assets}
               onNextStep={() => {
                 setStepper(1);
@@ -187,7 +200,7 @@ export default function Portfolio() {
             />
           ) : (
             <>
-              {addresses && addresses.length > 0 ? (
+              {walletAddresses && walletAddresses.length > 0 ? (
                 <WalletSigner
                   onNextStep={() => {
                     setOpenTransaction(false);

@@ -1,4 +1,10 @@
 export const showroomAddresses = [
+  // ALGORAND
+  {
+    chainId: "algorand",
+    address: "4BMXWZ7B2ATR2MZASRJHMSNCID24M4AJQQFRURIUTDXPAUX5ZJNLZDQLIE",
+  },
+  // EVM
   {
     chainId: "ethereum",
     address: "0xfc43f5f9dd45258b3aff31bdbe6561d97e8b71de",
@@ -11,11 +17,12 @@ export const showroomAddresses = [
     chainId: "linea",
     address: "0x0ab15480627a44f9ae058b741a5ec46c765b7400",
   },
-
   {
     chainId: "arbitrum",
     address: "0xc674f77b81d8B37C72Bbe33e681412cd500D860A",
   },
+  // COSMOS
+  // TODO Add pubKey for each address
   {
     chainId: "cosmoshub",
     address: "cosmos1g84934jpu3v5de5yqukkkhxmcvsw3u2ajxvpdl",
@@ -23,10 +30,6 @@ export const showroomAddresses = [
   {
     chainId: "osmosis",
     address: "osmo1g84934jpu3v5de5yqukkkhxmcvsw3u2a6al3md",
-  },
-  {
-    chainId: "algorand",
-    address: "4BMXWZ7B2ATR2MZASRJHMSNCID24M4AJQQFRURIUTDXPAUX5ZJNLZDQLIE",
   },
   {
     chainId: "dydx",

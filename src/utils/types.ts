@@ -17,9 +17,12 @@ export type Transaction = {
   amount: string;
   fees?: string;
   gas?: string;
+  nonce?: string;
   format?: string;
-  pubKey?: string;
   memo?: string;
+  params?: {
+    pubKey?: string;
+  };
 };
 
 export type Asset = {
@@ -33,6 +36,7 @@ export type Asset = {
   balanceUSD: number | undefined;
   ticker: string;
   address: string;
+  pubKey?: string;
   contractAddress?: string;
   decimals: number;
   isToken: boolean;
