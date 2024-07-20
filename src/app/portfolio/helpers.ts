@@ -1,14 +1,10 @@
-import { GetAddressStateResponse } from "~/api/adamik/addressState";
-import { GetChainDetailsResponse } from "~/api/adamik/chainDetails";
-import { Asset, Feature } from "~/utils/types";
+import { AddressState, Asset, Chain, Feature } from "~/utils/types";
 import { amountToMainUnit, formatAmount, resolveLogo } from "~/utils/helper";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { MobulaBlockchain } from "~/api/mobula/types";
 import { Address } from "../wallets/types";
 
-export const getTickers = (
-  data: (GetChainDetailsResponse | undefined | null)[]
-) => {
+export const getTickers = (data: (Chain | undefined | null)[]) => {
   const reducedArray = data.reduce<string[]>((acc, chainDetail) => {
     if (!chainDetail) return acc;
     return [...acc, chainDetail.ticker];
@@ -16,9 +12,7 @@ export const getTickers = (
   return Array.from(new Set(reducedArray));
 };
 
-export const getTokenTickers = (
-  data: (GetAddressStateResponse | undefined | null)[]
-) => {
+export const getTokenTickers = (data: (AddressState | undefined | null)[]) => {
   return data.reduce<string[]>((acc, accountData) => {
     if (!accountData) return acc;
 
@@ -34,7 +28,7 @@ export const getTokenTickers = (
 };
 
 export const getTokenContractAddresses = (
-  data: (GetAddressStateResponse | undefined | null)[]
+  data: (AddressState | undefined | null)[]
 ) => {
   return data.reduce<string[]>((acc, accountData) => {
     if (!accountData) return acc;
@@ -49,7 +43,7 @@ export const getTokenContractAddresses = (
 };
 
 export const getTokenTickersSortByChain = (
-  data: (GetAddressStateResponse | undefined | null)[]
+  data: (AddressState | undefined | null)[]
 ) => {
   return data.reduce((acc, accountData) => {
     if (!accountData) return acc;
@@ -74,8 +68,8 @@ export const getTokenTickersSortByChain = (
 // TODO Probably need to refacto a bit the model, to handle all the different data sources in a simpler way
 export const calculateAssets = (
   walletAddresses: Address[],
-  addressesData: (GetAddressStateResponse | undefined | null)[],
-  chainsDetails: (GetChainDetailsResponse | undefined | null)[],
+  addressesData: (AddressState | undefined | null)[],
+  chainsDetails: (Chain | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null,
   mobulaBlockChainData: MobulaBlockchain[] | undefined
 ): Asset[] => {

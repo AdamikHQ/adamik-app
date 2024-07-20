@@ -4,25 +4,20 @@ import { Rocket } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { useTransaction } from "~/hooks/useTransaction";
 import { useWallet } from "~/hooks/useWallet";
-import { Broadcast } from "./Broadcast";
+import { BroadcastModal } from "./BroadcastModal";
 import { KeplrConnect } from "./KeplrConnect";
 import { MetamaskConnect } from "./MetamaskConnect";
 import { PeraConnect } from "./PeraConnect";
 import { WalletName } from "./types";
 
 export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
-  const {
-    transaction,
-    transactionHash,
-    setTransactionHash,
-    signedTransaction,
-  } = useTransaction();
+  const { transaction, transactionHash, setTransactionHash } = useTransaction();
   const { addresses } = useWallet();
 
   const signer = addresses.find(
     (address) =>
-      address.chainId === transaction?.transaction.plain.chainId &&
-      address.address === transaction?.transaction.plain.senders[0]
+      address.chainId === transaction?.plain.chainId &&
+      address.address === transaction?.plain.senders[0]
   );
 
   const getSignerComponent = () => {
@@ -75,8 +70,8 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
     );
   }
 
-  if (signedTransaction) {
-    return <Broadcast onNextStep={() => onNextStep()} />;
+  if (transaction?.signature) {
+    return <BroadcastModal onNextStep={() => onNextStep()} />;
   }
 
   return (

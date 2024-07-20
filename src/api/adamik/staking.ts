@@ -50,6 +50,7 @@ export type DataAddressStateStaking = {
   balances: Balances;
 };
 
+// TODO Better API error management, consistent for for all endpoints
 export const getStaking = (): DataAddressStateStaking => {
   return {
     chainId: "cosmoshub",

@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
@@ -22,10 +22,10 @@ import {
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { useTransaction } from "~/hooks/useTransaction";
-import { useTransactionEncode } from "~/hooks/useTransactionEncode";
+import { useEncodeTransaction } from "~/hooks/useEncodeTransaction";
 import { amountToSmallestUnit } from "~/utils/helper";
 import { TransactionFormInput, transactionFormSchema } from "~/utils/schema";
-import { Asset, TransactionMode } from "~/utils/types";
+import { Asset, PlainTransaction, TransactionMode } from "~/utils/types";
 import { AssetsSelector } from "./AssetsSelector";
 import { TransactionLoading } from "./TransactionLoading";
 
@@ -34,8 +34,10 @@ type TransactionProps = {
   assets: Asset[];
 };
 
-export function Transaction({ onNextStep, assets }: TransactionProps) {
-  const { mutate, isPending, isSuccess } = useTransactionEncode();
+// FIXME Some duplicate logic to put in common with src/app/stake/TransactionModal.tsx
+
+export function TransactionModal({ onNextStep, assets }: TransactionProps) {
+  const { mutate, isPending, isSuccess } = useEncodeTransaction();
   const form = useForm<TransactionFormInput>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
@@ -49,49 +51,47 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
     },
   });
   const [decimals, setDecimals] = useState<number>(0);
-  const {
-    transaction,
-    setTransaction,
-    setSignedTransaction,
-    setTransactionHash,
-  } = useTransaction();
+  const { transaction, setTransaction, setTransactionHash } = useTransaction();
   const [errors, setErrors] = useState("");
 
-  function onSubmit(values: TransactionFormInput) {
-    // FIXME Hack to be able to provide the pubKey, probably better to refacto
-    const pubKey = assets.find(
-      (asset) => asset.address === values.senders
-    )?.pubKey;
-
-    mutate(
-      {
-        mode: values.mode,
-        chainId: values.chainId,
-        tokenId: values.tokenId,
-        recipients: values.recipients ? [values.recipients] : [],
-        senders: [values.senders],
-        amount: values.useMaxAmount
+  const onSubmit = useCallback(
+    (formInput: TransactionFormInput) => {
+      const plainTransaction: PlainTransaction = {
+        mode: formInput.mode,
+        chainId: formInput.chainId,
+        tokenId: formInput.tokenId,
+        recipients: formInput.recipients ? [formInput.recipients] : [],
+        senders: [formInput.senders],
+        amount: formInput.useMaxAmount
           ? ""
-          : amountToSmallestUnit(values.amount.toString(), decimals),
-        useMaxAmount: values.useMaxAmount,
-        format: "json",
-        params: {
+          : amountToSmallestUnit(formInput.amount.toString(), decimals),
+        useMaxAmount: formInput.useMaxAmount,
+        format: "json", // FIXME Not always the default, should come from chains config
+      };
+
+      // FIXME Hack to be able to provide the pubKey, probably better to refacto
+      const pubKey = assets.find(
+        (asset) => asset.address === formInput.senders
+      )?.pubKey;
+
+      if (pubKey) {
+        plainTransaction.params = {
           pubKey,
-        },
-      },
-      {
-        onSettled: (values) => {
+        };
+      }
+
+      mutate(plainTransaction, {
+        onSettled: (settledTransaction) => {
           setTransaction(undefined);
-          setSignedTransaction(undefined);
           setTransactionHash(undefined);
-          if (values) {
+          if (settledTransaction) {
             if (
-              values.transaction.status.errors &&
-              values.transaction.status.errors.length > 0
+              settledTransaction.status.errors &&
+              settledTransaction.status.errors.length > 0
             ) {
-              setErrors(values.transaction.status.errors[0].message);
+              setErrors(settledTransaction.status.errors[0].message);
             } else {
-              setTransaction(values);
+              setTransaction(settledTransaction);
             }
           } else {
             setErrors("API ERROR - Please try again later");
@@ -99,13 +99,13 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
         },
         onError: (error) => {
           setTransaction(undefined);
-          setSignedTransaction(undefined);
           setTransactionHash(undefined);
           setErrors("API ERROR - Please try again later :" + error.message);
         },
-      }
-    );
-  }
+      });
+    },
+    [assets, decimals, mutate, setTransaction, setTransactionHash]
+  );
 
   if (isPending) {
     return <TransactionLoading />;

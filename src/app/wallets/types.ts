@@ -1,4 +1,4 @@
-import { TransactionEncodeResponse } from "~/api/adamik/encode";
+import { Transaction } from "~/utils/types";
 
 export interface IWallet {
   id: string;
@@ -26,5 +26,5 @@ export enum WalletName {
 }
 
 export type WalletConnectorProps = {
-  transactionPayload?: TransactionEncodeResponse;
+  transactionPayload?: Transaction;
 };

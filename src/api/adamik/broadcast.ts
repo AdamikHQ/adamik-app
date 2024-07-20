@@ -3,22 +3,15 @@
 import { env, ADAMIK_API_URL } from "~/env";
 import { Transaction } from "~/utils/types";
 
-type BroadcastArgs = {
-  transaction: Transaction;
-  signature: string;
-  encodedTransaction?: string;
-};
-
 export type BroadcastResponse = {
   hash: string;
   error?: { message: string };
 };
 
-export const broadcast = async ({
-  transaction,
-  signature,
-  encodedTransaction,
-}: BroadcastArgs): Promise<BroadcastResponse> => {
+// TODO Better API error management, consistent for for all endpoints
+export const broadcast = async (
+  transaction: Transaction
+): Promise<BroadcastResponse> => {
   const response = await fetch(`${ADAMIK_API_URL}/transaction/broadcast`, {
     headers: {
       Authorization: env.ADAMIK_API_KEY,
@@ -26,11 +19,7 @@ export const broadcast = async ({
     },
     method: "POST",
     body: JSON.stringify({
-      transaction: {
-        plain: transaction,
-        encoded: encodedTransaction,
-        signature,
-      },
+      transaction: { transaction },
     }),
   });
 

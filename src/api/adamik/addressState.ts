@@ -1,65 +1,13 @@
 "use server";
 
 import { env, ADAMIK_API_URL } from "~/env";
+import { AddressState } from "~/utils/types";
 
-interface Token {
-  chainId: string;
-  type: string;
-  id: string;
-  name: string;
-  ticker: string;
-  decimals: number;
-  contractAddress?: string;
-}
-
-interface TokenAmount {
-  amount: string;
-  value: string;
-  token: Token;
-}
-
-interface ValidatorPosition {
-  validatorAddresses: string[];
-  amount: string;
-  status: string;
-  completionDate?: number;
-}
-
-interface Reward {
-  tokenId?: string;
-  validatorAddress: string;
-  amount: string;
-}
-
-interface Balances {
-  native: {
-    available: string;
-    total: string;
-  };
-  tokens: TokenAmount[];
-  staking?: {
-    total: string;
-    locked: string;
-    unlocking: string;
-    unlocked: string;
-    positions?: ValidatorPosition[];
-    rewards: {
-      native: Reward[];
-      tokens: Reward[];
-    };
-  };
-}
-
-export type GetAddressStateResponse = {
-  chainId: string;
-  address: string;
-  balances: Balances;
-};
-
+// TODO Better API error management, consistent for for all endpoints
 export const addressState = async (
   chainId: string,
   address: string
-): Promise<GetAddressStateResponse | null> => {
+): Promise<AddressState | null> => {
   const response = await fetch(`${ADAMIK_API_URL}/address/state`, {
     headers: {
       Authorization: env.ADAMIK_API_KEY,

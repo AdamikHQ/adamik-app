@@ -1,19 +1,12 @@
 "use server";
 
 import { env, ADAMIK_API_URL } from "~/env";
-import { Transaction } from "~/utils/types";
+import { Transaction, PlainTransaction } from "~/utils/types";
 
-export type TransactionEncodeResponse = {
-  transaction: {
-    plain: Transaction;
-    encoded: string;
-    status: { errors: { message: string }[]; warnings: { message: string }[] };
-  };
-};
-
+// TODO Better API error management, consistent for for all endpoints
 export const transactionEncode = async (
-  plainTransaction: Transaction
-): Promise<TransactionEncodeResponse | null> => {
+  plainTransaction: PlainTransaction
+): Promise<Transaction | null> => {
   const response = await fetch(`${ADAMIK_API_URL}/transaction/encode`, {
     headers: {
       Authorization: env.ADAMIK_API_KEY,
@@ -24,11 +17,10 @@ export const transactionEncode = async (
   });
 
   if (response.status === 200) {
-    const data: TransactionEncodeResponse = await response.json();
-    return data;
+    const { transaction }: { transaction: Transaction } = await response.json();
+    return transaction;
   } else {
-    const data: TransactionEncodeResponse = await response.json();
-    console.error("encode - backend error:", JSON.stringify(data));
-    return data;
+    console.error("encode - backend error");
+    return null;
   }
 };
