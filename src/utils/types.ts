@@ -17,6 +17,7 @@ export type Transaction = {
   amount: string;
   fees?: string;
   gas?: string;
+  nonce?: string;
   format?: string;
   memo?: string;
   params?: {
