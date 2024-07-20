@@ -1,5 +1,5 @@
 import { useQueries } from "@tanstack/react-query";
-import { addressState } from "~/api/addressState";
+import { addressState } from "~/api/adamik/addressState";
 import { queryCache } from "~/providers/QueryProvider";
 
 type GetAddressStateParams = {

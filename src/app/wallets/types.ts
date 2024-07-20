@@ -1,4 +1,4 @@
-import { TransactionEncodeResponse } from "~/api/encode";
+import { TransactionEncodeResponse } from "~/api/adamik/encode";
 
 export interface IWallet {
   id: string;

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getChainDetails } from "~/api/chainDetails";
+import { getChainDetails } from "~/api/adamik/chainDetails";
 
 export const useChainDetails = (chainId: string | undefined) => {
   return useQuery({

@@ -1,5 +1,5 @@
-import { GetAddressStateResponse } from "~/api/addressState";
-import { GetChainDetailsResponse } from "~/api/chainDetails";
+import { GetAddressStateResponse } from "~/api/adamik/addressState";
+import { GetChainDetailsResponse } from "~/api/adamik/chainDetails";
 import { Asset, Feature } from "~/utils/types";
 import { amountToMainUnit, formatAmount, resolveLogo } from "~/utils/helper";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";

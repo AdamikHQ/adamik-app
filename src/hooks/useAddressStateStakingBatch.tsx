@@ -1,5 +1,5 @@
 import { useQueries } from "@tanstack/react-query";
-import { getStaking } from "~/api/staking";
+import { getStaking } from "~/api/adamik/staking";
 
 export const useAddressStateBatchStakingBatch = () => {
   return useQueries({

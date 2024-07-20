@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { transactionEncode } from "~/api/encode";
+import { transactionEncode } from "~/api/adamik/encode";
 import { Transaction } from "~/utils/types";
 
 export const useTransactionEncode = () => {

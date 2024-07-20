@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { broadcast } from "~/api/broadcast";
+import { broadcast } from "~/api/adamik/broadcast";
 import { Transaction } from "~/utils/types";
 import { clearAddressStateCache } from "./useAddressState";
 
