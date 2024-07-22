@@ -6,6 +6,7 @@ import { WalletConnectorProps, WalletName } from "./types";
 import { useWallet } from "~/hooks/useWallet";
 import { useTransaction } from "~/hooks/useTransaction";
 import { Modal } from "../../components/ui/modal";
+import { Loader2 } from "lucide-react";
 
 export const FireBlocksConnect: React.FC<WalletConnectorProps> = ({
   transactionPayload,
@@ -94,6 +95,7 @@ export const FireBlocksConnect: React.FC<WalletConnectorProps> = ({
             <h1 className="text-2xl font-semibold text-center">
               Validate Transaction
             </h1>
+            <Loader2 className="animate-spin" height={32} width={32} />
             <p className="text-center text-sm text-gray-400">
               Please validate the transaction on your Fireblocks interface.
             </p>

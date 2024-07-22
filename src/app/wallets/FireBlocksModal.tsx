@@ -5,7 +5,11 @@ import { Button } from "../../components/ui/button";
 export const FireBlocksModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
-  onConnect: (data: { address: string; pubKey: string }) => void;
+  onConnect: (data: {
+    address: string;
+    pubKey: string;
+    chainId: string;
+  }) => void;
 }> = ({ isOpen, onClose, onConnect }) => {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
