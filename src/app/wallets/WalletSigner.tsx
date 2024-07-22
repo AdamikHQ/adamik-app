@@ -8,6 +8,7 @@ import { Broadcast } from "./Broadcast";
 import { KeplrConnect } from "./KeplrConnect";
 import { MetamaskConnect } from "./MetamaskConnect";
 import { PeraConnect } from "./PeraConnect";
+import { FireBlocksConnect } from "./FireBlocksConnect";
 import { WalletName } from "./types";
 
 export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
@@ -33,6 +34,8 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
         return <MetamaskConnect transactionPayload={transaction} />;
       case WalletName.PERA:
         return <PeraConnect transactionPayload={transaction} />;
+      case WalletName.FIREBLOCKS:
+        return <FireBlocksConnect transactionPayload={transaction} />;
       default:
         return null;
     }

@@ -10,6 +10,7 @@ import { Label } from "~/components/ui/label";
 import { KeplrConnect } from "./KeplrConnect";
 import { MetamaskConnect } from "./MetamaskConnect";
 import { PeraConnect } from "./PeraConnect";
+import { FireBlocksConnect } from "./FireBlocksConnect";
 
 const WalletModalContent = () => {
   return (
@@ -17,6 +18,7 @@ const WalletModalContent = () => {
       <MetamaskConnect />
       <KeplrConnect />
       <PeraConnect />
+      <FireBlocksConnect />
     </div>
   );
 };

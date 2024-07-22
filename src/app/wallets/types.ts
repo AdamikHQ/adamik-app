@@ -23,6 +23,7 @@ export enum WalletName {
   METAMASK = "metamask",
   KEPLR = "keplr",
   PERA = "pera",
+  FIREBLOCKS = "fireblocks",
 }
 
 export type WalletConnectorProps = {
