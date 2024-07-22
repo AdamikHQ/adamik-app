@@ -53,6 +53,7 @@ export const FireBlocksConnect: React.FC<WalletConnectorProps> = ({
       closeValidationModal();
 
       // Mocking the signing process
+      setSignedTransaction(transactionPayload);
 
       toast({
         description: "Transaction signed successfully",
