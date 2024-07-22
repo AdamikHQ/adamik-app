@@ -20,7 +20,6 @@ export const Broadcast = ({ onNextStep }: BroadcastProps) => {
   const { mutate, isPending } = useBroadcastMutation();
   const { toast } = useToast();
   const [error, setError] = useState<string | undefined>();
-  const [currentStep, setCurrentStep] = useState(1);
 
   if (!transaction || !signedTransaction) {
     return (
@@ -44,14 +43,6 @@ export const Broadcast = ({ onNextStep }: BroadcastProps) => {
       </div>
     );
   }
-
-  const handleNextStep = () => {
-    setCurrentStep((prevStep) => prevStep + 1);
-  };
-
-  const handlePreviousStep = () => {
-    setCurrentStep((prevStep) => prevStep - 1);
-  };
 
   const handleBroadcast = () => {
     mutate(
@@ -78,48 +69,40 @@ export const Broadcast = ({ onNextStep }: BroadcastProps) => {
     );
   };
 
-  if (currentStep === 1) {
-    return (
-      <div className="p-12 py-2 flex flex-col gap-6 items-center">
-        <h1 className="font-extrabold text-2xl text-center mb-4">
-          Verify Your Transaction
-        </h1>
-        <Textarea
-          readOnly
-          value={JSON.stringify(signedTransaction, null, 2)}
-          className="h-32 text-xs text-gray-500 mt-4"
-        />
-        <div className="flex gap-6">
-          <Button
-            variant="secondary"
-            onClick={() => {
-              onNextStep();
-              setTransactionHash(undefined);
-              setSignedTransaction(undefined);
-            }}
-          >
-            Cancel
-          </Button>
-          <Button variant="default" onClick={handleNextStep}>
-            Continue
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-12 py-2 flex flex-col gap-6 items-center">
       <h1 className="font-extrabold text-2xl text-center mb-4">
-        Broadcast with Adamik
+        Verify Your Transaction
       </h1>
-      {isPending && <Loader2 className="animate-spin" height={32} width={32} />}
-      {error && <div className="text-red-500">{error}</div>}
+
+      <Textarea
+        readOnly
+        value={JSON.stringify(signedTransaction, null, 2)}
+        className="h-32 text-xs text-gray-500 mt-4"
+      />
+
+      <div className="flex flex-col gap-2 text-center text-sm text-gray-400">
+        <p>
+          For increased security, compare with
+          <a
+            href="https://minitel.wtf/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 underline block mt-2"
+          >
+            Minitel raw transaction decoder
+          </a>
+        </p>
+      </div>
+
       <div className="flex gap-6">
         <Button
-          disabled={isPending}
           variant="secondary"
-          onClick={handlePreviousStep}
+          onClick={() => {
+            onNextStep();
+            setTransactionHash(undefined);
+            setSignedTransaction(undefined);
+          }}
         >
           Cancel
         </Button>
@@ -128,9 +111,11 @@ export const Broadcast = ({ onNextStep }: BroadcastProps) => {
           disabled={isPending}
           onClick={handleBroadcast}
         >
-          Broadcast
+          Confirm and Broadcast
         </Button>
       </div>
+      {isPending && <Loader2 className="animate-spin" height={32} width={32} />}
+      {error && <div className="text-red-500">{error}</div>}
     </div>
   );
 };

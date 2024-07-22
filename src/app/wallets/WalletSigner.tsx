@@ -79,7 +79,7 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
   }
 
   if (signedTransaction) {
-    return <Broadcast onNextStep={() => onNextStep()} />;
+    return <Broadcast onNextStep={onNextStep} />;
   }
 
   return (

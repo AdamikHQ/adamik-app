@@ -53,8 +53,6 @@ export const FireBlocksConnect: React.FC<WalletConnectorProps> = ({
       closeValidationModal();
 
       // Mocking the signing process
-      const mockSignature = "mocked_signature_of_the_transaction";
-      setSignedTransaction(mockSignature);
 
       toast({
         description: "Transaction signed successfully",
@@ -92,10 +90,10 @@ export const FireBlocksConnect: React.FC<WalletConnectorProps> = ({
         onClose={closeValidationModal}
         modalContent={
           <div className="flex items-center flex-col gap-4">
+            <Loader2 className="animate-spin" height={32} width={32} />
             <h1 className="text-2xl font-semibold text-center">
               Validate Transaction
             </h1>
-            <Loader2 className="animate-spin" height={32} width={32} />
             <p className="text-center text-sm text-gray-400">
               Please validate the transaction on your Fireblocks interface.
             </p>
