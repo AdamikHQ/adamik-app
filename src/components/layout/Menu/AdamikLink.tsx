@@ -11,7 +11,7 @@ import {
 export const AdamikLink = () => {
   return (
     <div className="p-4">
-      <div className="flex justify-center gap-4 mb-4">
+      {/*  <div className="flex justify-center gap-4 mb-4">
         <Link href="https://adamik.io" target="_blank" aria-label="Adamik Home">
           <Home className="w-5 h-5" />
         </Link>
@@ -43,7 +43,7 @@ export const AdamikLink = () => {
             </Link>
           </Button>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 };
