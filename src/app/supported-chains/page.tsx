@@ -117,8 +117,8 @@ export default function SupportedChains() {
   return (
     <main className="flex-1 mx-auto w-full flex flex-col auto-rows-max gap-4 p-4 md:p-8 max-h-[100vh] overflow-y-auto">
       <div className="flex justify-between items-center mb-4">
-        <CardTitle>Supported Chains</CardTitle>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center">
+          <CardTitle>Supported Chains</CardTitle>
           <Tooltip text="View the API documentation for fetching the supported chains list">
             <a
               href="https://docs.adamik.io/api-reference/endpoint/get-apichains"
@@ -128,6 +128,8 @@ export default function SupportedChains() {
               <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
             </a>
           </Tooltip>
+        </div>
+        <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium leading-none">
               Filter by Features:
