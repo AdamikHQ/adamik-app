@@ -140,4 +140,5 @@ export type Validator = {
 
 export type SupportedBlockchain = Chain & {
   logo?: string;
+  labels?: string[]; // To define the list of features supported
 };

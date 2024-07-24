@@ -47,9 +47,10 @@ export const WelcomeModal = () => {
                   >
                     Adamik API
                   </a>
+                  <div className="h-4"></div> {/* Extra space */}
                 </p>
                 <img
-                  src="/intro.svg"
+                  src="/intro.png"
                   alt="Adamik Introduction"
                   className="w-[80%] h-auto mx-auto"
                 />
@@ -70,12 +71,12 @@ export const WelcomeModal = () => {
                 </button>
               </div>
               <h1 className="text-2xl font-semibold text-center">
-                Select your experience
+                Use in Demo mode or Add your Wallet
               </h1>
               <div className="flex flex-col gap-2 text-center text-sm text-gray-400">
-                <p>Switch between modes using the toggle</p>
+                <p>Easily switch between modes using the toggle</p>
                 <video
-                  className="w-full h-auto mt-4 rounded-lg" // Added rounded-lg for border radius
+                  className="w-1/4 h-auto mt-4 rounded-lg mx-auto" // Set width to 50%, add mx-auto for centering
                   src="/toggle.mp4" // Replace with the video file path
                   autoPlay
                   loop
