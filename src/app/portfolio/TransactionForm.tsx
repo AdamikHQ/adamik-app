@@ -25,60 +25,53 @@ import { useTransaction } from "~/hooks/useTransaction";
 import { useEncodeTransaction } from "~/hooks/useEncodeTransaction";
 import { amountToSmallestUnit } from "~/utils/helper";
 import { TransactionFormInput, transactionFormSchema } from "~/utils/schema";
-import {
-  Asset,
-  PlainTransaction,
-  TransactionMode,
-  Validator,
-} from "~/utils/types";
-import { TransactionLoading } from "../portfolio/TransactionLoading";
-import { ValidatorSelector } from "./ValidatorSelector";
-import { AssetsSelector } from "../portfolio/AssetsSelector";
+import { Asset, PlainTransaction, TransactionMode } from "~/utils/types";
+import { AssetsSelector } from "./AssetsSelector";
+import { TransactionLoading } from "./TransactionLoading";
 
 type TransactionProps = {
   onNextStep: () => void;
   assets: Asset[];
-  validators: Validator[];
 };
 
-// FIXME Some duplicate logic to put in common with src/app/portfolio/TransactionModal.tsx
+// FIXME Some duplicate logic to put in common with src/app/stake/TransactionForm.tsx
 
-export function TransactionModal({
-  onNextStep,
-  validators,
-  assets,
-}: TransactionProps) {
+export function TransactionForm({ onNextStep, assets }: TransactionProps) {
   const { mutate, isPending, isSuccess } = useEncodeTransaction();
   const form = useForm<TransactionFormInput>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
-      mode: TransactionMode.DELEGATE,
+      mode: TransactionMode.TRANSFER,
       chainId: "",
+      tokenId: "",
       senders: "",
-      validatorAddress: "",
-      amount: 0,
+      recipients: "",
+      amount: undefined,
       useMaxAmount: false,
     },
   });
   const [decimals, setDecimals] = useState<number>(0);
   const { transaction, setTransaction, setTransactionHash } = useTransaction();
   const [errors, setErrors] = useState("");
-  // const chainId = form.watch("chainId");
 
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
       const plainTransaction: PlainTransaction = {
-        mode: TransactionMode.DELEGATE,
+        mode: formInput.mode,
         chainId: formInput.chainId,
+        tokenId: formInput.tokenId,
+        recipients: formInput.recipients ? [formInput.recipients] : [],
         senders: [formInput.senders],
-        recipients: [],
-        validatorAddress: formInput.validatorAddress ?? "",
-        amount: formInput.useMaxAmount
-          ? ""
-          : amountToSmallestUnit(formInput.amount.toString(), decimals),
         useMaxAmount: formInput.useMaxAmount,
         format: "json", // FIXME Not always the default, should come from chains config
       };
+
+      if (formInput.amount && !formInput.useMaxAmount) {
+        plainTransaction.amount = amountToSmallestUnit(
+          formInput.amount.toString(),
+          decimals
+        );
+      }
 
       // FIXME Hack to be able to provide the pubKey, probably better to refacto
       const pubKey = assets.find(
@@ -92,7 +85,8 @@ export function TransactionModal({
       }
 
       mutate(plainTransaction, {
-        onSettled: (settledTransaction) => {
+        onSuccess: (settledTransaction) => {
+          setTransaction(undefined);
           setTransactionHash(undefined);
           if (settledTransaction) {
             if (
@@ -100,18 +94,17 @@ export function TransactionModal({
               settledTransaction.status.errors.length > 0
             ) {
               setErrors(settledTransaction.status.errors[0].message);
-              setTransaction(undefined);
             } else {
               setTransaction(settledTransaction);
             }
           } else {
-            setTransaction(undefined);
             setErrors("API ERROR - Please try again later");
           }
         },
         onError: (error) => {
+          setTransaction(undefined);
           setTransactionHash(undefined);
-          setErrors("API ERROR - Please try again later :" + error.message);
+          setErrors(error.message);
         },
       });
     },
@@ -122,7 +115,7 @@ export function TransactionModal({
     return <TransactionLoading />;
   }
 
-  if (isSuccess && transaction?.encoded) {
+  if (isSuccess && transaction) {
     return (
       <>
         <h1 className="font-bold text-xl text-center">
@@ -144,7 +137,7 @@ export function TransactionModal({
           <CollapsibleContent>
             <Textarea
               readOnly
-              value={JSON.stringify(transaction.encoded)}
+              value={JSON.stringify(transaction)}
               className="h-32 text-xs text-gray-500 mt-4"
             />
           </CollapsibleContent>
@@ -155,7 +148,7 @@ export function TransactionModal({
 
   return (
     <>
-      <h1 className="font-bold text-xl text-center">Stake</h1>
+      <h1 className="font-bold text-xl text-center">Transfer</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 px-4">
           <FormField
@@ -176,8 +169,13 @@ export function TransactionModal({
                       form.setValue("assetIndex", index);
                       form.setValue("chainId", asset.chainId);
                       form.setValue("senders", asset.address);
-                      form.resetField("validatorIndex");
-                      form.resetField("validatorAddress");
+                      if (asset.isToken) {
+                        form.setValue("mode", TransactionMode.TRANSFER_TOKEN);
+                        form.setValue(
+                          "tokenId",
+                          asset.contractAddress || asset.assetId
+                        );
+                      }
                       setDecimals(asset.decimals);
                     }}
                     {...field}
@@ -204,37 +202,14 @@ export function TransactionModal({
 
           <FormField
             control={form.control}
-            name="validatorAddress"
+            name="recipients"
             render={({ field }) => (
               <FormItem>
-                <>
-                  <FormLabel>Validators</FormLabel>
-                  <FormControl>
-                    <ValidatorSelector
-                      validators={validators.filter((validator) => {
-                        const chainId = form.watch("chainId");
-                        return chainId === ""
-                          ? true
-                          : validator.chainId === chainId;
-                      })}
-                      selectedValue={
-                        form.getValues().validatorIndex
-                          ? validators[
-                              form.getValues().validatorIndex as number
-                            ]
-                          : undefined
-                      }
-                      onSelect={(validator, index) => {
-                        form.setValue("validatorIndex", index);
-                        form.setValue("chainId", validator.chainId);
-                        form.setValue("validatorAddress", validator.address);
-                        setDecimals(validator.decimals);
-                      }}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </>
+                <FormLabel>Recipients</FormLabel>
+                <FormControl>
+                  <Input placeholder="Recipient" {...field} />
+                </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />

@@ -28,7 +28,7 @@ import {
 import { StakingPositionsList } from "./StakingPositionsList";
 import { useMemo, useState } from "react";
 import { Modal } from "~/components/ui/modal";
-import { TransactionModal } from "./TransactionModal";
+import { TransactionForm } from "./TransactionForm";
 import { WalletSigner } from "../wallets/WalletSigner";
 import { ConnectWallet } from "../portfolio/ConnectWallet";
 import { clearAddressStateCache } from "~/hooks/useAddressState";
@@ -181,7 +181,7 @@ export default function Stake() {
         modalContent={
           // Probably need to rework
           stepper === 0 ? (
-            <TransactionModal
+            <TransactionForm
               assets={assets}
               validators={validators}
               onNextStep={() => {

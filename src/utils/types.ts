@@ -68,7 +68,7 @@ export type PlainTransaction = {
   tokenId?: string;
   useMaxAmount: boolean;
   chainId: string;
-  amount: string;
+  amount?: string;
   fees?: string;
   gas?: string;
   nonce?: string;

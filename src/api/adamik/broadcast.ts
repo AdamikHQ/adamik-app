@@ -8,7 +8,7 @@ export type BroadcastResponse = {
   error?: { message: string };
 };
 
-// TODO Better API error management, consistent for for all endpoints
+// TODO Better API error management, consistent for all endpoints
 export const broadcast = async (
   transaction: Transaction
 ): Promise<BroadcastResponse> => {
@@ -18,15 +18,13 @@ export const broadcast = async (
       "Content-Type": "application/json",
     },
     method: "POST",
-    body: JSON.stringify({
-      transaction: { transaction },
-    }),
+    body: JSON.stringify({ transaction }),
   });
 
+  const result = await response.json();
   if (response.status !== 200) {
-    console.error("broadcast - backend error:", response.statusText);
+    console.error("broadcast - backend error:", JSON.stringify(result));
   }
 
-  const result = (await response.json()) as BroadcastResponse;
-  return result;
+  return result as BroadcastResponse;
 };

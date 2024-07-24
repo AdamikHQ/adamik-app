@@ -3,7 +3,7 @@
 import { env, ADAMIK_API_URL } from "~/env";
 import { AddressState } from "~/utils/types";
 
-// TODO Better API error management, consistent for for all endpoints
+// TODO Better API error management, consistent for all endpoints
 export const addressState = async (
   chainId: string,
   address: string
@@ -17,10 +17,12 @@ export const addressState = async (
     body: JSON.stringify({ chainId, address }),
   });
 
+  const result = await response.json();
+
   if (response.status === 200) {
-    return await response.json();
+    return result;
   } else {
-    console.error("state - backend error");
+    console.error("state - backend error:", JSON.stringify(result));
     return null;
   }
 };
