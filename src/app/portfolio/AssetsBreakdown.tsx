@@ -12,6 +12,7 @@ import {
 import { formatAmountUSD } from "~/utils/helper";
 import { Asset } from "~/utils/types";
 import { filterAndSortAssets } from "./helpers";
+import { StakingPosition } from "../stake/helpers";
 
 const AssetsBreakdownRow: React.FC<{
   asset: Asset;
@@ -71,6 +72,7 @@ const AssetsBreakdownRow: React.FC<{
 export const AssetsBreakdown: React.FC<{
   isLoading: boolean;
   assets: Asset[];
+  stakingPositions?: StakingPosition[]; // Optional to handle undefined case
   totalBalance: number;
   hideLowBalance: boolean;
   setHideLowBalance: (value: boolean) => void;
@@ -79,10 +81,10 @@ export const AssetsBreakdown: React.FC<{
   assets,
   totalBalance,
   hideLowBalance,
+  stakingPositions = [], // Default to an empty array
   setHideLowBalance,
 }) => {
   const filteredAggregatedAssets = useMemo(() => {
-    // Group assets by chainId
     // FIXME Replace with Object.groupBy() when Node.js 21 becomes supported by Vercel
     const assetsPerChain = _.groupBy(
       assets,
@@ -98,10 +100,20 @@ export const AssetsBreakdown: React.FC<{
           const chain = assetsPerChain[chainId].find((asset) => !asset.assetId);
           if (chain) {
             // Aggregate the USD balance of the main asset + all tokens
-            const totalBalanceUSD = assetsPerChain[chainId].reduce(
+            let totalBalanceUSD = assetsPerChain[chainId].reduce(
               (balance, asset) => balance + (asset.balanceUSD || 0),
               0
             );
+
+            // Add staking positions' amountUSD and rewardAmountUSD to the total balance
+            const stakingPosition = stakingPositions.find(
+              (position) => position.chainId === chainId
+            );
+            if (stakingPosition) {
+              totalBalanceUSD +=
+                (stakingPosition.amountUSD || 0) +
+                (stakingPosition.rewardAmountUSD || 0);
+            }
 
             return {
               ...chain,
@@ -113,7 +125,21 @@ export const AssetsBreakdown: React.FC<{
     ).sort();
 
     return filterAndSortAssets(aggregatedAssets, hideLowBalance);
-  }, [assets, hideLowBalance]);
+  }, [assets, hideLowBalance, stakingPositions]);
+
+  // Calculate the total balance including staking positions
+  const totalBalanceIncludingStaking = useMemo(() => {
+    const assetsBalance = assets.reduce(
+      (total, asset) => total + (asset.balanceUSD || 0),
+      0
+    );
+    const stakingBalance = stakingPositions.reduce(
+      (total, position) =>
+        total + (position.amountUSD || 0) + (position.rewardAmountUSD || 0),
+      0
+    );
+    return assetsBalance + stakingBalance;
+  }, [assets, stakingPositions]);
 
   return (
     <div className="order-first md:order-last">
@@ -131,7 +157,7 @@ export const AssetsBreakdown: React.FC<{
                     <AssetsBreakdownRow
                       key={`${i}_${asset.name}`}
                       asset={asset}
-                      totalBalance={totalBalance}
+                      totalBalance={totalBalanceIncludingStaking} // Use the updated total balance
                     />
                   );
                 })}
