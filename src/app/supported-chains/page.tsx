@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
@@ -14,7 +13,7 @@ import { useChains } from "~/hooks/useChains";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { resolveLogo } from "~/utils/helper";
-import { SupportedBlockchain } from "~/utils/types";
+import { SupportedBlockchain, Feature } from "~/utils/types";
 
 const comingSoonIds = ["tron", "the-open-network", "solana"];
 
@@ -47,8 +46,28 @@ export default function SupportedChains() {
       if (chain.isTestNet) {
         return acc;
       }
+
+      // Determine labels based on chain features
+      const labels: string[] = [];
+      if (
+        chain.supportedFeatures.includes(Feature.BALANCES_NATIVE) &&
+        chain.supportedFeatures.includes(Feature.TRANSACTIONS_NATIVE)
+      ) {
+        labels.push("native");
+      }
+      if (
+        chain.supportedFeatures.includes(Feature.BALANCES_TOKENS) &&
+        chain.supportedFeatures.includes(Feature.TRANSACTIONS_TOKENS)
+      ) {
+        labels.push("token");
+      }
+      if (chain.supportedFeatures.includes(Feature.BALANCES_STAKING)) {
+        labels.push("staking");
+      }
+
       const supportedChain = {
         ...chain,
+        labels, // Add labels to the chain object
         logo: resolveLogo({
           asset: { name: chain.name, ticker: chain.ticker },
           mobulaMarketData,
@@ -74,6 +93,19 @@ export default function SupportedChains() {
 
   const isLoading =
     supportedChainsLoading || isAssetDetailsLoading || mobulaBlockchainLoading;
+
+  const getLabelClass = (label: string) => {
+    switch (label) {
+      case "native":
+        return "tooltip-native";
+      case "token":
+        return "tooltip-token";
+      case "staking":
+        return "tooltip-staking";
+      default:
+        return "";
+    }
+  };
 
   return (
     <main className="flex-1 mx-auto w-full flex flex-col auto-rows-max gap-4 p-4 md:p-8 max-h-[100vh] overflow-y-auto">
@@ -102,8 +134,17 @@ export default function SupportedChains() {
                   return (
                     <div
                       key={chain.id}
-                      className="flex flex-row gap-4 items-center bg-primary/10 p-4 rounded-md"
+                      className="relative flex flex-row gap-4 items-center bg-primary/10 p-4 rounded-md"
                     >
+                      <div className="absolute top-2 right-2 tooltip-container">
+                        {chain.labels?.map((label: string) => (
+                          <Tooltip key={label} text={label}>
+                            <span className={`tooltip ${getLabelClass(label)}`}>
+                              &nbsp;
+                            </span>
+                          </Tooltip>
+                        ))}
+                      </div>
                       <Avatar>
                         <AvatarImage src={chain.logo} alt={chain.name} />
                         <AvatarFallback>{chain.ticker}</AvatarFallback>
@@ -116,7 +157,13 @@ export default function SupportedChains() {
                           <h2 className="text-md font-semibold">
                             {chain.ticker}
                           </h2>
-                          {isComingSoon && <Badge>Coming Soon</Badge>}
+                          {isComingSoon && (
+                            <Tooltip text="Coming Soon">
+                              <span className="tooltip-content">
+                                Coming Soon
+                              </span>
+                            </Tooltip>
+                          )}
                         </div>
                       </div>
                     </div>
