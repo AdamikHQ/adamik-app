@@ -74,7 +74,6 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               alt="Adamik Logo"
             />
           )}
-          <span className="font-bold">App</span>
         </div>
       </div>
     </header>
