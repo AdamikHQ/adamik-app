@@ -21,6 +21,7 @@ export default function SupportedChains() {
   const { isLoading: supportedChainsLoading, data: supportedChains } =
     useChains();
   const [showTestnets, setShowTestnets] = useState(false);
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]); // Add state for selected features
   const { isLoading: mobulaBlockchainLoading, data: mobulaBlockchains } =
     useMobulaBlockchains();
   const tickers = Object.values(supportedChains || {}).reduce<string[]>(
@@ -50,12 +51,6 @@ export default function SupportedChains() {
       // Determine labels based on chain features
       const labels: string[] = [];
       if (
-        chain.supportedFeatures.includes(Feature.BALANCES_NATIVE) &&
-        chain.supportedFeatures.includes(Feature.TRANSACTIONS_NATIVE)
-      ) {
-        labels.push("native");
-      }
-      if (
         chain.supportedFeatures.includes(Feature.BALANCES_TOKENS) &&
         chain.supportedFeatures.includes(Feature.TRANSACTIONS_TOKENS)
       ) {
@@ -78,6 +73,12 @@ export default function SupportedChains() {
     }, [])
     .sort((a, b) => a.name.localeCompare(b.name));
 
+  const filteredChains = selectedFeatures.length
+    ? chainsWithInfo.filter((chain) =>
+        selectedFeatures.every((feature) => chain.labels!.includes(feature))
+      )
+    : chainsWithInfo;
+
   const additionalChains = Object.values(supportedChains).reduce<string[]>(
     (acc, chain) => {
       return chain.isTestNet && !acc.includes(chain.name)
@@ -91,13 +92,19 @@ export default function SupportedChains() {
     setShowTestnets(!showTestnets);
   };
 
+  const handleFeatureSelect = (feature: string) => {
+    setSelectedFeatures((prevSelected) =>
+      prevSelected.includes(feature)
+        ? prevSelected.filter((f) => f !== feature)
+        : [...prevSelected, feature]
+    );
+  };
+
   const isLoading =
     supportedChainsLoading || isAssetDetailsLoading || mobulaBlockchainLoading;
 
   const getLabelClass = (label: string) => {
     switch (label) {
-      case "native":
-        return "tooltip-native";
       case "token":
         return "tooltip-token";
       case "staking":
@@ -109,26 +116,57 @@ export default function SupportedChains() {
 
   return (
     <main className="flex-1 mx-auto w-full flex flex-col auto-rows-max gap-4 p-4 md:p-8 max-h-[100vh] overflow-y-auto">
+      <div className="flex justify-between items-center mb-4">
+        <CardTitle>Supported Chains</CardTitle>
+        <div className="flex items-center gap-4">
+          <Tooltip text="View the API documentation for fetching the supported chains list">
+            <a
+              href="https://docs.adamik.io/api-reference/endpoint/get-apichains"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
+            </a>
+          </Tooltip>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium leading-none">
+              Filter by Features:
+            </label>
+            <div className="flex gap-2">
+              <Checkbox
+                id="filter-token"
+                checked={selectedFeatures.includes("token")}
+                onCheckedChange={() => handleFeatureSelect("token")}
+              />
+              <label
+                htmlFor="filter-token"
+                className="text-sm font-medium leading-none"
+              >
+                Token
+              </label>
+              <Checkbox
+                id="filter-staking"
+                checked={selectedFeatures.includes("staking")}
+                onCheckedChange={() => handleFeatureSelect("staking")}
+              />
+              <label
+                htmlFor="filter-staking"
+                className="text-sm font-medium leading-none"
+              >
+                Staking
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
       <div className="flex flex-col">
         <Card className="xl:col-span-2 bg-muted/70">
-          <CardHeader className="flex flex-row items-center">
-            <CardTitle>Supported Chains</CardTitle>
-            <Tooltip text="View the API documentation for fetching the supported chains list">
-              <a
-                href="https://docs.adamik.io/api-reference/endpoint/get-apichains"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
-              </a>
-            </Tooltip>
-          </CardHeader>
           <CardContent>
             {isLoading ? (
               <Loader2 className="animate-spin" />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
-                {chainsWithInfo?.map((chain) => {
+                {filteredChains?.map((chain) => {
                   const isComingSoon = comingSoonIds.includes(chain.id);
 
                   return (
