@@ -12,6 +12,7 @@ export type ValidatorResponse = {
   }[];
 };
 
+// TODO Better API error management, consistent for all endpoints
 export const getValidators = async (
   chainId: string,
   offset?: number,
@@ -40,9 +41,11 @@ export const getValidators = async (
     body: JSON.stringify(body),
   });
 
+  const result = await response.json();
+
   if (response.status !== 200) {
-    console.error("validators - backend error:", response.statusText);
+    console.error("validators - backend error:", result);
   }
 
-  return response.json();
+  return result;
 };

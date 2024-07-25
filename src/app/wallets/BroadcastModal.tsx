@@ -1,8 +1,8 @@
 import { Loader2, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Textarea } from "~/components/ui/textarea";
-import { useBroadcastMutation } from "~/hooks/useBroadcastMutation";
+import { useBroadcastTransaction } from "~/hooks/useBroadcastTransaction";
 import { useTransaction } from "~/hooks/useTransaction";
 import {
   Collapsible,
@@ -15,18 +15,31 @@ type BroadcastProps = {
   onNextStep: () => void;
 };
 
-export const Broadcast = ({ onNextStep }: BroadcastProps) => {
-  const {
-    transaction,
-    setTransactionHash,
-    signedTransaction,
-    setSignedTransaction,
-  } = useTransaction();
-  const { mutate, isPending } = useBroadcastMutation();
+export const BroadcastModal = ({ onNextStep }: BroadcastProps) => {
+  const { transaction, setTransaction, setTransactionHash } = useTransaction();
   const { toast } = useToast();
+  const { mutate, isPending } = useBroadcastTransaction();
   const [error, setError] = useState<string | undefined>();
 
-  if (!transaction || !signedTransaction) {
+  const broadcast = useCallback(() => {
+    transaction &&
+      mutate(transaction, {
+        onSuccess: (values) => {
+          if (values.error) {
+            setError(values.error.message);
+          } else {
+            setTransactionHash(values.hash);
+            toast({
+              description:
+                "Transaction has been successfully broadcasted. Your balance will be updated in a few moments",
+            });
+            setTransaction(undefined);
+          }
+        },
+      });
+  }, [mutate, setTransaction, setTransactionHash, toast, transaction]);
+
+  if (!transaction?.encoded || !transaction.signature) {
     return (
       <div className="p-12 py-2 flex flex-col gap-6 items-center">
         <div className="text-center text-xl">Broadcast with Adamik</div>
@@ -40,7 +53,7 @@ export const Broadcast = ({ onNextStep }: BroadcastProps) => {
           onClick={() => {
             onNextStep();
             setTransactionHash(undefined);
-            setSignedTransaction(undefined);
+            setTransaction(undefined);
           }}
         >
           Cancel
@@ -64,38 +77,12 @@ export const Broadcast = ({ onNextStep }: BroadcastProps) => {
           onClick={() => {
             onNextStep();
             setTransactionHash(undefined);
-            setSignedTransaction(undefined);
+            setTransaction(undefined);
           }}
         >
           Cancel
         </Button>
-        <Button
-          variant="default"
-          disabled={isPending}
-          onClick={() => {
-            mutate(
-              {
-                transaction: transaction.transaction.plain,
-                encodedTransaction: transaction.transaction.encoded,
-                signature: signedTransaction,
-              },
-              {
-                onSuccess: (values) => {
-                  if (values.error) {
-                    setError(values.error.message);
-                  } else {
-                    setTransactionHash(values.hash);
-                    toast({
-                      description:
-                        "Transaction has been successfully broadcasted. Your balance will be updated in a few moments",
-                    });
-                    setSignedTransaction(undefined);
-                  }
-                },
-              }
-            );
-          }}
-        >
+        <Button variant="default" disabled={isPending} onClick={broadcast}>
           Broadcast
         </Button>
       </div>
@@ -109,7 +96,7 @@ export const Broadcast = ({ onNextStep }: BroadcastProps) => {
         <CollapsibleContent>
           <Textarea
             readOnly
-            value={JSON.stringify(signedTransaction)}
+            value={JSON.stringify(transaction.signature)}
             className="h-32 text-xs text-gray-500 mt-4"
           />
         </CollapsibleContent>

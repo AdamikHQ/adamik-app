@@ -1,22 +1,18 @@
 import React from "react";
-import { TransactionEncodeResponse } from "~/api/adamik/encode";
+import { Transaction } from "~/utils/types";
 
 type TransactionContextType = {
-  transaction: TransactionEncodeResponse | undefined;
-  setTransaction: (transaction: TransactionEncodeResponse | undefined) => void;
-  signedTransaction: string | undefined;
-  setSignedTransaction: (signedTransaction: string | undefined) => void;
+  transaction: Transaction | undefined;
+  setTransaction: (transaction: Transaction | undefined) => void;
   transactionHash: string | undefined;
   setTransactionHash: (transactionHash: string | undefined) => void;
 };
 
 export const TransactionContext = React.createContext<TransactionContextType>({
   transaction: undefined,
-  transactionHash: undefined,
-  signedTransaction: undefined,
   setTransaction: () => {},
+  transactionHash: undefined,
   setTransactionHash: () => {},
-  setSignedTransaction: () => {},
 });
 
 export const useTransaction = () => {

@@ -73,7 +73,7 @@ export const MetamaskConnect: React.FC<WalletConnectorProps> = ({
     const provider = sdk?.getProvider();
 
     if (provider && transactionPayload) {
-      const chainId = transactionPayload.transaction.plain.chainId;
+      const chainId = transactionPayload.plain.chainId;
       const chain = evmChains?.find((chain) => chain.id === chainId);
 
       if (!chain) {
@@ -101,7 +101,7 @@ export const MetamaskConnect: React.FC<WalletConnectorProps> = ({
 
       const txHash = await provider.request({
         method: "eth_sendTransaction",
-        params: [transactionPayload.transaction.encoded],
+        params: [transactionPayload.encoded],
       });
 
       if (typeof txHash === "string") {

@@ -16,7 +16,7 @@ export const PeraConnect: React.FC<WalletConnectorProps> = ({
   transactionPayload,
 }) => {
   const { toast } = useToast();
-  const { setSignedTransaction } = useTransaction();
+  const { transaction, setTransaction } = useTransaction();
   const { addAddresses } = useWallet();
 
   const getAddresses = useCallback(async () => {
@@ -78,9 +78,7 @@ export const PeraConnect: React.FC<WalletConnectorProps> = ({
         {
           // FIXME: The app shouldn't have to use a chain SDK, we could provide an Adamik SDK instead
           txn: algosdk.decodeUnsignedTransaction(
-            new Uint8Array(
-              Buffer.from(transactionPayload.transaction.encoded, "hex")
-            )
+            new Uint8Array(Buffer.from(transactionPayload.encoded, "hex"))
           ),
         },
       ],
@@ -88,14 +86,14 @@ export const PeraConnect: React.FC<WalletConnectorProps> = ({
 
     const signature = Buffer.from(signatureBytes[0]).toString("hex");
 
-    setSignedTransaction(signature);
+    transaction && setTransaction({ ...transaction, signature });
     /*
       toast({
         description: "Transaction failed",
         variant: "destructive",
       });
       */
-  }, [setSignedTransaction, toast, transactionPayload]);
+  }, [setTransaction, toast, transaction, transactionPayload]);
 
   return (
     <div className="relative w-24 h-24">

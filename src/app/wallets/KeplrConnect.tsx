@@ -31,7 +31,7 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
         );
   }, [chains]);
 
-  const { setSignedTransaction } = useTransaction();
+  const { transaction, setTransaction } = useTransaction();
 
   const getAddresses = useCallback(async () => {
     if (status === "Done" && client) {
@@ -77,7 +77,7 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
 
   const sign = useCallback(async () => {
     if (client && chains && transactionPayload) {
-      const chainId = transactionPayload.transaction.plain.chainId;
+      const chainId = transactionPayload.plain.chainId;
       const chain = Object.values(chains).find((chain) => chain.id === chainId);
 
       if (!chain) {
@@ -86,13 +86,18 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
 
       const signedTransaction = await client.signAmino?.(
         chain.nativeId,
-        transactionPayload.transaction.plain.senders[0],
-        transactionPayload.transaction.encoded as any
+        transactionPayload.plain.senders[0],
+        transactionPayload.encoded as any
       );
 
-      setSignedTransaction(signedTransaction?.signature.signature);
+      transaction &&
+        signedTransaction &&
+        setTransaction({
+          ...transaction,
+          signature: signedTransaction?.signature.signature,
+        });
     }
-  }, [client, chains, setSignedTransaction, transactionPayload]);
+  }, [chains, client, setTransaction, transaction, transactionPayload]);
 
   return (
     <div className="relative w-24 h-24">

@@ -18,7 +18,7 @@ export const getMobulaName = (name: string) => {
 
 // Helpers to convert from/to user-convenient format in main unit, and smallest unit of the chain
 export function amountToSmallestUnit(amount: string, decimals: number): string {
-  const computedAmount = parseFloat(amount) * Math.pow(10, decimals);
+  const computedAmount = Number(amount) * Math.pow(10, decimals);
   return computedAmount.toString();
 }
 
@@ -26,7 +26,7 @@ export function amountToMainUnit(
   amount: string,
   decimals: number
 ): string | null {
-  const parsedAmount = parseInt(amount);
+  const parsedAmount = Number(amount);
   return Number.isNaN(parsedAmount)
     ? null
     : (parsedAmount / Math.pow(10, decimals)).toString();
@@ -41,7 +41,7 @@ export function formatAmountUSD(amount: number) {
 
 export function formatAmount(amount: string | number | null, decimals: number) {
   const parsedAmount =
-    typeof amount === "number" ? amount : parseFloat(amount ?? "0");
+    typeof amount === "number" ? amount : Number(amount ?? "0");
   if (isNaN(parsedAmount)) {
     return "0";
   }

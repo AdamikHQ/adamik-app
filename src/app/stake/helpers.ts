@@ -1,9 +1,7 @@
-import { GetAddressStateResponse } from "~/api/adamik/addressState";
-import { GetChainDetailsResponse } from "~/api/adamik/chainDetails";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { ValidatorResponse } from "~/api/adamik/validators";
 import { amountToMainUnit, resolveLogo } from "~/utils/helper";
-import { Chain, Validator } from "~/utils/types";
+import { AddressState, Chain, Validator } from "~/utils/types";
 
 export type AggregatedBalances = {
   availableBalance: number;
@@ -31,8 +29,8 @@ const getAmountToUSD = (
 };
 
 export const aggregateStakingBalances = (
-  data: (GetAddressStateResponse | undefined | null)[],
-  chainsDetails: (GetChainDetailsResponse | undefined | null)[],
+  data: (AddressState | undefined | null)[],
+  chainsDetails: (Chain | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null
 ): AggregatedBalances => {
   return data?.reduce<AggregatedBalances>(
@@ -128,8 +126,8 @@ const getValidatorInfo = (
 };
 
 export const getAddressStakingPositions = (
-  data: (GetAddressStateResponse | null | undefined)[],
-  chainsDetails: (GetChainDetailsResponse | undefined | null)[],
+  data: (AddressState | null | undefined)[],
+  chainsDetails: (Chain | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null,
   validatorsData: (ValidatorResponse | undefined)[]
 ) => {
@@ -200,7 +198,7 @@ export const getAddressStakingPositions = (
 
 export const createValidatorList = (
   validatorData: (ValidatorResponse | undefined)[],
-  chainsDetails: (GetChainDetailsResponse | undefined | null)[],
+  chainsDetails: (Chain | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null
 ): Validator[] => {
   return validatorData

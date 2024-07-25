@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
@@ -22,96 +22,110 @@ import {
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { useTransaction } from "~/hooks/useTransaction";
-import { useTransactionEncode } from "~/hooks/useTransactionEncode";
+import { useEncodeTransaction } from "~/hooks/useEncodeTransaction";
 import { amountToSmallestUnit } from "~/utils/helper";
 import { TransactionFormInput, transactionFormSchema } from "~/utils/schema";
-import { Asset, TransactionMode } from "~/utils/types";
-import { AssetsSelector } from "./AssetsSelector";
-import { TransactionLoading } from "./TransactionLoading";
+import {
+  Asset,
+  PlainTransaction,
+  TransactionMode,
+  Validator,
+} from "~/utils/types";
+import { TransactionLoading } from "../portfolio/TransactionLoading";
+import { ValidatorSelector } from "./ValidatorSelector";
+import { AssetsSelector } from "../portfolio/AssetsSelector";
 
 type TransactionProps = {
   onNextStep: () => void;
   assets: Asset[];
+  validators: Validator[];
 };
 
-export function Transaction({ onNextStep, assets }: TransactionProps) {
-  const { mutate, isPending, isSuccess } = useTransactionEncode();
+// FIXME Some duplicate logic to put in common with src/app/portfolio/TransactionForm.tsx
+
+export function TransactionForm({
+  onNextStep,
+  validators,
+  assets,
+}: TransactionProps) {
+  const { mutate, isPending, isSuccess } = useEncodeTransaction();
   const form = useForm<TransactionFormInput>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
-      mode: TransactionMode.TRANSFER,
+      mode: TransactionMode.DELEGATE,
       chainId: "",
-      tokenId: "",
       senders: "",
-      recipients: "",
-      amount: 0,
+      validatorAddress: "",
+      amount: undefined,
       useMaxAmount: false,
     },
   });
   const [decimals, setDecimals] = useState<number>(0);
-  const {
-    transaction,
-    setTransaction,
-    setSignedTransaction,
-    setTransactionHash,
-  } = useTransaction();
+  const { transaction, setTransaction, setTransactionHash } = useTransaction();
   const [errors, setErrors] = useState("");
 
-  function onSubmit(values: TransactionFormInput) {
-    // FIXME Hack to be able to provide the pubKey, probably better to refacto
-    const pubKey = assets.find(
-      (asset) => asset.address === values.senders
-    )?.pubKey;
+  const onSubmit = useCallback(
+    (formInput: TransactionFormInput) => {
+      const plainTransaction: PlainTransaction = {
+        mode: TransactionMode.DELEGATE,
+        chainId: formInput.chainId,
+        senders: [formInput.senders],
+        recipients: [],
+        validatorAddress: formInput.validatorAddress ?? "",
+        useMaxAmount: formInput.useMaxAmount,
+        format: "json", // FIXME Not always the default, should come from chains config
+      };
 
-    mutate(
-      {
-        mode: values.mode,
-        chainId: values.chainId,
-        tokenId: values.tokenId,
-        recipients: values.recipients ? [values.recipients] : [],
-        senders: [values.senders],
-        amount: values.useMaxAmount
-          ? ""
-          : amountToSmallestUnit(values.amount.toString(), decimals),
-        useMaxAmount: values.useMaxAmount,
-        format: "json",
-        params: {
+      if (formInput.amount && !formInput.useMaxAmount) {
+        plainTransaction.amount = amountToSmallestUnit(
+          formInput.amount.toString(),
+          decimals
+        );
+      }
+
+      // FIXME Hack to be able to provide the pubKey, probably better to refacto
+      const pubKey = assets.find(
+        (asset) => asset.address === formInput.senders
+      )?.pubKey;
+
+      if (pubKey) {
+        plainTransaction.params = {
           pubKey,
-        },
-      },
-      {
-        onSettled: (values) => {
-          setTransaction(undefined);
-          setSignedTransaction(undefined);
+        };
+      }
+
+      mutate(plainTransaction, {
+        onSuccess: (settledTransaction) => {
           setTransactionHash(undefined);
-          if (values) {
+          if (settledTransaction) {
             if (
-              values.transaction.status.errors &&
-              values.transaction.status.errors.length > 0
+              settledTransaction.status.errors &&
+              settledTransaction.status.errors.length > 0
             ) {
-              setErrors(values.transaction.status.errors[0].message);
+              setErrors(settledTransaction.status.errors[0].message);
+              setTransaction(undefined);
             } else {
-              setTransaction(values);
+              setTransaction(settledTransaction);
             }
           } else {
+            setTransaction(undefined);
             setErrors("API ERROR - Please try again later");
           }
         },
         onError: (error) => {
-          setTransaction(undefined);
-          setSignedTransaction(undefined);
           setTransactionHash(undefined);
-          setErrors("API ERROR - Please try again later :" + error.message);
+          setErrors(error.message);
         },
-      }
-    );
-  }
+      });
+    },
+    [assets, decimals, mutate, setTransaction, setTransactionHash]
+  );
 
   if (isPending) {
     return <TransactionLoading />;
   }
 
-  if (isSuccess && transaction) {
+  if (isSuccess && transaction?.encoded) {
     return (
       <>
         <h1 className="font-bold text-xl text-center">
@@ -133,7 +147,7 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
           <CollapsibleContent>
             <Textarea
               readOnly
-              value={JSON.stringify(transaction)}
+              value={JSON.stringify(transaction.encoded)}
               className="h-32 text-xs text-gray-500 mt-4"
             />
           </CollapsibleContent>
@@ -144,7 +158,7 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
 
   return (
     <>
-      <h1 className="font-bold text-xl text-center">Transfer</h1>
+      <h1 className="font-bold text-xl text-center">Stake</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 px-4">
           <FormField
@@ -165,13 +179,8 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
                       form.setValue("assetIndex", index);
                       form.setValue("chainId", asset.chainId);
                       form.setValue("senders", asset.address);
-                      if (asset.isToken) {
-                        form.setValue("mode", TransactionMode.TRANSFER_TOKEN);
-                        form.setValue(
-                          "tokenId",
-                          asset.contractAddress || asset.assetId
-                        );
-                      }
+                      form.resetField("validatorIndex");
+                      form.resetField("validatorAddress");
                       setDecimals(asset.decimals);
                     }}
                     {...field}
@@ -198,14 +207,37 @@ export function Transaction({ onNextStep, assets }: TransactionProps) {
 
           <FormField
             control={form.control}
-            name="recipients"
+            name="validatorAddress"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Recipients</FormLabel>
-                <FormControl>
-                  <Input placeholder="Recipient" {...field} />
-                </FormControl>
-                <FormMessage />
+                <>
+                  <FormLabel>Validators</FormLabel>
+                  <FormControl>
+                    <ValidatorSelector
+                      validators={validators.filter((validator) => {
+                        const chainId = form.watch("chainId");
+                        return chainId === ""
+                          ? true
+                          : validator.chainId === chainId;
+                      })}
+                      selectedValue={
+                        form.getValues().validatorIndex
+                          ? validators[
+                              form.getValues().validatorIndex as number
+                            ]
+                          : undefined
+                      }
+                      onSelect={(validator, index) => {
+                        form.setValue("validatorIndex", index);
+                        form.setValue("chainId", validator.chainId);
+                        form.setValue("validatorAddress", validator.address);
+                        setDecimals(validator.decimals);
+                      }}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </>
               </FormItem>
             )}
           />

@@ -1,12 +1,66 @@
 export type PortfolioAddresses = Record<string, string[]>;
 
+interface Token {
+  chainId: string;
+  type: string;
+  id: string;
+  name: string;
+  ticker: string;
+  decimals: number;
+  contractAddress?: string;
+}
+
+interface TokenAmount {
+  amount: string;
+  value: string;
+  token: Token;
+}
+
+interface ValidatorPosition {
+  validatorAddresses: string[];
+  amount: string;
+  status: string;
+  completionDate?: number;
+}
+
+interface Reward {
+  tokenId?: string;
+  validatorAddress: string;
+  amount: string;
+}
+
+interface Balances {
+  native: {
+    available: string;
+    total: string;
+  };
+  tokens: TokenAmount[];
+  staking?: {
+    total: string;
+    locked: string;
+    unlocking: string;
+    unlocked: string;
+    positions?: ValidatorPosition[];
+    rewards: {
+      native: Reward[];
+      tokens: Reward[];
+    };
+  };
+}
+
+export type AddressState = {
+  chainId: string;
+  address: string;
+  balances: Balances;
+};
+
 export enum TransactionMode {
   TRANSFER = "transfer",
   TRANSFER_TOKEN = "transferToken",
   DELEGATE = "delegate",
 }
 
-export type Transaction = {
+export type PlainTransaction = {
   mode: TransactionMode;
   senders: string[];
   recipients?: string[];
@@ -14,7 +68,7 @@ export type Transaction = {
   tokenId?: string;
   useMaxAmount: boolean;
   chainId: string;
-  amount: string;
+  amount?: string;
   fees?: string;
   gas?: string;
   nonce?: string;
@@ -23,6 +77,13 @@ export type Transaction = {
   params?: {
     pubKey?: string;
   };
+};
+
+export type Transaction = {
+  plain: PlainTransaction;
+  encoded: string;
+  signature: string;
+  status: { errors: { message: string }[]; warnings: { message: string }[] };
 };
 
 export type Asset = {

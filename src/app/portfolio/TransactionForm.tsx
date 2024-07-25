@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
@@ -22,88 +22,94 @@ import {
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { useTransaction } from "~/hooks/useTransaction";
-import { useTransactionEncode } from "~/hooks/useTransactionEncode";
+import { useEncodeTransaction } from "~/hooks/useEncodeTransaction";
 import { amountToSmallestUnit } from "~/utils/helper";
 import { TransactionFormInput, transactionFormSchema } from "~/utils/schema";
-import { Asset, TransactionMode, Validator } from "~/utils/types";
-import { TransactionLoading } from "../portfolio/TransactionLoading";
-import { ValidatorSelector } from "./ValidatorSelector";
-import { AssetsSelector } from "../portfolio/AssetsSelector";
+import { Asset, PlainTransaction, TransactionMode } from "~/utils/types";
+import { AssetsSelector } from "./AssetsSelector";
+import { TransactionLoading } from "./TransactionLoading";
 
 type TransactionProps = {
   onNextStep: () => void;
   assets: Asset[];
-  validators: Validator[];
 };
 
-export function Transaction({
-  onNextStep,
-  validators,
-  assets,
-}: TransactionProps) {
-  const { mutate, isPending, isSuccess } = useTransactionEncode();
+// FIXME Some duplicate logic to put in common with src/app/stake/TransactionForm.tsx
+
+export function TransactionForm({ onNextStep, assets }: TransactionProps) {
+  const { mutate, isPending, isSuccess } = useEncodeTransaction();
   const form = useForm<TransactionFormInput>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
-      mode: TransactionMode.DELEGATE,
+      mode: TransactionMode.TRANSFER,
       chainId: "",
+      tokenId: "",
       senders: "",
-      validatorAddress: "",
-      amount: 0,
+      recipients: "",
+      amount: undefined,
       useMaxAmount: false,
     },
   });
   const [decimals, setDecimals] = useState<number>(0);
-  const {
-    transaction,
-    setTransaction,
-    setSignedTransaction,
-    setTransactionHash,
-  } = useTransaction();
+  const { transaction, setTransaction, setTransactionHash } = useTransaction();
   const [errors, setErrors] = useState("");
-  // const chainId = form.watch("chainId");
 
-  function onSubmit(values: TransactionFormInput) {
-    mutate(
-      {
-        mode: TransactionMode.DELEGATE,
-        chainId: values.chainId,
-        senders: [values.senders],
-        recipients: [],
-        validatorAddress: values.validatorAddress ?? "",
-        amount: values.useMaxAmount
-          ? ""
-          : amountToSmallestUnit(values.amount.toString(), decimals),
-        useMaxAmount: values.useMaxAmount,
-        format: "json",
-      },
-      {
-        onSettled: (values) => {
-          setSignedTransaction(undefined);
+  const onSubmit = useCallback(
+    (formInput: TransactionFormInput) => {
+      const plainTransaction: PlainTransaction = {
+        mode: formInput.mode,
+        chainId: formInput.chainId,
+        tokenId: formInput.tokenId,
+        recipients: formInput.recipients ? [formInput.recipients] : [],
+        senders: [formInput.senders],
+        useMaxAmount: formInput.useMaxAmount,
+        format: "json", // FIXME Not always the default, should come from chains config
+      };
+
+      if (formInput.amount && !formInput.useMaxAmount) {
+        plainTransaction.amount = amountToSmallestUnit(
+          formInput.amount.toString(),
+          decimals
+        );
+      }
+
+      // FIXME Hack to be able to provide the pubKey, probably better to refacto
+      const pubKey = assets.find(
+        (asset) => asset.address === formInput.senders
+      )?.pubKey;
+
+      if (pubKey) {
+        plainTransaction.params = {
+          pubKey,
+        };
+      }
+
+      mutate(plainTransaction, {
+        onSuccess: (settledTransaction) => {
+          setTransaction(undefined);
           setTransactionHash(undefined);
-          if (values) {
+          if (settledTransaction) {
             if (
-              values.transaction.status.errors &&
-              values.transaction.status.errors.length > 0
+              settledTransaction.status.errors &&
+              settledTransaction.status.errors.length > 0
             ) {
-              setErrors(values.transaction.status.errors[0].message);
-              setTransaction(undefined);
+              setErrors(settledTransaction.status.errors[0].message);
             } else {
-              setTransaction(values);
+              setTransaction(settledTransaction);
             }
           } else {
-            setTransaction(undefined);
             setErrors("API ERROR - Please try again later");
           }
         },
         onError: (error) => {
-          setSignedTransaction(undefined);
+          setTransaction(undefined);
           setTransactionHash(undefined);
-          setErrors("API ERROR - Please try again later :" + error.message);
+          setErrors(error.message);
         },
-      }
-    );
-  }
+      });
+    },
+    [assets, decimals, mutate, setTransaction, setTransactionHash]
+  );
 
   if (isPending) {
     return <TransactionLoading />;
@@ -142,7 +148,7 @@ export function Transaction({
 
   return (
     <>
-      <h1 className="font-bold text-xl text-center">Stake</h1>
+      <h1 className="font-bold text-xl text-center">Transfer</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 px-4">
           <FormField
@@ -163,8 +169,13 @@ export function Transaction({
                       form.setValue("assetIndex", index);
                       form.setValue("chainId", asset.chainId);
                       form.setValue("senders", asset.address);
-                      form.resetField("validatorIndex");
-                      form.resetField("validatorAddress");
+                      if (asset.isToken) {
+                        form.setValue("mode", TransactionMode.TRANSFER_TOKEN);
+                        form.setValue(
+                          "tokenId",
+                          asset.contractAddress || asset.assetId
+                        );
+                      }
                       setDecimals(asset.decimals);
                     }}
                     {...field}
@@ -191,37 +202,14 @@ export function Transaction({
 
           <FormField
             control={form.control}
-            name="validatorAddress"
+            name="recipients"
             render={({ field }) => (
               <FormItem>
-                <>
-                  <FormLabel>Validators</FormLabel>
-                  <FormControl>
-                    <ValidatorSelector
-                      validators={validators.filter((validator) => {
-                        const chainId = form.watch("chainId");
-                        return chainId === ""
-                          ? true
-                          : validator.chainId === chainId;
-                      })}
-                      selectedValue={
-                        form.getValues().validatorIndex
-                          ? validators[
-                              form.getValues().validatorIndex as number
-                            ]
-                          : undefined
-                      }
-                      onSelect={(validator, index) => {
-                        form.setValue("validatorIndex", index);
-                        form.setValue("chainId", validator.chainId);
-                        form.setValue("validatorAddress", validator.address);
-                        setDecimals(validator.decimals);
-                      }}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </>
+                <FormLabel>Recipients</FormLabel>
+                <FormControl>
+                  <Input placeholder="Recipient" {...field} />
+                </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />

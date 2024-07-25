@@ -7,7 +7,7 @@ type GetChainsResponse = {
   chains: Record<string, Chain>;
 };
 
-// TODO Should maybe handle API error (throw and/or display an error toast) instead of returning null?
+// TODO Better API error management, consistent for all endpoints
 export const getChains = async (): Promise<Record<string, Chain> | null> => {
   const response = await fetch(`${ADAMIK_API_URL}/chains`, {
     headers: {
