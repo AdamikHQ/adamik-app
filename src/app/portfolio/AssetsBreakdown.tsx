@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Loader2 } from "lucide-react";
+import { Loader2, Info } from "lucide-react";
 import { useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -86,35 +86,36 @@ export const AssetsBreakdown: React.FC<{
 }) => {
   const filteredAggregatedAssets = useMemo(() => {
     // FIXME Replace with Object.groupBy() when Node.js 21 becomes supported by Vercel
+    // Group assets by chainId
     const assetsPerChain = _.groupBy(
       assets,
       (asset) => asset.chainId
     ) as Record<string, Asset[]>;
 
-    // Aggregate chains by their total USD balance
+    // Aggregate the balance for each chain
     const aggregatedAssets = (
       Object.keys(assetsPerChain)
-        // For each chain
         .map((chainId) => {
-          // Identify the main asset of the chain, as the only one that doesn't have an 'assetId'
+          // Find the main asset of the chain
           const chain = assetsPerChain[chainId].find((asset) => !asset.assetId);
           if (chain) {
-            // Aggregate the USD balance of the main asset + all tokens
+            // Sum the USD balance of the chain's main asset and all its tokens
             let totalBalanceUSD = assetsPerChain[chainId].reduce(
               (balance, asset) => balance + (asset.balanceUSD || 0),
               0
             );
 
-            // Add staking positions' amountUSD and rewardAmountUSD to the total balance
-            const stakingPosition = stakingPositions.find(
+            // Include all staking positions' USD balances for the chainId
+            const stakingPositionsForChain = stakingPositions.filter(
               (position) => position.chainId === chainId
             );
-            if (stakingPosition) {
+            stakingPositionsForChain.forEach((stakingPosition) => {
               totalBalanceUSD +=
                 (stakingPosition.amountUSD || 0) +
                 (stakingPosition.rewardAmountUSD || 0);
-            }
+            });
 
+            // Return the main asset with the aggregated USD balance
             return {
               ...chain,
               balanceUSD: totalBalanceUSD,
@@ -145,7 +146,12 @@ export const AssetsBreakdown: React.FC<{
     <div className="order-first md:order-last">
       <Card className="lg:col-span-2">
         <CardHeader className="flex flex-row items-center justify-between py-9">
-          <CardTitle>Assets Breakdown</CardTitle>
+          <div className="flex items-center">
+            <CardTitle>Assets Breakdown</CardTitle>
+            <Tooltip text="Shows the distribution of your assets per network">
+              <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
+            </Tooltip>
+          </div>
         </CardHeader>
         <CardContent>
           {!isLoading ? (
