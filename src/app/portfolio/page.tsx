@@ -18,7 +18,7 @@ import { showroomAddresses } from "../../utils/showroomAddresses";
 import {
   aggregateStakingBalances,
   getAddressStakingPositions,
-} from "../stake/helpers"; // Added getAddressStakingPositions
+} from "../stake/helpers";
 import { WalletSelection } from "../wallets/WalletSelection";
 import { WalletSigner } from "../wallets/WalletSigner";
 import { AssetsBalances } from "./AssetsBalances";
@@ -103,7 +103,7 @@ export default function Portfolio() {
           addressesData,
           chainsDetails || [],
           mobulaMarketData,
-          [] // Pass the correct validator data if needed
+          []
         )
       ),
     [addressesData, chainsDetails, mobulaMarketData]
@@ -199,7 +199,7 @@ export default function Portfolio() {
           totalBalance={totalBalance}
           hideLowBalance={hideLowBalance}
           setHideLowBalance={setHideLowBalance}
-          stakingPositions={stakingPositions} // Pass staking positions here
+          stakingPositions={stakingPositions}
         />
       </div>
 
