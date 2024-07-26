@@ -98,11 +98,13 @@ export default function Portfolio() {
   // Fetch staking positions
   const stakingPositions = useMemo(
     () =>
-      getAddressStakingPositions(
-        addressesData,
-        chainsDetails || [],
-        mobulaMarketData,
-        [] // Pass the correct validator data if needed
+      Object.values(
+        getAddressStakingPositions(
+          addressesData,
+          chainsDetails || [],
+          mobulaMarketData,
+          [] // Pass the correct validator data if needed
+        )
       ),
     [addressesData, chainsDetails, mobulaMarketData]
   );
@@ -197,7 +199,7 @@ export default function Portfolio() {
           totalBalance={totalBalance}
           hideLowBalance={hideLowBalance}
           setHideLowBalance={setHideLowBalance}
-          stakingPositions={Object.values(stakingPositions)} // Pass staking positions here
+          stakingPositions={stakingPositions} // Pass staking positions here
         />
       </div>
 
