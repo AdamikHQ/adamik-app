@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { Loader2, Info } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
@@ -92,7 +92,12 @@ export const AssetsList: React.FC<{
     <>
       <Card className="lg:col-span-2">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Assets</CardTitle>
+          <div className="flex items-center">
+            <CardTitle>Assets</CardTitle>
+            <Tooltip text="List of your available assets and their balances">
+              <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
+            </Tooltip>
+          </div>
           <Button
             type="submit"
             onClick={() => setOpenTransaction(!openTransaction)}

@@ -15,7 +15,10 @@ import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { useWallet } from "~/hooks/useWallet";
 import { useChains } from "~/hooks/useChains";
 import { showroomAddresses } from "../../utils/showroomAddresses";
-import { aggregateStakingBalances } from "../stake/helpers";
+import {
+  aggregateStakingBalances,
+  getAddressStakingPositions,
+} from "../stake/helpers";
 import { WalletSelection } from "../wallets/WalletSelection";
 import { WalletSigner } from "../wallets/WalletSigner";
 import { AssetsBalances } from "./AssetsBalances";
@@ -90,6 +93,20 @@ export default function Portfolio() {
         mobulaMarketData
       ),
     [chainsDetails, addressesData, mobulaMarketData]
+  );
+
+  // Fetch staking positions
+  const stakingPositions = useMemo(
+    () =>
+      Object.values(
+        getAddressStakingPositions(
+          addressesData,
+          chainsDetails || [],
+          mobulaMarketData,
+          []
+        )
+      ),
+    [addressesData, chainsDetails, mobulaMarketData]
   );
 
   const isLoading =
@@ -182,6 +199,7 @@ export default function Portfolio() {
           totalBalance={totalBalance}
           hideLowBalance={hideLowBalance}
           setHideLowBalance={setHideLowBalance}
+          stakingPositions={stakingPositions}
         />
       </div>
 
