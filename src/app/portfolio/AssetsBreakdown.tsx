@@ -72,7 +72,7 @@ const AssetsBreakdownRow: React.FC<{
 export const AssetsBreakdown: React.FC<{
   isLoading: boolean;
   assets: Asset[];
-  stakingPositions?: StakingPosition[]; // Optional to handle undefined case
+  stakingPositions?: StakingPosition[];
   totalBalance: number;
   hideLowBalance: boolean;
   setHideLowBalance: (value: boolean) => void;
@@ -81,7 +81,7 @@ export const AssetsBreakdown: React.FC<{
   assets,
   totalBalance,
   hideLowBalance,
-  stakingPositions = [], // Default to an empty array
+  stakingPositions = [],
   setHideLowBalance,
 }) => {
   const filteredAggregatedAssets = useMemo(() => {
@@ -128,20 +128,6 @@ export const AssetsBreakdown: React.FC<{
     return filterAndSortAssets(aggregatedAssets, hideLowBalance);
   }, [assets, hideLowBalance, stakingPositions]);
 
-  // Calculate the total balance including staking positions
-  const totalBalanceIncludingStaking = useMemo(() => {
-    const assetsBalance = assets.reduce(
-      (total, asset) => total + (asset.balanceUSD || 0),
-      0
-    );
-    const stakingBalance = stakingPositions.reduce(
-      (total, position) =>
-        total + (position.amountUSD || 0) + (position.rewardAmountUSD || 0),
-      0
-    );
-    return assetsBalance + stakingBalance;
-  }, [assets, stakingPositions]);
-
   return (
     <div className="order-first md:order-last">
       <Card className="lg:col-span-2">
@@ -163,7 +149,7 @@ export const AssetsBreakdown: React.FC<{
                     <AssetsBreakdownRow
                       key={`${i}_${asset.name}`}
                       asset={asset}
-                      totalBalance={totalBalanceIncludingStaking} // Use the updated total balance
+                      totalBalance={totalBalance}
                     />
                   );
                 })}
