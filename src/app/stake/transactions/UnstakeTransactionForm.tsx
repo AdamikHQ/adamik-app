@@ -25,27 +25,42 @@ import { useTransaction } from "~/hooks/useTransaction";
 import { useEncodeTransaction } from "~/hooks/useEncodeTransaction";
 import { amountToSmallestUnit } from "~/utils/helper";
 import { TransactionFormInput, transactionFormSchema } from "~/utils/schema";
-import { Asset, PlainTransaction, TransactionMode } from "~/utils/types";
-import { AssetsSelector } from "./AssetsSelector";
-import { TransactionLoading } from "./TransactionLoading";
+import {
+  Asset,
+  PlainTransaction,
+  TransactionMode,
+  Validator,
+} from "~/utils/types";
+import { TransactionLoading } from "~/app/portfolio/TransactionLoading";
+import { AssetsSelector } from "~/app/portfolio/AssetsSelector";
+import { StakingPosition } from "../helpers";
+import { StakingPositionSelector } from "../StakingPositionSelector";
 
-type TransactionProps = {
+type UnstakeTransactionProps = {
   onNextStep: () => void;
   assets: Asset[];
+  stakingPositions: Record<string, StakingPosition>;
+  validators: Validator[];
 };
 
-// FIXME Some duplicate logic to put in common with src/app/stake/TransactionForm.tsx
+// TODO Only works for Cosmos !!! API abstraction still needed
 
-export function TransactionForm({ onNextStep, assets }: TransactionProps) {
+// FIXME Some duplicate logic to put in common with src/app/portfolio/TransactionForm.tsx
+
+export function UnstakeTransactionForm({
+  onNextStep,
+  assets,
+  stakingPositions,
+  validators,
+}: UnstakeTransactionProps) {
   const { mutate, isPending, isSuccess } = useEncodeTransaction();
   const form = useForm<TransactionFormInput>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
-      mode: TransactionMode.TRANSFER,
+      mode: TransactionMode.UNDELEGATE,
       chainId: "",
-      tokenId: "",
       senders: "",
-      recipients: "",
+      validatorAddress: "",
       amount: undefined,
       useMaxAmount: false,
     },
@@ -57,11 +72,11 @@ export function TransactionForm({ onNextStep, assets }: TransactionProps) {
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
       const plainTransaction: PlainTransaction = {
-        mode: formInput.mode,
+        mode: TransactionMode.UNDELEGATE,
         chainId: formInput.chainId,
-        tokenId: formInput.tokenId,
-        recipients: formInput.recipients ? [formInput.recipients] : [],
         senders: [formInput.senders],
+        recipients: [],
+        validatorAddress: formInput.validatorAddress ?? "",
         useMaxAmount: formInput.useMaxAmount,
         format: "json", // FIXME Not always the default, should come from chains config
       };
@@ -148,7 +163,7 @@ export function TransactionForm({ onNextStep, assets }: TransactionProps) {
 
   return (
     <>
-      <h1 className="font-bold text-xl text-center">Transfer</h1>
+      <h1 className="font-bold text-xl text-center">Unstake</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 px-4">
           <FormField
@@ -169,13 +184,8 @@ export function TransactionForm({ onNextStep, assets }: TransactionProps) {
                       form.setValue("assetIndex", index);
                       form.setValue("chainId", asset.chainId);
                       form.setValue("senders", asset.address);
-                      if (asset.isToken) {
-                        form.setValue("mode", TransactionMode.TRANSFER_TOKEN);
-                        form.setValue(
-                          "tokenId",
-                          asset.contractAddress || asset.assetId
-                        );
-                      }
+                      form.resetField("validatorIndex");
+                      form.resetField("validatorAddress");
                       setDecimals(asset.decimals);
                     }}
                     {...field}
@@ -202,14 +212,48 @@ export function TransactionForm({ onNextStep, assets }: TransactionProps) {
 
           <FormField
             control={form.control}
-            name="recipients"
+            name="validatorAddress"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Recipients</FormLabel>
-                <FormControl>
-                  <Input placeholder="Recipient" {...field} />
-                </FormControl>
-                <FormMessage />
+                <>
+                  <FormLabel>Validators</FormLabel>
+                  <FormControl>
+                    <StakingPositionSelector
+                      validators={validators.filter((validator) => {
+                        const chainId = form.watch("chainId");
+                        return chainId === ""
+                          ? true
+                          : validator.chainId === chainId;
+                      })}
+                      stakingPositions={Object.values(stakingPositions).filter(
+                        (stakingPosition) => {
+                          const chainId = form.watch("chainId");
+                          return chainId === ""
+                            ? true
+                            : stakingPosition.chainId === chainId;
+                        }
+                      )}
+                      selectedValue={
+                        form.getValues().stakingPositionIndex
+                          ? stakingPositions[
+                              form.getValues().stakingPositionIndex as number
+                            ]
+                          : undefined
+                      }
+                      onSelect={(stakingPosition, index) => {
+                        form.setValue("stakingPositionIndex", index);
+                        form.setValue("chainId", stakingPosition.chainId);
+                        form.setValue(
+                          "validatorAddress",
+                          stakingPosition.validatorAddresses[0]
+                        );
+                        //setDecimals(stakingPosition.decimals);
+                      }}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </>
               </FormItem>
             )}
           />

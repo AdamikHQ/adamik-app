@@ -58,6 +58,8 @@ export enum TransactionMode {
   TRANSFER = "transfer",
   TRANSFER_TOKEN = "transferToken",
   DELEGATE = "delegate",
+  UNDELEGATE = "undelegate",
+  CLAIM_REWARDS = "claimRewards",
 }
 
 export type PlainTransaction = {

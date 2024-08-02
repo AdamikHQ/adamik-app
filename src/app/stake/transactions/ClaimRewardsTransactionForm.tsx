@@ -25,27 +25,42 @@ import { useTransaction } from "~/hooks/useTransaction";
 import { useEncodeTransaction } from "~/hooks/useEncodeTransaction";
 import { amountToSmallestUnit } from "~/utils/helper";
 import { TransactionFormInput, transactionFormSchema } from "~/utils/schema";
-import { Asset, PlainTransaction, TransactionMode } from "~/utils/types";
-import { AssetsSelector } from "./AssetsSelector";
-import { TransactionLoading } from "./TransactionLoading";
+import {
+  Asset,
+  PlainTransaction,
+  TransactionMode,
+  Validator,
+} from "~/utils/types";
+import { TransactionLoading } from "~/app/portfolio/TransactionLoading";
+import { AssetsSelector } from "~/app/portfolio/AssetsSelector";
+import { StakingPosition } from "../helpers";
+import { StakingPositionSelector } from "../StakingPositionSelector";
 
-type TransactionProps = {
+type ClaimRewardsTransactionProps = {
   onNextStep: () => void;
   assets: Asset[];
+  stakingPositions: Record<string, StakingPosition>;
+  validators: Validator[];
 };
 
-// FIXME Some duplicate logic to put in common with src/app/stake/TransactionForm.tsx
+// TODO Only works for Cosmos !!! API abstraction still needed
 
-export function TransactionForm({ onNextStep, assets }: TransactionProps) {
+// FIXME Some duplicate logic to put in common with src/app/portfolio/TransactionForm.tsx
+
+export function ClaimRewardsTransactionForm({
+  onNextStep,
+  assets,
+  stakingPositions,
+  validators,
+}: ClaimRewardsTransactionProps) {
   const { mutate, isPending, isSuccess } = useEncodeTransaction();
   const form = useForm<TransactionFormInput>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
-      mode: TransactionMode.TRANSFER,
+      mode: TransactionMode.CLAIM_REWARDS,
       chainId: "",
-      tokenId: "",
       senders: "",
-      recipients: "",
+      validatorAddress: "",
       amount: undefined,
       useMaxAmount: false,
     },
@@ -57,11 +72,11 @@ export function TransactionForm({ onNextStep, assets }: TransactionProps) {
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
       const plainTransaction: PlainTransaction = {
-        mode: formInput.mode,
+        mode: TransactionMode.CLAIM_REWARDS,
         chainId: formInput.chainId,
-        tokenId: formInput.tokenId,
-        recipients: formInput.recipients ? [formInput.recipients] : [],
         senders: [formInput.senders],
+        recipients: [],
+        validatorAddress: formInput.validatorAddress ?? "",
         useMaxAmount: formInput.useMaxAmount,
         format: "json", // FIXME Not always the default, should come from chains config
       };
@@ -148,7 +163,7 @@ export function TransactionForm({ onNextStep, assets }: TransactionProps) {
 
   return (
     <>
-      <h1 className="font-bold text-xl text-center">Transfer</h1>
+      <h1 className="font-bold text-xl text-center">Claim rewards</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 px-4">
           <FormField
@@ -169,13 +184,8 @@ export function TransactionForm({ onNextStep, assets }: TransactionProps) {
                       form.setValue("assetIndex", index);
                       form.setValue("chainId", asset.chainId);
                       form.setValue("senders", asset.address);
-                      if (asset.isToken) {
-                        form.setValue("mode", TransactionMode.TRANSFER_TOKEN);
-                        form.setValue(
-                          "tokenId",
-                          asset.contractAddress || asset.assetId
-                        );
-                      }
+                      form.resetField("validatorIndex");
+                      form.resetField("validatorAddress");
                       setDecimals(asset.decimals);
                     }}
                     {...field}
@@ -202,47 +212,48 @@ export function TransactionForm({ onNextStep, assets }: TransactionProps) {
 
           <FormField
             control={form.control}
-            name="recipients"
+            name="validatorAddress"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Recipients</FormLabel>
-                <FormControl>
-                  <Input placeholder="Recipient" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="amount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Amount</FormLabel>
-                <FormControl>
-                  <>
-                    <Input type="number" placeholder="amount" {...field} />
-                    <FormField
-                      control={form.control}
-                      name="useMaxAmount"
-                      render={({ field: fieldSendMax }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                          <FormControl>
-                            <Checkbox
-                              checked={fieldSendMax.value}
-                              onCheckedChange={fieldSendMax.onChange}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>Use Max</FormLabel>
-                          </div>
-                        </FormItem>
+                <>
+                  <FormLabel>Validators</FormLabel>
+                  <FormControl>
+                    <StakingPositionSelector
+                      validators={validators.filter((validator) => {
+                        const chainId = form.watch("chainId");
+                        return chainId === ""
+                          ? true
+                          : validator.chainId === chainId;
+                      })}
+                      stakingPositions={Object.values(stakingPositions).filter(
+                        (stakingPosition) => {
+                          const chainId = form.watch("chainId");
+                          return chainId === ""
+                            ? true
+                            : stakingPosition.chainId === chainId;
+                        }
                       )}
+                      selectedValue={
+                        form.getValues().stakingPositionIndex
+                          ? stakingPositions[
+                              form.getValues().stakingPositionIndex as number
+                            ]
+                          : undefined
+                      }
+                      onSelect={(stakingPosition, index) => {
+                        form.setValue("stakingPositionIndex", index);
+                        form.setValue("chainId", stakingPosition.chainId);
+                        form.setValue(
+                          "validatorAddress",
+                          stakingPosition.validatorAddresses[0]
+                        );
+                        //setDecimals(stakingPosition.decimals);
+                      }}
+                      {...field}
                     />
-                  </>
-                </FormControl>
-                <FormMessage />
+                  </FormControl>
+                  <FormMessage />
+                </>
               </FormItem>
             )}
           />

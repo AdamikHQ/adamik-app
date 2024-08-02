@@ -28,7 +28,9 @@ import {
 import { StakingPositionsList } from "./StakingPositionsList";
 import { useMemo, useState } from "react";
 import { Modal } from "~/components/ui/modal";
-import { TransactionForm } from "./TransactionForm";
+import { StakeTransactionForm } from "./transactions/StakeTransactionForm";
+import { UnstakeTransactionForm } from "./transactions/UnstakeTransactionForm";
+import { ClaimRewardsTransactionForm } from "./transactions/ClaimRewardsTransactionForm";
 import { WalletSigner } from "../wallets/WalletSigner";
 import { ConnectWallet } from "../portfolio/ConnectWallet";
 import { clearAddressStateCache } from "~/hooks/useAddressState";
@@ -40,7 +42,10 @@ import { useChains } from "~/hooks/useChains";
 export default function Stake() {
   const { addresses, isShowroom, setWalletMenuOpen } = useWallet();
   const { setTransaction } = useTransaction();
-  const [openTransaction, setOpenTransaction] = useState(false);
+  const [openStakeTransaction, setOpenStakeTransaction] = useState(false);
+  const [openUnstakeTransaction, setOpenUnstakeTransaction] = useState(false);
+  const [openClaimRewardsTransaction, setOpenClaimRewardsTransaction] =
+    useState(false);
   const [stepper, setStepper] = useState(0);
   const { toast } = useToast();
 
@@ -148,18 +153,29 @@ export default function Stake() {
           className="col-span-2"
           onClick={() => {
             setTransaction(undefined);
-            setOpenTransaction(true);
+            setOpenStakeTransaction(true);
           }}
         >
           Stake
         </Button>
-        <Tooltip text="Coming Soon">
-          <Button className="opacity-50 cursor-default">Unstake</Button>
-        </Tooltip>
 
-        <Tooltip text="Coming Soon">
-          <Button className="opacity-50 cursor-default">Claim</Button>
-        </Tooltip>
+        <Button
+          onClick={() => {
+            setTransaction(undefined);
+            setOpenUnstakeTransaction(true);
+          }}
+        >
+          Unstake
+        </Button>
+
+        <Button
+          onClick={() => {
+            setTransaction(undefined);
+            setOpenClaimRewardsTransaction(true);
+          }}
+        >
+          Claim
+        </Button>
       </div>
 
       <StakingPositionsList
@@ -175,13 +191,14 @@ export default function Stake() {
         }}
       />
 
+      {/* FIXME Full duplication, need to rework*/}
+
       <Modal
-        open={openTransaction}
-        setOpen={setOpenTransaction}
+        open={openStakeTransaction}
+        setOpen={setOpenStakeTransaction}
         modalContent={
-          // Probably need to rework
           stepper === 0 ? (
-            <TransactionForm
+            <StakeTransactionForm
               assets={assets}
               validators={validators}
               onNextStep={() => {
@@ -193,7 +210,7 @@ export default function Stake() {
               {addresses && addresses.length > 0 ? (
                 <WalletSigner
                   onNextStep={() => {
-                    setOpenTransaction(false);
+                    setOpenStakeTransaction(false);
                     setTimeout(() => {
                       setStepper(0);
                     }, 200);
@@ -202,7 +219,87 @@ export default function Stake() {
               ) : (
                 <ConnectWallet
                   onNextStep={() => {
-                    setOpenTransaction(false);
+                    setOpenStakeTransaction(false);
+                    setWalletMenuOpen(true);
+                    setTimeout(() => {
+                      setStepper(0);
+                    }, 200);
+                  }}
+                />
+              )}
+            </>
+          )
+        }
+      />
+
+      <Modal
+        open={openUnstakeTransaction}
+        setOpen={setOpenUnstakeTransaction}
+        modalContent={
+          stepper === 0 ? (
+            <UnstakeTransactionForm
+              assets={assets}
+              validators={validators}
+              stakingPositions={stakingPositions}
+              onNextStep={() => {
+                setStepper(1);
+              }}
+            />
+          ) : (
+            <>
+              {addresses && addresses.length > 0 ? (
+                <WalletSigner
+                  onNextStep={() => {
+                    setOpenUnstakeTransaction(false);
+                    setTimeout(() => {
+                      setStepper(0);
+                    }, 200);
+                  }}
+                />
+              ) : (
+                <ConnectWallet
+                  onNextStep={() => {
+                    setOpenUnstakeTransaction(false);
+                    setWalletMenuOpen(true);
+                    setTimeout(() => {
+                      setStepper(0);
+                    }, 200);
+                  }}
+                />
+              )}
+            </>
+          )
+        }
+      />
+
+      <Modal
+        open={openClaimRewardsTransaction}
+        setOpen={setOpenClaimRewardsTransaction}
+        modalContent={
+          stepper === 0 ? (
+            <ClaimRewardsTransactionForm
+              assets={assets}
+              validators={validators}
+              stakingPositions={stakingPositions}
+              onNextStep={() => {
+                setStepper(1);
+              }}
+            />
+          ) : (
+            <>
+              {addresses && addresses.length > 0 ? (
+                <WalletSigner
+                  onNextStep={() => {
+                    setOpenClaimRewardsTransaction(false);
+                    setTimeout(() => {
+                      setStepper(0);
+                    }, 200);
+                  }}
+                />
+              ) : (
+                <ConnectWallet
+                  onNextStep={() => {
+                    setOpenClaimRewardsTransaction(false);
                     setWalletMenuOpen(true);
                     setTimeout(() => {
                       setStepper(0);

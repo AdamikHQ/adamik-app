@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
@@ -28,7 +28,7 @@ type ValidatorSelectorProps = {
   onSelect: (validator: Validator, index: number) => void;
 };
 
-export const ValidatorView = ({ validator }: { validator: Validator }) => {
+const ValidatorView = ({ validator }: { validator: Validator }) => {
   return (
     <div className="flex items-center justify-between w-full">
       {validator?.name && (
@@ -62,9 +62,48 @@ export const ValidatorView = ({ validator }: { validator: Validator }) => {
       )}
       <div className="flex-1 text-right">{validator.name}</div>
       <div className="font-bold flex-1 text-right">
-        Commision: {validator.commission}
+        Commission: {validator.commission}
       </div>
     </div>
+  );
+};
+
+const ValidatorSelectorList = ({
+  setOpen,
+  setSelectedChoice,
+  validators,
+  onSelect,
+}: {
+  setOpen: (open: boolean) => void;
+  setSelectedChoice: (choice: Validator | undefined) => void;
+  validators: Validator[];
+  onSelect: (validator: Validator, index: number) => void;
+}) => {
+  return (
+    <Command>
+      <CommandInput placeholder="Filter validators..." />
+      <CommandList>
+        <CommandEmpty>No results found.</CommandEmpty>
+        <ScrollArea className="h-[240px] overflow-auto">
+          <CommandGroup>
+            {validators.map((validator, i) => (
+              <CommandItem
+                key={`${validator.address}_${i}`}
+                value={`${validator.name}_${i.toString()}`}
+                onSelect={(value) => {
+                  const [name, index] = value.split("_");
+                  setSelectedChoice(validators[Number(index)]);
+                  setOpen(false);
+                  onSelect(validator, i);
+                }}
+              >
+                <ValidatorView validator={validator} />
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </ScrollArea>
+      </CommandList>
+    </Command>
   );
 };
 
@@ -133,44 +172,5 @@ export function ValidatorSelector({
         </div>
       </DrawerContent>
     </Drawer>
-  );
-}
-
-function ValidatorSelectorList({
-  setOpen,
-  setSelectedChoice,
-  validators,
-  onSelect,
-}: {
-  setOpen: (open: boolean) => void;
-  setSelectedChoice: (choice: Validator | undefined) => void;
-  validators: Validator[];
-  onSelect: (validator: Validator, index: number) => void;
-}) {
-  return (
-    <Command>
-      <CommandInput placeholder="Filter assets..." />
-      <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
-        <ScrollArea className="h-[240px] overflow-auto">
-          <CommandGroup>
-            {validators.map((validator, i) => (
-              <CommandItem
-                key={`${validator.address}_${i}`}
-                value={`${validator.name}_${i.toString()}`}
-                onSelect={(value) => {
-                  const [name, index] = value.split("_");
-                  setSelectedChoice(validators[Number(index)]);
-                  setOpen(false);
-                  onSelect(validator, i);
-                }}
-              >
-                <ValidatorView validator={validator} />
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </ScrollArea>
-      </CommandList>
-    </Command>
   );
 }

@@ -31,23 +31,25 @@ import {
   TransactionMode,
   Validator,
 } from "~/utils/types";
-import { TransactionLoading } from "../portfolio/TransactionLoading";
-import { ValidatorSelector } from "./ValidatorSelector";
-import { AssetsSelector } from "../portfolio/AssetsSelector";
+import { TransactionLoading } from "~/app/portfolio/TransactionLoading";
+import { AssetsSelector } from "~/app/portfolio/AssetsSelector";
+import { ValidatorSelector } from "../ValidatorSelector";
 
-type TransactionProps = {
+type StakeTransactionProps = {
   onNextStep: () => void;
   assets: Asset[];
   validators: Validator[];
 };
 
+// TODO Only works for Cosmos !!! API abstraction still needed
+
 // FIXME Some duplicate logic to put in common with src/app/portfolio/TransactionForm.tsx
 
-export function TransactionForm({
+export function StakeTransactionForm({
   onNextStep,
-  validators,
   assets,
-}: TransactionProps) {
+  validators,
+}: StakeTransactionProps) {
   const { mutate, isPending, isSuccess } = useEncodeTransaction();
   const form = useForm<TransactionFormInput>({
     resolver: zodResolver(transactionFormSchema),
@@ -96,6 +98,7 @@ export function TransactionForm({
 
       mutate(plainTransaction, {
         onSuccess: (settledTransaction) => {
+          setTransaction(undefined);
           setTransactionHash(undefined);
           if (settledTransaction) {
             if (
@@ -103,16 +106,15 @@ export function TransactionForm({
               settledTransaction.status.errors.length > 0
             ) {
               setErrors(settledTransaction.status.errors[0].message);
-              setTransaction(undefined);
             } else {
               setTransaction(settledTransaction);
             }
           } else {
-            setTransaction(undefined);
             setErrors("API ERROR - Please try again later");
           }
         },
         onError: (error) => {
+          setTransaction(undefined);
           setTransactionHash(undefined);
           setErrors(error.message);
         },
@@ -125,7 +127,7 @@ export function TransactionForm({
     return <TransactionLoading />;
   }
 
-  if (isSuccess && transaction?.encoded) {
+  if (isSuccess && transaction) {
     return (
       <>
         <h1 className="font-bold text-xl text-center">
@@ -147,7 +149,7 @@ export function TransactionForm({
           <CollapsibleContent>
             <Textarea
               readOnly
-              value={JSON.stringify(transaction.encoded)}
+              value={JSON.stringify(transaction)}
               className="h-32 text-xs text-gray-500 mt-4"
             />
           </CollapsibleContent>
@@ -263,7 +265,7 @@ export function TransactionForm({
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none">
-                            <FormLabel>Send Max</FormLabel>
+                            <FormLabel>Use Max</FormLabel>
                           </div>
                         </FormItem>
                       )}

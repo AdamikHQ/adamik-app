@@ -3,20 +3,17 @@ import { TransactionMode } from "./types";
 
 export const transactionFormSchema = z
   .object({
-    mode: z.enum([
-      TransactionMode.TRANSFER,
-      TransactionMode.TRANSFER_TOKEN,
-      TransactionMode.DELEGATE,
-    ]),
+    mode: z.nativeEnum(TransactionMode),
     chainId: z.string().min(1),
     senders: z.string().min(1),
     recipients: z.string().min(1).optional(),
     validatorAddress: z.string().min(1).optional(),
-    amount: z.coerce.number().min(0),
+    amount: z.coerce.number().optional(),
     useMaxAmount: z.boolean(),
     tokenId: z.string().optional(),
     assetIndex: z.number().optional(),
     validatorIndex: z.number().optional(),
+    stakingPositionIndex: z.number().optional(),
   })
   .superRefine(({ useMaxAmount }) => {
     if (useMaxAmount) return z.object({ amount: z.literal(0) });
