@@ -138,27 +138,6 @@ export const AssetsList: React.FC<{
                       </TableCell>
                     </TableRow>
                   )}
-                  <TableRow>
-                    <TableCell colSpan={5}>
-                      <div className="items-top flex space-x-2">
-                        <Checkbox
-                          id="hideBalanceAssetsList"
-                          checked={hideLowBalance}
-                          onClick={() => {
-                            setHideLowBalance(!hideLowBalance);
-                          }}
-                        />
-                        <div className="grid gap-1.5 leading-none">
-                          <label
-                            htmlFor="hideBalanceAssetsList"
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            {`Hide low balances (< 1$)`}
-                          </label>
-                        </div>
-                      </div>
-                    </TableCell>
-                  </TableRow>
                 </TableBody>
               </Table>
             </>
