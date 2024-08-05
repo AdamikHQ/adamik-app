@@ -1,7 +1,7 @@
 import { DollarSign, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { formatAmountUSD } from "~/utils/helper";
-import { AggregatedBalances } from "../stake/helpers";
+import { AggregatedBalances } from "~/utils/types";
 
 export const AssetsBalances: React.FC<{
   isLoading: boolean;

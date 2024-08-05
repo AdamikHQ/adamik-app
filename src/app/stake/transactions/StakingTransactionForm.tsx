@@ -2,24 +2,15 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDown } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "~/components/ui/button";
-import { Checkbox } from "~/components/ui/checkbox";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "~/components/ui/form";
-import { Input } from "~/components/ui/input";
+import { Form } from "~/components/ui/form";
 import { Textarea } from "~/components/ui/textarea";
 import { useTransaction } from "~/hooks/useTransaction";
 import { useEncodeTransaction } from "~/hooks/useEncodeTransaction";
@@ -32,32 +23,37 @@ import {
   Validator,
 } from "~/utils/types";
 import { TransactionLoading } from "~/app/portfolio/TransactionLoading";
-import { AssetsSelector } from "~/app/portfolio/AssetsSelector";
 import { StakingPosition } from "../helpers";
-import { StakingPositionSelector } from "../StakingPositionSelector";
+import { AssetFormField } from "./fields/AssetFormField";
+import { SenderFormField } from "./fields/SenderFormField";
+import { ValidatorFormField } from "./fields/ValidatorFormField";
+import { AmountFormField } from "./fields/AmountFormField";
+import { StakingPositionFormField } from "./fields/StakingPositionFormField";
 
-type ClaimRewardsTransactionProps = {
-  onNextStep: () => void;
+type StakingTransactionProps = {
+  mode: TransactionMode;
   assets: Asset[];
   stakingPositions: Record<string, StakingPosition>;
   validators: Validator[];
+  onNextStep: () => void;
 };
 
 // TODO Only works for Cosmos !!! API abstraction still needed
 
 // FIXME Some duplicate logic to put in common with src/app/portfolio/TransactionForm.tsx
 
-export function ClaimRewardsTransactionForm({
-  onNextStep,
+export function StakingTransactionForm({
+  mode,
   assets,
   stakingPositions,
   validators,
-}: ClaimRewardsTransactionProps) {
+  onNextStep,
+}: StakingTransactionProps) {
   const { mutate, isPending, isSuccess } = useEncodeTransaction();
   const form = useForm<TransactionFormInput>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
-      mode: TransactionMode.CLAIM_REWARDS,
+      mode,
       chainId: "",
       senders: "",
       validatorAddress: "",
@@ -69,10 +65,21 @@ export function ClaimRewardsTransactionForm({
   const { transaction, setTransaction, setTransactionHash } = useTransaction();
   const [errors, setErrors] = useState("");
 
+  const label = useMemo(() => {
+    switch (mode) {
+      case TransactionMode.DELEGATE:
+        return "Stake";
+      case TransactionMode.UNDELEGATE:
+        return "Untake";
+      case TransactionMode.CLAIM_REWARDS:
+        return "Claim";
+    }
+  }, [mode]);
+
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
       const plainTransaction: PlainTransaction = {
-        mode: TransactionMode.CLAIM_REWARDS,
+        mode,
         chainId: formInput.chainId,
         senders: [formInput.senders],
         recipients: [],
@@ -123,7 +130,7 @@ export function ClaimRewardsTransactionForm({
         },
       });
     },
-    [assets, decimals, mutate, setTransaction, setTransactionHash]
+    [assets, decimals, mode, mutate, setTransaction, setTransactionHash]
   );
 
   if (isPending) {
@@ -163,100 +170,38 @@ export function ClaimRewardsTransactionForm({
 
   return (
     <>
-      <h1 className="font-bold text-xl text-center">Claim rewards</h1>
+      <h1 className="font-bold text-xl text-center">{label}</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 px-4">
-          <FormField
-            control={form.control}
-            name="chainId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Asset</FormLabel>
-                <FormControl>
-                  <AssetsSelector
-                    assets={assets}
-                    selectedValue={
-                      form.getValues().assetIndex
-                        ? assets[form.getValues().assetIndex as number]
-                        : undefined
-                    }
-                    onSelect={(asset, index) => {
-                      form.setValue("assetIndex", index);
-                      form.setValue("chainId", asset.chainId);
-                      form.setValue("senders", asset.address);
-                      form.resetField("validatorIndex");
-                      form.resetField("validatorAddress");
-                      setDecimals(asset.decimals);
-                    }}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+          <AssetFormField
+            form={form}
+            assets={assets}
+            setDecimals={setDecimals}
           />
 
-          <FormField
-            control={form.control}
-            name="senders"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Sender</FormLabel>
-                <FormControl>
-                  <Input readOnly placeholder="Sender" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <SenderFormField form={form} />
 
-          <FormField
-            control={form.control}
-            name="validatorAddress"
-            render={({ field }) => (
-              <FormItem>
-                <>
-                  <FormLabel>Validators</FormLabel>
-                  <FormControl>
-                    <StakingPositionSelector
-                      validators={validators.filter((validator) => {
-                        const chainId = form.watch("chainId");
-                        return chainId === ""
-                          ? true
-                          : validator.chainId === chainId;
-                      })}
-                      stakingPositions={Object.values(stakingPositions).filter(
-                        (stakingPosition) => {
-                          const chainId = form.watch("chainId");
-                          return chainId === ""
-                            ? true
-                            : stakingPosition.chainId === chainId;
-                        }
-                      )}
-                      selectedValue={
-                        form.getValues().stakingPositionIndex
-                          ? stakingPositions[
-                              form.getValues().stakingPositionIndex as number
-                            ]
-                          : undefined
-                      }
-                      onSelect={(stakingPosition, index) => {
-                        form.setValue("stakingPositionIndex", index);
-                        form.setValue("chainId", stakingPosition.chainId);
-                        form.setValue(
-                          "validatorAddress",
-                          stakingPosition.validatorAddresses[0]
-                        );
-                        //setDecimals(stakingPosition.decimals);
-                      }}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </>
-              </FormItem>
-            )}
-          />
+          {mode === TransactionMode.DELEGATE && (
+            <ValidatorFormField
+              form={form}
+              validators={validators}
+              setDecimals={setDecimals}
+            />
+          )}
+
+          {(mode === TransactionMode.UNDELEGATE ||
+            mode === TransactionMode.CLAIM_REWARDS) && (
+            <StakingPositionFormField
+              form={form}
+              stakingPositions={stakingPositions}
+              validators={validators}
+            />
+          )}
+
+          {(mode === TransactionMode.DELEGATE ||
+            mode === TransactionMode.UNDELEGATE) && (
+            <AmountFormField form={form} />
+          )}
 
           {errors && (
             <div className="text-red-500 w-full break-all">{errors}</div>

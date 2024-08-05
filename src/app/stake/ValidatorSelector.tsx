@@ -28,85 +28,6 @@ type ValidatorSelectorProps = {
   onSelect: (validator: Validator, index: number) => void;
 };
 
-const ValidatorView = ({ validator }: { validator: Validator }) => {
-  return (
-    <div className="flex items-center justify-between w-full">
-      {validator?.name && (
-        <div className="relative">
-          <Tooltip text={validator.address}>
-            <TooltipTrigger>
-              <Avatar className="w-[32px] h-[32px]">
-                <AvatarFallback>
-                  {validator?.name[0].toUpperCase() ||
-                    validator.address[0].toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            </TooltipTrigger>
-          </Tooltip>
-          {validator.chainLogo && (
-            <Tooltip text={validator.chainId}>
-              <TooltipTrigger>
-                <div className="absolute w-4 h-4 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-[6px] -end-1">
-                  <Avatar className="h-3 w-3">
-                    <AvatarImage
-                      src={validator.chainLogo}
-                      alt={validator.chainId}
-                    />
-                    <AvatarFallback>{validator.chainId}</AvatarFallback>
-                  </Avatar>
-                </div>
-              </TooltipTrigger>
-            </Tooltip>
-          )}
-        </div>
-      )}
-      <div className="flex-1 text-right">{validator.name}</div>
-      <div className="font-bold flex-1 text-right">
-        Commission: {validator.commission}
-      </div>
-    </div>
-  );
-};
-
-const ValidatorSelectorList = ({
-  setOpen,
-  setSelectedChoice,
-  validators,
-  onSelect,
-}: {
-  setOpen: (open: boolean) => void;
-  setSelectedChoice: (choice: Validator | undefined) => void;
-  validators: Validator[];
-  onSelect: (validator: Validator, index: number) => void;
-}) => {
-  return (
-    <Command>
-      <CommandInput placeholder="Filter validators..." />
-      <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
-        <ScrollArea className="h-[240px] overflow-auto">
-          <CommandGroup>
-            {validators.map((validator, i) => (
-              <CommandItem
-                key={`${validator.address}_${i}`}
-                value={`${validator.name}_${i.toString()}`}
-                onSelect={(value) => {
-                  const [name, index] = value.split("_");
-                  setSelectedChoice(validators[Number(index)]);
-                  setOpen(false);
-                  onSelect(validator, i);
-                }}
-              >
-                <ValidatorView validator={validator} />
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </ScrollArea>
-      </CommandList>
-    </Command>
-  );
-};
-
 export function ValidatorSelector({
   validators,
   selectedValue,
@@ -174,3 +95,82 @@ export function ValidatorSelector({
     </Drawer>
   );
 }
+
+const ValidatorSelectorList = ({
+  setOpen,
+  setSelectedChoice,
+  validators,
+  onSelect,
+}: {
+  setOpen: (open: boolean) => void;
+  setSelectedChoice: (choice: Validator | undefined) => void;
+  validators: Validator[];
+  onSelect: (validator: Validator, index: number) => void;
+}) => {
+  return (
+    <Command>
+      <CommandInput placeholder="Filter validators..." />
+      <CommandList>
+        <CommandEmpty>No results found.</CommandEmpty>
+        <ScrollArea className="h-[240px] overflow-auto">
+          <CommandGroup>
+            {validators.map((validator, i) => (
+              <CommandItem
+                key={`${validator.address}_${i}`}
+                value={`${validator.name}_${i.toString()}`}
+                onSelect={(value) => {
+                  const [name, index] = value.split("_");
+                  setSelectedChoice(validators[Number(index)]);
+                  setOpen(false);
+                  onSelect(validator, i);
+                }}
+              >
+                <ValidatorView validator={validator} />
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </ScrollArea>
+      </CommandList>
+    </Command>
+  );
+};
+
+const ValidatorView = ({ validator }: { validator: Validator }) => {
+  return (
+    <div className="flex items-center justify-between w-full">
+      {validator?.name && (
+        <div className="relative">
+          <Tooltip text={validator.address}>
+            <TooltipTrigger>
+              <Avatar className="w-[32px] h-[32px]">
+                <AvatarFallback>
+                  {validator?.name[0].toUpperCase() ||
+                    validator.address[0].toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </TooltipTrigger>
+          </Tooltip>
+          {validator.chainLogo && (
+            <Tooltip text={validator.chainId}>
+              <TooltipTrigger>
+                <div className="absolute w-4 h-4 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-[6px] -end-1">
+                  <Avatar className="h-3 w-3">
+                    <AvatarImage
+                      src={validator.chainLogo}
+                      alt={validator.chainId}
+                    />
+                    <AvatarFallback>{validator.chainId}</AvatarFallback>
+                  </Avatar>
+                </div>
+              </TooltipTrigger>
+            </Tooltip>
+          )}
+        </div>
+      )}
+      <div className="flex-1 text-right">{validator.name}</div>
+      <div className="font-bold flex-1 text-right">
+        Commission: {validator.commission}
+      </div>
+    </div>
+  );
+};

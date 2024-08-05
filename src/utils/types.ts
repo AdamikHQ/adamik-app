@@ -16,6 +16,9 @@ interface TokenAmount {
   token: Token;
 }
 
+// FIXME Confusing name!
+// - not linked to 1 single validator
+// - confusion with StakingPosition in helpers.ts
 interface ValidatorPosition {
   validatorAddresses: string[];
   amount: string;
@@ -52,6 +55,13 @@ export type AddressState = {
   chainId: string;
   address: string;
   balances: Balances;
+};
+
+export type AggregatedBalances = {
+  availableBalance: number;
+  stakedBalance: number;
+  claimableRewards: number;
+  unstakingBalance: number;
 };
 
 export enum TransactionMode {

@@ -28,9 +28,6 @@ import {
 import { StakingPositionsList } from "./StakingPositionsList";
 import { useMemo, useState } from "react";
 import { Modal } from "~/components/ui/modal";
-import { StakeTransactionForm } from "./transactions/StakeTransactionForm";
-import { UnstakeTransactionForm } from "./transactions/UnstakeTransactionForm";
-import { ClaimRewardsTransactionForm } from "./transactions/ClaimRewardsTransactionForm";
 import { WalletSigner } from "../wallets/WalletSigner";
 import { ConnectWallet } from "../portfolio/ConnectWallet";
 import { clearAddressStateCache } from "~/hooks/useAddressState";
@@ -38,14 +35,15 @@ import { useToast } from "~/components/ui/use-toast";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useTransaction } from "~/hooks/useTransaction";
 import { useChains } from "~/hooks/useChains";
+import { TransactionMode } from "~/utils/types";
+import { StakingTransactionForm } from "./transactions/StakingTransactionForm";
 
 export default function Stake() {
   const { addresses, isShowroom, setWalletMenuOpen } = useWallet();
   const { setTransaction } = useTransaction();
-  const [openStakeTransaction, setOpenStakeTransaction] = useState(false);
-  const [openUnstakeTransaction, setOpenUnstakeTransaction] = useState(false);
-  const [openClaimRewardsTransaction, setOpenClaimRewardsTransaction] =
-    useState(false);
+  const [currentTransactionFlow, setCurrentTransactionFlow] = useState<
+    TransactionMode | undefined
+  >(undefined);
   const [stepper, setStepper] = useState(0);
   const { toast } = useToast();
 
@@ -153,7 +151,7 @@ export default function Stake() {
           className="col-span-2"
           onClick={() => {
             setTransaction(undefined);
-            setOpenStakeTransaction(true);
+            setCurrentTransactionFlow(TransactionMode.DELEGATE);
           }}
         >
           Stake
@@ -162,7 +160,7 @@ export default function Stake() {
         <Button
           onClick={() => {
             setTransaction(undefined);
-            setOpenUnstakeTransaction(true);
+            setCurrentTransactionFlow(TransactionMode.UNDELEGATE);
           }}
         >
           Unstake
@@ -171,7 +169,7 @@ export default function Stake() {
         <Button
           onClick={() => {
             setTransaction(undefined);
-            setOpenClaimRewardsTransaction(true);
+            setCurrentTransactionFlow(TransactionMode.CLAIM_REWARDS);
           }}
         >
           Claim
@@ -191,126 +189,48 @@ export default function Stake() {
         }}
       />
 
-      {/* FIXME Full duplication, need to rework*/}
-
-      <Modal
-        open={openStakeTransaction}
-        setOpen={setOpenStakeTransaction}
-        modalContent={
-          stepper === 0 ? (
-            <StakeTransactionForm
-              assets={assets}
-              validators={validators}
-              onNextStep={() => {
-                setStepper(1);
-              }}
-            />
-          ) : (
-            <>
-              {addresses && addresses.length > 0 ? (
-                <WalletSigner
-                  onNextStep={() => {
-                    setOpenStakeTransaction(false);
-                    setTimeout(() => {
-                      setStepper(0);
-                    }, 200);
-                  }}
-                />
-              ) : (
-                <ConnectWallet
-                  onNextStep={() => {
-                    setOpenStakeTransaction(false);
-                    setWalletMenuOpen(true);
-                    setTimeout(() => {
-                      setStepper(0);
-                    }, 200);
-                  }}
-                />
-              )}
-            </>
-          )
-        }
-      />
-
-      <Modal
-        open={openUnstakeTransaction}
-        setOpen={setOpenUnstakeTransaction}
-        modalContent={
-          stepper === 0 ? (
-            <UnstakeTransactionForm
-              assets={assets}
-              validators={validators}
-              stakingPositions={stakingPositions}
-              onNextStep={() => {
-                setStepper(1);
-              }}
-            />
-          ) : (
-            <>
-              {addresses && addresses.length > 0 ? (
-                <WalletSigner
-                  onNextStep={() => {
-                    setOpenUnstakeTransaction(false);
-                    setTimeout(() => {
-                      setStepper(0);
-                    }, 200);
-                  }}
-                />
-              ) : (
-                <ConnectWallet
-                  onNextStep={() => {
-                    setOpenUnstakeTransaction(false);
-                    setWalletMenuOpen(true);
-                    setTimeout(() => {
-                      setStepper(0);
-                    }, 200);
-                  }}
-                />
-              )}
-            </>
-          )
-        }
-      />
-
-      <Modal
-        open={openClaimRewardsTransaction}
-        setOpen={setOpenClaimRewardsTransaction}
-        modalContent={
-          stepper === 0 ? (
-            <ClaimRewardsTransactionForm
-              assets={assets}
-              validators={validators}
-              stakingPositions={stakingPositions}
-              onNextStep={() => {
-                setStepper(1);
-              }}
-            />
-          ) : (
-            <>
-              {addresses && addresses.length > 0 ? (
-                <WalletSigner
-                  onNextStep={() => {
-                    setOpenClaimRewardsTransaction(false);
-                    setTimeout(() => {
-                      setStepper(0);
-                    }, 200);
-                  }}
-                />
-              ) : (
-                <ConnectWallet
-                  onNextStep={() => {
-                    setOpenClaimRewardsTransaction(false);
-                    setWalletMenuOpen(true);
-                    setTimeout(() => {
-                      setStepper(0);
-                    }, 200);
-                  }}
-                />
-              )}
-            </>
-          )
-        }
-      />
+      {!!currentTransactionFlow && (
+        <Modal
+          open={!!currentTransactionFlow}
+          setOpen={(value) => !value && setCurrentTransactionFlow(undefined)}
+          modalContent={
+            stepper === 0 ? (
+              <StakingTransactionForm
+                mode={currentTransactionFlow}
+                assets={assets}
+                stakingPositions={stakingPositions}
+                validators={validators}
+                onNextStep={() => {
+                  setStepper(1);
+                }}
+              />
+            ) : (
+              <>
+                {addresses && addresses.length > 0 ? (
+                  <WalletSigner
+                    onNextStep={() => {
+                      setCurrentTransactionFlow(undefined);
+                      setTimeout(() => {
+                        setStepper(0);
+                      }, 200);
+                    }}
+                  />
+                ) : (
+                  <ConnectWallet
+                    onNextStep={() => {
+                      setCurrentTransactionFlow(undefined);
+                      setWalletMenuOpen(true);
+                      setTimeout(() => {
+                        setStepper(0);
+                      }, 200);
+                    }}
+                  />
+                )}
+              </>
+            )
+          }
+        />
+      )}
     </main>
   );
 }
