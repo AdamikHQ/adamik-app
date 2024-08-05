@@ -166,7 +166,7 @@ export const AssetsBreakdown: React.FC<{
                     htmlFor="hideBalanceAssetsBreakdown"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    {`Hide low balances (< 1$)`}
+                    {`Hide chains with low balances (< 1$)`}
                   </label>
                 </div>
               </div>
