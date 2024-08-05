@@ -1,7 +1,7 @@
 "use client";
 
 import { Info } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { LoadingModal } from "~/components/layout/LoadingModal";
 import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { Modal } from "~/components/ui/modal";
@@ -64,6 +64,13 @@ export default function Portfolio() {
   const [openTransaction, setOpenTransaction] = useState(false);
   const [hideLowBalance, setHideLowBalance] = useState(true);
   const [stepper, setStepper] = useState(0);
+
+  useEffect(() => {
+    const storedValue = localStorage.getItem("hideLowBalance");
+    if (storedValue !== null) {
+      setHideLowBalance(JSON.parse(storedValue));
+    }
+  }, []);
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
   const tokenTickers = getTokenTickers(addressesData || []);
@@ -197,8 +204,6 @@ export default function Portfolio() {
           isLoading={isLoading}
           assets={assets}
           totalBalance={totalBalance}
-          hideLowBalance={hideLowBalance}
-          setHideLowBalance={setHideLowBalance}
           stakingPositions={stakingPositions}
         />
       </div>
