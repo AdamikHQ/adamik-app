@@ -202,11 +202,6 @@ export const filterAndSortAssets = (
       .filter((asset) => {
         return asset?.logo !== "";
       })
-      // Remove 0.0000 balances
-      // formatAmount return (0) in case of truncase 0.00000
-      .filter((asset) => {
-        return formatAmount(asset?.balanceMainUnit, 5) !== "0";
-      })
 
       .sort((a, b) => {
         // Highest to lowest USD balance
