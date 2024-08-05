@@ -180,13 +180,23 @@ export const filterAndSortAssets = (
   assets: Asset[],
   hideLowBalance: boolean
 ) => {
+  // Aggregate the balance for each chainId
+  const aggregatedBalances: Record<string, number> = {};
+
+  assets.forEach((asset) => {
+    if (!aggregatedBalances[asset.chainId]) {
+      aggregatedBalances[asset.chainId] = 0;
+    }
+    aggregatedBalances[asset.chainId] += asset.balanceUSD || 0;
+  });
+
   return (
     assets
       // Remove empty items
       .filter(Boolean)
       // Apply low balances filter if necessary
       .filter((asset) => {
-        return !(hideLowBalance && (asset?.balanceUSD || 0) <= 1);
+        return !(hideLowBalance && aggregatedBalances[asset.chainId] <= 1);
       })
       // Hide all asset without logo (mostly spam coins for EVM)
       .filter((asset) => {
