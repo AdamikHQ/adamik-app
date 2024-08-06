@@ -16,6 +16,9 @@ interface TokenAmount {
   token: Token;
 }
 
+// FIXME Confusing name!
+// - not linked to 1 single validator
+// - confusion with StakingPosition in helpers.ts
 interface ValidatorPosition {
   validatorAddresses: string[];
   amount: string;
@@ -54,10 +57,19 @@ export type AddressState = {
   balances: Balances;
 };
 
+export type AggregatedBalances = {
+  availableBalance: number;
+  stakedBalance: number;
+  claimableRewards: number;
+  unstakingBalance: number;
+};
+
 export enum TransactionMode {
   TRANSFER = "transfer",
   TRANSFER_TOKEN = "transferToken",
   DELEGATE = "delegate",
+  UNDELEGATE = "undelegate",
+  CLAIM_REWARDS = "claimRewards",
 }
 
 export type PlainTransaction = {

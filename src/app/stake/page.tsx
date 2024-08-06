@@ -28,7 +28,6 @@ import {
 import { StakingPositionsList } from "./StakingPositionsList";
 import { useMemo, useState } from "react";
 import { Modal } from "~/components/ui/modal";
-import { TransactionForm } from "./TransactionForm";
 import { WalletSigner } from "../wallets/WalletSigner";
 import { ConnectWallet } from "../portfolio/ConnectWallet";
 import { clearAddressStateCache } from "~/hooks/useAddressState";
@@ -36,11 +35,15 @@ import { useToast } from "~/components/ui/use-toast";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useTransaction } from "~/hooks/useTransaction";
 import { useChains } from "~/hooks/useChains";
+import { TransactionMode } from "~/utils/types";
+import { StakingTransactionForm } from "../transactions/StakingTransactionForm";
 
 export default function Stake() {
   const { addresses, isShowroom, setWalletMenuOpen } = useWallet();
   const { setTransaction } = useTransaction();
-  const [openTransaction, setOpenTransaction] = useState(false);
+  const [currentTransactionFlow, setCurrentTransactionFlow] = useState<
+    TransactionMode | undefined
+  >(undefined);
   const [stepper, setStepper] = useState(0);
   const { toast } = useToast();
 
@@ -148,18 +151,29 @@ export default function Stake() {
           className="col-span-2"
           onClick={() => {
             setTransaction(undefined);
-            setOpenTransaction(true);
+            setCurrentTransactionFlow(TransactionMode.DELEGATE);
           }}
         >
           Stake
         </Button>
-        <Tooltip text="Coming Soon">
-          <Button className="opacity-50 cursor-default">Unstake</Button>
-        </Tooltip>
 
-        <Tooltip text="Coming Soon">
-          <Button className="opacity-50 cursor-default">Claim</Button>
-        </Tooltip>
+        <Button
+          onClick={() => {
+            setTransaction(undefined);
+            setCurrentTransactionFlow(TransactionMode.UNDELEGATE);
+          }}
+        >
+          Unstake
+        </Button>
+
+        <Button
+          onClick={() => {
+            setTransaction(undefined);
+            setCurrentTransactionFlow(TransactionMode.CLAIM_REWARDS);
+          }}
+        >
+          Claim
+        </Button>
       </div>
 
       <StakingPositionsList
@@ -175,45 +189,48 @@ export default function Stake() {
         }}
       />
 
-      <Modal
-        open={openTransaction}
-        setOpen={setOpenTransaction}
-        modalContent={
-          // Probably need to rework
-          stepper === 0 ? (
-            <TransactionForm
-              assets={assets}
-              validators={validators}
-              onNextStep={() => {
-                setStepper(1);
-              }}
-            />
-          ) : (
-            <>
-              {addresses && addresses.length > 0 ? (
-                <WalletSigner
-                  onNextStep={() => {
-                    setOpenTransaction(false);
-                    setTimeout(() => {
-                      setStepper(0);
-                    }, 200);
-                  }}
-                />
-              ) : (
-                <ConnectWallet
-                  onNextStep={() => {
-                    setOpenTransaction(false);
-                    setWalletMenuOpen(true);
-                    setTimeout(() => {
-                      setStepper(0);
-                    }, 200);
-                  }}
-                />
-              )}
-            </>
-          )
-        }
-      />
+      {!!currentTransactionFlow && (
+        <Modal
+          open={!!currentTransactionFlow}
+          setOpen={(value) => !value && setCurrentTransactionFlow(undefined)}
+          modalContent={
+            stepper === 0 ? (
+              <StakingTransactionForm
+                mode={currentTransactionFlow}
+                assets={assets}
+                stakingPositions={stakingPositions}
+                validators={validators}
+                onNextStep={() => {
+                  setStepper(1);
+                }}
+              />
+            ) : (
+              <>
+                {addresses && addresses.length > 0 ? (
+                  <WalletSigner
+                    onNextStep={() => {
+                      setCurrentTransactionFlow(undefined);
+                      setTimeout(() => {
+                        setStepper(0);
+                      }, 200);
+                    }}
+                  />
+                ) : (
+                  <ConnectWallet
+                    onNextStep={() => {
+                      setCurrentTransactionFlow(undefined);
+                      setWalletMenuOpen(true);
+                      setTimeout(() => {
+                        setStepper(0);
+                      }, 200);
+                    }}
+                  />
+                )}
+              </>
+            )
+          }
+        />
+      )}
     </main>
   );
 }

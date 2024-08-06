@@ -1,14 +1,12 @@
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { ValidatorResponse } from "~/api/adamik/validators";
 import { amountToMainUnit, resolveLogo } from "~/utils/helper";
-import { AddressState, Chain, Validator } from "~/utils/types";
-
-export type AggregatedBalances = {
-  availableBalance: number;
-  stakedBalance: number;
-  claimableRewards: number;
-  unstakingBalance: number;
-};
+import {
+  AddressState,
+  AggregatedBalances,
+  Chain,
+  Validator,
+} from "~/utils/types";
 
 const getAmountToUSD = (
   amount: string,

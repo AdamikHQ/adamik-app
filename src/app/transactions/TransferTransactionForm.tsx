@@ -5,38 +5,35 @@ import { ChevronDown } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "~/components/ui/button";
-import { Checkbox } from "~/components/ui/checkbox";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "~/components/ui/form";
-import { Input } from "~/components/ui/input";
+import { Form } from "~/components/ui/form";
 import { Textarea } from "~/components/ui/textarea";
 import { useTransaction } from "~/hooks/useTransaction";
 import { useEncodeTransaction } from "~/hooks/useEncodeTransaction";
 import { amountToSmallestUnit } from "~/utils/helper";
 import { TransactionFormInput, transactionFormSchema } from "~/utils/schema";
 import { Asset, PlainTransaction, TransactionMode } from "~/utils/types";
-import { AssetsSelector } from "./AssetsSelector";
-import { TransactionLoading } from "./TransactionLoading";
+import { AssetFormField } from "./fields/AssetFormField";
+import { SenderFormField } from "./fields/SenderFormField";
+import { RecipientFormField } from "./fields/RecipientFormField";
+import { AmountFormField } from "./fields/AmountFormField";
+import { TransactionLoading } from "../portfolio/TransactionLoading";
 
 type TransactionProps = {
   onNextStep: () => void;
   assets: Asset[];
 };
 
-// FIXME Some duplicate logic to put in common with src/app/stake/TransactionForm.tsx
+// FIXME Some duplicate logic to put in common with ./StakingTransactionForm.tsx
 
-export function TransactionForm({ onNextStep, assets }: TransactionProps) {
+export function TransferTransactionForm({
+  onNextStep,
+  assets,
+}: TransactionProps) {
   const { mutate, isPending, isSuccess } = useEncodeTransaction();
   const form = useForm<TransactionFormInput>({
     resolver: zodResolver(transactionFormSchema),
@@ -151,101 +148,17 @@ export function TransactionForm({ onNextStep, assets }: TransactionProps) {
       <h1 className="font-bold text-xl text-center">Transfer</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 px-4">
-          <FormField
-            control={form.control}
-            name="chainId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Asset</FormLabel>
-                <FormControl>
-                  <AssetsSelector
-                    assets={assets}
-                    selectedValue={
-                      form.getValues().assetIndex
-                        ? assets[form.getValues().assetIndex as number]
-                        : undefined
-                    }
-                    onSelect={(asset, index) => {
-                      form.setValue("assetIndex", index);
-                      form.setValue("chainId", asset.chainId);
-                      form.setValue("senders", asset.address);
-                      if (asset.isToken) {
-                        form.setValue("mode", TransactionMode.TRANSFER_TOKEN);
-                        form.setValue(
-                          "tokenId",
-                          asset.contractAddress || asset.assetId
-                        );
-                      }
-                      setDecimals(asset.decimals);
-                    }}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+          <AssetFormField
+            form={form}
+            assets={assets}
+            setDecimals={setDecimals}
           />
 
-          <FormField
-            control={form.control}
-            name="senders"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Sender</FormLabel>
-                <FormControl>
-                  <Input readOnly placeholder="Sender" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <SenderFormField form={form} />
 
-          <FormField
-            control={form.control}
-            name="recipients"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Recipients</FormLabel>
-                <FormControl>
-                  <Input placeholder="Recipient" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <RecipientFormField form={form} />
 
-          <FormField
-            control={form.control}
-            name="amount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Amount</FormLabel>
-                <FormControl>
-                  <>
-                    <Input type="number" placeholder="amount" {...field} />
-                    <FormField
-                      control={form.control}
-                      name="useMaxAmount"
-                      render={({ field: fieldSendMax }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                          <FormControl>
-                            <Checkbox
-                              checked={fieldSendMax.value}
-                              onCheckedChange={fieldSendMax.onChange}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>Send Max</FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  </>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <AmountFormField form={form} />
 
           {errors && (
             <div className="text-red-500 w-full break-all">{errors}</div>

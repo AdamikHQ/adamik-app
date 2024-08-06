@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
@@ -26,46 +26,6 @@ type ValidatorSelectorProps = {
   validators: Validator[];
   selectedValue: Validator | undefined;
   onSelect: (validator: Validator, index: number) => void;
-};
-
-export const ValidatorView = ({ validator }: { validator: Validator }) => {
-  return (
-    <div className="flex items-center justify-between w-full">
-      {validator?.name && (
-        <div className="relative">
-          <Tooltip text={validator.address}>
-            <TooltipTrigger>
-              <Avatar className="w-[32px] h-[32px]">
-                <AvatarFallback>
-                  {validator?.name[0].toUpperCase() ||
-                    validator.address[0].toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            </TooltipTrigger>
-          </Tooltip>
-          {validator.chainLogo && (
-            <Tooltip text={validator.chainId}>
-              <TooltipTrigger>
-                <div className="absolute w-4 h-4 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-[6px] -end-1">
-                  <Avatar className="h-3 w-3">
-                    <AvatarImage
-                      src={validator.chainLogo}
-                      alt={validator.chainId}
-                    />
-                    <AvatarFallback>{validator.chainId}</AvatarFallback>
-                  </Avatar>
-                </div>
-              </TooltipTrigger>
-            </Tooltip>
-          )}
-        </div>
-      )}
-      <div className="flex-1 text-right">{validator.name}</div>
-      <div className="font-bold flex-1 text-right">
-        Commision: {validator.commission}
-      </div>
-    </div>
-  );
 };
 
 export function ValidatorSelector({
@@ -136,7 +96,7 @@ export function ValidatorSelector({
   );
 }
 
-function ValidatorSelectorList({
+const ValidatorSelectorList = ({
   setOpen,
   setSelectedChoice,
   validators,
@@ -146,10 +106,10 @@ function ValidatorSelectorList({
   setSelectedChoice: (choice: Validator | undefined) => void;
   validators: Validator[];
   onSelect: (validator: Validator, index: number) => void;
-}) {
+}) => {
   return (
     <Command>
-      <CommandInput placeholder="Filter assets..." />
+      <CommandInput placeholder="Filter validators..." />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
         <ScrollArea className="h-[240px] overflow-auto">
@@ -173,4 +133,44 @@ function ValidatorSelectorList({
       </CommandList>
     </Command>
   );
-}
+};
+
+const ValidatorView = ({ validator }: { validator: Validator }) => {
+  return (
+    <div className="flex items-center justify-between w-full">
+      {validator?.name && (
+        <div className="relative">
+          <Tooltip text={validator.address}>
+            <TooltipTrigger>
+              <Avatar className="w-[32px] h-[32px]">
+                <AvatarFallback>
+                  {validator?.name[0].toUpperCase() ||
+                    validator.address[0].toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </TooltipTrigger>
+          </Tooltip>
+          {validator.chainLogo && (
+            <Tooltip text={validator.chainId}>
+              <TooltipTrigger>
+                <div className="absolute w-4 h-4 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-[6px] -end-1">
+                  <Avatar className="h-3 w-3">
+                    <AvatarImage
+                      src={validator.chainLogo}
+                      alt={validator.chainId}
+                    />
+                    <AvatarFallback>{validator.chainId}</AvatarFallback>
+                  </Avatar>
+                </div>
+              </TooltipTrigger>
+            </Tooltip>
+          )}
+        </div>
+      )}
+      <div className="flex-1 text-right">{validator.name}</div>
+      <div className="font-bold flex-1 text-right">
+        Commission: {validator.commission}
+      </div>
+    </div>
+  );
+};
