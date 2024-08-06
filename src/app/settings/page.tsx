@@ -10,17 +10,30 @@ import { Tooltip } from "~/components/ui/tooltip";
 
 export default function Settings() {
   const [hideLowBalance, setHideLowBalance] = useState(true);
+  const [hideSpamTokens, setHideSpamTokens] = useState(true);
 
-  const handleCheckboxChange = () => {
-    setHideLowBalance(!hideLowBalance);
-    localStorage.setItem("hideLowBalance", JSON.stringify(!hideLowBalance));
+  const handleHideLowBalanceChange = () => {
+    const newValue = !hideLowBalance;
+    setHideLowBalance(newValue);
+    localStorage.setItem("hideLowBalance", JSON.stringify(newValue));
+  };
+
+  const handleHideSpamTokensChange = () => {
+    const newValue = !hideSpamTokens;
+    setHideSpamTokens(newValue);
+    localStorage.setItem("hideSpamTokens", JSON.stringify(newValue));
   };
 
   // Initialize state from localStorage
   useEffect(() => {
-    const storedValue = localStorage.getItem("hideLowBalance");
-    if (storedValue !== null) {
-      setHideLowBalance(JSON.parse(storedValue));
+    const storedHideLowBalance = localStorage.getItem("hideLowBalance");
+    if (storedHideLowBalance !== null) {
+      setHideLowBalance(JSON.parse(storedHideLowBalance));
+    }
+
+    const storedHideSpamTokens = localStorage.getItem("hideSpamTokens");
+    if (storedHideSpamTokens !== null) {
+      setHideSpamTokens(JSON.parse(storedHideSpamTokens));
     }
   }, []);
 
@@ -28,8 +41,8 @@ export default function Settings() {
     <main className="flex-1 mx-auto w-full flex flex-col auto-rows-max gap-4 p-4 md:p-8 max-h-[100vh] overflow-y-auto">
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center">
-          <CardTitle>Settings</CardTitle>
-          <Tooltip text="Change or update your settings here">
+          <CardTitle>General Settings</CardTitle>
+          <Tooltip text="Manage your general settings here">
             <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
           </Tooltip>
         </div>
@@ -37,22 +50,29 @@ export default function Settings() {
       <div className="flex flex-col">
         <Card className="xl:col-span-2 bg-muted/70">
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
-              {/* Placeholder for general settings */}
-              <div className="flex flex-row gap-4 items-center bg-primary/10 p-4 rounded-md">
+            <div className="grid grid-cols-1 gap-4 mt-4">
+              {/* Checkbox for hiding spam tokens */}
+              <div className="flex flex-row gap-4 items-center bg-primary/10 p-4 rounded-md w-full">
+                <Checkbox
+                  id="hideSpamTokens"
+                  checked={hideSpamTokens}
+                  onCheckedChange={handleHideSpamTokensChange}
+                />
                 <div className="flex flex-col">
-                  <h1 className="text-lg font-bold md:text-2xl">
-                    General Settings
-                  </h1>
-                  <p className="text-sm">Manage your general settings here.</p>
+                  <label
+                    htmlFor="hideSpamTokens"
+                    className="text-sm font-medium leading-none"
+                  >
+                    {"Hide Spam Tokens"}
+                  </label>
                 </div>
               </div>
               {/* Checkbox for hiding low balance chains */}
-              <div className="flex flex-row gap-4 items-center bg-primary/10 p-4 rounded-md">
+              <div className="flex flex-row gap-4 items-center bg-primary/10 p-4 rounded-md w-full">
                 <Checkbox
                   id="hideBalanceAssetsBreakdown"
                   checked={hideLowBalance}
-                  onCheckedChange={handleCheckboxChange}
+                  onCheckedChange={handleHideLowBalanceChange}
                 />
                 <div className="flex flex-col">
                   <label
