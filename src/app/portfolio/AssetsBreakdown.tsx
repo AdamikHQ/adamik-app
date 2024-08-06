@@ -1,9 +1,8 @@
 import _ from "lodash";
 import { Loader2, Info } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Checkbox } from "~/components/ui/checkbox";
 import {
   Tooltip,
   TooltipProvider,
@@ -14,10 +13,10 @@ import { Asset } from "~/utils/types";
 import { filterAndSortAssets } from "./helpers";
 import { StakingPosition } from "../stake/helpers";
 
-const AssetsBreakdownRow: React.FC<{
-  asset: Asset;
-  totalBalance: number;
-}> = ({ asset, totalBalance }) => {
+const AssetsBreakdownRow: React.FC<{ asset: Asset; totalBalance: number }> = ({
+  asset,
+  totalBalance,
+}) => {
   const assetPercentage = useMemo(() => {
     return Math.round(((asset.balanceUSD || 0) / totalBalance) * 10000) / 100;
   }, [asset, totalBalance]);
@@ -74,16 +73,16 @@ export const AssetsBreakdown: React.FC<{
   assets: Asset[];
   stakingPositions?: StakingPosition[];
   totalBalance: number;
-  hideLowBalance: boolean;
-  setHideLowBalance: (value: boolean) => void;
-}> = ({
-  isLoading,
-  assets,
-  totalBalance,
-  hideLowBalance,
-  stakingPositions = [],
-  setHideLowBalance,
-}) => {
+}> = ({ isLoading, assets, totalBalance, stakingPositions = [] }) => {
+  const [hideLowBalance, setHideLowBalance] = useState(true);
+
+  useEffect(() => {
+    const storedValue = localStorage.getItem("hideLowBalance");
+    if (storedValue !== null) {
+      setHideLowBalance(JSON.parse(storedValue));
+    }
+  }, []);
+
   const filteredAggregatedAssets = useMemo(() => {
     // FIXME Replace with Object.groupBy() when Node.js 21 becomes supported by Vercel
     // Group assets by chainId
@@ -153,23 +152,6 @@ export const AssetsBreakdown: React.FC<{
                     />
                   );
                 })}
-              <div className="items-top flex space-x-2">
-                <Checkbox
-                  id="hideBalanceAssetsBreakdown"
-                  checked={hideLowBalance}
-                  onClick={() => {
-                    setHideLowBalance(!hideLowBalance);
-                  }}
-                />
-                <div className="grid gap-1.5 leading-none">
-                  <label
-                    htmlFor="hideBalanceAssetsBreakdown"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {`Hide chains with low balances (< 1$)`}
-                  </label>
-                </div>
-              </div>
             </>
           ) : (
             <Loader2 className="animate-spin" />

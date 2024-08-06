@@ -1,6 +1,6 @@
 "use client";
 
-import { HandCoins, PieChart, SquareStack } from "lucide-react";
+import { HandCoins, PieChart, SquareStack, Settings } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useWallet } from "~/hooks/useWallet";
 import { MobileMenu } from "./MobileMenu";
@@ -23,6 +23,11 @@ const menu = [
     title: "Supported chains",
     icon: SquareStack,
     href: "/supported-chains",
+  },
+  {
+    title: "Settings",
+    icon: Settings,
+    href: "/settings",
   },
 ];
 
