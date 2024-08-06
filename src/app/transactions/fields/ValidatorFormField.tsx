@@ -1,4 +1,5 @@
 import { UseFormReturn } from "react-hook-form";
+import { ValidatorSelector } from "~/app/stake/ValidatorSelector";
 import {
   FormControl,
   FormField,
@@ -8,7 +9,6 @@ import {
 } from "~/components/ui/form";
 import { TransactionFormInput } from "~/utils/schema";
 import { Validator } from "~/utils/types";
-import { ValidatorSelector } from "../../ValidatorSelector";
 
 type ValidatorFormFieldProps = {
   form: UseFormReturn<TransactionFormInput>;

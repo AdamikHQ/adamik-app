@@ -1,4 +1,6 @@
 import { UseFormReturn } from "react-hook-form";
+import { StakingPosition } from "~/app/stake/helpers";
+import { StakingPositionSelector } from "~/app/stake/StakingPositionSelector";
 import {
   FormControl,
   FormField,
@@ -8,8 +10,6 @@ import {
 } from "~/components/ui/form";
 import { TransactionFormInput } from "~/utils/schema";
 import { Validator } from "~/utils/types";
-import { StakingPositionSelector } from "../../StakingPositionSelector";
-import { StakingPosition } from "../../helpers";
 
 type StakingPositionFormFieldProps = {
   form: UseFormReturn<TransactionFormInput>;

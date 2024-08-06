@@ -23,12 +23,12 @@ import {
   Validator,
 } from "~/utils/types";
 import { TransactionLoading } from "~/app/portfolio/TransactionLoading";
-import { StakingPosition } from "../helpers";
 import { AssetFormField } from "./fields/AssetFormField";
 import { SenderFormField } from "./fields/SenderFormField";
 import { ValidatorFormField } from "./fields/ValidatorFormField";
 import { AmountFormField } from "./fields/AmountFormField";
 import { StakingPositionFormField } from "./fields/StakingPositionFormField";
+import { StakingPosition } from "../stake/helpers";
 
 type StakingTransactionProps = {
   mode: TransactionMode;
@@ -40,7 +40,7 @@ type StakingTransactionProps = {
 
 // TODO Only works for Cosmos !!! API abstraction still needed
 
-// FIXME Some duplicate logic to put in common with src/app/portfolio/TransactionForm.tsx
+// FIXME Some duplicate logic to put in common with ./TransferTransactionForm.tsx
 
 export function StakingTransactionForm({
   mode,

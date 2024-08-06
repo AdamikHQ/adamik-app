@@ -25,7 +25,6 @@ import { AssetsBalances } from "./AssetsBalances";
 import { AssetsBreakdown } from "./AssetsBreakdown";
 import { AssetsList } from "./AssetsList";
 import { ConnectWallet } from "./ConnectWallet";
-import { TransferTransactionForm } from "./transactions/TransferTransactionForm";
 import {
   calculateAssets,
   filterAndSortAssets,
@@ -33,6 +32,7 @@ import {
   getTokenContractAddresses,
   getTokenTickers,
 } from "./helpers";
+import { TransferTransactionForm } from "../transactions/TransferTransactionForm";
 
 export default function Portfolio() {
   const {

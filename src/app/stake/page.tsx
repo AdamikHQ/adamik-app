@@ -36,7 +36,7 @@ import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useTransaction } from "~/hooks/useTransaction";
 import { useChains } from "~/hooks/useChains";
 import { TransactionMode } from "~/utils/types";
-import { StakingTransactionForm } from "./transactions/StakingTransactionForm";
+import { StakingTransactionForm } from "../transactions/StakingTransactionForm";
 
 export default function Stake() {
   const { addresses, isShowroom, setWalletMenuOpen } = useWallet();

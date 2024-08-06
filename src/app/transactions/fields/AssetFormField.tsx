@@ -8,7 +8,7 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { TransactionFormInput } from "~/utils/schema";
-import { Asset } from "~/utils/types";
+import { Asset, TransactionMode } from "~/utils/types";
 
 type AssetFormFieldProps = {
   form: UseFormReturn<TransactionFormInput>;
@@ -40,6 +40,13 @@ export function AssetFormField({
                 form.setValue("assetIndex", index);
                 form.setValue("chainId", asset.chainId);
                 form.setValue("senders", asset.address);
+                if (asset.isToken) {
+                  form.setValue("mode", TransactionMode.TRANSFER_TOKEN);
+                  form.setValue(
+                    "tokenId",
+                    asset.contractAddress || asset.assetId
+                  );
+                }
                 form.resetField("validatorIndex");
                 form.resetField("validatorAddress");
                 setDecimals(asset.decimals);
