@@ -70,7 +70,7 @@ export function StakingTransactionForm({
       case TransactionMode.DELEGATE:
         return "Stake";
       case TransactionMode.UNDELEGATE:
-        return "Untake";
+        return "Unstake";
       case TransactionMode.CLAIM_REWARDS:
         return "Claim";
     }
