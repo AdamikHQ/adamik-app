@@ -79,7 +79,7 @@ export default function Settings() {
                     htmlFor="hideBalanceAssetsBreakdown"
                     className="text-sm font-medium leading-none"
                   >
-                    {"Hide chains with low balances (< 1$)"}
+                    {"Hide assets with balances under $1"}
                   </label>
                 </div>
               </div>
