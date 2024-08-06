@@ -25,7 +25,7 @@ import { AssetsBalances } from "./AssetsBalances";
 import { AssetsBreakdown } from "./AssetsBreakdown";
 import { AssetsList } from "./AssetsList";
 import { ConnectWallet } from "./ConnectWallet";
-import { TransactionForm } from "./TransactionForm";
+import { TransferTransactionForm } from "./transactions/TransferTransactionForm";
 import {
   calculateAssets,
   filterAndSortAssets,
@@ -209,7 +209,7 @@ export default function Portfolio() {
         modalContent={
           // Probably need to rework
           stepper === 0 ? (
-            <TransactionForm
+            <TransferTransactionForm
               // FIXME non-filtered assets should be used here
               assets={assets}
               onNextStep={() => {

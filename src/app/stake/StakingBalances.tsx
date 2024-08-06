@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { AggregatedBalances } from "./helpers";
 import { formatAmountUSD } from "~/utils/helper";
+import { AggregatedBalances } from "~/utils/types";
 
 type StakingBalancesProps = {
   aggregatedBalances: AggregatedBalances;

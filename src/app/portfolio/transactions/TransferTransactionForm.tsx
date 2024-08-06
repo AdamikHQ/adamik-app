@@ -26,8 +26,8 @@ import { useEncodeTransaction } from "~/hooks/useEncodeTransaction";
 import { amountToSmallestUnit } from "~/utils/helper";
 import { TransactionFormInput, transactionFormSchema } from "~/utils/schema";
 import { Asset, PlainTransaction, TransactionMode } from "~/utils/types";
-import { AssetsSelector } from "./AssetsSelector";
-import { TransactionLoading } from "./TransactionLoading";
+import { AssetsSelector } from "../AssetsSelector";
+import { TransactionLoading } from "../TransactionLoading";
 
 type TransactionProps = {
   onNextStep: () => void;
@@ -36,7 +36,10 @@ type TransactionProps = {
 
 // FIXME Some duplicate logic to put in common with src/app/stake/TransactionForm.tsx
 
-export function TransactionForm({ onNextStep, assets }: TransactionProps) {
+export function TransferTransactionForm({
+  onNextStep,
+  assets,
+}: TransactionProps) {
   const { mutate, isPending, isSuccess } = useEncodeTransaction();
   const form = useForm<TransactionFormInput>({
     resolver: zodResolver(transactionFormSchema),
