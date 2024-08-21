@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { Card, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   Table,
@@ -22,7 +23,14 @@ import { Button } from "~/components/ui/button";
 const StakingPositionsListRow: React.FC<{
   position: StakingPosition;
 }> = ({ position }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const formattedAddresses = position.addresses.toString().replace(",", "\n");
+  const tokenRewardsCount = position.rewardTokens?.length || 0; // Safely handle undefined rewardTokens
+
+  const handleToggleExpand = () => {
+    setIsExpanded((prev) => !prev);
+  };
+
   return (
     <TooltipProvider delayDuration={100}>
       <TableRow>
@@ -61,9 +69,37 @@ const StakingPositionsListRow: React.FC<{
         </TableCellWithTooltip>
 
         <TableCellWithTooltip text={formattedAddresses}>
-          {position.rewardAmount
-            ? `${formatAmount(position.rewardAmount, 5)} ${position.ticker}`
-            : "-"}
+          {/* Display Native Reward */}
+          {position.rewardAmount && (
+            <div>
+              {`${formatAmount(position.rewardAmount, 5)} ${position.ticker}`}
+            </div>
+          )}
+
+          {/* Display Token Reward Count and Toggle Button */}
+          {tokenRewardsCount > 0 && (
+            <div
+              style={{
+                cursor: "pointer",
+                color: "grey",
+                textDecoration: "underline",
+              }}
+              onClick={handleToggleExpand}
+            >
+              {tokenRewardsCount} Token Reward{tokenRewardsCount > 1 ? "s" : ""}
+            </div>
+          )}
+
+          {/* Conditionally Render Token Rewards if Expanded */}
+          {isExpanded && tokenRewardsCount > 0 && (
+            <div className="mt-2">
+              {position.rewardTokens?.map((token, index) => (
+                <div key={index}>
+                  {`${formatAmount(token.amount, 5)} ${token.ticker}`}
+                </div>
+              ))}
+            </div>
+          )}
         </TableCellWithTooltip>
       </TableRow>
     </TooltipProvider>
