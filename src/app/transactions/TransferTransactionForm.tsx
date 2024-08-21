@@ -16,7 +16,7 @@ import { useTransaction } from "~/hooks/useTransaction";
 import { useEncodeTransaction } from "~/hooks/useEncodeTransaction";
 import { amountToSmallestUnit } from "~/utils/helper";
 import { TransactionFormInput, transactionFormSchema } from "~/utils/schema";
-import { Asset, PlainTransaction, TransactionMode } from "~/utils/types";
+import { Asset, TransactionData, TransactionMode } from "~/utils/types";
 import { AssetFormField } from "./fields/AssetFormField";
 import { SenderFormField } from "./fields/SenderFormField";
 import { RecipientFormField } from "./fields/RecipientFormField";
@@ -53,7 +53,7 @@ export function TransferTransactionForm({
 
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
-      const plainTransaction: PlainTransaction = {
+      const transactionData: TransactionData = {
         mode: formInput.mode,
         chainId: formInput.chainId,
         tokenId: formInput.tokenId,
@@ -64,7 +64,7 @@ export function TransferTransactionForm({
       };
 
       if (formInput.amount && !formInput.useMaxAmount) {
-        plainTransaction.amount = amountToSmallestUnit(
+        transactionData.amount = amountToSmallestUnit(
           formInput.amount.toString(),
           decimals
         );
@@ -76,12 +76,12 @@ export function TransferTransactionForm({
       )?.pubKey;
 
       if (pubKey) {
-        plainTransaction.params = {
+        transactionData.params = {
           pubKey,
         };
       }
 
-      mutate(plainTransaction, {
+      mutate(transactionData, {
         onSuccess: (settledTransaction) => {
           setTransaction(undefined);
           setTransactionHash(undefined);

@@ -18,7 +18,7 @@ import { amountToSmallestUnit } from "~/utils/helper";
 import { TransactionFormInput, transactionFormSchema } from "~/utils/schema";
 import {
   Asset,
-  PlainTransaction,
+  TransactionData,
   TransactionMode,
   Validator,
 } from "~/utils/types";
@@ -78,7 +78,7 @@ export function StakingTransactionForm({
 
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
-      const plainTransaction: PlainTransaction = {
+      const transactionData: TransactionData = {
         mode,
         chainId: formInput.chainId,
         senders: [formInput.senders],
@@ -89,7 +89,7 @@ export function StakingTransactionForm({
       };
 
       if (formInput.amount && !formInput.useMaxAmount) {
-        plainTransaction.amount = amountToSmallestUnit(
+        transactionData.amount = amountToSmallestUnit(
           formInput.amount.toString(),
           decimals
         );
@@ -101,12 +101,12 @@ export function StakingTransactionForm({
       )?.pubKey;
 
       if (pubKey) {
-        plainTransaction.params = {
+        transactionData.params = {
           pubKey,
         };
       }
 
-      mutate(plainTransaction, {
+      mutate(transactionData, {
         onSuccess: (settledTransaction) => {
           setTransaction(undefined);
           setTransactionHash(undefined);

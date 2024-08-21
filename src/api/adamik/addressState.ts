@@ -6,7 +6,7 @@ import { AddressState } from "~/utils/types";
 // TODO Better API error management, consistent for all endpoints
 export const addressState = async (
   chainId: string,
-  address: string
+  accountId: string
 ): Promise<AddressState | null> => {
   const response = await fetch(`${ADAMIK_API_URL}/address/state`, {
     headers: {
@@ -14,7 +14,7 @@ export const addressState = async (
       "Content-Type": "application/json",
     },
     method: "POST",
-    body: JSON.stringify({ chainId, address }),
+    body: JSON.stringify({ chainId, accountId }),
   });
 
   const result = await response.json();

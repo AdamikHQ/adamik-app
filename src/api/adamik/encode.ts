@@ -1,11 +1,11 @@
 "use server";
 
 import { env, ADAMIK_API_URL } from "~/env";
-import { Transaction, PlainTransaction } from "~/utils/types";
+import { Transaction, TransactionData } from "~/utils/types";
 
 // TODO Better API error management, consistent for all endpoints
 export const transactionEncode = async (
-  plainTransaction: PlainTransaction
+  transactionData: TransactionData
 ): Promise<Transaction> => {
   const response = await fetch(`${ADAMIK_API_URL}/transaction/encode`, {
     headers: {
@@ -13,7 +13,7 @@ export const transactionEncode = async (
       "Content-Type": "application/json",
     },
     method: "POST",
-    body: JSON.stringify({ transaction: { plain: plainTransaction } }),
+    body: JSON.stringify({ transaction: { data: transactionData } }),
   });
 
   const {

@@ -72,7 +72,7 @@ export enum TransactionMode {
   CLAIM_REWARDS = "claimRewards",
 }
 
-export type PlainTransaction = {
+export type TransactionData = {
   mode: TransactionMode;
   senders: string[];
   recipients?: string[];
@@ -92,7 +92,7 @@ export type PlainTransaction = {
 };
 
 export type Transaction = {
-  plain: PlainTransaction;
+  data: TransactionData;
   encoded: string;
   signature: string;
   status: { errors: { message: string }[]; warnings: { message: string }[] };
