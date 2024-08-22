@@ -4,6 +4,7 @@ import * as React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { cn } from "~/utils/helper";
 import { TableCell } from "./table";
+import { useEffect, useRef } from "react";
 
 const TooltipProvider = TooltipPrimitive.Provider;
 
@@ -53,13 +54,46 @@ const TableCellWithTooltip = ({
 }: {
   children: React.ReactNode;
   text: string;
-}) => (
-  <TableCell>
-    <CustomTooltip text={text}>
-      <TooltipTrigger>{children}</TooltipTrigger>
-    </CustomTooltip>
-  </TableCell>
-);
+}) => {
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleCopy = (event: ClipboardEvent) => {
+      if (
+        tooltipRef.current &&
+        tooltipRef.current.contains(event.target as Node)
+      ) {
+        event.preventDefault();
+        event.clipboardData?.setData("text/plain", text);
+      }
+    };
+
+    document.addEventListener("copy", handleCopy);
+
+    return () => {
+      document.removeEventListener("copy", handleCopy);
+    };
+  }, [text]);
+
+  return (
+    <TableCell>
+      <TooltipProvider>
+        <TooltipPrimitive.Root delayDuration={100}>
+          <TooltipTrigger asChild>
+            <span>{children}</span>
+          </TooltipTrigger>
+          <TooltipContent
+            sideOffset={4}
+            ref={tooltipRef}
+            className="whitespace-pre-line z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md"
+          >
+            {text}
+          </TooltipContent>
+        </TooltipPrimitive.Root>
+      </TooltipProvider>
+    </TableCell>
+  );
+};
 
 export {
   TooltipTrigger,
