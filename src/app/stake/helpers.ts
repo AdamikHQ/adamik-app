@@ -17,7 +17,6 @@ const getAmountToUSD = (
   const amountInMainUnit = amountToMainUnit(amount, decimals);
 
   const balanceUSD =
-    // !chainDetails.isTestNet &&  TMP: Just to usetestnet for test
     mobulaMarketData && mobulaMarketData[chainDetails.ticker]
       ? mobulaMarketData[chainDetails.ticker]?.price *
         parseFloat(amountInMainUnit as string)
@@ -104,6 +103,8 @@ export type StakingPosition = {
     tokenId: string;
     amount: string;
     ticker: string;
+    name: string;
+    decimals: number;
     amountUSD?: number;
   }[];
   commission?: number;
@@ -193,7 +194,7 @@ export const getAddressStakingPositions = (
         }
       );
 
-      // Handle token rewards directly from the API response
+      // Handle token rewards
       (accountData?.balances.staking?.rewards.tokens || []).forEach(
         (reward) => {
           newAcc[reward.validatorAddress] = {
@@ -202,11 +203,17 @@ export const getAddressStakingPositions = (
               ...(newAcc[reward.validatorAddress]?.rewardTokens || []),
               {
                 tokenId: reward.tokenId ?? "",
-                amount: amountToMainUnit(reward.amount, 6) || "-", // Assuming 6 decimals as a fallback
-                ticker: "Unknown", // For the time being there is no ticker returned by the API (to be updated)
+                amount:
+                  amountToMainUnit(
+                    reward.amount,
+                    reward.token?.decimals || 6
+                  ) || "-",
+                ticker: reward.token?.ticker || "Unknown",
+                name: reward.token?.name || "Unknown",
+                decimals: reward.token?.decimals || 6,
                 amountUSD: getAmountToUSD(
                   reward.amount,
-                  6, // Fallback to 6 decimals
+                  reward.token?.decimals || 6,
                   mobulaMarketData,
                   chainDetails
                 ),
