@@ -2,7 +2,7 @@ import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { ValidatorResponse } from "~/api/adamik/validators";
 import { amountToMainUnit, resolveLogo } from "~/utils/helper";
 import {
-  AddressState,
+  AccountState,
   AggregatedBalances,
   Chain,
   Validator,
@@ -27,7 +27,7 @@ const getAmountToUSD = (
 };
 
 export const aggregateStakingBalances = (
-  data: (AddressState | undefined | null)[],
+  data: (AccountState | undefined | null)[],
   chainsDetails: (Chain | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null
 ): AggregatedBalances => {
@@ -124,7 +124,7 @@ const getValidatorInfo = (
 };
 
 export const getAddressStakingPositions = (
-  data: (AddressState | null | undefined)[],
+  data: (AccountState | null | undefined)[],
   chainsDetails: (Chain | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null,
   validatorsData: (ValidatorResponse | undefined)[]
@@ -148,7 +148,7 @@ export const getAddressStakingPositions = (
           const currentAddresses = newAcc[validatorAddress]?.addresses || [];
           newAcc[validatorAddress] = {
             ...position,
-            addresses: [accountData.address].concat(currentAddresses),
+            addresses: [accountData.accountId].concat(currentAddresses),
             validatorName: validatorInfo?.name,
             commission: Number(validatorInfo?.commission),
             chainId: accountData.chainId,

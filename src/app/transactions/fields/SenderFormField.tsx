@@ -17,7 +17,7 @@ export function SenderFormField({ form }: AssetFormFieldProps) {
   return (
     <FormField
       control={form.control}
-      name="senders"
+      name="sender"
       render={({ field }) => (
         <FormItem>
           <FormLabel>Sender</FormLabel>

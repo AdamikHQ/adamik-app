@@ -17,7 +17,7 @@ export function RecipientFormField({ form }: RecipientFormFieldProps) {
   return (
     <FormField
       control={form.control}
-      name="recipients"
+      name="recipient"
       render={({ field }) => (
         <FormItem>
           <FormLabel>Recipient</FormLabel>

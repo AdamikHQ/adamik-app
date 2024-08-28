@@ -6,9 +6,9 @@ import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { Button } from "~/components/ui/button";
 import { Tooltip } from "~/components/ui/tooltip";
 import {
-  isAddressStateCache,
-  useAddressStateBatch,
-} from "~/hooks/useAddressStateBatch";
+  isInAccountStateBatchCache,
+  useAccountStateBatch,
+} from "~/hooks/useAccountStateBatch";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { useValidatorsBatch } from "~/hooks/useValidatorsBatch";
 import { useWallet } from "~/hooks/useWallet";
@@ -30,7 +30,7 @@ import { useMemo, useState } from "react";
 import { Modal } from "~/components/ui/modal";
 import { WalletSigner } from "../wallets/WalletSigner";
 import { ConnectWallet } from "../portfolio/ConnectWallet";
-import { clearAddressStateCache } from "~/hooks/useAddressState";
+import { clearAccountStateCache } from "~/hooks/useAccountState";
 import { useToast } from "~/components/ui/use-toast";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useTransaction } from "~/hooks/useTransaction";
@@ -64,7 +64,7 @@ export default function Stake() {
     );
 
   const { data: addressesData, isLoading: isAddressStateLoading } =
-    useAddressStateBatch(displayAddresses);
+    useAccountStateBatch(displayAddresses);
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
@@ -122,7 +122,7 @@ export default function Stake() {
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
-      {isLoading && !isAddressStateCache(displayAddresses) ? (
+      {isLoading && !isInAccountStateBatchCache(displayAddresses) ? (
         <LoadingModal />
       ) : null}
       <div className="flex items-center justify-between">
@@ -181,7 +181,7 @@ export default function Stake() {
         refreshPositions={() => {
           toast({ description: "Refreshing..." });
           assets.forEach((asset) => {
-            clearAddressStateCache({
+            clearAccountStateCache({
               chainId: asset.chainId,
               address: asset.address,
             });

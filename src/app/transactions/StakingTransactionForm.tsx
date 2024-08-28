@@ -18,7 +18,7 @@ import { amountToSmallestUnit } from "~/utils/helper";
 import { TransactionFormInput, transactionFormSchema } from "~/utils/schema";
 import {
   Asset,
-  PlainTransaction,
+  TransactionData,
   TransactionMode,
   Validator,
 } from "~/utils/types";
@@ -55,7 +55,7 @@ export function StakingTransactionForm({
     defaultValues: {
       mode,
       chainId: "",
-      senders: "",
+      sender: "",
       validatorAddress: "",
       amount: undefined,
       useMaxAmount: false,
@@ -78,18 +78,18 @@ export function StakingTransactionForm({
 
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
-      const plainTransaction: PlainTransaction = {
+      const transactionData: TransactionData = {
         mode,
         chainId: formInput.chainId,
-        senders: [formInput.senders],
-        recipients: [],
+        sender: formInput.sender,
+        recipient: "",
         validatorAddress: formInput.validatorAddress ?? "",
         useMaxAmount: formInput.useMaxAmount,
         format: "json", // FIXME Not always the default, should come from chains config
       };
 
       if (formInput.amount && !formInput.useMaxAmount) {
-        plainTransaction.amount = amountToSmallestUnit(
+        transactionData.amount = amountToSmallestUnit(
           formInput.amount.toString(),
           decimals
         );
@@ -97,16 +97,16 @@ export function StakingTransactionForm({
 
       // FIXME Hack to be able to provide the pubKey, probably better to refacto
       const pubKey = assets.find(
-        (asset) => asset.address === formInput.senders
+        (asset) => asset.address === formInput.sender
       )?.pubKey;
 
       if (pubKey) {
-        plainTransaction.params = {
+        transactionData.params = {
           pubKey,
         };
       }
 
-      mutate(plainTransaction, {
+      mutate(transactionData, {
         onSuccess: (settledTransaction) => {
           setTransaction(undefined);
           setTransactionHash(undefined);

@@ -51,9 +51,9 @@ interface Balances {
   };
 }
 
-export type AddressState = {
+export type AccountState = {
   chainId: string;
-  address: string;
+  accountId: string;
   balances: Balances;
 };
 
@@ -72,10 +72,10 @@ export enum TransactionMode {
   CLAIM_REWARDS = "claimRewards",
 }
 
-export type PlainTransaction = {
+export type TransactionData = {
   mode: TransactionMode;
-  senders: string[];
-  recipients?: string[];
+  sender: string;
+  recipient?: string;
   validatorAddress?: string;
   tokenId?: string;
   useMaxAmount: boolean;
@@ -92,7 +92,7 @@ export type PlainTransaction = {
 };
 
 export type Transaction = {
-  plain: PlainTransaction;
+  data: TransactionData;
   encoded: string;
   signature: string;
   status: { errors: { message: string }[]; warnings: { message: string }[] };
