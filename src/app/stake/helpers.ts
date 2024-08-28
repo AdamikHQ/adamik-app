@@ -202,7 +202,7 @@ export const getAddressStakingPositions = (
             rewardTokens: [
               ...(newAcc[reward.validatorAddress]?.rewardTokens || []),
               {
-                tokenId: reward.tokenId ?? "",
+                tokenId: reward.token?.id ?? "",
                 amount:
                   amountToMainUnit(
                     reward.amount,
