@@ -73,7 +73,7 @@ export const MetamaskConnect: React.FC<WalletConnectorProps> = ({
     const provider = sdk?.getProvider();
 
     if (provider && transactionPayload) {
-      const chainId = transactionPayload.plain.chainId;
+      const chainId = transactionPayload.data.chainId;
       const chain = evmChains?.find((chain) => chain.id === chainId);
 
       if (!chain) {

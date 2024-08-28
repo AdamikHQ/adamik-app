@@ -16,7 +16,7 @@ import { useTransaction } from "~/hooks/useTransaction";
 import { useEncodeTransaction } from "~/hooks/useEncodeTransaction";
 import { amountToSmallestUnit } from "~/utils/helper";
 import { TransactionFormInput, transactionFormSchema } from "~/utils/schema";
-import { Asset, PlainTransaction, TransactionMode } from "~/utils/types";
+import { Asset, TransactionData, TransactionMode } from "~/utils/types";
 import { AssetFormField } from "./fields/AssetFormField";
 import { SenderFormField } from "./fields/SenderFormField";
 import { RecipientFormField } from "./fields/RecipientFormField";
@@ -41,8 +41,8 @@ export function TransferTransactionForm({
       mode: TransactionMode.TRANSFER,
       chainId: "",
       tokenId: "",
-      senders: "",
-      recipients: "",
+      sender: "",
+      recipient: "",
       amount: undefined,
       useMaxAmount: false,
     },
@@ -53,18 +53,18 @@ export function TransferTransactionForm({
 
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
-      const plainTransaction: PlainTransaction = {
+      const transactionData: TransactionData = {
         mode: formInput.mode,
         chainId: formInput.chainId,
         tokenId: formInput.tokenId,
-        recipients: formInput.recipients ? [formInput.recipients] : [],
-        senders: [formInput.senders],
+        recipient: formInput.recipient ? formInput.recipient : "",
+        sender: formInput.sender,
         useMaxAmount: formInput.useMaxAmount,
         format: "json", // FIXME Not always the default, should come from chains config
       };
 
       if (formInput.amount && !formInput.useMaxAmount) {
-        plainTransaction.amount = amountToSmallestUnit(
+        transactionData.amount = amountToSmallestUnit(
           formInput.amount.toString(),
           decimals
         );
@@ -72,16 +72,16 @@ export function TransferTransactionForm({
 
       // FIXME Hack to be able to provide the pubKey, probably better to refacto
       const pubKey = assets.find(
-        (asset) => asset.address === formInput.senders
+        (asset) => asset.address === formInput.sender
       )?.pubKey;
 
       if (pubKey) {
-        plainTransaction.params = {
+        transactionData.params = {
           pubKey,
         };
       }
 
-      mutate(plainTransaction, {
+      mutate(transactionData, {
         onSuccess: (settledTransaction) => {
           setTransaction(undefined);
           setTransactionHash(undefined);

@@ -5,8 +5,8 @@ export const transactionFormSchema = z
   .object({
     mode: z.nativeEnum(TransactionMode),
     chainId: z.string().min(1),
-    senders: z.string().min(1),
-    recipients: z.string().min(1).optional(),
+    sender: z.string().min(1),
+    recipient: z.string().min(1).optional(),
     validatorAddress: z.string().min(1).optional(),
     amount: z.coerce.number().optional(),
     useMaxAmount: z.boolean(),

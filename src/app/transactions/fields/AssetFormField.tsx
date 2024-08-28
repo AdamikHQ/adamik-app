@@ -39,7 +39,7 @@ export function AssetFormField({
               onSelect={(asset, index) => {
                 form.setValue("assetIndex", index);
                 form.setValue("chainId", asset.chainId);
-                form.setValue("senders", asset.address);
+                form.setValue("sender", asset.address);
                 if (asset.isToken) {
                   form.setValue("mode", TransactionMode.TRANSFER_TOKEN);
                   form.setValue(

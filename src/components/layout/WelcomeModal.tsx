@@ -47,8 +47,8 @@ export const WelcomeModal = () => {
                   >
                     Adamik API
                   </a>
-                  <div className="h-4"></div> {/* Extra space */}
                 </p>
+                <div className="h-4"></div> {/* Extra space */}
                 <img
                   src="/intro.png"
                   alt="Adamik Introduction"

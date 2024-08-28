@@ -77,7 +77,7 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
 
   const sign = useCallback(async () => {
     if (client && chains && transactionPayload) {
-      const chainId = transactionPayload.plain.chainId;
+      const chainId = transactionPayload.data.chainId;
       const chain = Object.values(chains).find((chain) => chain.id === chainId);
 
       if (!chain) {
@@ -86,7 +86,7 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
 
       const signedTransaction = await client.signAmino?.(
         chain.nativeId,
-        transactionPayload.plain.senders[0],
+        transactionPayload.data.sender,
         transactionPayload.encoded as any
       );
 

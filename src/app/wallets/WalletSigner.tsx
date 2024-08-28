@@ -17,8 +17,8 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
 
   const signer = addresses.find(
     (address) =>
-      address.chainId === transaction?.plain.chainId &&
-      address.address === transaction?.plain.senders[0]
+      address.chainId === transaction?.data.chainId &&
+      address.address === transaction?.data.sender
   );
 
   const getSignerComponent = () => {
