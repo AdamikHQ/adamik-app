@@ -16,7 +16,9 @@ interface TokenAmount {
   token: Token;
 }
 
-// This interface represents the positions of a validator.
+// FIXME Confusing name!
+// - not linked to 1 single validator
+// - confusion with StakingPosition in helpers.ts
 interface ValidatorPosition {
   validatorAddresses: string[];
   amount: string;
@@ -26,7 +28,6 @@ interface ValidatorPosition {
 
 // This interface represents the rewards for staking.
 interface Reward {
-  tokenId: string; // Making this required since tokenId is crucial for token rewards
   validatorAddress: string;
   amount: string;
   token?: Token; // Adding this to link rewards to the token information
