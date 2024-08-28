@@ -197,23 +197,30 @@ export const getAddressStakingPositions = (
       // Handle token rewards
       (accountData?.balances.staking?.rewards.tokens || []).forEach(
         (reward) => {
+          if (
+            !reward.token?.id ||
+            !reward.token?.ticker ||
+            !reward.token?.name ||
+            reward.token?.decimals === undefined
+          ) {
+            // Skip this token if mandatory fields are missing
+            return;
+          }
+
           newAcc[reward.validatorAddress] = {
             ...(newAcc[reward.validatorAddress] || {}),
             rewardTokens: [
               ...(newAcc[reward.validatorAddress]?.rewardTokens || []),
               {
-                tokenId: reward.token?.id ?? "",
+                tokenId: reward.token.id,
                 amount:
-                  amountToMainUnit(
-                    reward.amount,
-                    reward.token?.decimals || 6
-                  ) || "-",
-                ticker: reward.token?.ticker || "Unknown",
-                name: reward.token?.name || "Unknown",
-                decimals: reward.token?.decimals || 6,
+                  amountToMainUnit(reward.amount, reward.token.decimals) || "-",
+                ticker: reward.token.ticker,
+                name: reward.token.name,
+                decimals: reward.token.decimals,
                 amountUSD: getAmountToUSD(
                   reward.amount,
-                  reward.token?.decimals || 6,
+                  reward.token.decimals,
                   mobulaMarketData,
                   chainDetails
                 ),
