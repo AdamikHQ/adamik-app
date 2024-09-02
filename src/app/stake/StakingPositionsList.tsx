@@ -93,9 +93,11 @@ const StakingPositionsListRow: React.FC<{
           {/* Conditionally Render Token Rewards if Expanded */}
           {isExpanded && tokenRewardsCount > 0 && (
             <div className="mt-2">
-              {position.rewardTokens?.map((token, index) => (
+              {position.rewardTokens?.map((tokenAmount, index) => (
                 <div key={index}>
-                  {`${formatAmount(token.amount, 5)} ${token.ticker}`}
+                  {`${formatAmount(tokenAmount.amount, 5)} ${
+                    tokenAmount.token.ticker
+                  }`}
                 </div>
               ))}
             </div>
