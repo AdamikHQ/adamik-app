@@ -1,4 +1,4 @@
-import { AddressState, Asset, Chain, Feature } from "~/utils/types";
+import { AccountState, Asset, Chain, Feature } from "~/utils/types";
 import { amountToMainUnit, formatAmount, resolveLogo } from "~/utils/helper";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { MobulaBlockchain } from "~/api/mobula/types";
@@ -12,7 +12,7 @@ export const getTickers = (data: (Chain | undefined | null)[]) => {
   return Array.from(new Set(reducedArray));
 };
 
-export const getTokenTickers = (data: (AddressState | undefined | null)[]) => {
+export const getTokenTickers = (data: (AccountState | undefined | null)[]) => {
   return data.reduce<string[]>((acc, accountData) => {
     if (!accountData) return acc;
 
@@ -28,7 +28,7 @@ export const getTokenTickers = (data: (AddressState | undefined | null)[]) => {
 };
 
 export const getTokenContractAddresses = (
-  data: (AddressState | undefined | null)[]
+  data: (AccountState | undefined | null)[]
 ) => {
   return data.reduce<string[]>((acc, accountData) => {
     if (!accountData) return acc;
@@ -43,7 +43,7 @@ export const getTokenContractAddresses = (
 };
 
 export const getTokenTickersSortByChain = (
-  data: (AddressState | undefined | null)[]
+  data: (AccountState | undefined | null)[]
 ) => {
   return data.reduce((acc, accountData) => {
     if (!accountData) return acc;
@@ -68,7 +68,7 @@ export const getTokenTickersSortByChain = (
 // TODO Probably need to refacto a bit the model, to handle all the different data sources in a simpler way
 export const calculateAssets = (
   walletAddresses: Address[],
-  addressesData: (AddressState | undefined | null)[],
+  addressesData: (AccountState | undefined | null)[],
   chainsDetails: (Chain | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null,
   mobulaBlockChainData: MobulaBlockchain[] | undefined
@@ -81,7 +81,7 @@ export const calculateAssets = (
     );
 
     const walletAddress = walletAddresses.find(
-      (address) => address.address === accountData.address
+      (address) => address.address === accountData.accountId
     );
 
     if (!chainDetails || !walletAddress) {
@@ -113,7 +113,7 @@ export const calculateAssets = (
       balanceMainUnit,
       balanceUSD,
       ticker: chainDetails.ticker,
-      address: accountData.address,
+      address: accountData.accountId,
       pubKey: walletAddress.pubKey,
       decimals: chainDetails.decimals,
       isToken: false,

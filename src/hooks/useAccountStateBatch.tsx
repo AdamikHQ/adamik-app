@@ -1,5 +1,5 @@
 import { useQueries } from "@tanstack/react-query";
-import { addressState } from "~/api/adamik/addressState";
+import { accountState } from "~/api/adamik/accountState";
 import { queryCache } from "~/providers/QueryProvider";
 
 type GetAddressStateParams = {
@@ -7,21 +7,23 @@ type GetAddressStateParams = {
   address: string;
 };
 
-export const isAddressStateCache = (addresses: GetAddressStateParams[]) => {
+export const isInAccountStateBatchCache = (
+  addresses: GetAddressStateParams[]
+) => {
   return addresses.every(({ chainId, address }) => {
-    return queryCache.find({ queryKey: ["addressState", chainId, address] });
+    return queryCache.find({ queryKey: ["accountState", chainId, address] });
   });
 };
 
 // TODO Response should be typed
-export const useAddressStateBatch = (
+export const useAccountStateBatch = (
   addressesParams: GetAddressStateParams[]
 ) => {
   return useQueries({
     queries: addressesParams.map(({ chainId, address }) => {
       return {
-        queryKey: ["addressState", chainId, address],
-        queryFn: async () => addressState(chainId, address),
+        queryKey: ["accountState", chainId, address],
+        queryFn: async () => accountState(chainId, address),
       };
     }),
     combine: (results) => {

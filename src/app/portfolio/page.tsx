@@ -7,9 +7,9 @@ import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { Modal } from "~/components/ui/modal";
 import { Tooltip } from "~/components/ui/tooltip";
 import {
-  isAddressStateCache,
-  useAddressStateBatch,
-} from "~/hooks/useAddressStateBatch";
+  isInAccountStateBatchCache,
+  useAccountStateBatch,
+} from "~/hooks/useAccountStateBatch";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { useWallet } from "~/hooks/useWallet";
@@ -59,7 +59,7 @@ export default function Portfolio() {
     );
 
   const { data: addressesData, isLoading: isAddressesLoading } =
-    useAddressStateBatch(displayAddresses);
+    useAccountStateBatch(displayAddresses);
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
   const [openTransaction, setOpenTransaction] = useState(false);
   const [hideLowBalance, setHideLowBalance] = useState(true);
@@ -155,7 +155,7 @@ export default function Portfolio() {
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
-      {isLoading && !isAddressStateCache(displayAddresses) ? (
+      {isLoading && !isInAccountStateBatchCache(displayAddresses) ? (
         <LoadingModal />
       ) : null}
       <div className="flex items-center justify-between">
