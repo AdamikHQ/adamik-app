@@ -87,6 +87,7 @@ export const aggregateStakingBalances = (
 };
 
 export type StakingPosition = {
+export type StakingPosition = {
   chainId: string;
   chainName: string;
   chainLogo?: string;
@@ -99,17 +100,11 @@ export type StakingPosition = {
   completionDate?: number;
   rewardAmount?: string;
   rewardAmountUSD?: number;
-  rewardTokens?: {
-    tokenId: string;
-    amount: string;
-    ticker: string;
-    name: string;
-    decimals: number;
-    amountUSD?: number;
-  }[];
+  rewardTokens?: TokenAmount[];
   commission?: number;
   ticker: string;
 };
+
 
 const getValidatorInfo = (
   validatorsData: (ValidatorResponse | undefined)[],
