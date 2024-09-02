@@ -12,7 +12,6 @@ interface Token {
 
 interface TokenAmount {
   amount: string;
-  value: string;
   token: Token;
 }
 
