@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { Card, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   Table,
@@ -22,29 +23,46 @@ import { Button } from "~/components/ui/button";
 const StakingPositionsListRow: React.FC<{
   position: StakingPosition;
 }> = ({ position }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const formattedAddresses = position.addresses.toString().replace(",", "\n");
+
+  // Separate token rewards into large and small amounts
+  const largeTokenRewards =
+    position.rewardTokens?.filter(
+      (tokenAmount) => parseFloat(tokenAmount.amount) >= 0.00001
+    ) || [];
+
+  const smallTokenRewards =
+    position.rewardTokens?.filter(
+      (tokenAmount) =>
+        parseFloat(tokenAmount.amount) > 0 &&
+        parseFloat(tokenAmount.amount) < 0.00001
+    ) || [];
+
+  const handleToggleExpand = () => {
+    setIsExpanded((prev) => !prev);
+  };
+
   return (
     <TooltipProvider delayDuration={100}>
       <TableRow>
         <TableCell>
-          <div>
-            <div className="relative">
-              <Tooltip text={position.chainName}>
-                <TooltipTrigger>
-                  <Avatar>
-                    <AvatarImage
-                      src={position.chainLogo}
-                      alt={position.chainId}
-                    />
-                    <AvatarFallback>{position.chainName}</AvatarFallback>
-                  </Avatar>
-                </TooltipTrigger>
-              </Tooltip>
-            </div>
+          <div className="relative">
+            <Tooltip text={position.chainName}>
+              <TooltipTrigger>
+                <Avatar>
+                  <AvatarImage
+                    src={position.chainLogo}
+                    alt={position.chainId}
+                  />
+                  <AvatarFallback>{position.chainName}</AvatarFallback>
+                </Avatar>
+              </TooltipTrigger>
+            </Tooltip>
           </div>
         </TableCell>
         <TableCell>
-          {position.validatorName || position.validatorAddresses}
+          {position.validatorName || position.validatorAddresses.join(", ")}
         </TableCell>
 
         <TableCellWithTooltip text={formattedAddresses}>
@@ -61,9 +79,52 @@ const StakingPositionsListRow: React.FC<{
         </TableCellWithTooltip>
 
         <TableCellWithTooltip text={formattedAddresses}>
-          {position.rewardAmount
-            ? `${formatAmount(position.rewardAmount, 5)} ${position.ticker}`
-            : "-"}
+          {/* Display Native Reward */}
+          {position.rewardAmount && (
+            <div>
+              {`${formatAmount(position.rewardAmount, 5)} ${position.ticker}`}
+            </div>
+          )}
+
+          {/* Display Token Reward Count and Toggle Button */}
+          {(largeTokenRewards.length > 0 || smallTokenRewards.length > 0) && (
+            <div
+              style={{
+                cursor: "pointer",
+                color: "grey",
+                textDecoration: "underline",
+              }}
+              onClick={handleToggleExpand}
+            >
+              {position.rewardTokens?.length} Token Reward
+              {position.rewardTokens && position.rewardTokens.length > 1
+                ? "s"
+                : ""}
+            </div>
+          )}
+
+          {/* Conditionally Render Token Rewards if Expanded */}
+          {isExpanded && (
+            <div className="mt-2">
+              {/* Render tokens with significant value */}
+              {largeTokenRewards.map((tokenAmount, index) => (
+                <div key={index}>
+                  {`${formatAmount(tokenAmount.amount, 5)} ${
+                    tokenAmount.token.ticker
+                  }`}
+                </div>
+              ))}
+
+              {/* Render a single line for small value tokens */}
+              {/* Render a single line for small value tokens */}
+              {smallTokenRewards.length > 0 && (
+                <div key="small-values">
+                  {smallTokenRewards.length} token
+                  {smallTokenRewards.length > 1 ? "s" : ""} &lt; 0.00001
+                </div>
+              )}
+            </div>
+          )}
         </TableCellWithTooltip>
       </TableRow>
     </TooltipProvider>

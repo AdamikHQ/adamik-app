@@ -42,8 +42,13 @@ export function formatAmountUSD(amount: number) {
 export function formatAmount(amount: string | number | null, decimals: number) {
   const parsedAmount =
     typeof amount === "number" ? amount : Number(amount ?? "0");
+
   if (isNaN(parsedAmount)) {
     return "0";
+  }
+
+  if (parsedAmount > 0 && parsedAmount < 0.00001) {
+    return "0.00001>";
   }
 
   return new Intl.NumberFormat("en-US", {

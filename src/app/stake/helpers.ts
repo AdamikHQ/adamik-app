@@ -6,6 +6,7 @@ import {
   AggregatedBalances,
   Chain,
   Validator,
+  TokenAmount,
 } from "~/utils/types";
 
 const getAmountToUSD = (
@@ -17,7 +18,6 @@ const getAmountToUSD = (
   const amountInMainUnit = amountToMainUnit(amount, decimals);
 
   const balanceUSD =
-    // !chainDetails.isTestNet &&  TMP: Just to usetestnet for test
     mobulaMarketData && mobulaMarketData[chainDetails.ticker]
       ? mobulaMarketData[chainDetails.ticker]?.price *
         parseFloat(amountInMainUnit as string)
@@ -100,6 +100,7 @@ export type StakingPosition = {
   completionDate?: number;
   rewardAmount?: string;
   rewardAmountUSD?: number;
+  rewardTokens?: TokenAmount[];
   commission?: number;
   ticker: string;
 };
@@ -128,16 +129,16 @@ export const getAddressStakingPositions = (
   chainsDetails: (Chain | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null,
   validatorsData: (ValidatorResponse | undefined)[]
-) => {
+): Record<string, StakingPosition> => {
   const positions = data.reduce<Record<string, StakingPosition>>(
     (acc, accountData) => {
       const newAcc = { ...acc };
-      if (!accountData) return { ...acc };
+      if (!accountData) return newAcc;
 
       const chainDetails = chainsDetails.find(
         (chainDetail) => chainDetail?.id === accountData.chainId
       );
-      if (!chainDetails) return { ...acc };
+      if (!chainDetails) return newAcc;
 
       (accountData?.balances.staking?.positions || []).forEach((position) => {
         position.validatorAddresses.forEach((validatorAddress) => {
@@ -170,6 +171,7 @@ export const getAddressStakingPositions = (
         });
       });
 
+      // Handle native rewards
       (accountData?.balances.staking?.rewards.native || []).forEach(
         (reward) => {
           newAcc[reward.validatorAddress] = {
@@ -182,6 +184,43 @@ export const getAddressStakingPositions = (
               mobulaMarketData,
               chainDetails
             ),
+          };
+        }
+      );
+
+      // Handle token rewards
+      (accountData?.balances.staking?.rewards.tokens || []).forEach(
+        (reward) => {
+          if (
+            !reward.token?.id ||
+            !reward.token?.ticker ||
+            !reward.token?.name ||
+            reward.token?.decimals === undefined
+          ) {
+            // Skip this token if mandatory fields are missing
+            return;
+          }
+
+          const tokenAmount: TokenAmount = {
+            amount:
+              amountToMainUnit(reward.amount, reward.token.decimals) || "-",
+            token: {
+              chainId: accountData.chainId,
+              type: reward.token.type || "unknown", // Adjust this based on your requirements
+              id: reward.token.id,
+              name: reward.token.name,
+              ticker: reward.token.ticker,
+              decimals: reward.token.decimals,
+              contractAddress: reward.token.contractAddress,
+            },
+          };
+
+          newAcc[reward.validatorAddress] = {
+            ...(newAcc[reward.validatorAddress] || {}),
+            rewardTokens: [
+              ...(newAcc[reward.validatorAddress]?.rewardTokens || []),
+              tokenAmount,
+            ],
           };
         }
       );
