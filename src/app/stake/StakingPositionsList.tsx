@@ -25,7 +25,19 @@ const StakingPositionsListRow: React.FC<{
 }> = ({ position }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const formattedAddresses = position.addresses.toString().replace(",", "\n");
-  const tokenRewardsCount = position.rewardTokens?.length || 0; // Safely handle undefined rewardTokens
+
+  // Separate token rewards into large and small amounts
+  const largeTokenRewards =
+    position.rewardTokens?.filter(
+      (tokenAmount) => parseFloat(tokenAmount.amount) >= 0.00001
+    ) || [];
+
+  const smallTokenRewards =
+    position.rewardTokens?.filter(
+      (tokenAmount) =>
+        parseFloat(tokenAmount.amount) > 0 &&
+        parseFloat(tokenAmount.amount) < 0.00001
+    ) || [];
 
   const handleToggleExpand = () => {
     setIsExpanded((prev) => !prev);
@@ -35,24 +47,22 @@ const StakingPositionsListRow: React.FC<{
     <TooltipProvider delayDuration={100}>
       <TableRow>
         <TableCell>
-          <div>
-            <div className="relative">
-              <Tooltip text={position.chainName}>
-                <TooltipTrigger>
-                  <Avatar>
-                    <AvatarImage
-                      src={position.chainLogo}
-                      alt={position.chainId}
-                    />
-                    <AvatarFallback>{position.chainName}</AvatarFallback>
-                  </Avatar>
-                </TooltipTrigger>
-              </Tooltip>
-            </div>
+          <div className="relative">
+            <Tooltip text={position.chainName}>
+              <TooltipTrigger>
+                <Avatar>
+                  <AvatarImage
+                    src={position.chainLogo}
+                    alt={position.chainId}
+                  />
+                  <AvatarFallback>{position.chainName}</AvatarFallback>
+                </Avatar>
+              </TooltipTrigger>
+            </Tooltip>
           </div>
         </TableCell>
         <TableCell>
-          {position.validatorName || position.validatorAddresses}
+          {position.validatorName || position.validatorAddresses.join(", ")}
         </TableCell>
 
         <TableCellWithTooltip text={formattedAddresses}>
@@ -77,7 +87,7 @@ const StakingPositionsListRow: React.FC<{
           )}
 
           {/* Display Token Reward Count and Toggle Button */}
-          {tokenRewardsCount > 0 && (
+          {(largeTokenRewards.length > 0 || smallTokenRewards.length > 0) && (
             <div
               style={{
                 cursor: "pointer",
@@ -86,20 +96,33 @@ const StakingPositionsListRow: React.FC<{
               }}
               onClick={handleToggleExpand}
             >
-              {tokenRewardsCount} Token Reward{tokenRewardsCount > 1 ? "s" : ""}
+              {position.rewardTokens?.length} Token Reward
+              {position.rewardTokens && position.rewardTokens.length > 1
+                ? "s"
+                : ""}
             </div>
           )}
 
           {/* Conditionally Render Token Rewards if Expanded */}
-          {isExpanded && tokenRewardsCount > 0 && (
+          {isExpanded && (
             <div className="mt-2">
-              {position.rewardTokens?.map((tokenAmount, index) => (
+              {/* Render tokens with significant value */}
+              {largeTokenRewards.map((tokenAmount, index) => (
                 <div key={index}>
                   {`${formatAmount(tokenAmount.amount, 5)} ${
                     tokenAmount.token.ticker
                   }`}
                 </div>
               ))}
+
+              {/* Render a single line for small value tokens */}
+              {/* Render a single line for small value tokens */}
+              {smallTokenRewards.length > 0 && (
+                <div key="small-values">
+                  {smallTokenRewards.length} token
+                  {smallTokenRewards.length > 1 ? "s" : ""} &lt; 0.00001
+                </div>
+              )}
             </div>
           )}
         </TableCellWithTooltip>
