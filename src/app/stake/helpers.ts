@@ -6,6 +6,7 @@ import {
   AggregatedBalances,
   Chain,
   Validator,
+  TokenAmount,
 } from "~/utils/types";
 
 const getAmountToUSD = (
@@ -87,7 +88,6 @@ export const aggregateStakingBalances = (
 };
 
 export type StakingPosition = {
-export type StakingPosition = {
   chainId: string;
   chainName: string;
   chainLogo?: string;
@@ -104,7 +104,6 @@ export type StakingPosition = {
   commission?: number;
   ticker: string;
 };
-
 
 const getValidatorInfo = (
   validatorsData: (ValidatorResponse | undefined)[],
@@ -202,24 +201,25 @@ export const getAddressStakingPositions = (
             return;
           }
 
+          const tokenAmount: TokenAmount = {
+            amount:
+              amountToMainUnit(reward.amount, reward.token.decimals) || "-",
+            token: {
+              chainId: accountData.chainId,
+              type: reward.token.type || "unknown", // Adjust this based on your requirements
+              id: reward.token.id,
+              name: reward.token.name,
+              ticker: reward.token.ticker,
+              decimals: reward.token.decimals,
+              contractAddress: reward.token.contractAddress,
+            },
+          };
+
           newAcc[reward.validatorAddress] = {
             ...(newAcc[reward.validatorAddress] || {}),
             rewardTokens: [
               ...(newAcc[reward.validatorAddress]?.rewardTokens || []),
-              {
-                tokenId: reward.token.id,
-                amount:
-                  amountToMainUnit(reward.amount, reward.token.decimals) || "-",
-                ticker: reward.token.ticker,
-                name: reward.token.name,
-                decimals: reward.token.decimals,
-                amountUSD: getAmountToUSD(
-                  reward.amount,
-                  reward.token.decimals,
-                  mobulaMarketData,
-                  chainDetails
-                ),
-              },
+              tokenAmount,
             ],
           };
         }

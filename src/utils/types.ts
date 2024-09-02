@@ -10,7 +10,7 @@ interface Token {
   contractAddress?: string;
 }
 
-interface TokenAmount {
+export interface TokenAmount {
   amount: string;
   token: Token;
 }
