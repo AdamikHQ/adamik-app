@@ -6,15 +6,16 @@ import { AccountState } from "~/utils/types";
 // TODO Better API error management, consistent for all endpoints
 export const accountState = async (
   chainId: string,
-  address: string
+  accountId: string
 ): Promise<AccountState | null> => {
+  console.log("Requesting directly to adamik API: ", chainId, accountId);
   const response = await fetch(`${ADAMIK_API_URL}/account/state`, {
     headers: {
       Authorization: env.ADAMIK_API_KEY,
       "Content-Type": "application/json",
     },
     method: "POST",
-    body: JSON.stringify({ chainId, accountId: address }),
+    body: JSON.stringify({ chainId, accountId }),
   });
 
   const result = await response.json();

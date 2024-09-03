@@ -30,6 +30,7 @@
     "@tanstack/query-sync-storage-persister": "^5.48.0",
     "@tanstack/react-query": "^5.40.1",
     "@tanstack/react-query-persist-client": "^5.48.0",
+    "@unisat/wallet-sdk": "^1.7.1",
     "algosdk": "^2.7.0",
     "chain-registry": "^1.63.9",
     "chart.js": "^4.4.3",
