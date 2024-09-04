@@ -78,6 +78,8 @@ export function StakingTransactionForm({
 
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
+      console.log("Form submitted with input:", formInput); // Log form input
+
       const transactionData: TransactionData = {
         mode,
         chainId: formInput.chainId,
@@ -95,6 +97,8 @@ export function StakingTransactionForm({
         );
       }
 
+      console.log("Transaction data before mutation:", transactionData); // Log transaction data
+
       // FIXME Hack to be able to provide the pubKey, probably better to refacto
       const pubKey = assets.find(
         (asset) => asset.address === formInput.sender
@@ -108,6 +112,7 @@ export function StakingTransactionForm({
 
       mutate(transactionData, {
         onSuccess: (settledTransaction) => {
+          console.log("Transaction success:", settledTransaction); // Log success response
           setTransaction(undefined);
           setTransactionHash(undefined);
           if (settledTransaction) {
@@ -116,14 +121,20 @@ export function StakingTransactionForm({
               settledTransaction.status.errors.length > 0
             ) {
               setErrors(settledTransaction.status.errors[0].message);
+              console.log(
+                "Transaction error message:",
+                settledTransaction.status.errors[0].message
+              ); // Log any errors returned from the transaction
             } else {
               setTransaction(settledTransaction);
             }
           } else {
             setErrors("API ERROR - Please try again later");
+            console.log("API ERROR - Please try again later"); // Log general error
           }
         },
         onError: (error) => {
+          console.log("Transaction error:", error.message); // Log error message
           setTransaction(undefined);
           setTransactionHash(undefined);
           setErrors(error.message);
@@ -138,6 +149,7 @@ export function StakingTransactionForm({
   }
 
   if (isSuccess && transaction) {
+    console.log("Transaction is ready:", transaction); // Log ready transaction
     return (
       <>
         <h1 className="font-bold text-xl text-center">
