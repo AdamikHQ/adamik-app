@@ -173,11 +173,14 @@ export function StakingTransactionForm({
       <h1 className="font-bold text-xl text-center">{label}</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 px-4">
-          <AssetFormField
-            form={form}
-            assets={assets}
-            setDecimals={setDecimals}
-          />
+          {/* Only show AssetFormField for delegation */}
+          {mode === TransactionMode.DELEGATE && (
+            <AssetFormField
+              form={form}
+              assets={assets}
+              setDecimals={setDecimals}
+            />
+          )}
 
           <SenderFormField form={form} />
 
