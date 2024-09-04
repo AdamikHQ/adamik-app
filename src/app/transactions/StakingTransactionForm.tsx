@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDown } from "lucide-react";
-import { useCallback, useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "~/components/ui/button";
 import {
@@ -62,13 +62,9 @@ export function StakingTransactionForm({
   const [decimals, setDecimals] = useState<number>(0);
   const { transaction, setTransaction, setTransactionHash } = useTransaction();
   const [errors, setErrors] = useState("");
-
-  // Add a state to track the selected staking position
   const [selectedStakingPosition, setSelectedStakingPosition] =
     useState<StakingPosition | null>(null);
-
-  // Track changes to the selected asset (chainId)
-  const selectedChainId = form.watch("chainId");
+  const prevStakingPositionRef = useRef<StakingPosition | null>(null);
 
   const label = useMemo(() => {
     switch (mode) {
@@ -83,18 +79,8 @@ export function StakingTransactionForm({
     }
   }, [mode]);
 
-  // Reset validator-related fields when the asset (chainId) changes
-  useEffect(() => {
-    if (selectedChainId) {
-      // Reset validator-related form values
-      form.setValue("validatorIndex", undefined);
-      form.setValue("validatorAddress", "");
-    }
-  }, [selectedChainId, form]);
-
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
-      // Reset transaction and errors before initiating a new transaction
       setTransaction(undefined);
       setTransactionHash(undefined);
       setErrors("");
@@ -113,7 +99,7 @@ export function StakingTransactionForm({
       if (
         (mode === TransactionMode.UNDELEGATE ||
           mode === TransactionMode.CLAIM_REWARDS) &&
-        selectedStakingPosition // Ensure a staking position is selected
+        selectedStakingPosition
       ) {
         transactionData.sender = selectedStakingPosition.addresses[0]; // Automatically use the first address from staking position
       }
@@ -125,7 +111,6 @@ export function StakingTransactionForm({
         );
       }
 
-      // FIXME Hack to be able to provide the pubKey, probably better to refactor
       const pubKey = assets.find(
         (asset) => asset.address === formInput.sender
       )?.pubKey;
@@ -167,28 +152,26 @@ export function StakingTransactionForm({
       mutate,
       setTransaction,
       setTransactionHash,
-      selectedStakingPosition, // Make sure we track the selected staking position
+      selectedStakingPosition,
     ]
   );
 
-  // Handle Staking Position change to auto-set sender
   const handleStakingPositionChange = (stakingPosition: StakingPosition) => {
-    setSelectedStakingPosition(stakingPosition); // Track the selected staking position
+    setSelectedStakingPosition(stakingPosition);
 
-    // Find the associated asset based on the staking position (chainId or another identifier)
     const associatedAsset = assets.find(
       (asset) => asset.chainId === stakingPosition.chainId
     );
 
     if (associatedAsset) {
-      setDecimals(associatedAsset.decimals); // Set decimals from the asset
+      setDecimals(associatedAsset.decimals);
     }
 
     if (
       mode === TransactionMode.UNDELEGATE ||
       mode === TransactionMode.CLAIM_REWARDS
     ) {
-      form.setValue("sender", stakingPosition.addresses[0]); // Automatically set the sender for unstaking or claiming
+      form.setValue("sender", stakingPosition.addresses[0]);
     }
   };
 
@@ -232,7 +215,6 @@ export function StakingTransactionForm({
       <h1 className="font-bold text-xl text-center">{label}</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 px-4">
-          {/* Only show AssetFormField for delegation */}
           {mode === TransactionMode.DELEGATE && (
             <AssetFormField
               form={form}
@@ -241,7 +223,6 @@ export function StakingTransactionForm({
             />
           )}
 
-          {/* Only show SenderFormField for delegation */}
           {mode === TransactionMode.DELEGATE && <SenderFormField form={form} />}
 
           {mode === TransactionMode.DELEGATE && (
@@ -258,7 +239,7 @@ export function StakingTransactionForm({
               form={form}
               stakingPositions={stakingPositions}
               validators={validators}
-              onStakingPositionChange={handleStakingPositionChange} // Pass the handler to track the selected staking position
+              onStakingPositionChange={handleStakingPositionChange}
               setDecimals={setDecimals}
             />
           )}
