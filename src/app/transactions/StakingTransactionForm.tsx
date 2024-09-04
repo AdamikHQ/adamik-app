@@ -182,7 +182,8 @@ export function StakingTransactionForm({
             />
           )}
 
-          <SenderFormField form={form} />
+          {/* Only show SenderFormField for delegation */}
+          {mode === TransactionMode.DELEGATE && <SenderFormField form={form} />}
 
           {mode === TransactionMode.DELEGATE && (
             <ValidatorFormField
