@@ -78,6 +78,11 @@ export function StakingTransactionForm({
 
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
+      // Reset transaction and errors before initiating a new transaction
+      setTransaction(undefined);
+      setTransactionHash(undefined);
+      setErrors("");
+
       const transactionData: TransactionData = {
         mode,
         chainId: formInput.chainId,
