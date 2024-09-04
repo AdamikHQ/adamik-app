@@ -65,9 +65,6 @@ export function StakingTransactionForm({
   const { transaction, setTransaction, setTransactionHash } = useTransaction();
   const [errors, setErrors] = useState("");
 
-  // Debugging: Log any form errors immediately
-  console.log("Form errors:", form.formState.errors);
-
   const label = useMemo(() => {
     switch (mode) {
       case TransactionMode.DELEGATE:
@@ -81,7 +78,6 @@ export function StakingTransactionForm({
 
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
-      console.log("Submit handler triggered"); // Log when submit is triggered
       console.log("Form submitted with input:", formInput); // Log form input
 
       const transactionData: TransactionData = {
@@ -148,10 +144,6 @@ export function StakingTransactionForm({
     [assets, decimals, mode, mutate, setTransaction, setTransactionHash]
   );
 
-  const handleError = (errors: any) => {
-    console.log("Form validation failed:", errors); // Log validation errors
-  };
-
   if (isPending) {
     return <TransactionLoading />;
   }
@@ -192,10 +184,7 @@ export function StakingTransactionForm({
     <>
       <h1 className="font-bold text-xl text-center">{label}</h1>
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit, handleError)}
-          className="space-y-8 px-4"
-        >
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 px-4">
           {/* Only show AssetFormField for delegation */}
           {mode === TransactionMode.DELEGATE && (
             <AssetFormField
@@ -228,22 +217,6 @@ export function StakingTransactionForm({
           {(mode === TransactionMode.DELEGATE ||
             mode === TransactionMode.UNDELEGATE) && (
             <AmountFormField form={form} />
-          )}
-
-          {form.formState.errors && (
-            <div className="text-red-500">
-              {Object.keys(form.formState.errors).map((key) => {
-                const errorMessage =
-                  form.formState.errors[
-                    key as keyof typeof form.formState.errors
-                  ]?.message;
-                return (
-                  <div key={key}>
-                    Error in {key}: {errorMessage}
-                  </div>
-                );
-              })}
-            </div>
           )}
 
           {errors && (
