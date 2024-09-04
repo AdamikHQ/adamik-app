@@ -40,6 +40,11 @@ export function AssetFormField({
                 form.setValue("assetIndex", index);
                 form.setValue("chainId", asset.chainId);
                 form.setValue("sender", asset.address);
+
+                // Clear the validator-related fields
+                form.setValue("validatorIndex", undefined);
+                form.setValue("validatorAddress", "");
+
                 if (asset.isToken) {
                   form.setValue("mode", TransactionMode.TRANSFER_TOKEN);
                   form.setValue(
@@ -47,8 +52,6 @@ export function AssetFormField({
                     asset.contractAddress || asset.assetId
                   );
                 }
-                form.resetField("validatorIndex");
-                form.resetField("validatorAddress");
                 setDecimals(asset.decimals);
               }}
               {...field}

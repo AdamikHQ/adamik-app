@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDown } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "~/components/ui/button";
 import {
@@ -40,8 +40,6 @@ type StakingTransactionProps = {
 
 // TODO Only works for Cosmos !!! API abstraction still needed
 
-// FIXME Some duplicate logic to put in common with ./TransferTransactionForm.tsx
-
 export function StakingTransactionForm({
   mode,
   assets,
@@ -69,6 +67,9 @@ export function StakingTransactionForm({
   const [selectedStakingPosition, setSelectedStakingPosition] =
     useState<StakingPosition | null>(null);
 
+  // Track changes to the selected asset (chainId)
+  const selectedChainId = form.watch("chainId");
+
   const label = useMemo(() => {
     switch (mode) {
       case TransactionMode.DELEGATE:
@@ -77,13 +78,22 @@ export function StakingTransactionForm({
         return "Unstake";
       case TransactionMode.CLAIM_REWARDS:
         return "Claim";
+      default:
+        return "Submit";
     }
   }, [mode]);
 
+  // Reset validator-related fields when the asset (chainId) changes
+  useEffect(() => {
+    if (selectedChainId) {
+      // Reset validator-related form values
+      form.setValue("validatorIndex", undefined);
+      form.setValue("validatorAddress", "");
+    }
+  }, [selectedChainId, form]);
+
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
-      console.log("Form Input on submit:", formInput);
-
       // Reset transaction and errors before initiating a new transaction
       setTransaction(undefined);
       setTransactionHash(undefined);
@@ -106,10 +116,6 @@ export function StakingTransactionForm({
         selectedStakingPosition // Ensure a staking position is selected
       ) {
         transactionData.sender = selectedStakingPosition.addresses[0]; // Automatically use the first address from staking position
-        console.log(
-          "Auto-set sender for unstaking/claiming:",
-          transactionData.sender
-        );
       }
 
       if (formInput.amount && !formInput.useMaxAmount) {
@@ -129,8 +135,6 @@ export function StakingTransactionForm({
           pubKey,
         };
       }
-
-      console.log("Submitting transaction data", transactionData);
 
       mutate(transactionData, {
         onSuccess: (settledTransaction) => {
@@ -185,10 +189,6 @@ export function StakingTransactionForm({
       mode === TransactionMode.CLAIM_REWARDS
     ) {
       form.setValue("sender", stakingPosition.addresses[0]); // Automatically set the sender for unstaking or claiming
-      console.log(
-        "Sender auto-set from staking position:",
-        stakingPosition.addresses[0]
-      );
     }
   };
 
