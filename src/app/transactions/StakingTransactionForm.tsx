@@ -38,10 +38,6 @@ type StakingTransactionProps = {
   onNextStep: () => void;
 };
 
-// TODO Only works for Cosmos !!! API abstraction still needed
-
-// FIXME Some duplicate logic to put in common with ./TransferTransactionForm.tsx
-
 export function StakingTransactionForm({
   mode,
   assets,
@@ -107,7 +103,7 @@ export function StakingTransactionForm({
       // Handle auto-setting of sender for unstake or claim rewards based on selected staking position
       if (mode !== TransactionMode.DELEGATE && selectedStakingPosition) {
         console.log("Selected staking position:", selectedStakingPosition); // Log the selected staking position
-        transactionData.sender = selectedStakingPosition.addresses[0]; // Use the first address in the array for sender
+        transactionData.sender = selectedStakingPosition.addresses[0]; // Automatically use the first address
         console.log(
           "Auto-determined sender from staking position:",
           transactionData.sender
@@ -159,7 +155,13 @@ export function StakingTransactionForm({
   const handleStakingPositionChange = (stakingPosition: StakingPosition) => {
     console.log("Staking position selected:", stakingPosition);
     setSelectedStakingPosition(stakingPosition); // Track the selected staking position
-    form.setValue("sender", stakingPosition.addresses[0]); // Set the sender value based on the staking position's address
+    if (
+      mode === TransactionMode.UNDELEGATE ||
+      mode === TransactionMode.CLAIM_REWARDS
+    ) {
+      form.setValue("sender", stakingPosition.addresses[0]); // Auto-fill sender for unstake/claim
+      console.log("Sender set to:", stakingPosition.addresses[0]);
+    }
   };
 
   const handleError = (errors: any) => {
