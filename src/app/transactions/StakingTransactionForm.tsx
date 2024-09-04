@@ -65,9 +65,8 @@ export function StakingTransactionForm({
   const { transaction, setTransaction, setTransactionHash } = useTransaction();
   const [errors, setErrors] = useState("");
 
-  // Add a state to keep track of the selected staking position
-  const [selectedStakingPosition, setSelectedStakingPosition] =
-    useState<StakingPosition | null>(null);
+  // Debugging: Log any form errors immediately
+  console.log("Form errors:", form.formState.errors);
 
   const label = useMemo(() => {
     switch (mode) {
@@ -82,13 +81,13 @@ export function StakingTransactionForm({
 
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
-      console.log("Submit handler triggered");
-      console.log("Form submitted with input:", formInput);
+      console.log("Submit handler triggered"); // Log when submit is triggered
+      console.log("Form submitted with input:", formInput); // Log form input
 
       const transactionData: TransactionData = {
         mode,
         chainId: formInput.chainId,
-        sender: formInput.sender || "", // If unstaking, sender can be derived from the staking position
+        sender: formInput.sender,
         recipient: "",
         validatorAddress: formInput.validatorAddress ?? "",
         useMaxAmount: formInput.useMaxAmount,
@@ -102,21 +101,22 @@ export function StakingTransactionForm({
         );
       }
 
-      console.log("Transaction data before mutation:", transactionData);
+      console.log("Transaction data before mutation:", transactionData); // Log transaction data
 
-      // Handle auto-setting of sender for unstake or claim rewards based on selected staking position
-      if (mode !== TransactionMode.DELEGATE && selectedStakingPosition) {
-        console.log("Selected staking position:", selectedStakingPosition); // Log the selected staking position
-        transactionData.sender = selectedStakingPosition.addresses[0]; // Use the first address in the array for sender
-        console.log(
-          "Auto-determined sender from staking position:",
-          transactionData.sender
-        );
+      // FIXME Hack to be able to provide the pubKey, probably better to refacto
+      const pubKey = assets.find(
+        (asset) => asset.address === formInput.sender
+      )?.pubKey;
+
+      if (pubKey) {
+        transactionData.params = {
+          pubKey,
+        };
       }
 
       mutate(transactionData, {
         onSuccess: (settledTransaction) => {
-          console.log("Transaction success:", settledTransaction);
+          console.log("Transaction success:", settledTransaction); // Log success response
           setTransaction(undefined);
           setTransactionHash(undefined);
           if (settledTransaction) {
@@ -128,42 +128,28 @@ export function StakingTransactionForm({
               console.log(
                 "Transaction error message:",
                 settledTransaction.status.errors[0].message
-              );
+              ); // Log any errors returned from the transaction
             } else {
               setTransaction(settledTransaction);
             }
           } else {
             setErrors("API ERROR - Please try again later");
-            console.log("API ERROR - Please try again later");
+            console.log("API ERROR - Please try again later"); // Log general error
           }
         },
         onError: (error) => {
-          console.log("Transaction error:", error.message);
+          console.log("Transaction error:", error.message); // Log error message
           setTransaction(undefined);
           setTransactionHash(undefined);
           setErrors(error.message);
         },
       });
     },
-    [
-      assets,
-      decimals,
-      mode,
-      mutate,
-      selectedStakingPosition,
-      setTransaction,
-      setTransactionHash,
-    ]
+    [assets, decimals, mode, mutate, setTransaction, setTransactionHash]
   );
 
-  const handleStakingPositionChange = (stakingPosition: StakingPosition) => {
-    console.log("Staking position selected:", stakingPosition);
-    setSelectedStakingPosition(stakingPosition); // Track the selected staking position
-    form.setValue("sender", stakingPosition.addresses[0]); // Set the sender value based on the staking position's address
-  };
-
   const handleError = (errors: any) => {
-    console.log("Form validation failed:", errors);
+    console.log("Form validation failed:", errors); // Log validation errors
   };
 
   if (isPending) {
@@ -171,7 +157,7 @@ export function StakingTransactionForm({
   }
 
   if (isSuccess && transaction) {
-    console.log("Transaction is ready:", transaction);
+    console.log("Transaction is ready:", transaction); // Log ready transaction
     return (
       <>
         <h1 className="font-bold text-xl text-center">
@@ -210,6 +196,7 @@ export function StakingTransactionForm({
           onSubmit={form.handleSubmit(onSubmit, handleError)}
           className="space-y-8 px-4"
         >
+          {/* Only show AssetFormField for delegation */}
           {mode === TransactionMode.DELEGATE && (
             <AssetFormField
               form={form}
@@ -218,6 +205,7 @@ export function StakingTransactionForm({
             />
           )}
 
+          {/* Only show SenderFormField for delegation */}
           {mode === TransactionMode.DELEGATE && <SenderFormField form={form} />}
 
           {mode === TransactionMode.DELEGATE && (
@@ -234,7 +222,6 @@ export function StakingTransactionForm({
               form={form}
               stakingPositions={stakingPositions}
               validators={validators}
-              onStakingPositionChange={handleStakingPositionChange} // Pass handler to track selected staking position
             />
           )}
 
@@ -245,15 +232,17 @@ export function StakingTransactionForm({
 
           {form.formState.errors && (
             <div className="text-red-500">
-              {(
-                Object.keys(form.formState.errors) as Array<
-                  keyof typeof form.formState.errors
-                >
-              ).map((key) => (
-                <div key={key}>
-                  Error in {key}: {form.formState.errors[key]?.message}
-                </div>
-              ))}
+              {Object.keys(form.formState.errors).map((key) => {
+                const errorMessage =
+                  form.formState.errors[
+                    key as keyof typeof form.formState.errors
+                  ]?.message;
+                return (
+                  <div key={key}>
+                    Error in {key}: {errorMessage}
+                  </div>
+                );
+              })}
             </div>
           )}
 
