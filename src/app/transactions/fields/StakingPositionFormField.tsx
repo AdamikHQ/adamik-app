@@ -15,15 +15,15 @@ type StakingPositionFormFieldProps = {
   form: UseFormReturn<TransactionFormInput>;
   stakingPositions: Record<string, StakingPosition>;
   validators: Validator[];
-  //setDecimals: (decimals: number) => void;
-  onStakingPositionChange: (stakingPosition: StakingPosition) => void; // Add this line
+  setDecimals: (decimals: number) => void; // Ensure this prop is used
+  onStakingPositionChange: (stakingPosition: StakingPosition) => void;
 };
 
 export function StakingPositionFormField({
   form,
   stakingPositions,
   validators,
-  onStakingPositionChange, // Include the onStakingPositionChange prop here
+  onStakingPositionChange,
 }: StakingPositionFormFieldProps) {
   return (
     <FormField
@@ -61,8 +61,9 @@ export function StakingPositionFormField({
                     "validatorAddress",
                     stakingPosition.validatorAddresses[0]
                   );
-                  //setDecimals(stakingPosition.decimals);
-                  onStakingPositionChange(stakingPosition); // Trigger the prop passed to the component
+
+                  // Trigger the prop passed to the component
+                  onStakingPositionChange(stakingPosition);
                 }}
                 {...field}
               />

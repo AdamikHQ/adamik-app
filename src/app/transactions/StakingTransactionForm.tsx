@@ -170,6 +170,16 @@ export function StakingTransactionForm({
   // Handle Staking Position change to auto-set sender
   const handleStakingPositionChange = (stakingPosition: StakingPosition) => {
     setSelectedStakingPosition(stakingPosition); // Track the selected staking position
+
+    // Find the associated asset based on the staking position (chainId or another identifier)
+    const associatedAsset = assets.find(
+      (asset) => asset.chainId === stakingPosition.chainId
+    );
+
+    if (associatedAsset) {
+      setDecimals(associatedAsset.decimals); // Set decimals from the asset
+    }
+
     if (
       mode === TransactionMode.UNDELEGATE ||
       mode === TransactionMode.CLAIM_REWARDS
@@ -249,6 +259,7 @@ export function StakingTransactionForm({
               stakingPositions={stakingPositions}
               validators={validators}
               onStakingPositionChange={handleStakingPositionChange} // Pass the handler to track the selected staking position
+              setDecimals={setDecimals}
             />
           )}
 
