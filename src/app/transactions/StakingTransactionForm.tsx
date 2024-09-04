@@ -93,6 +93,22 @@ export function StakingTransactionForm({
         format: "json", // FIXME Not always the default, should come from chains config
       };
 
+      // Handle auto-setting of sender for unstake or claim rewards based on selected staking position
+      if (
+        (mode === TransactionMode.UNDELEGATE ||
+          mode === TransactionMode.CLAIM_REWARDS) &&
+        formInput.validatorAddress // Ensure validatorAddress is defined
+      ) {
+        const selectedStakingPosition =
+          stakingPositions[formInput.validatorAddress];
+        if (
+          selectedStakingPosition &&
+          selectedStakingPosition.addresses.length > 0
+        ) {
+          transactionData.sender = selectedStakingPosition.addresses[0]; // Automatically use the first address
+        }
+      }
+
       if (formInput.amount && !formInput.useMaxAmount) {
         transactionData.amount = amountToSmallestUnit(
           formInput.amount.toString(),
@@ -135,7 +151,15 @@ export function StakingTransactionForm({
         },
       });
     },
-    [assets, decimals, mode, mutate, setTransaction, setTransactionHash]
+    [
+      assets,
+      decimals,
+      mode,
+      mutate,
+      setTransaction,
+      setTransactionHash,
+      stakingPositions,
+    ]
   );
 
   if (isPending) {
