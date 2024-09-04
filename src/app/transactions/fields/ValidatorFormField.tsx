@@ -26,10 +26,7 @@ export function ValidatorFormField({
   const chainId = form.watch("chainId");
 
   // Log chainId and validatorIndex to track changes
-  useEffect(() => {
-    console.log("Current chainId (or assetId):", chainId);
-    console.log("Current validator index:", form.getValues("validatorIndex"));
-  }, [chainId, form]);
+  useEffect(() => {}, [chainId, form]);
 
   return (
     <FormField
@@ -56,7 +53,6 @@ export function ValidatorFormField({
                   form.setValue("chainId", validator.chainId);
                   form.setValue("validatorAddress", validator.address);
                   setDecimals(validator.decimals);
-                  console.log("Selected validator index:", index);
                 }}
                 {...field}
               />
