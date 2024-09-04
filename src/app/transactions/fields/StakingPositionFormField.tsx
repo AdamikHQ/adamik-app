@@ -15,13 +15,14 @@ type StakingPositionFormFieldProps = {
   form: UseFormReturn<TransactionFormInput>;
   stakingPositions: Record<string, StakingPosition>;
   validators: Validator[];
-  //setDecimals: (decimals: number) => void;
+  onStakingPositionChange?: (stakingPosition: StakingPosition) => void; // Add this prop for notifying parent
 };
 
 export function StakingPositionFormField({
   form,
   stakingPositions,
   validators,
+  onStakingPositionChange, // Destructure the new prop
 }: StakingPositionFormFieldProps) {
   return (
     <FormField
@@ -53,13 +54,18 @@ export function StakingPositionFormField({
                     : undefined
                 }
                 onSelect={(stakingPosition, index) => {
+                  // Set values in the form when a position is selected
                   form.setValue("stakingPositionIndex", index);
                   form.setValue("chainId", stakingPosition.chainId);
                   form.setValue(
                     "validatorAddress",
                     stakingPosition.validatorAddresses[0]
                   );
-                  //setDecimals(stakingPosition.decimals);
+
+                  // Call the callback prop to notify parent if provided
+                  if (onStakingPositionChange) {
+                    onStakingPositionChange(stakingPosition);
+                  }
                 }}
                 {...field}
               />
