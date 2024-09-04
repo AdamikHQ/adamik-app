@@ -16,12 +16,14 @@ type StakingPositionFormFieldProps = {
   stakingPositions: Record<string, StakingPosition>;
   validators: Validator[];
   //setDecimals: (decimals: number) => void;
+  onStakingPositionChange: (stakingPosition: StakingPosition) => void; // Add this line
 };
 
 export function StakingPositionFormField({
   form,
   stakingPositions,
   validators,
+  onStakingPositionChange, // Include the onStakingPositionChange prop here
 }: StakingPositionFormFieldProps) {
   return (
     <FormField
@@ -60,6 +62,7 @@ export function StakingPositionFormField({
                     stakingPosition.validatorAddresses[0]
                   );
                   //setDecimals(stakingPosition.decimals);
+                  onStakingPositionChange(stakingPosition); // Trigger the prop passed to the component
                 }}
                 {...field}
               />

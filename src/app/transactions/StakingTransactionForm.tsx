@@ -65,6 +65,10 @@ export function StakingTransactionForm({
   const { transaction, setTransaction, setTransactionHash } = useTransaction();
   const [errors, setErrors] = useState("");
 
+  // Add a state to track the selected staking position
+  const [selectedStakingPosition, setSelectedStakingPosition] =
+    useState<StakingPosition | null>(null);
+
   const label = useMemo(() => {
     switch (mode) {
       case TransactionMode.DELEGATE:
@@ -78,6 +82,8 @@ export function StakingTransactionForm({
 
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
+      console.log("Form Input on submit:", formInput);
+
       // Reset transaction and errors before initiating a new transaction
       setTransaction(undefined);
       setTransactionHash(undefined);
@@ -97,16 +103,13 @@ export function StakingTransactionForm({
       if (
         (mode === TransactionMode.UNDELEGATE ||
           mode === TransactionMode.CLAIM_REWARDS) &&
-        formInput.validatorAddress // Ensure validatorAddress is defined
+        selectedStakingPosition // Ensure a staking position is selected
       ) {
-        const selectedStakingPosition =
-          stakingPositions[formInput.validatorAddress];
-        if (
-          selectedStakingPosition &&
-          selectedStakingPosition.addresses.length > 0
-        ) {
-          transactionData.sender = selectedStakingPosition.addresses[0]; // Automatically use the first address
-        }
+        transactionData.sender = selectedStakingPosition.addresses[0]; // Automatically use the first address from staking position
+        console.log(
+          "Auto-set sender for unstaking/claiming:",
+          transactionData.sender
+        );
       }
 
       if (formInput.amount && !formInput.useMaxAmount) {
@@ -116,7 +119,7 @@ export function StakingTransactionForm({
         );
       }
 
-      // FIXME Hack to be able to provide the pubKey, probably better to refacto
+      // FIXME Hack to be able to provide the pubKey, probably better to refactor
       const pubKey = assets.find(
         (asset) => asset.address === formInput.sender
       )?.pubKey;
@@ -126,6 +129,8 @@ export function StakingTransactionForm({
           pubKey,
         };
       }
+
+      console.log("Submitting transaction data", transactionData);
 
       mutate(transactionData, {
         onSuccess: (settledTransaction) => {
@@ -158,9 +163,24 @@ export function StakingTransactionForm({
       mutate,
       setTransaction,
       setTransactionHash,
-      stakingPositions,
+      selectedStakingPosition, // Make sure we track the selected staking position
     ]
   );
+
+  // Handle Staking Position change to auto-set sender
+  const handleStakingPositionChange = (stakingPosition: StakingPosition) => {
+    setSelectedStakingPosition(stakingPosition); // Track the selected staking position
+    if (
+      mode === TransactionMode.UNDELEGATE ||
+      mode === TransactionMode.CLAIM_REWARDS
+    ) {
+      form.setValue("sender", stakingPosition.addresses[0]); // Automatically set the sender for unstaking or claiming
+      console.log(
+        "Sender auto-set from staking position:",
+        stakingPosition.addresses[0]
+      );
+    }
+  };
 
   if (isPending) {
     return <TransactionLoading />;
@@ -228,6 +248,7 @@ export function StakingTransactionForm({
               form={form}
               stakingPositions={stakingPositions}
               validators={validators}
+              onStakingPositionChange={handleStakingPositionChange} // Pass the handler to track the selected staking position
             />
           )}
 
