@@ -35,18 +35,10 @@ export function StakingPositionFormField({
             <FormLabel>Positions</FormLabel>
             <FormControl>
               <StakingPositionSelector
-                validators={validators.filter((validator) => {
-                  const chainId = form.watch("chainId");
-                  return chainId === "" ? true : validator.chainId === chainId;
-                })}
-                stakingPositions={Object.values(stakingPositions).filter(
-                  (stakingPosition) => {
-                    const chainId = form.watch("chainId");
-                    return chainId === ""
-                      ? true
-                      : stakingPosition.chainId === chainId;
-                  }
-                )}
+                // Remove filtering for validators
+                validators={validators}
+                // Remove filtering for staking positions
+                stakingPositions={Object.values(stakingPositions)}
                 selectedValue={
                   form.getValues().stakingPositionIndex
                     ? stakingPositions[
