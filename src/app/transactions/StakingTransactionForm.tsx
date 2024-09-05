@@ -65,8 +65,6 @@ export function StakingTransactionForm({
   const [selectedStakingPosition, setSelectedStakingPosition] = useState<
     StakingPosition | undefined
   >();
-  const prevStakingPositionRef = useRef<StakingPosition | null>(null);
-
   const label = useMemo(() => {
     switch (mode) {
       case TransactionMode.DELEGATE:
