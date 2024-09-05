@@ -238,6 +238,7 @@ export function StakingTransactionForm({
           {(mode === TransactionMode.UNDELEGATE ||
             mode === TransactionMode.CLAIM_REWARDS) && (
             <StakingPositionFormField
+              mode={mode}
               form={form}
               stakingPositions={stakingPositions}
               validators={validators}

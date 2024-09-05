@@ -9,7 +9,7 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { TransactionFormInput } from "~/utils/schema";
-import { Validator } from "~/utils/types";
+import { Validator, TransactionMode } from "~/utils/types";
 
 type StakingPositionFormFieldProps = {
   form: UseFormReturn<TransactionFormInput>;
@@ -17,6 +17,7 @@ type StakingPositionFormFieldProps = {
   validators: Validator[];
   setDecimals: (decimals: number) => void; // Ensure this prop is used
   onStakingPositionChange: (stakingPosition: StakingPosition) => void;
+  mode: TransactionMode;
 };
 
 export function StakingPositionFormField({
@@ -24,6 +25,7 @@ export function StakingPositionFormField({
   stakingPositions,
   validators,
   onStakingPositionChange,
+  mode,
 }: StakingPositionFormFieldProps) {
   return (
     <FormField
@@ -35,9 +37,8 @@ export function StakingPositionFormField({
             <FormLabel>Positions</FormLabel>
             <FormControl>
               <StakingPositionSelector
-                // Remove filtering for validators
+                mode={mode}
                 validators={validators}
-                // Remove filtering for staking positions
                 stakingPositions={Object.values(stakingPositions)}
                 selectedValue={
                   form.getValues().stakingPositionIndex
