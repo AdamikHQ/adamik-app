@@ -114,8 +114,6 @@ const StakingPositionsListRow: React.FC<{
                   }`}
                 </div>
               ))}
-
-              {/* Render a single line for small value tokens */}
               {/* Render a single line for small value tokens */}
               {smallTokenRewards.length > 0 && (
                 <div key="small-values">
