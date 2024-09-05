@@ -140,7 +140,6 @@ export const getAddressStakingPositions = (
       );
       if (!chainDetails) return newAcc;
 
-      // Iterate over staking positions
       (accountData?.balances.staking?.positions || []).forEach((position) => {
         position.validatorAddresses.forEach((validatorAddress) => {
           const validatorInfo = getValidatorInfo(
@@ -173,13 +172,13 @@ export const getAddressStakingPositions = (
               mobulaMarketData,
               chainDetails
             ),
-            status: position.status, // Important to keep track of the status
+            status: position.status,
             completionDate: position.completionDate, // If exists for 'unlocking' positions
           };
         });
       });
 
-      // Handle native rewards by merging them into the existing staking position
+      // Handle native rewards and merge them into the existing staking position
       (accountData?.balances.staking?.rewards.native || []).forEach(
         (reward) => {
           const uniqueKey = `${reward.validatorAddress}_locked`;
@@ -200,7 +199,7 @@ export const getAddressStakingPositions = (
         }
       );
 
-      // Handle token rewards by merging them into the existing staking position
+      // Handle token rewards and merge them into the existing staking position
       (accountData?.balances.staking?.rewards.tokens || []).forEach(
         (reward) => {
           if (
