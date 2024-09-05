@@ -127,23 +127,25 @@ const StakingPositionSelectorList = ({
         <CommandEmpty>No results found.</CommandEmpty>
         <ScrollArea className="h-[240px] overflow-auto">
           <CommandGroup>
-            {stakingPositions.map((stakingPosition, i) => (
-              <CommandItem
-                key={`${stakingPosition.validatorAddresses[0]}_${i}`}
-                value={`${stakingPosition.validatorName}_${i.toString()}`}
-                onSelect={(value) => {
-                  const [name, index] = value.split("_");
-                  setSelectedChoice(stakingPositions[Number(index)]);
-                  setOpen(false);
-                  onSelect(stakingPosition, i);
-                }}
-              >
-                <StakingPositionView
-                  stakingPosition={stakingPosition}
-                  validators={validators}
-                />
-              </CommandItem>
-            ))}
+            {stakingPositions
+              .filter((position) => position.status !== "unlocking") // Filtering logic
+              .map((stakingPosition, i) => (
+                <CommandItem
+                  key={`${stakingPosition.validatorAddresses[0]}_${i}`}
+                  value={`${stakingPosition.validatorName}_${i.toString()}`}
+                  onSelect={(value) => {
+                    const [name, index] = value.split("_");
+                    setSelectedChoice(stakingPositions[Number(index)]);
+                    setOpen(false);
+                    onSelect(stakingPosition, i);
+                  }}
+                >
+                  <StakingPositionView
+                    stakingPosition={stakingPosition}
+                    validators={validators}
+                  />
+                </CommandItem>
+              ))}
           </CommandGroup>
         </ScrollArea>
       </CommandList>
