@@ -5,12 +5,13 @@ import { useState } from "react";
 
 export const queryCache = new QueryCache();
 
+// This is the global QueryClient you can use in other parts of your app
 export const queryClientGlobal = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 60, // 1 hour in ms
       refetchOnWindowFocus: false,
-      gcTime: 1000 * 60 * 60, // 1 hours
+      gcTime: 1000 * 60 * 60, // 1 hour
     },
   },
 });

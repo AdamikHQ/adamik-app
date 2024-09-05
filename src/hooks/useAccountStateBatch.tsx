@@ -1,6 +1,6 @@
 import { useQueries } from "@tanstack/react-query";
 import { accountState } from "~/api/adamik/accountState";
-import { queryCache } from "~/providers/QueryProvider";
+import { queryClientGlobal } from "~/providers/QueryProvider"; // Use the correct import
 
 type GetAddressStateParams = {
   chainId: string;
@@ -11,11 +11,23 @@ export const isInAccountStateBatchCache = (
   addresses: GetAddressStateParams[]
 ) => {
   return addresses.every(({ chainId, address }) => {
-    return queryCache.find({ queryKey: ["accountState", chainId, address] });
+    return queryClientGlobal
+      .getQueryCache()
+      .find({ queryKey: ["accountState", chainId, address] });
   });
 };
 
-// TODO Response should be typed
+// Function to clear specific account state cache
+export const clearAccountStateCache = ({
+  chainId,
+  address,
+}: GetAddressStateParams) => {
+  queryClientGlobal.removeQueries({
+    queryKey: ["accountState", chainId, address],
+  });
+};
+
+// Use account state batch hook to fetch multiple account states
 export const useAccountStateBatch = (
   addressesParams: GetAddressStateParams[]
 ) => {
