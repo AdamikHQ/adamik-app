@@ -7,7 +7,7 @@ export const transactionFormSchema = z
     chainId: z.string().min(1),
     sender: z.string().min(1),
     recipient: z.string().min(1).optional(),
-    validatorAddress: z.string().min(1).optional(),
+    validatorAddress: z.string().optional(),
     amount: z.coerce.number().optional(),
     useMaxAmount: z.boolean(),
     tokenId: z.string().optional(),
@@ -15,7 +15,10 @@ export const transactionFormSchema = z
     validatorIndex: z.number().optional(),
     stakingPositionIndex: z.number().optional(),
   })
-  .superRefine(({ useMaxAmount }) => {
+  .superRefine(({ useMaxAmount, mode }) => {
+    if ([TransactionMode.DELEGATE].includes(mode)) {
+      return z.object({ validatorAddress: z.string().min(1) });
+    }
     if (useMaxAmount) return z.object({ amount: z.literal(0) });
   });
 

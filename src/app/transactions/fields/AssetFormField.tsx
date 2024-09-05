@@ -14,12 +14,14 @@ type AssetFormFieldProps = {
   form: UseFormReturn<TransactionFormInput>;
   assets: Asset[];
   setDecimals: (decimals: number) => void;
+  initialMode: TransactionMode;
 };
 
 export function AssetFormField({
   form,
   assets,
   setDecimals,
+  initialMode,
 }: AssetFormFieldProps) {
   return (
     <FormField
@@ -51,6 +53,12 @@ export function AssetFormField({
                     "tokenId",
                     asset.contractAddress || asset.assetId
                   );
+                } else {
+                  form.setValue(
+                    "tokenId",
+                    undefined
+                  );
+                  form.setValue("mode", initialMode);  
                 }
                 setDecimals(asset.decimals);
               }}

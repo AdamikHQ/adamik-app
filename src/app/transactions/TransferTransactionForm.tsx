@@ -152,6 +152,7 @@ export function TransferTransactionForm({
             form={form}
             assets={assets}
             setDecimals={setDecimals}
+            initialMode={TransactionMode.TRANSFER}
           />
 
           <SenderFormField form={form} />
@@ -163,7 +164,7 @@ export function TransferTransactionForm({
           {errors && (
             <div className="text-red-500 w-full break-all">{errors}</div>
           )}
-
+          
           <Button type="submit" className="w-full">
             Submit
           </Button>

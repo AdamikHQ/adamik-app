@@ -221,6 +221,7 @@ export function StakingTransactionForm({
               form={form}
               assets={assets}
               setDecimals={setDecimals}
+              initialMode={TransactionMode.DELEGATE}
             />
           )}
 
