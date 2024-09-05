@@ -15,13 +15,15 @@ type StakingPositionFormFieldProps = {
   form: UseFormReturn<TransactionFormInput>;
   stakingPositions: Record<string, StakingPosition>;
   validators: Validator[];
-  //setDecimals: (decimals: number) => void;
+  setDecimals: (decimals: number) => void; // Ensure this prop is used
+  onStakingPositionChange: (stakingPosition: StakingPosition) => void;
 };
 
 export function StakingPositionFormField({
   form,
   stakingPositions,
   validators,
+  onStakingPositionChange,
 }: StakingPositionFormFieldProps) {
   return (
     <FormField
@@ -33,18 +35,10 @@ export function StakingPositionFormField({
             <FormLabel>Positions</FormLabel>
             <FormControl>
               <StakingPositionSelector
-                validators={validators.filter((validator) => {
-                  const chainId = form.watch("chainId");
-                  return chainId === "" ? true : validator.chainId === chainId;
-                })}
-                stakingPositions={Object.values(stakingPositions).filter(
-                  (stakingPosition) => {
-                    const chainId = form.watch("chainId");
-                    return chainId === ""
-                      ? true
-                      : stakingPosition.chainId === chainId;
-                  }
-                )}
+                // Remove filtering for validators
+                validators={validators}
+                // Remove filtering for staking positions
+                stakingPositions={Object.values(stakingPositions)}
                 selectedValue={
                   form.getValues().stakingPositionIndex
                     ? stakingPositions[
@@ -59,7 +53,9 @@ export function StakingPositionFormField({
                     "validatorAddress",
                     stakingPosition.validatorAddresses[0]
                   );
-                  //setDecimals(stakingPosition.decimals);
+
+                  // Trigger the prop passed to the component
+                  onStakingPositionChange(stakingPosition);
                 }}
                 {...field}
               />

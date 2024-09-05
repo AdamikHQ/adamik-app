@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { ValidatorSelector } from "~/app/stake/ValidatorSelector";
 import {
@@ -21,6 +22,9 @@ export function ValidatorFormField({
   validators,
   setDecimals,
 }: ValidatorFormFieldProps) {
+  // Watch the chainId to trigger re-render
+  const chainId = form.watch("chainId");
+
   return (
     <FormField
       control={form.control}
@@ -30,9 +34,10 @@ export function ValidatorFormField({
           <>
             <FormLabel>Validators</FormLabel>
             <FormControl>
+              {/* Add key to ValidatorSelector to force remount when chainId changes */}
               <ValidatorSelector
+                key={chainId} // Force re-render on chainId change
                 validators={validators.filter((validator) => {
-                  const chainId = form.watch("chainId");
                   return chainId === "" ? true : validator.chainId === chainId;
                 })}
                 selectedValue={

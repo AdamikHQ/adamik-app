@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDown } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "~/components/ui/button";
 import {
@@ -40,8 +40,6 @@ type StakingTransactionProps = {
 
 // TODO Only works for Cosmos !!! API abstraction still needed
 
-// FIXME Some duplicate logic to put in common with ./TransferTransactionForm.tsx
-
 export function StakingTransactionForm({
   mode,
   assets,
@@ -64,6 +62,10 @@ export function StakingTransactionForm({
   const [decimals, setDecimals] = useState<number>(0);
   const { transaction, setTransaction, setTransactionHash } = useTransaction();
   const [errors, setErrors] = useState("");
+  const [selectedStakingPosition, setSelectedStakingPosition] = useState<
+    StakingPosition | undefined
+  >();
+  const prevStakingPositionRef = useRef<StakingPosition | null>(null);
 
   const label = useMemo(() => {
     switch (mode) {
@@ -73,11 +75,17 @@ export function StakingTransactionForm({
         return "Unstake";
       case TransactionMode.CLAIM_REWARDS:
         return "Claim";
+      default:
+        return "Submit";
     }
   }, [mode]);
 
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
+      setTransaction(undefined);
+      setTransactionHash(undefined);
+      setErrors("");
+
       const transactionData: TransactionData = {
         mode,
         chainId: formInput.chainId,
@@ -88,6 +96,15 @@ export function StakingTransactionForm({
         format: "json", // FIXME Not always the default, should come from chains config
       };
 
+      // Handle auto-setting of sender for unstake or claim rewards based on selected staking position
+      if (
+        (mode === TransactionMode.UNDELEGATE ||
+          mode === TransactionMode.CLAIM_REWARDS) &&
+        selectedStakingPosition
+      ) {
+        transactionData.sender = selectedStakingPosition.addresses[0]; // Automatically use the first address from staking position
+      }
+
       if (formInput.amount && !formInput.useMaxAmount) {
         transactionData.amount = amountToSmallestUnit(
           formInput.amount.toString(),
@@ -95,7 +112,6 @@ export function StakingTransactionForm({
         );
       }
 
-      // FIXME Hack to be able to provide the pubKey, probably better to refacto
       const pubKey = assets.find(
         (asset) => asset.address === formInput.sender
       )?.pubKey;
@@ -130,8 +146,35 @@ export function StakingTransactionForm({
         },
       });
     },
-    [assets, decimals, mode, mutate, setTransaction, setTransactionHash]
+    [
+      assets,
+      decimals,
+      mode,
+      mutate,
+      setTransaction,
+      setTransactionHash,
+      selectedStakingPosition,
+    ]
   );
+
+  const handleStakingPositionChange = (stakingPosition: StakingPosition) => {
+    setSelectedStakingPosition(stakingPosition);
+
+    const associatedAsset = assets.find(
+      (asset) => asset.chainId === stakingPosition.chainId
+    );
+
+    if (associatedAsset) {
+      setDecimals(associatedAsset.decimals);
+    }
+
+    if (
+      mode === TransactionMode.UNDELEGATE ||
+      mode === TransactionMode.CLAIM_REWARDS
+    ) {
+      form.setValue("sender", stakingPosition.addresses[0]);
+    }
+  };
 
   if (isPending) {
     return <TransactionLoading />;
@@ -173,13 +216,15 @@ export function StakingTransactionForm({
       <h1 className="font-bold text-xl text-center">{label}</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 px-4">
-          <AssetFormField
-            form={form}
-            assets={assets}
-            setDecimals={setDecimals}
-          />
+          {mode === TransactionMode.DELEGATE && (
+            <AssetFormField
+              form={form}
+              assets={assets}
+              setDecimals={setDecimals}
+            />
+          )}
 
-          <SenderFormField form={form} />
+          {mode === TransactionMode.DELEGATE && <SenderFormField form={form} />}
 
           {mode === TransactionMode.DELEGATE && (
             <ValidatorFormField
@@ -195,6 +240,8 @@ export function StakingTransactionForm({
               form={form}
               stakingPositions={stakingPositions}
               validators={validators}
+              onStakingPositionChange={handleStakingPositionChange}
+              setDecimals={setDecimals}
             />
           )}
 
