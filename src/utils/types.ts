@@ -125,13 +125,16 @@ export type Asset = {
 
 // Enum to list different features that a chain might support.
 export enum Feature {
-  BALANCES_NATIVE = "balances.native",
-  BALANCES_TOKENS = "balances.tokens",
-  BALANCES_STAKING = "balances.staking",
-  TRANSACTIONS_NATIVE = "transactions.native",
-  TRANSACTIONS_TOKENS = "transactions.tokens",
-  TRANSACTIONS_STAKING = "transactions.staking",
-  MEMO = "memo",
+  READ_ACCOUNT_BALANCES_NATIVE = "read.account.balances.native",
+  READ_ACCOUNT_BALANCES_TOKENS = "read.account.balances.tokens",
+  READ_ACCOUNT_BALANCES_STAKING = "read.account.balances.staking",
+  READ_TRANSACTION_NATIVE = "read.transaction.native",
+  READ_TRANSACTION_TOKENS = "read.transaction.tokens",
+  READ_TRANSACTION_STAKING = "read.transaction.staking",
+  WRITE_TRANSACTION_TYPE_NATIVE = "write.transaction.type.native",
+  WRITE_TRANSACTION_TYPE_TOKENS = "write.transaction.type.tokens",
+  WRITE_TRANSACTION_TYPE_STAKING = "write.transaction.type.staking",
+  WRITE_TRANSACTION_FIELD_MEMO = "write.transaction.field.memo",
 }
 
 // Represents the configuration of a blockchain.
