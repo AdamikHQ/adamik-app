@@ -179,28 +179,13 @@ const StakingPositionView = ({
             <Tooltip text={validator?.address}>
               <TooltipTrigger>
                 <Avatar className="w-[32px] h-[32px]">
-                  <AvatarFallback>
-                    {validator.name[0].toUpperCase() ||
-                      validator?.address[0].toUpperCase()}
-                  </AvatarFallback>
+                  <AvatarImage
+                    src={validator.chainLogo}
+                    alt={validator.chainId}
+                  />
                 </Avatar>
               </TooltipTrigger>
             </Tooltip>
-            {validator.chainLogo && (
-              <Tooltip text={validator.chainId}>
-                <TooltipTrigger>
-                  <div className="absolute w-4 h-4 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-[6px] -end-1">
-                    <Avatar className="h-3 w-3">
-                      <AvatarImage
-                        src={validator.chainLogo}
-                        alt={validator.chainId}
-                      />
-                      <AvatarFallback>{validator.chainId}</AvatarFallback>
-                    </Avatar>
-                  </div>
-                </TooltipTrigger>
-              </Tooltip>
-            )}
           </div>
         )}
         <div className="flex-1 text-right">{validator.name}</div>
