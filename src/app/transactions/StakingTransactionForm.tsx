@@ -62,8 +62,9 @@ export function StakingTransactionForm({
   const [decimals, setDecimals] = useState<number>(0);
   const { transaction, setTransaction, setTransactionHash } = useTransaction();
   const [errors, setErrors] = useState("");
-  const [selectedStakingPosition, setSelectedStakingPosition] =
-    useState<StakingPosition | null>(null);
+  const [selectedStakingPosition, setSelectedStakingPosition] = useState<
+    StakingPosition | undefined
+  >();
   const prevStakingPositionRef = useRef<StakingPosition | null>(null);
 
   const label = useMemo(() => {
