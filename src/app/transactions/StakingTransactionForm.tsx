@@ -211,8 +211,6 @@ export function StakingTransactionForm({
     );
   }
 
-  console.log({assets});
-
   return (
     <>
       <h1 className="font-bold text-xl text-center">{label}</h1>
