@@ -153,6 +153,7 @@ export const getAddressStakingPositions = (
           const uniqueKey = `${validatorAddress}_${position.status}`;
 
           newAcc[uniqueKey] = {
+            ...newAcc[uniqueKey], // Keep existing data if already processed
             ...position,
             addresses: [accountData.accountId].concat(currentAddresses),
             validatorName: validatorInfo?.name,
@@ -178,26 +179,28 @@ export const getAddressStakingPositions = (
         });
       });
 
-      // Handle native rewards
+      // Handle native rewards by merging them into the existing staking position
       (accountData?.balances.staking?.rewards.native || []).forEach(
         (reward) => {
-          const uniqueKey = `${reward.validatorAddress}_rewards`;
+          const uniqueKey = `${reward.validatorAddress}_locked`;
 
-          newAcc[uniqueKey] = {
-            ...(newAcc[uniqueKey] || {}),
-            rewardAmount:
-              amountToMainUnit(reward.amount, chainDetails.decimals) || "-",
-            rewardAmountUSD: getAmountToUSD(
-              reward.amount,
-              chainDetails.decimals,
-              mobulaMarketData,
-              chainDetails
-            ),
-          };
+          if (newAcc[uniqueKey]) {
+            newAcc[uniqueKey] = {
+              ...newAcc[uniqueKey],
+              rewardAmount:
+                amountToMainUnit(reward.amount, chainDetails.decimals) || "-",
+              rewardAmountUSD: getAmountToUSD(
+                reward.amount,
+                chainDetails.decimals,
+                mobulaMarketData,
+                chainDetails
+              ),
+            };
+          }
         }
       );
 
-      // Handle token rewards
+      // Handle token rewards by merging them into the existing staking position
       (accountData?.balances.staking?.rewards.tokens || []).forEach(
         (reward) => {
           if (
@@ -224,15 +227,17 @@ export const getAddressStakingPositions = (
             },
           };
 
-          const uniqueKey = `${reward.validatorAddress}_tokens`;
+          const uniqueKey = `${reward.validatorAddress}_locked`;
 
-          newAcc[uniqueKey] = {
-            ...(newAcc[uniqueKey] || {}),
-            rewardTokens: [
-              ...(newAcc[uniqueKey]?.rewardTokens || []),
-              tokenAmount,
-            ],
-          };
+          if (newAcc[uniqueKey]) {
+            newAcc[uniqueKey] = {
+              ...newAcc[uniqueKey],
+              rewardTokens: [
+                ...(newAcc[uniqueKey]?.rewardTokens || []),
+                tokenAmount,
+              ],
+            };
+          }
         }
       );
 
