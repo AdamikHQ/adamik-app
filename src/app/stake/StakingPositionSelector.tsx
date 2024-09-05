@@ -190,8 +190,7 @@ const StakingPositionView = ({
         )}
         <div className="flex-1 text-right">{validator.name}</div>
         <div className="font-bold flex-1 text-right">
-          Stake: {stakingPosition.amount}
-          {/* FIXME Need to display the unit too */}
+          {stakingPosition.amount} {stakingPosition.ticker}
         </div>
       </div>
     )
