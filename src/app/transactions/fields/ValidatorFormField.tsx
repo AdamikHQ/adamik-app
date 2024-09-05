@@ -25,9 +25,6 @@ export function ValidatorFormField({
   // Watch the chainId to trigger re-render
   const chainId = form.watch("chainId");
 
-  // Log chainId and validatorIndex to track changes
-  useEffect(() => {}, [chainId, form]);
-
   return (
     <FormField
       control={form.control}
