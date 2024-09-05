@@ -22,6 +22,7 @@ import { ScrollArea } from "~/components/ui/scroll-area";
 import { Tooltip, TooltipTrigger } from "~/components/ui/tooltip";
 import { StakingPosition } from "./helpers";
 import { TransactionMode, Validator } from "~/utils/types";
+import { formatAmount } from "~/utils/helper";
 
 type StakingPositionSelectorProps = {
   stakingPositions: StakingPosition[];
@@ -46,7 +47,7 @@ export function StakingPositionSelector({
 
   const label =
     mode === TransactionMode.CLAIM_REWARDS
-      ? "Select a position to claim rewards"
+      ? "Select rewards to claim"
       : "Select a position";
 
   if (isDesktop) {
@@ -197,6 +198,17 @@ const StakingPositionView = ({
     );
   }, [stakingPosition, validators]);
 
+  // Define the threshold for showing rewards
+  const MIN_REWARD_THRESHOLD = 0.00001;
+
+  const formattedRewardAmount = stakingPosition.rewardAmount
+    ? parseFloat(stakingPosition.rewardAmount)
+    : 0;
+
+  const displayReward =
+    formattedRewardAmount >= MIN_REWARD_THRESHOLD
+      ? formatAmount(formattedRewardAmount, 3)
+      : `>${MIN_REWARD_THRESHOLD}`;
   return (
     validator && (
       <div className="flex items-center justify-between w-full">
@@ -219,10 +231,13 @@ const StakingPositionView = ({
         <div className="font-bold flex-1 text-right">
           {mode === TransactionMode.CLAIM_REWARDS ? (
             <>
-              {stakingPosition.rewardAmount
-                ? parseFloat(stakingPosition.rewardAmount).toFixed(3)
-                : "0"}{" "}
-              {stakingPosition.ticker} Rewards
+              {stakingPosition.rewardAmount ? (
+                <div>
+                  {displayReward} {stakingPosition.ticker}
+                </div>
+              ) : (
+                "0 Rewards"
+              )}
             </>
           ) : (
             <>
