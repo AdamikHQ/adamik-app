@@ -51,12 +51,12 @@ export default function SupportedChains() {
       // Determine labels based on chain features
       const labels: string[] = [];
       if (
-        chain.supportedFeatures.includes(Feature.BALANCES_TOKENS) &&
-        chain.supportedFeatures.includes(Feature.TRANSACTIONS_TOKENS)
+        chain.supportedFeatures.includes(Feature.READ_ACCOUNT_BALANCES_TOKENS) &&
+        chain.supportedFeatures.includes(Feature.READ_TRANSACTION_TOKENS)
       ) {
         labels.push("token");
       }
-      if (chain.supportedFeatures.includes(Feature.BALANCES_STAKING)) {
+      if (chain.supportedFeatures.includes(Feature.READ_ACCOUNT_BALANCES_STAKING)) {
         labels.push("staking");
       }
 
