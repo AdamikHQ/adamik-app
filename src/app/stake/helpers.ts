@@ -147,7 +147,12 @@ export const getAddressStakingPositions = (
             validatorAddress
           );
           const currentAddresses = newAcc[validatorAddress]?.addresses || [];
-          newAcc[validatorAddress] = {
+
+          // Create a unique key combining validatorAddress and status
+          const uniqueKey = `${validatorAddress}_${position.status}`;
+
+          newAcc[uniqueKey] = {
+            ...newAcc[uniqueKey], // Keep existing data if already processed
             ...position,
             addresses: [accountData.accountId].concat(currentAddresses),
             validatorName: validatorInfo?.name,
@@ -167,28 +172,34 @@ export const getAddressStakingPositions = (
               mobulaMarketData,
               chainDetails
             ),
+            status: position.status,
+            completionDate: position.completionDate, // If exists for 'unlocking' positions
           };
         });
       });
 
-      // Handle native rewards
+      // Handle native rewards and merge them into the existing staking position
       (accountData?.balances.staking?.rewards.native || []).forEach(
         (reward) => {
-          newAcc[reward.validatorAddress] = {
-            ...(newAcc[reward.validatorAddress] || {}),
-            rewardAmount:
-              amountToMainUnit(reward.amount, chainDetails.decimals) || "-",
-            rewardAmountUSD: getAmountToUSD(
-              reward.amount,
-              chainDetails.decimals,
-              mobulaMarketData,
-              chainDetails
-            ),
-          };
+          const uniqueKey = `${reward.validatorAddress}_locked`;
+
+          if (newAcc[uniqueKey]) {
+            newAcc[uniqueKey] = {
+              ...newAcc[uniqueKey],
+              rewardAmount:
+                amountToMainUnit(reward.amount, chainDetails.decimals) || "-",
+              rewardAmountUSD: getAmountToUSD(
+                reward.amount,
+                chainDetails.decimals,
+                mobulaMarketData,
+                chainDetails
+              ),
+            };
+          }
         }
       );
 
-      // Handle token rewards
+      // Handle token rewards and merge them into the existing staking position
       (accountData?.balances.staking?.rewards.tokens || []).forEach(
         (reward) => {
           if (
@@ -206,7 +217,7 @@ export const getAddressStakingPositions = (
               amountToMainUnit(reward.amount, reward.token.decimals) || "-",
             token: {
               chainId: accountData.chainId,
-              type: reward.token.type || "unknown", // Adjust this based on your requirements
+              type: reward.token.type || "unknown",
               id: reward.token.id,
               name: reward.token.name,
               ticker: reward.token.ticker,
@@ -215,13 +226,17 @@ export const getAddressStakingPositions = (
             },
           };
 
-          newAcc[reward.validatorAddress] = {
-            ...(newAcc[reward.validatorAddress] || {}),
-            rewardTokens: [
-              ...(newAcc[reward.validatorAddress]?.rewardTokens || []),
-              tokenAmount,
-            ],
-          };
+          const uniqueKey = `${reward.validatorAddress}_locked`;
+
+          if (newAcc[uniqueKey]) {
+            newAcc[uniqueKey] = {
+              ...newAcc[uniqueKey],
+              rewardTokens: [
+                ...(newAcc[uniqueKey]?.rewardTokens || []),
+                tokenAmount,
+              ],
+            };
+          }
         }
       );
 
