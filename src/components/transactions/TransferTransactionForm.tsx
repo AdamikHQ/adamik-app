@@ -21,7 +21,7 @@ import { AssetFormField } from "./fields/AssetFormField";
 import { SenderFormField } from "./fields/SenderFormField";
 import { RecipientFormField } from "./fields/RecipientFormField";
 import { AmountFormField } from "./fields/AmountFormField";
-import { TransactionLoading } from "../portfolio/TransactionLoading";
+import { TransactionLoading } from "~/app/portfolio/TransactionLoading";
 
 type TransactionProps = {
   onNextStep: () => void;
@@ -164,7 +164,7 @@ export function TransferTransactionForm({
           {errors && (
             <div className="text-red-500 w-full break-all">{errors}</div>
           )}
-          
+
           <Button type="submit" className="w-full">
             Submit
           </Button>

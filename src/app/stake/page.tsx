@@ -18,7 +18,7 @@ import {
   filterAndSortAssets,
   getTickers,
 } from "../portfolio/helpers";
-import { WalletSelection } from "../wallets/WalletSelection";
+import { WalletSelection } from "~/components/wallets/WalletSelection";
 import { StakingBalances } from "./StakingBalances";
 import {
   aggregateStakingBalances,
@@ -28,7 +28,7 @@ import {
 import { StakingPositionsList } from "./StakingPositionsList";
 import { useMemo, useState } from "react";
 import { Modal } from "~/components/ui/modal";
-import { WalletSigner } from "../wallets/WalletSigner";
+import { WalletSigner } from "~/components/wallets/WalletSigner";
 import { ConnectWallet } from "../portfolio/ConnectWallet";
 import { clearAccountStateCache } from "~/hooks/useAccountState";
 import { useToast } from "~/components/ui/use-toast";
@@ -36,7 +36,7 @@ import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useTransaction } from "~/hooks/useTransaction";
 import { useChains } from "~/hooks/useChains";
 import { TransactionMode } from "~/utils/types";
-import { StakingTransactionForm } from "../transactions/StakingTransactionForm";
+import { StakingTransactionForm } from "~/components/transactions/StakingTransactionForm";
 
 export default function Stake() {
   const { addresses, isShowroom, setWalletMenuOpen } = useWallet();

@@ -19,8 +19,8 @@ import {
   aggregateStakingBalances,
   getAddressStakingPositions,
 } from "../stake/helpers";
-import { WalletSelection } from "../wallets/WalletSelection";
-import { WalletSigner } from "../wallets/WalletSigner";
+import { WalletSelection } from "~/components/wallets/WalletSelection";
+import { WalletSigner } from "~/components/wallets/WalletSigner";
 import { AssetsBalances } from "./AssetsBalances";
 import { AssetsBreakdown } from "./AssetsBreakdown";
 import { AssetsList } from "./AssetsList";
@@ -32,7 +32,7 @@ import {
   getTokenContractAddresses,
   getTokenTickers,
 } from "./helpers";
-import { TransferTransactionForm } from "../transactions/TransferTransactionForm";
+import { TransferTransactionForm } from "~/components/transactions/TransferTransactionForm";
 
 export default function Portfolio() {
   const {
