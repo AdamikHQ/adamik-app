@@ -65,8 +65,6 @@ export function StakingTransactionForm({
   const [selectedStakingPosition, setSelectedStakingPosition] = useState<
     StakingPosition | undefined
   >();
-  const prevStakingPositionRef = useRef<StakingPosition | null>(null);
-
   const label = useMemo(() => {
     switch (mode) {
       case TransactionMode.DELEGATE:
@@ -238,6 +236,7 @@ export function StakingTransactionForm({
           {(mode === TransactionMode.UNDELEGATE ||
             mode === TransactionMode.CLAIM_REWARDS) && (
             <StakingPositionFormField
+              mode={mode}
               form={form}
               stakingPositions={stakingPositions}
               validators={validators}
