@@ -28,13 +28,13 @@ const getSimplifiedTimeRemaining = (completionDate: number): string => {
   // Convert timeRemaining to a simplified format
   const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
   const hours = Math.floor((timeRemaining / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((timeRemaining / (1000 * 60)) % 60);
 
   if (days > 0) {
     return `${days} day${days > 1 ? "s" : ""} left`;
   } else if (hours > 0) {
     return `${hours} hour${hours > 1 ? "s" : ""} left`;
   } else {
-    const minutes = Math.floor((timeRemaining / (1000 * 60)) % 60);
     return `${minutes} minute${minutes > 1 ? "s" : ""} left`;
   }
 };
@@ -96,14 +96,7 @@ const StakingPositionsListRow: React.FC<{
         <TableCellWithTooltip text={formattedAddresses}>
           {position.status === "unlocking" && position.completionDate ? (
             <div>
-              {/* Unlocking status with timer icon */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  fontWeight: "bold",
-                }}
-              >
+              <div style={{ display: "flex", alignItems: "center" }}>
                 <span
                   role="img"
                   aria-label="timer-icon"
@@ -113,13 +106,14 @@ const StakingPositionsListRow: React.FC<{
                 </span>
                 <span>Unlocking</span>
               </div>
-              <div style={{ fontSize: "12px", color: "gray" }}>
+              <div
+                style={{ fontSize: "12px", color: "gray", marginTop: "4px" }}
+              >
                 {getSimplifiedTimeRemaining(position.completionDate)}
               </div>
             </div>
           ) : (
             <div style={{ display: "flex", alignItems: "center" }}>
-              {/* Locked status with lock icon */}
               <span
                 role="img"
                 aria-label="lock-icon"
