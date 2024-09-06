@@ -20,17 +20,23 @@ import { StakingPosition } from "./helpers";
 import { RefreshCw } from "lucide-react";
 import { Button } from "~/components/ui/button";
 
-const getTimeRemaining = (completionDate: number): string => {
+const getSimplifiedTimeRemaining = (completionDate: number): string => {
   const currentTime = Date.now();
   const timeRemaining = completionDate - currentTime;
   if (timeRemaining <= 0) return "Completed";
 
-  // Convert timeRemaining from milliseconds to a human-readable format
+  // Convert timeRemaining to a simplified format
   const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
   const hours = Math.floor((timeRemaining / (1000 * 60 * 60)) % 24);
-  const minutes = Math.floor((timeRemaining / (1000 * 60)) % 60);
 
-  return `${days}d ${hours}h ${minutes}m remaining`;
+  if (days > 0) {
+    return `${days} day${days > 1 ? "s" : ""} left`;
+  } else if (hours > 0) {
+    return `${hours} hour${hours > 1 ? "s" : ""} left`;
+  } else {
+    const minutes = Math.floor((timeRemaining / (1000 * 60)) % 60);
+    return `${minutes} minute${minutes > 1 ? "s" : ""} left`;
+  }
 };
 
 const StakingPositionsListRow: React.FC<{
@@ -90,10 +96,39 @@ const StakingPositionsListRow: React.FC<{
         <TableCellWithTooltip text={formattedAddresses}>
           {position.status === "unlocking" && position.completionDate ? (
             <div>
-              {position.status} ({getTimeRemaining(position.completionDate)})
+              {/* Unlocking status with timer icon */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  fontWeight: "bold",
+                }}
+              >
+                <span
+                  role="img"
+                  aria-label="timer-icon"
+                  style={{ marginRight: "5px" }}
+                >
+                  ⏳
+                </span>
+                <span>Unlocking</span>
+              </div>
+              <div style={{ fontSize: "12px", color: "gray" }}>
+                {getSimplifiedTimeRemaining(position.completionDate)}
+              </div>
             </div>
           ) : (
-            position.status
+            <div style={{ display: "flex", alignItems: "center" }}>
+              {/* Locked status with lock icon */}
+              <span
+                role="img"
+                aria-label="lock-icon"
+                style={{ marginRight: "5px" }}
+              >
+                🔒
+              </span>
+              <span>Locked</span>
+            </div>
           )}
         </TableCellWithTooltip>
 
