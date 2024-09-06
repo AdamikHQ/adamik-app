@@ -21,13 +21,15 @@ import {
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Tooltip, TooltipTrigger } from "~/components/ui/tooltip";
 import { StakingPosition } from "./helpers";
-import { Validator } from "~/utils/types";
+import { TransactionMode, Validator } from "~/utils/types";
+import { formatAmount } from "~/utils/helper";
 
 type StakingPositionSelectorProps = {
   stakingPositions: StakingPosition[];
   validators: Validator[];
   selectedValue: StakingPosition | undefined;
   onSelect: (stakingPosition: StakingPosition, index: number) => void;
+  mode: TransactionMode;
 };
 
 export function StakingPositionSelector({
@@ -35,12 +37,18 @@ export function StakingPositionSelector({
   validators,
   selectedValue,
   onSelect,
+  mode,
 }: StakingPositionSelectorProps): ReactNode {
   const [open, setOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [selectedChoice, setSelectedChoice] = useState<
     StakingPosition | undefined
   >(selectedValue);
+
+  const label =
+    mode === TransactionMode.CLAIM_REWARDS
+      ? "Select rewards to claim"
+      : "Select a position";
 
   if (isDesktop) {
     return (
@@ -55,9 +63,10 @@ export function StakingPositionSelector({
               <StakingPositionView
                 stakingPosition={selectedChoice}
                 validators={validators}
+                mode={mode}
               />
             ) : (
-              <>Select a position</>
+              <>{label}</>
             )}
           </Button>
         </PopoverTrigger>
@@ -68,6 +77,7 @@ export function StakingPositionSelector({
             onSelect={onSelect}
             stakingPositions={stakingPositions}
             validators={validators}
+            mode={mode}
           />
         </PopoverContent>
       </Popover>
@@ -86,9 +96,10 @@ export function StakingPositionSelector({
             <StakingPositionView
               stakingPosition={selectedChoice}
               validators={validators}
+              mode={mode}
             />
           ) : (
-            <>Select a position</>
+            <>{label}</>
           )}
         </Button>
       </DrawerTrigger>
@@ -100,6 +111,7 @@ export function StakingPositionSelector({
             onSelect={onSelect}
             stakingPositions={stakingPositions}
             validators={validators}
+            mode={mode}
           />
         </div>
       </DrawerContent>
@@ -113,13 +125,27 @@ const StakingPositionSelectorList = ({
   onSelect,
   stakingPositions,
   validators,
+  mode,
 }: {
   setOpen: (open: boolean) => void;
   setSelectedChoice: (choice: StakingPosition | undefined) => void;
   onSelect: (stakingPosition: StakingPosition, index: number) => void;
   stakingPositions: StakingPosition[];
   validators: Validator[];
+  mode: TransactionMode;
 }) => {
+  const filteredPositions = useMemo(() => {
+    if (mode === TransactionMode.CLAIM_REWARDS) {
+      return stakingPositions.filter(
+        (position) =>
+          position.rewardAmount && parseFloat(position.rewardAmount) > 0
+      );
+    }
+    return stakingPositions.filter(
+      (position) => position.status !== "unlocking"
+    );
+  }, [stakingPositions, mode]);
+
   return (
     <Command>
       <CommandInput placeholder="Filter positions..." />
@@ -127,25 +153,24 @@ const StakingPositionSelectorList = ({
         <CommandEmpty>No results found.</CommandEmpty>
         <ScrollArea className="h-[240px] overflow-auto">
           <CommandGroup>
-            {stakingPositions
-              .filter((position) => position.status !== "unlocking") // Filtering logic
-              .map((stakingPosition, i) => (
-                <CommandItem
-                  key={`${stakingPosition.validatorAddresses[0]}_${i}`}
-                  value={`${stakingPosition.validatorName}_${i.toString()}`}
-                  onSelect={(value) => {
-                    const [name, index] = value.split("_");
-                    setSelectedChoice(stakingPositions[Number(index)]);
-                    setOpen(false);
-                    onSelect(stakingPosition, i);
-                  }}
-                >
-                  <StakingPositionView
-                    stakingPosition={stakingPosition}
-                    validators={validators}
-                  />
-                </CommandItem>
-              ))}
+            {filteredPositions.map((stakingPosition, i) => (
+              <CommandItem
+                key={`${stakingPosition.validatorAddresses[0]}_${i}`}
+                value={`${stakingPosition.validatorName}_${i.toString()}`}
+                onSelect={(value) => {
+                  const [name, index] = value.split("_");
+                  setSelectedChoice(stakingPositions[Number(index)]);
+                  setOpen(false);
+                  onSelect(stakingPosition, i);
+                }}
+              >
+                <StakingPositionView
+                  stakingPosition={stakingPosition}
+                  validators={validators}
+                  mode={mode}
+                />
+              </CommandItem>
+            ))}
           </CommandGroup>
         </ScrollArea>
       </CommandList>
@@ -156,9 +181,11 @@ const StakingPositionSelectorList = ({
 const StakingPositionView = ({
   stakingPosition,
   validators,
+  mode,
 }: {
   stakingPosition: StakingPosition;
   validators: Validator[];
+  mode: TransactionMode;
 }) => {
   const validator = useMemo(() => {
     // FIXME Hack for Cosmos, all validatorAddresses should be handled not just the 1st one
@@ -171,6 +198,17 @@ const StakingPositionView = ({
     );
   }, [stakingPosition, validators]);
 
+  // Define the threshold for showing rewards
+  const MIN_REWARD_THRESHOLD = 0.00001;
+
+  const formattedRewardAmount = stakingPosition.rewardAmount
+    ? parseFloat(stakingPosition.rewardAmount)
+    : 0;
+
+  const displayReward =
+    formattedRewardAmount >= MIN_REWARD_THRESHOLD
+      ? formatAmount(formattedRewardAmount, 3)
+      : `>${MIN_REWARD_THRESHOLD}`;
   return (
     validator && (
       <div className="flex items-center justify-between w-full">
@@ -179,34 +217,34 @@ const StakingPositionView = ({
             <Tooltip text={validator?.address}>
               <TooltipTrigger>
                 <Avatar className="w-[32px] h-[32px]">
-                  <AvatarFallback>
-                    {validator.name[0].toUpperCase() ||
-                      validator?.address[0].toUpperCase()}
-                  </AvatarFallback>
+                  <AvatarImage
+                    src={validator.chainLogo}
+                    alt={validator.chainId}
+                  />
                 </Avatar>
               </TooltipTrigger>
             </Tooltip>
-            {validator.chainLogo && (
-              <Tooltip text={validator.chainId}>
-                <TooltipTrigger>
-                  <div className="absolute w-4 h-4 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-[6px] -end-1">
-                    <Avatar className="h-3 w-3">
-                      <AvatarImage
-                        src={validator.chainLogo}
-                        alt={validator.chainId}
-                      />
-                      <AvatarFallback>{validator.chainId}</AvatarFallback>
-                    </Avatar>
-                  </div>
-                </TooltipTrigger>
-              </Tooltip>
-            )}
           </div>
         )}
         <div className="flex-1 text-right">{validator.name}</div>
+
         <div className="font-bold flex-1 text-right">
-          Stake: {stakingPosition.amount}
-          {/* FIXME Need to display the unit too */}
+          {mode === TransactionMode.CLAIM_REWARDS ? (
+            <>
+              {stakingPosition.rewardAmount ? (
+                <div>
+                  {displayReward} {stakingPosition.ticker}
+                </div>
+              ) : (
+                "0 Rewards"
+              )}
+            </>
+          ) : (
+            <>
+              {parseFloat(stakingPosition.amount).toFixed(3)}{" "}
+              {stakingPosition.ticker}
+            </>
+          )}
         </div>
       </div>
     )
