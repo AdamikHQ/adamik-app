@@ -20,6 +20,25 @@ import { StakingPosition } from "./helpers";
 import { RefreshCw } from "lucide-react";
 import { Button } from "~/components/ui/button";
 
+const getSimplifiedTimeRemaining = (completionDate: number): string => {
+  const currentTime = Date.now();
+  const timeRemaining = completionDate - currentTime;
+  if (timeRemaining <= 0) return "Completed";
+
+  // Convert timeRemaining to a simplified format
+  const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((timeRemaining / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((timeRemaining / (1000 * 60)) % 60);
+
+  if (days > 0) {
+    return `${days} day${days > 1 ? "s" : ""} left`;
+  } else if (hours > 0) {
+    return `${hours} hour${hours > 1 ? "s" : ""} left`;
+  } else {
+    return `${minutes} minute${minutes > 1 ? "s" : ""} left`;
+  }
+};
+
 const StakingPositionsListRow: React.FC<{
   position: StakingPosition;
 }> = ({ position }) => {
@@ -75,7 +94,36 @@ const StakingPositionsListRow: React.FC<{
         </TableCellWithTooltip>
 
         <TableCellWithTooltip text={formattedAddresses}>
-          {position.status}
+          {position.status === "unlocking" && position.completionDate ? (
+            <div>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <span
+                  role="img"
+                  aria-label="timer-icon"
+                  style={{ marginRight: "5px" }}
+                >
+                  ⏳
+                </span>
+                <span>Unlocking</span>
+              </div>
+              <div
+                style={{ fontSize: "12px", color: "gray", marginTop: "4px" }}
+              >
+                {getSimplifiedTimeRemaining(position.completionDate)}
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <span
+                role="img"
+                aria-label="lock-icon"
+                style={{ marginRight: "5px" }}
+              >
+                🔒
+              </span>
+              <span>Locked</span>
+            </div>
+          )}
         </TableCellWithTooltip>
 
         <TableCellWithTooltip text={formattedAddresses}>
