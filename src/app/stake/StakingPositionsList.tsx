@@ -20,6 +20,19 @@ import { StakingPosition } from "./helpers";
 import { RefreshCw } from "lucide-react";
 import { Button } from "~/components/ui/button";
 
+const getTimeRemaining = (completionDate: number): string => {
+  const currentTime = Date.now();
+  const timeRemaining = completionDate - currentTime;
+  if (timeRemaining <= 0) return "Completed";
+
+  // Convert timeRemaining from milliseconds to a human-readable format
+  const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((timeRemaining / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((timeRemaining / (1000 * 60)) % 60);
+
+  return `${days}d ${hours}h ${minutes}m remaining`;
+};
+
 const StakingPositionsListRow: React.FC<{
   position: StakingPosition;
 }> = ({ position }) => {
@@ -75,7 +88,13 @@ const StakingPositionsListRow: React.FC<{
         </TableCellWithTooltip>
 
         <TableCellWithTooltip text={formattedAddresses}>
-          {position.status}
+          {position.status === "unlocking" && position.completionDate ? (
+            <div>
+              {position.status} ({getTimeRemaining(position.completionDate)})
+            </div>
+          ) : (
+            position.status
+          )}
         </TableCellWithTooltip>
 
         <TableCellWithTooltip text={formattedAddresses}>
