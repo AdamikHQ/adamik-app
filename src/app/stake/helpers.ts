@@ -148,9 +148,8 @@ export const getAddressStakingPositions = (
           );
           const currentAddresses = newAcc[validatorAddress]?.addresses || [];
 
-          // Create a unique key combining validatorAddress and status
-          const uniqueKey = `${validatorAddress}_${position.status}`;
-
+          // Create a unique key combining validatorAddress, status, and completion date
+          const uniqueKey = `${validatorAddress}_${position.status}_${position.completionDate}`;
           newAcc[uniqueKey] = {
             ...newAcc[uniqueKey], // Keep existing data if already processed
             ...position,
