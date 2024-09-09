@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { broadcast } from "~/api/adamik/broadcast";
 import { Transaction } from "~/utils/types";
-import { clearAccountStateCache } from "./useAccountState";
+import { clearAccountStateCache } from "./useAccountStateBatch";
 
 export const useBroadcastTransaction = () => {
   return useMutation({

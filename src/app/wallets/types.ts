@@ -1,5 +1,11 @@
 import { Transaction } from "~/utils/types";
 
+declare global {
+  interface Window {
+    unisat: UnisatWalletInterface;
+  }
+}
+
 export interface IWallet {
   id: string;
   families: string[];
@@ -23,8 +29,18 @@ export enum WalletName {
   METAMASK = "metamask",
   KEPLR = "keplr",
   PERA = "pera",
+  UNISAT = "unisat",
 }
 
 export type WalletConnectorProps = {
   transactionPayload?: Transaction;
+};
+
+/**
+ * Unisat Wallet Interface types from {@link https://github.com/unisat-wallet/extension/blob/04cbfd6e7f7953815d35d8f77df457388fea2707/src/background/controller/wallet.ts}
+ * */
+export type UnisatWalletInterface = {
+  signPsbt(psbtHex: string): Promise<string>;
+  disconnect(): Promise<void>;
+  requestAccounts(): Promise<string[]>;
 };
