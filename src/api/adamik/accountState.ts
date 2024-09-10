@@ -1,12 +1,12 @@
 "use server";
 
-import { env, ADAMIK_API_URL } from "~/env";
+import { ADAMIK_API_URL, env } from "~/env";
 import { AccountState } from "~/utils/types";
 
 // TODO Better API error management, consistent for all endpoints
 export const accountState = async (
   chainId: string,
-  address: string
+  accountId: string
 ): Promise<AccountState | null> => {
   const response = await fetch(`${ADAMIK_API_URL}/account/state`, {
     headers: {
@@ -14,7 +14,7 @@ export const accountState = async (
       "Content-Type": "application/json",
     },
     method: "POST",
-    body: JSON.stringify({ chainId, accountId: address }),
+    body: JSON.stringify({ chainId, accountId }),
   });
 
   const result = await response.json();

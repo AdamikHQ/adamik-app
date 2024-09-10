@@ -19,7 +19,7 @@ export const getMobulaName = (name: string) => {
 // Helpers to convert from/to user-convenient format in main unit, and smallest unit of the chain
 export function amountToSmallestUnit(amount: string, decimals: number): string {
   const computedAmount = Number(amount) * Math.pow(10, decimals);
-  return computedAmount.toString();
+  return Math.trunc(computedAmount).toString();
 }
 
 export function amountToMainUnit(
