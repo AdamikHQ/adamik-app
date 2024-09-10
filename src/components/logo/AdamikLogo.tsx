@@ -1,6 +1,6 @@
 import * as React from "react";
 
-const AdamikFull = ({
+const AdamikLogo = ({
   color,
   ...props
 }: {
@@ -42,4 +42,4 @@ const AdamikFull = ({
     </defs>
   </svg>
 );
-export default AdamikFull;
+export default AdamikLogo;

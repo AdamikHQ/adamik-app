@@ -1,8 +1,8 @@
 import { AccountState, Asset, Chain, Feature } from "~/utils/types";
-import { amountToMainUnit, formatAmount, resolveLogo } from "~/utils/helper";
+import { amountToMainUnit, resolveLogo } from "~/utils/helper";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { MobulaBlockchain } from "~/api/mobula/types";
-import { Address } from "../wallets/types";
+import { Address } from "~/components/wallets/types";
 
 export const getTickers = (data: (Chain | undefined | null)[]) => {
   const reducedArray = data.reduce<string[]>((acc, chainDetail) => {
@@ -96,7 +96,7 @@ export const calculateAssets = (
       // !chainDetails.isTestNet && TMP: Just to usetestnet for test
       mobulaMarketData && mobulaMarketData[chainDetails.ticker]
         ? mobulaMarketData[chainDetails.ticker]?.price *
-        parseFloat(balanceMainUnit as string)
+          parseFloat(balanceMainUnit as string)
         : undefined;
 
     const mainChainAsset = {
@@ -139,7 +139,7 @@ export const calculateAssets = (
           const balanceUSD =
             mobulaMarketData && mobulaMarketData[tokenIndex]
               ? mobulaMarketData[tokenIndex]?.price *
-              parseFloat(balanceMainUnit as string)
+                parseFloat(balanceMainUnit as string)
               : undefined;
 
           return [

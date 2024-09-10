@@ -27,15 +27,15 @@ import {
   filterAndSortAssets,
   getTickers,
 } from "../portfolio/helpers";
-import { StakingTransactionForm } from "../transactions/StakingTransactionForm";
-import { WalletSelection } from "../wallets/WalletSelection";
-import { WalletSigner } from "../wallets/WalletSigner";
+import { WalletSelection } from "~/components/wallets/WalletSelection";
+import { StakingBalances } from "./StakingBalances";
+import { StakingTransactionForm } from "~/components/transactions/StakingTransactionForm";
+import { WalletSigner } from "~/components/wallets/WalletSigner";
 import {
   aggregateStakingBalances,
   createValidatorList,
   getAddressStakingPositions,
 } from "./helpers";
-import { StakingBalances } from "./StakingBalances";
 import { StakingPositionsList } from "./StakingPositionsList";
 
 export default function Stake() {
