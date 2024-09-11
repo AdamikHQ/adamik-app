@@ -43,7 +43,13 @@ export const MetamaskConnect: React.FC<WalletConnectorProps> = ({
         for (const address of metamaskAddresses) {
           // FIXME Should loop over all supported chains for full discovery, but limited for now for performance
           //for (const chainId of evmChainIds)
-          for (const chainId of ["ethereum", "optimism", "arbitrum", "base"])
+          for (const chainId of [
+            "ethereum",
+            "optimism",
+            "arbitrum",
+            "base",
+            "polygon",
+          ])
             addresses.push({
               address,
               chainId,
