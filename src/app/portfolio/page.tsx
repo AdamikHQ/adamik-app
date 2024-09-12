@@ -6,12 +6,11 @@ import { LoadingModal } from "~/components/layout/LoadingModal";
 import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { Modal } from "~/components/ui/modal";
 import { Tooltip } from "~/components/ui/tooltip";
-import { Button } from "~/components/ui/button"; // Import the Button component
-import { useToast } from "~/components/ui/use-toast"; // Import the toast functionality
+import { useToast } from "~/components/ui/use-toast";
 import {
   isInAccountStateBatchCache,
   useAccountStateBatch,
-  clearAccountStateCache, // Import the function to clear cache
+  clearAccountStateCache,
 } from "~/hooks/useAccountStateBatch";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
@@ -44,7 +43,7 @@ export default function Portfolio() {
     isShowroom,
   } = useWallet();
 
-  const { toast } = useToast(); // Initialize toast
+  const { toast } = useToast();
   const displayAddresses = isShowroom ? showroomAddresses : walletAddresses;
   const addressesChainIds = displayAddresses.reduce<string[]>(
     (acc, { chainId }) => {
@@ -157,7 +156,6 @@ export default function Portfolio() {
     stakingBalances.stakedBalance +
     stakingBalances.unstakingBalance;
 
-  // Refresh function to clear cache and re-fetch data
   const refreshPositions = () => {
     toast({ description: "Refreshing portfolio..." });
     assets.forEach((asset) => {
@@ -186,10 +184,6 @@ export default function Portfolio() {
             </a>
           </Tooltip>
         </div>
-
-        {/* Add the Refresh Button */}
-        <Button onClick={refreshPositions}>Refresh</Button>
-
         <WalletSelection />
       </div>
 
@@ -210,6 +204,7 @@ export default function Portfolio() {
           setOpenTransaction={setOpenTransaction}
           hideLowBalance={hideLowBalance}
           setHideLowBalance={setHideLowBalance}
+          refreshPositions={refreshPositions}
         />
 
         <AssetsBreakdown
