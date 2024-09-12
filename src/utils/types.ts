@@ -123,6 +123,39 @@ export type Asset = {
   isStakable?: boolean;
 };
 
+export type FinalizedTransaction = {
+  parsed?: {
+    chainId: string;
+    id: string;
+    mode: TransactionMode;
+    tokenId?: string;
+    state: string;
+    blockHeight?: string;
+    timestamp?: number;
+    senders: {
+      address: string;
+    }[];
+    recipients: {
+      address: string;
+      amount: string;
+    }[];
+    validators?: {
+      source?: {
+        address: string;
+      };
+      target?: {
+        address: string;
+        amount: string;
+      };
+    };
+    fees: string;
+    gas?: string;
+    nonce?: string;
+    memo?: string;
+  };
+  raw: unknown; // The raw transaction as returned from the node (or explorer when necessary)
+};
+
 // Enum to list different features that a chain might support.
 export enum Feature {
   READ_ACCOUNT_BALANCES_NATIVE = "read.account.balances.native",

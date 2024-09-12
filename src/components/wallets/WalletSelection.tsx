@@ -11,6 +11,7 @@ import { Label } from "~/components/ui/label";
 import { KeplrConnect } from "./KeplrConnect";
 import { MetamaskConnect } from "./MetamaskConnect";
 import { PeraConnect } from "./PeraConnect";
+import { UniSatConnect } from "./UniSatConnect";
 
 const WalletModalContent = () => {
   return (
@@ -18,6 +19,7 @@ const WalletModalContent = () => {
       <MetamaskConnect />
       <KeplrConnect />
       <PeraConnect />
+      <UniSatConnect />
     </div>
   );
 };

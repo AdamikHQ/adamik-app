@@ -28,7 +28,7 @@ import { SenderFormField } from "./fields/SenderFormField";
 import { ValidatorFormField } from "./fields/ValidatorFormField";
 import { AmountFormField } from "./fields/AmountFormField";
 import { StakingPositionFormField } from "./fields/StakingPositionFormField";
-import { StakingPosition } from "../stake/helpers";
+import { StakingPosition } from "~/app/stake/helpers";
 
 type StakingTransactionProps = {
   mode: TransactionMode;
@@ -39,6 +39,8 @@ type StakingTransactionProps = {
 };
 
 // TODO Only works for Cosmos !!! API abstraction still needed
+
+// FIXME Some duplicate logic to put in common with ./TransferTransactionForm.tsx
 
 export function StakingTransactionForm({
   mode,
@@ -65,8 +67,6 @@ export function StakingTransactionForm({
   const [selectedStakingPosition, setSelectedStakingPosition] = useState<
     StakingPosition | undefined
   >();
-  const prevStakingPositionRef = useRef<StakingPosition | null>(null);
-
   const label = useMemo(() => {
     switch (mode) {
       case TransactionMode.DELEGATE:
@@ -112,6 +112,7 @@ export function StakingTransactionForm({
         );
       }
 
+      // FIXME Hack to be able to provide the pubKey, probably better to refacto
       const pubKey = assets.find(
         (asset) => asset.address === formInput.sender
       )?.pubKey;
@@ -238,6 +239,7 @@ export function StakingTransactionForm({
           {(mode === TransactionMode.UNDELEGATE ||
             mode === TransactionMode.CLAIM_REWARDS) && (
             <StakingPositionFormField
+              mode={mode}
               form={form}
               stakingPositions={stakingPositions}
               validators={validators}
