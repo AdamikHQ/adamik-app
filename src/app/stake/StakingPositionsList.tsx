@@ -188,10 +188,10 @@ export const StakingPositionsList = ({
     <Card className="lg:col-span-2">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
             Positions
             <Tooltip text="Refresh">
-              <Button onClick={() => refreshPositions()} className="p-2">
+              <Button onClick={refreshPositions} className="p-2 ml-1">
                 <RefreshCw className="hover:animate-spin w-4" />
               </Button>
             </Tooltip>
