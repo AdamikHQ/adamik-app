@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { AdamikLink } from "./AdamikLink";
 import { MenuItem } from "./Menu";
 import { ThemeSelector } from "../ThemeSelector";
-import AdamikFull from "~/components/logo/AdamikFull";
+import AdamikLogo from "~/components/logo/AdamikLogo";
 
 type SideMenuProps = {
   menu: MenuItem[];
@@ -22,7 +22,7 @@ export const SideMenu: React.FC<SideMenuProps> = ({ menu, currentTheme }) => {
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center justify-between border-b px-4 lg:h-[60px] lg:px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold">
-            <AdamikFull
+            <AdamikLogo
               width="152"
               height="32"
               color={currentTheme === "light" ? "#000" : "#fff"}

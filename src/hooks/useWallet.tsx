@@ -1,5 +1,5 @@
 import React from "react";
-import { Address, IWallet } from "~/app/wallets/types";
+import { Address, IWallet } from "~/components/wallets/types";
 
 type WalletContextType = {
   wallets: IWallet[];

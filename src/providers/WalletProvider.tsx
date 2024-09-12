@@ -5,7 +5,7 @@ import { ChainProvider } from "@cosmos-kit/react-lite";
 import { MetaMaskProvider } from "@metamask/sdk-react";
 import { assets, chains } from "chain-registry";
 import React, { useEffect, useState } from "react";
-import { Address, IWallet } from "~/app/wallets/types";
+import { Address, IWallet } from "~/components/wallets/types";
 import { WalletContext } from "~/hooks/useWallet";
 
 const localStorage = typeof window !== "undefined" ? window.localStorage : null;
