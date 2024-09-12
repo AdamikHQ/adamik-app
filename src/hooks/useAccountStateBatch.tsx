@@ -17,7 +17,7 @@ export const isInAccountStateBatchCache = (
   });
 };
 
-// Use account state batch hook to fetch multiple account states
+// TODO Response should be typed
 export const useAccountStateBatch = (
   addressesParams: GetAddressStateParams[]
 ) => {
