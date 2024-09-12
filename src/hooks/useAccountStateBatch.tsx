@@ -11,9 +11,7 @@ export const isInAccountStateBatchCache = (
   addresses: GetAddressStateParams[]
 ) => {
   return addresses.every(({ chainId, address }) => {
-    return queryClientGlobal
-      .getQueryCache()
-      .find({ queryKey: ["accountState", chainId, address] });
+    return queryCache.find({ queryKey: ["accountState", chainId, address] });
   });
 };
 
