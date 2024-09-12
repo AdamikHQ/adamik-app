@@ -94,7 +94,6 @@ export const AssetsList: React.FC<{
       <Card className="lg:col-span-2">
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
-            {" "}
             <CardTitle>Assets</CardTitle>
             <Tooltip text="List of your available assets and their balances">
               <Info className="w-4 h-4 text-gray-500 cursor-pointer" />
