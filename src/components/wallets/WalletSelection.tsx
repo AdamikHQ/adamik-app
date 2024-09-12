@@ -12,6 +12,7 @@ import { KeplrConnect } from "./KeplrConnect";
 import { MetamaskConnect } from "./MetamaskConnect";
 import { PeraConnect } from "./PeraConnect";
 import { UniSatConnect } from "./UniSatConnect";
+import { LitescribeConnect } from "./LitescribeConnect";
 
 const WalletModalContent = () => {
   return (
@@ -20,6 +21,7 @@ const WalletModalContent = () => {
       <KeplrConnect />
       <PeraConnect />
       <UniSatConnect />
+      <LitescribeConnect />
     </div>
   );
 };

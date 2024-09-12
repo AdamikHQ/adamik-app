@@ -3,6 +3,7 @@ import { Transaction } from "~/utils/types";
 declare global {
   interface Window {
     unisat: UnisatWalletInterface;
+    litescribe: UnisatWalletInterface; // this is a fork of Unisat, hence the same interface
   }
 }
 
@@ -30,6 +31,7 @@ export enum WalletName {
   KEPLR = "keplr",
   PERA = "pera",
   UNISAT = "unisat",
+  LITESCRIBE = "litescribe",
 }
 
 export type WalletConnectorProps = {
