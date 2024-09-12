@@ -1,7 +1,6 @@
-import { Loader2, Info } from "lucide-react";
+import { Loader2, Info, RefreshCw } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Checkbox } from "~/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -80,6 +79,7 @@ export const AssetsList: React.FC<{
   setOpenTransaction: (value: boolean) => void;
   hideLowBalance: boolean;
   setHideLowBalance: (value: boolean) => void;
+  refreshPositions: () => void;
 }> = ({
   isLoading,
   assets,
@@ -87,15 +87,21 @@ export const AssetsList: React.FC<{
   setOpenTransaction,
   hideLowBalance,
   setHideLowBalance,
+  refreshPositions,
 }) => {
   return (
     <>
       <Card className="lg:col-span-2">
         <CardHeader className="flex flex-row items-center justify-between">
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
             <CardTitle>Assets</CardTitle>
             <Tooltip text="List of your available assets and their balances">
-              <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
+              <Info className="w-4 h-4 text-gray-500 cursor-pointer" />
+            </Tooltip>
+            <Tooltip text="Refresh">
+              <Button onClick={refreshPositions} className="p-2 ml-1">
+                <RefreshCw className="hover:animate-spin w-4" />
+              </Button>
             </Tooltip>
           </div>
           <Button

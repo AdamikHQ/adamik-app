@@ -6,9 +6,11 @@ import { LoadingModal } from "~/components/layout/LoadingModal";
 import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { Modal } from "~/components/ui/modal";
 import { Tooltip } from "~/components/ui/tooltip";
+import { useToast } from "~/components/ui/use-toast";
 import {
   isInAccountStateBatchCache,
   useAccountStateBatch,
+  clearAccountStateCache,
 } from "~/hooks/useAccountStateBatch";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
@@ -41,6 +43,7 @@ export default function Portfolio() {
     isShowroom,
   } = useWallet();
 
+  const { toast } = useToast();
   const displayAddresses = isShowroom ? showroomAddresses : walletAddresses;
   const addressesChainIds = displayAddresses.reduce<string[]>(
     (acc, { chainId }) => {
@@ -153,6 +156,16 @@ export default function Portfolio() {
     stakingBalances.stakedBalance +
     stakingBalances.unstakingBalance;
 
+  const refreshPositions = () => {
+    toast({ description: "Refreshing portfolio..." });
+    assets.forEach((asset) => {
+      clearAccountStateCache({
+        chainId: asset.chainId,
+        address: asset.address,
+      });
+    });
+  };
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
       {isLoading && !isInAccountStateBatchCache(displayAddresses) ? (
@@ -191,6 +204,7 @@ export default function Portfolio() {
           setOpenTransaction={setOpenTransaction}
           hideLowBalance={hideLowBalance}
           setHideLowBalance={setHideLowBalance}
+          refreshPositions={refreshPositions}
         />
 
         <AssetsBreakdown

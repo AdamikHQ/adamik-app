@@ -10,7 +10,7 @@ export const queryClientGlobal = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 60, // 1 hour in ms
       refetchOnWindowFocus: false,
-      gcTime: 1000 * 60 * 60, // 1 hours
+      gcTime: 1000 * 60 * 60, // 1 hour
     },
   },
 });
