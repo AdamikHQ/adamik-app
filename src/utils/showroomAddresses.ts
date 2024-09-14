@@ -43,4 +43,8 @@ export const showroomAddresses = [
     chainId: "bitcoin",
     address: "bc1q2e00eecxtjlvuzf6dpm4leqjd2pem0xkfggw8j",
   },
+  {
+    chainId: "ton",
+    address: "UQAQ113dWkP2MOfXN2uv0qPFB-097flcLBhyv0_lhgXEUhwz",
+  },
 ];
