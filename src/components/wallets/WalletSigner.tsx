@@ -11,6 +11,7 @@ import { PeraConnect } from "./PeraConnect";
 import { WalletName } from "./types";
 import { Modal } from "~/components/ui/modal"; // Import the Modal component
 import { UniSatConnect } from "./UniSatConnect";
+import { LitescribeConnect } from "./LitescribeConnect";
 
 export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
   const { transaction, transactionHash, setTransactionHash } = useTransaction();
@@ -32,6 +33,8 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
         return <PeraConnect transactionPayload={transaction} />;
       case WalletName.UNISAT:
         return <UniSatConnect transactionPayload={transaction} />;
+      case WalletName.LITESCRIBE:
+        return <LitescribeConnect transactionPayload={transaction} />;
       default:
         return null;
     }
