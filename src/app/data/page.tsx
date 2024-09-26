@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Info, Search } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { Button } from "~/components/ui/button";
@@ -26,9 +28,8 @@ import {
 } from "~/components/ui/form";
 import { Textarea } from "~/components/ui/textarea";
 import { amountToMainUnit, formatAmount } from "~/utils/helper";
-import { useSearchParams } from "next/navigation";
 
-export default function Data() {
+function DataContent() {
   const searchParams = useSearchParams();
   const { isLoading: isSupportedChainsLoading, data: supportedChains } =
     useChains();
@@ -308,6 +309,14 @@ export default function Data() {
         </Card>
       </div>
     </main>
+  );
+}
+
+export default function Data() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DataContent />
+    </Suspense>
   );
 }
 /*
