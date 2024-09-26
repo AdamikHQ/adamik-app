@@ -33,12 +33,19 @@ export default function Data() {
   const { isLoading: isSupportedChainsLoading, data: supportedChains } =
     useChains();
 
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
   const form = useForm({
     defaultValues: {
       chainId: searchParams.get("chainId") || "",
       transactionId: searchParams.get("transactionId") || "",
     },
   });
+
+  const [input, setInput] = useState<{
+    chainId: string | undefined;
+    transactionId: string | undefined;
+  }>({ chainId: undefined, transactionId: undefined });
 
   useEffect(() => {
     const chainId = searchParams.get("chainId");
@@ -50,14 +57,16 @@ export default function Data() {
     if (transactionId) {
       form.setValue("transactionId", transactionId);
     }
-  }, [searchParams, form]);
 
-  const [input, setInput] = useState<{
-    chainId: string | undefined;
-    transactionId: string | undefined;
-  }>({ chainId: undefined, transactionId: undefined });
+    // Only auto-submit if it's the initial load and both parameters are present
+    if (isInitialLoad && chainId && transactionId) {
+      form.handleSubmit(onSubmit)();
+    }
 
-  // TODO Proper schema
+    // Mark initial load as complete
+    setIsInitialLoad(false);
+  }, [searchParams, form, isInitialLoad]);
+
   function onSubmit(data: any) {
     setInput(data);
   }
