@@ -9,13 +9,23 @@ import { KeplrConnect } from "./KeplrConnect";
 import { MetamaskConnect } from "./MetamaskConnect";
 import { PeraConnect } from "./PeraConnect";
 import { WalletName } from "./types";
-import { Modal } from "~/components/ui/modal"; // Import the Modal component
+import { Modal } from "~/components/ui/modal";
 import { UniSatConnect } from "./UniSatConnect";
 import { LitescribeConnect } from "./LitescribeConnect";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
 export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
   const { transaction, transactionHash, setTransactionHash } = useTransaction();
   const { addresses } = useWallet();
+  const router = useRouter();
+  const [chainId, setChainId] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (transaction?.data?.chainId) {
+      setChainId(transaction.data.chainId);
+    }
+  }, [transaction]);
 
   const signer = addresses.find(
     (address) =>
@@ -53,6 +63,18 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
     }
   };
 
+  const handleViewTx = () => {
+    if (transactionHash && chainId) {
+      const url = `/data?chainId=${chainId}&transactionId=${transactionHash}`;
+      router.push(url);
+    } else {
+      console.error("Missing transactionHash or chainId", {
+        transactionHash,
+        chainId,
+      });
+    }
+  };
+
   const handleClose = () => {
     onNextStep();
     setTransactionHash(undefined);
@@ -73,6 +95,7 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
             </div>
             <div className="flex gap-4">
               <Button onClick={handleCopyToClipboard}>Copy Tx Hash</Button>
+              <Button onClick={handleViewTx}>View Tx</Button>
               <Button onClick={handleClose}>Close</Button>
             </div>
           </div>
