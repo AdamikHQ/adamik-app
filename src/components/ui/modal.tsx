@@ -45,17 +45,14 @@ export function Modal({
     return (
       <Dialog open={open} onOpenChange={setOpen}>
         {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-        <DialogContent
-          className="sm:max-w-[425px] lg:max-w-[660px]"
-          onOpenAutoFocus={(e) => e.preventDefault()}
-        >
+        <DialogContent className="sm:max-w-[425px] lg:max-w-[660px]">
           <DialogHeader>
             {modalTitle && <DialogTitle>{modalTitle}</DialogTitle>}
             {modalTitleDescription && (
               <DialogDescription>{modalTitleDescription}</DialogDescription>
             )}
           </DialogHeader>
-          {modalContent}
+          <div role="document">{modalContent}</div>
           {displayCloseButton && (
             <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
               <X className="h-4 w-4" />
@@ -77,7 +74,7 @@ export function Modal({
             <DrawerDescription>{modalTitleDescription}</DrawerDescription>
           )}
         </DrawerHeader>
-        {modalContent}
+        <div role="document">{modalContent}</div>
         <DrawerFooter className="pt-2"></DrawerFooter>
       </DrawerContent>
     </Drawer>
