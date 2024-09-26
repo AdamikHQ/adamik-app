@@ -1,7 +1,7 @@
 "use client";
 
 import { Info, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
@@ -26,22 +26,41 @@ import {
 } from "~/components/ui/form";
 import { Textarea } from "~/components/ui/textarea";
 import { amountToMainUnit, formatAmount } from "~/utils/helper";
+import { useSearchParams } from "next/navigation";
 
 export default function Data() {
+  const searchParams = useSearchParams();
+  const { isLoading: isSupportedChainsLoading, data: supportedChains } =
+    useChains();
+
+  const form = useForm({
+    defaultValues: {
+      chainId: searchParams.get("chainId") || "",
+      transactionId: searchParams.get("transactionId") || "",
+    },
+  });
+
+  useEffect(() => {
+    const chainId = searchParams.get("chainId");
+    const transactionId = searchParams.get("transactionId");
+
+    if (chainId) {
+      form.setValue("chainId", chainId);
+    }
+    if (transactionId) {
+      form.setValue("transactionId", transactionId);
+    }
+  }, [searchParams, form]);
+
   const [input, setInput] = useState<{
     chainId: string | undefined;
     transactionId: string | undefined;
   }>({ chainId: undefined, transactionId: undefined });
 
-  const form = useForm();
-
   // TODO Proper schema
   function onSubmit(data: any) {
     setInput(data);
   }
-
-  const { isLoading: isSupportedChainsLoading, data: supportedChains } =
-    useChains();
 
   const {
     isLoading: isTransactionLoading,
@@ -54,9 +73,6 @@ export default function Data() {
       (chain) => chain.id === input.chainId
     );
   }, [supportedChains, input]);
-
-  // FIXME DEBUG TBR
-  console.log("XXX - selectedChain: ", selectedChain);
 
   const amount = useMemo(
     () =>
@@ -107,10 +123,7 @@ export default function Data() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Chain</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a chain" />
@@ -123,13 +136,11 @@ export default function Data() {
                         ?.sort((chainA, chainB) =>
                           chainA.name.localeCompare(chainB.name)
                         )
-                        .map((chain) => {
-                          return (
-                            <SelectItem key={chain.id} value={chain.id}>
-                              {chain.name}
-                            </SelectItem>
-                          );
-                        })}
+                        .map((chain) => (
+                          <SelectItem key={chain.id} value={chain.id}>
+                            {chain.name}
+                          </SelectItem>
+                        ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -290,7 +301,6 @@ export default function Data() {
     </main>
   );
 }
-
 /*
 export type FinalizedTransaction = {
   parsed?: {
