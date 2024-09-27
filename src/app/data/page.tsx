@@ -1,7 +1,9 @@
 "use client";
 
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Info, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
@@ -27,21 +29,48 @@ import {
 import { Textarea } from "~/components/ui/textarea";
 import { amountToMainUnit, formatAmount } from "~/utils/helper";
 
-export default function Data() {
+function DataContent() {
+  const searchParams = useSearchParams();
+  const { isLoading: isSupportedChainsLoading, data: supportedChains } =
+    useChains();
+
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  const form = useForm({
+    defaultValues: {
+      chainId: searchParams.get("chainId") || "",
+      transactionId: searchParams.get("transactionId") || "",
+    },
+  });
+
   const [input, setInput] = useState<{
     chainId: string | undefined;
     transactionId: string | undefined;
   }>({ chainId: undefined, transactionId: undefined });
 
-  const form = useForm();
+  useEffect(() => {
+    const chainId = searchParams.get("chainId");
+    const transactionId = searchParams.get("transactionId");
 
-  // TODO Proper schema
+    if (chainId) {
+      form.setValue("chainId", chainId);
+    }
+    if (transactionId) {
+      form.setValue("transactionId", transactionId);
+    }
+
+    // Only auto-submit if it's the initial load and both parameters are present
+    if (isInitialLoad && chainId && transactionId) {
+      form.handleSubmit(onSubmit)();
+    }
+
+    // Mark initial load as complete
+    setIsInitialLoad(false);
+  }, [searchParams, form, isInitialLoad]);
+
   function onSubmit(data: any) {
     setInput(data);
   }
-
-  const { isLoading: isSupportedChainsLoading, data: supportedChains } =
-    useChains();
 
   const {
     isLoading: isTransactionLoading,
@@ -54,9 +83,6 @@ export default function Data() {
       (chain) => chain.id === input.chainId
     );
   }, [supportedChains, input]);
-
-  // FIXME DEBUG TBR
-  console.log("XXX - selectedChain: ", selectedChain);
 
   const amount = useMemo(
     () =>
@@ -107,10 +133,7 @@ export default function Data() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Chain</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a chain" />
@@ -123,13 +146,11 @@ export default function Data() {
                         ?.sort((chainA, chainB) =>
                           chainA.name.localeCompare(chainB.name)
                         )
-                        .map((chain) => {
-                          return (
-                            <SelectItem key={chain.id} value={chain.id}>
-                              {chain.name}
-                            </SelectItem>
-                          );
-                        })}
+                        .map((chain) => (
+                          <SelectItem key={chain.id} value={chain.id}>
+                            {chain.name}
+                          </SelectItem>
+                        ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -291,6 +312,13 @@ export default function Data() {
   );
 }
 
+export default function Data() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DataContent />
+    </Suspense>
+  );
+}
 /*
 export type FinalizedTransaction = {
   parsed?: {
