@@ -103,13 +103,13 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
         open={true}
         setOpen={() => handleClose()}
         modalContent={
-          <div className="p-6 flex flex-col gap-6 items-center">
-            <h1 className="font-extrabold text-2xl text-center">
+          <div className="p-6 flex flex-col gap-6 items-center text-center max-w-md mx-auto">
+            <h1 className="font-extrabold text-2xl">
               Transaction successfully broadcasted
             </h1>
             <Rocket className="h-12 w-12 text-green-500" />
-            <div className="flex items-center justify-between w-full bg-muted p-3 rounded text-sm">
-              <span className="font-mono text-foreground truncate flex-1 mr-2">
+            <div className="flex items-center w-full bg-muted p-3 rounded text-sm">
+              <span className="font-mono text-foreground truncate flex-1 pr-2">
                 {transactionHash}
               </span>
               <Tooltip text="Copy transaction hash">
