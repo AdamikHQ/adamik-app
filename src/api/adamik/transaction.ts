@@ -25,10 +25,8 @@ export const getTransaction = async (
 
   const result = await response.json();
 
-  if (response.status === 200) {
-    return result;
-  } else {
+  if (response.status !== 200) {
     console.error("state - backend error:", JSON.stringify(result));
-    throw new Error(result.message);
   }
+  return result;
 };
