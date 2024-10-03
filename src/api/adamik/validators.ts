@@ -19,26 +19,20 @@ export const getValidators = async (
   limit?: number
 ): Promise<ValidatorResponse> => {
   const url = new URL(`${ADAMIK_API_URL}/chains/${chainId}/validators`);
-  const body: {
-    chainId: string;
-    pagination: { offset?: number; limit?: number };
-  } = {
-    chainId,
-    pagination: {},
-  };
-  if (offset !== undefined) {
-    body.pagination.offset = offset;
+
+  if (offset) {
+    url.searchParams.set("offset", offset.toString());
   }
   if (limit) {
-    body.pagination.limit = limit;
+    url.searchParams.set("limit", limit.toString());
   }
+
   const response = await fetch(url, {
     headers: {
       Authorization: env.ADAMIK_API_KEY,
       "Content-Type": "application/json",
     },
-    method: "POST",
-    body: JSON.stringify(body),
+    method: "GET",
   });
 
   const result = await response.json();
