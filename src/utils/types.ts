@@ -180,7 +180,41 @@ export type Chain = {
   family: string;
   isTestNet: boolean;
   nativeId: string;
-  supportedFeatures: Feature[];
+  supportedFeatures: ChainSupportedFeatures;
+};
+
+type ChainSupportedFeatures = {
+  read: {
+    account: {
+      balances: {
+        native: boolean;
+        tokens: boolean;
+        staking: boolean;
+      };
+      transactions: {
+        native: boolean;
+        tokens: boolean;
+        staking: boolean;
+      };
+    };
+    transaction: {
+      native: boolean;
+      tokens: boolean;
+      staking: boolean;
+    };
+  };
+  write: {
+    transaction: {
+      type: {
+        native: boolean;
+        tokens: boolean;
+        staking: boolean;
+      };
+      field: {
+        memo: boolean;
+      };
+    };
+  };
 };
 
 // Represents a validator in a staking system.
