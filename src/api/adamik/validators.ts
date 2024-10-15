@@ -30,7 +30,6 @@ export const getValidators = async (
   const response = await fetch(url, {
     headers: {
       Authorization: env.ADAMIK_API_KEY,
-      "Content-Type": "application/json",
     },
     method: "GET",
   });

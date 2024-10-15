@@ -17,7 +17,6 @@ export const getTransaction = async (
     {
       headers: {
         Authorization: env.ADAMIK_API_KEY,
-        "Content-Type": "application/json",
       },
       method: "GET",
     }
