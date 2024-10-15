@@ -48,7 +48,7 @@ export const showroomAddresses = [
     address: "UQAQ113dWkP2MOfXN2uv0qPFB-097flcLBhyv0_lhgXEUhwz",
   },
   {
-    chainId: "rootstock-testnet ",
+    chainId: "rootstock-testnet",
     address: "0x3dD2504c27449a78Df04284129C380f3831cAF0d",
   },
 ];
