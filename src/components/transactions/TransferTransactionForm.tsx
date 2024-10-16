@@ -82,17 +82,14 @@ export function TransferTransactionForm({
       }
 
       mutate(transactionData, {
-        onSuccess: (settledTransaction) => {
+        onSuccess: (response) => {
           setTransaction(undefined);
           setTransactionHash(undefined);
-          if (settledTransaction) {
-            if (
-              settledTransaction.status.errors &&
-              settledTransaction.status.errors.length > 0
-            ) {
-              setErrors(settledTransaction.status.errors[0].message);
+          if (response) {
+            if (response?.status?.errors?.length) {
+              setErrors(response.status.errors[0].message);
             } else {
-              setTransaction(settledTransaction);
+              setTransaction(response.transaction);
             }
           } else {
             setErrors("API ERROR - Please try again later");

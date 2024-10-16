@@ -13,7 +13,7 @@ import { useChains } from "~/hooks/useChains";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { resolveLogo } from "~/utils/helper";
-import { SupportedBlockchain, Feature } from "~/utils/types";
+import { SupportedBlockchain } from "~/utils/types";
 
 const comingSoonIds = ["tron", "the-open-network", "solana"];
 

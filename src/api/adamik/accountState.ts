@@ -18,6 +18,8 @@ export const accountState = async (
   });
 
   const result = await response.json();
+  // FIXME DEBUG TBR
+  console.log("XXX - state - response:", result);
 
   if (response.status === 200) {
     return result;

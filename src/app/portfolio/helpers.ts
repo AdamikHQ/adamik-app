@@ -1,4 +1,4 @@
-import { AccountState, Asset, Chain, Feature } from "~/utils/types";
+import { AccountState, Asset, Chain } from "~/utils/types";
 import { amountToMainUnit, resolveLogo } from "~/utils/helper";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { MobulaBlockchain } from "~/api/mobula/types";

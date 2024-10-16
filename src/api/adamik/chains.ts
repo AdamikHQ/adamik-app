@@ -16,8 +16,12 @@ export const getChains = async (): Promise<Record<string, Chain> | null> => {
     method: "GET",
   });
 
+  // FIXME DEBUG TBR
+  const truc = await response.json();
+  console.log("XXX - chains - response:", truc);
+
   if (response.status === 200) {
-    const data: GetChainsResponse = await response.json();
+    const data: GetChainsResponse = truc;
     return data?.chains;
   }
 

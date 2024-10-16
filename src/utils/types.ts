@@ -96,12 +96,17 @@ export type TransactionData = {
   };
 };
 
-// Full transaction object including metadata like status and signature.
+// Full transaction object
 export type Transaction = {
   data: TransactionData;
   encoded: string;
   signature: string;
-  status: { errors: { message: string }[]; warnings: { message: string }[] };
+};
+
+// Response status for any request to the Adamik API
+export type Status = {
+  errors: { message: string }[];
+  warnings: { message: string }[];
 };
 
 // Represents an asset in a portfolio.
@@ -155,20 +160,6 @@ export type FinalizedTransaction = {
   };
   raw: unknown; // The raw transaction as returned from the node (or explorer when necessary)
 };
-
-// Enum to list different features that a chain might support.
-export enum Feature {
-  READ_ACCOUNT_BALANCES_NATIVE = "read.account.balances.native",
-  READ_ACCOUNT_BALANCES_TOKENS = "read.account.balances.tokens",
-  READ_ACCOUNT_BALANCES_STAKING = "read.account.balances.staking",
-  READ_TRANSACTION_NATIVE = "read.transaction.native",
-  READ_TRANSACTION_TOKENS = "read.transaction.tokens",
-  READ_TRANSACTION_STAKING = "read.transaction.staking",
-  WRITE_TRANSACTION_TYPE_NATIVE = "write.transaction.type.native",
-  WRITE_TRANSACTION_TYPE_TOKENS = "write.transaction.type.tokens",
-  WRITE_TRANSACTION_TYPE_STAKING = "write.transaction.type.staking",
-  WRITE_TRANSACTION_FIELD_MEMO = "write.transaction.field.memo",
-}
 
 // Represents the configuration of a blockchain.
 export type Chain = {
