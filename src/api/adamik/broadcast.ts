@@ -8,13 +8,6 @@ export type BroadcastResponse = {
   error?: { message: string };
 };
 
-export type BackendErrorResponse = {
-  status: {
-    errors: Array<{ message: string }>;
-    warnings: Array<string>;
-  };
-};
-
 // TODO Better API error management, consistent for all endpoints
 export const broadcast = async (
   transaction: Transaction
