@@ -10,7 +10,7 @@ import {
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
 import { useToast } from "~/components/ui/use-toast";
-import { BackendErrorResponse } from "~/utils/types";
+import { BackendErrorResponse } from "~/api/adamik/broadcast";
 
 type BroadcastProps = {
   onNextStep: () => void;
