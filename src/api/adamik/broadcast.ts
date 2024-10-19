@@ -8,6 +8,13 @@ export type BroadcastResponse = {
   error?: { message: string };
 };
 
+export type BackendErrorResponse = {
+  status: {
+    errors: Array<{ message: string }>;
+    warnings: Array<string>;
+  };
+};
+
 // TODO Better API error management, consistent for all endpoints
 export const broadcast = async (
   transaction: Transaction
@@ -24,6 +31,7 @@ export const broadcast = async (
   const result = await response.json();
   if (response.status !== 200) {
     console.error("broadcast - backend error:", JSON.stringify(result));
+    throw new Error(JSON.stringify(result));
   }
 
   return result as BroadcastResponse;
