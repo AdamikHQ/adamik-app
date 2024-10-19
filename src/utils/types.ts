@@ -226,3 +226,11 @@ export type SupportedBlockchain = Chain & {
   logo?: string;
   labels?: string[]; // To define the list of features supported
 };
+
+// Add this new type definition
+export type BackendErrorResponse = {
+  status: {
+    errors: Array<{ message: string }>;
+    warnings: Array<{ message: string }>;
+  };
+};

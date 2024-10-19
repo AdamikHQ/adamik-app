@@ -10,6 +10,7 @@ import {
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
 import { useToast } from "~/components/ui/use-toast";
+import { BackendErrorResponse } from "~/utils/types";
 
 type BroadcastProps = {
   onNextStep: () => void;
@@ -22,40 +23,72 @@ export const BroadcastModal = ({ onNextStep }: BroadcastProps) => {
   const [error, setError] = useState<string | undefined>();
 
   const broadcast = useCallback(() => {
-    transaction &&
-      mutate(transaction, {
-        onSuccess: (values) => {
-          if (values.error) {
-            setError(values.error.message);
-          } else {
-            setTransactionHash(values.hash);
-            toast({
-              description:
-                "Transaction has been successfully broadcasted. Your balance will be updated in a few moments",
-            });
-            setTransaction(undefined);
-          }
-        },
-      });
-  }, [mutate, setTransaction, setTransactionHash, toast, transaction]);
+    if (!transaction) return;
+
+    mutate(transaction, {
+      onSuccess: (response) => {
+        if (response.error) {
+          const errorMessage =
+            response.error.status.errors[0]?.message ||
+            "An unknown error occurred";
+          setError(errorMessage);
+          toast({
+            variant: "destructive",
+            title: "Broadcast Failed",
+            description: errorMessage,
+          });
+        } else if (response.hash) {
+          setTransactionHash(response.hash);
+          toast({
+            description:
+              "Transaction has been successfully broadcasted. Your balance will be updated in a few moments",
+          });
+          setTransaction(undefined);
+          onNextStep();
+        } else {
+          setError("Unexpected response from server");
+          toast({
+            variant: "destructive",
+            title: "Broadcast Failed",
+            description: "Unexpected response from server",
+          });
+        }
+      },
+      onError: (error) => {
+        console.error("Broadcast error:", error);
+        const errorMessage =
+          error instanceof Error ? error.message : "An unknown error occurred";
+        setError(errorMessage);
+        toast({
+          variant: "destructive",
+          title: "Broadcast Failed",
+          description: errorMessage,
+        });
+      },
+    });
+  }, [
+    mutate,
+    setTransaction,
+    setTransactionHash,
+    toast,
+    transaction,
+    onNextStep,
+  ]);
+
+  const handleCancel = useCallback(() => {
+    onNextStep();
+    setTransactionHash(undefined);
+    setTransaction(undefined);
+  }, [onNextStep, setTransactionHash, setTransaction]);
 
   if (!transaction?.encoded || !transaction.signature) {
     return (
       <div className="p-12 py-2 flex flex-col gap-6 items-center">
         <div className="text-center text-xl">Broadcast with Adamik</div>
-
         <div className="mb-8 text-center">
           No transaction found. Please retry the transaction.
         </div>
-
-        <Button
-          variant="secondary"
-          onClick={() => {
-            onNextStep();
-            setTransactionHash(undefined);
-            setTransaction(undefined);
-          }}
-        >
+        <Button variant="secondary" onClick={handleCancel}>
           Cancel
         </Button>
       </div>
@@ -65,21 +98,13 @@ export const BroadcastModal = ({ onNextStep }: BroadcastProps) => {
   return (
     <div className="p-12 py-2 flex flex-col gap-6 items-center">
       <h1 className="font-extrabold text-2xl text-center mb-4">
-        Broadcast with Adamik{" "}
+        Broadcast with Adamik
       </h1>
       {isPending && <Loader2 className="animate-spin" height={32} width={32} />}
       {error && <div className="text-red-500">{error}</div>}
 
       <div className="flex gap-6">
-        <Button
-          disabled={isPending}
-          variant="secondary"
-          onClick={() => {
-            onNextStep();
-            setTransactionHash(undefined);
-            setTransaction(undefined);
-          }}
-        >
+        <Button disabled={isPending} variant="secondary" onClick={handleCancel}>
           Cancel
         </Button>
         <Button variant="default" disabled={isPending} onClick={broadcast}>
