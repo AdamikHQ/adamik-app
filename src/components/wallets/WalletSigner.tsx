@@ -17,10 +17,11 @@ import { LitescribeConnect } from "./LitescribeConnect";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { ConnectWallet } from "../../app/portfolio/ConnectWallet";
 
 export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
   const { transaction, transactionHash, setTransactionHash } = useTransaction();
-  const { addresses } = useWallet();
+  const { addresses, isShowroom, setWalletMenuOpen } = useWallet();
   const router = useRouter();
   const [chainId, setChainId] = useState<string | undefined>(undefined);
 
@@ -150,6 +151,17 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
 
   if (transaction?.signature) {
     return <BroadcastModal onNextStep={onNextStep} />;
+  }
+
+  if (isShowroom) {
+    return (
+      <ConnectWallet
+        onNextStep={() => {
+          onNextStep();
+          setWalletMenuOpen(true);
+        }}
+      />
+    );
   }
 
   return (
