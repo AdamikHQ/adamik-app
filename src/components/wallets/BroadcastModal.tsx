@@ -10,6 +10,7 @@ import {
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
 import { useToast } from "~/components/ui/use-toast";
+import { BackendErrorResponse } from "~/api/adamik/broadcast";
 
 type BroadcastProps = {
   onNextStep: () => void;
@@ -35,6 +36,34 @@ export const BroadcastModal = ({ onNextStep }: BroadcastProps) => {
             });
             setTransaction(undefined);
           }
+        },
+        onError: (error) => {
+          console.error("Broadcast error:", error);
+          let errorMessage = "An unknown error occurred";
+          if (error instanceof Error) {
+            try {
+              const parsedError = JSON.parse(
+                error.message
+              ) as BackendErrorResponse;
+              if (
+                parsedError.status &&
+                parsedError.status.errors &&
+                parsedError.status.errors.length > 0
+              ) {
+                errorMessage = parsedError.status.errors[0].message;
+              } else {
+                errorMessage = error.message;
+              }
+            } catch {
+              errorMessage = error.message;
+            }
+          }
+          setError(errorMessage);
+          toast({
+            variant: "destructive",
+            title: "Broadcast Failed",
+            description: errorMessage,
+          });
         },
       });
   }, [mutate, setTransaction, setTransactionHash, toast, transaction]);
