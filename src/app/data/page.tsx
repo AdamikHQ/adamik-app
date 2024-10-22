@@ -42,6 +42,7 @@ function DataContent() {
   const { theme } = useTheme();
   const [highlightedCode, setHighlightedCode] = useState("");
   const [tokenInfo, setTokenInfo] = useState<TokenInfo | null>(null);
+  const [fetchTrigger, setFetchTrigger] = useState(0);
 
   const searchParams = useSearchParams();
   const { isLoading: isSupportedChainsLoading, data: supportedChains } =
@@ -61,9 +62,17 @@ function DataContent() {
 
   function onSubmit(data: any) {
     setInput(data);
+    setFetchTrigger((prev) => prev + 1);
   }
 
-  const { data: transaction, error } = useGetTransaction(input);
+  const {
+    data: transaction,
+    error,
+    isLoading,
+  } = useGetTransaction({
+    ...input,
+    fetchTrigger,
+  });
 
   const selectedChain = useMemo<Chain | undefined>(() => {
     return Object.values(supportedChains || {}).find(
@@ -215,7 +224,7 @@ function DataContent() {
           toast({
             title: "Copied!",
             description: "Raw data has been copied to clipboard",
-            duration: 2000, // Toast will disappear after 2 seconds
+            duration: 2000,
           });
         })
         .catch((error) => {
