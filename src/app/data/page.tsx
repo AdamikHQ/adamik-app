@@ -71,37 +71,37 @@ function DataContent() {
     );
   }, [supportedChains, input]);
 
-  const formattedDate = useMemo(() => {
-    if (transaction?.parsed?.timestamp) {
-      // Create a Date object from the timestamp (which is in milliseconds)
-      const date = new Date(Number(transaction.parsed.timestamp));
-      // Check if the date is valid before formatting
-      if (!isNaN(date.getTime())) {
-        return formatDistanceToNow(date, { addSuffix: true });
-      }
-    }
-    return "Invalid Date";
-  }, [transaction?.parsed?.timestamp]);
+  // const formattedDate = useMemo(() => {
+  //   if (transaction?.parsed?.timestamp) {
+  //     // Create a Date object from the timestamp (which is in milliseconds)
+  //     const date = new Date(Number(transaction.parsed.timestamp));
+  //     // Check if the date is valid before formatting
+  //     if (!isNaN(date.getTime())) {
+  //       return formatDistanceToNow(date, { addSuffix: true });
+  //     }
+  //   }
+  //   return "Invalid Date";
+  // }, [transaction?.parsed?.timestamp]);
 
-  const formattedFees = useMemo(() => {
-    if (transaction?.parsed?.fees && selectedChain) {
-      return `${amountToMainUnit(
-        transaction.parsed.fees,
-        selectedChain.decimals
-      )} ${selectedChain.ticker}`;
-    }
-    return null;
-  }, [transaction?.parsed?.fees, selectedChain]);
+  // const formattedFees = useMemo(() => {
+  //   if (transaction?.parsed?.fees && selectedChain) {
+  //     return `${amountToMainUnit(
+  //       transaction.parsed.fees,
+  //       selectedChain.decimals
+  //     )} ${selectedChain.ticker}`;
+  //   }
+  //   return null;
+  // }, [transaction?.parsed?.fees, selectedChain]);
 
-  const formattedAmount = useMemo(() => {
-    if (transaction?.parsed?.validators?.target?.amount && selectedChain) {
-      return `${amountToMainUnit(
-        transaction.parsed.validators.target.amount,
-        selectedChain.decimals
-      )} ${selectedChain.ticker}`;
-    }
-    return "N/A";
-  }, [transaction?.parsed?.validators?.target?.amount, selectedChain]);
+  // const formattedAmount = useMemo(() => {
+  //   if (transaction?.parsed?.validators?.target?.amount && selectedChain) {
+  //     return `${amountToMainUnit(
+  //       transaction.parsed.validators.target.amount,
+  //       selectedChain.decimals
+  //     )} ${selectedChain.ticker}`;
+  //   }
+  //   return "N/A";
+  // }, [transaction?.parsed?.validators?.target?.amount, selectedChain]);
 
   const formattedRawData = useMemo(() => {
     if (transaction?.raw) {
