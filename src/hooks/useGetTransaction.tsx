@@ -13,8 +13,10 @@ export const useGetTransaction = ({
   fetchTrigger,
 }: GetTransactionParams) => {
   return useQuery({
+    // Including fetchTrigger in the queryKey forces a refetch when it changes
     queryKey: ["transaction", chainId, transactionId, fetchTrigger],
     queryFn: async () => getTransaction(chainId, transactionId),
+    // Prevent query execution if chainId or transactionId are undefined
     enabled: !!chainId && !!transactionId,
   });
 };
