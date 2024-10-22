@@ -33,12 +33,15 @@ import { amountToMainUnit } from "~/utils/helper";
 import { Chain } from "~/utils/types";
 import { FinalizedTransaction } from "~/utils/types";
 import { useToast } from "~/components/ui/use-toast";
+import { getTokenInfo } from "~/api/adamik/tokens";
+import { TokenInfo } from "~/utils/types";
 
 hljs.registerLanguage("json", json);
 
 function DataContent() {
   const { theme } = useTheme();
   const [highlightedCode, setHighlightedCode] = useState("");
+  const [tokenInfo, setTokenInfo] = useState<TokenInfo | null>(null);
 
   const searchParams = useSearchParams();
   const { isLoading: isSupportedChainsLoading, data: supportedChains } =
@@ -131,6 +134,12 @@ function DataContent() {
 
     const formatAmount = () => {
       if (recipients && recipients[0]?.amount) {
+        if (tokenInfo) {
+          const amount = BigInt(recipients[0].amount);
+          const decimals = parseInt(tokenInfo.decimals);
+          const formattedAmount = Number(amount) / 10 ** decimals;
+          return `${formattedAmount.toFixed(decimals)} ${tokenInfo.ticker}`;
+        }
         return `${amountToMainUnit(
           recipients[0].amount,
           selectedChain?.decimals || 18
@@ -220,6 +229,24 @@ function DataContent() {
         });
     }
   };
+
+  useEffect(() => {
+    const fetchTokenInfo = async () => {
+      if (transaction?.parsed?.mode === "transferToken" && selectedChain) {
+        const tokenAddress = (transaction.raw as any).to;
+        if (typeof tokenAddress === "string") {
+          console.log("Fetching token info for:", tokenAddress);
+          const info = await getTokenInfo(selectedChain.id, tokenAddress);
+          console.log("Received token info:", info);
+          setTokenInfo(info);
+        }
+      } else {
+        setTokenInfo(null);
+      }
+    };
+
+    fetchTokenInfo();
+  }, [transaction, selectedChain]);
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
