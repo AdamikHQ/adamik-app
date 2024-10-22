@@ -228,7 +228,6 @@ function DataContent() {
           });
         })
         .catch((error) => {
-          console.error("Failed to copy: ", error);
           toast({
             title: "Copy failed",
             description: "Unable to copy raw data to clipboard",
@@ -244,10 +243,8 @@ function DataContent() {
       if (transaction?.parsed?.mode === "transferToken" && selectedChain) {
         const tokenAddress = (transaction.raw as any).to;
         if (typeof tokenAddress === "string") {
-          console.log("Fetching token info for:", tokenAddress);
           // Fetch token info using the chain ID and token address
           const info = await getTokenInfo(selectedChain.id, tokenAddress);
-          console.log("Received token info:", info);
           setTokenInfo(info);
         }
       } else {
