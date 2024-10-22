@@ -1,9 +1,13 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Info, Search } from "lucide-react";
-import { useMemo, useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { formatDistanceToNow } from "date-fns";
+import hljs from "highlight.js/lib/core";
+import json from "highlight.js/lib/languages/json";
+import { useTheme } from "next-themes"; // Or your custom theme hook
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
@@ -17,7 +21,6 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { useChains } from "~/hooks/useChains";
-import { useForm } from "react-hook-form";
 import {
   Form,
   FormControl,
@@ -26,15 +29,19 @@ import {
   FormLabel,
   FormMessage,
 } from "~/components/ui/form";
-import { Textarea } from "~/components/ui/textarea";
-import { amountToMainUnit, formatAmount } from "~/utils/helper";
+import { amountToMainUnit } from "~/utils/helper";
+import { Chain } from "~/utils/types";
+import { FinalizedTransaction } from "~/utils/types";
+
+hljs.registerLanguage("json", json);
 
 function DataContent() {
+  const { theme } = useTheme(); // Or your custom theme hook
+  const [highlightedCode, setHighlightedCode] = useState("");
+
   const searchParams = useSearchParams();
   const { isLoading: isSupportedChainsLoading, data: supportedChains } =
     useChains();
-
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const form = useForm({
     defaultValues: {
@@ -48,26 +55,6 @@ function DataContent() {
     transactionId: string | undefined;
   }>({ chainId: undefined, transactionId: undefined });
 
-  useEffect(() => {
-    const chainId = searchParams.get("chainId");
-    const transactionId = searchParams.get("transactionId");
-
-    if (chainId) {
-      form.setValue("chainId", chainId);
-    }
-    if (transactionId) {
-      form.setValue("transactionId", transactionId);
-    }
-
-    // Only auto-submit if it's the initial load and both parameters are present
-    if (isInitialLoad && chainId && transactionId) {
-      form.handleSubmit(onSubmit)();
-    }
-
-    // Mark initial load as complete
-    setIsInitialLoad(false);
-  }, [searchParams, form, isInitialLoad]);
-
   function onSubmit(data: any) {
     setInput(data);
   }
@@ -78,34 +65,170 @@ function DataContent() {
     error,
   } = useGetTransaction(input);
 
-  const selectedChain = useMemo(() => {
+  const selectedChain = useMemo<Chain | undefined>(() => {
     return Object.values(supportedChains || {}).find(
       (chain) => chain.id === input.chainId
     );
   }, [supportedChains, input]);
 
-  const amount = useMemo(
-    () =>
-      transaction?.parsed?.recipients?.length
-        ? transaction.parsed.recipients[0].amount
-        : transaction?.parsed?.validators?.target?.amount,
-    [transaction?.parsed]
-  );
+  const formattedDate = useMemo(() => {
+    if (transaction?.parsed?.timestamp) {
+      // Create a Date object from the timestamp (which is in milliseconds)
+      const date = new Date(Number(transaction.parsed.timestamp));
+      // Check if the date is valid before formatting
+      if (!isNaN(date.getTime())) {
+        return formatDistanceToNow(date, { addSuffix: true });
+      }
+    }
+    return "Invalid Date";
+  }, [transaction?.parsed?.timestamp]);
 
-  const formattedAmount = useMemo(
-    () =>
-      amount !== undefined && selectedChain
-        ? amountToMainUnit(amount, selectedChain.decimals)
-        : null,
-    [amount, selectedChain]
-  );
+  const formattedFees = useMemo(() => {
+    if (transaction?.parsed?.fees && selectedChain) {
+      return `${amountToMainUnit(
+        transaction.parsed.fees,
+        selectedChain.decimals
+      )} ${selectedChain.ticker}`;
+    }
+    return null;
+  }, [transaction?.parsed?.fees, selectedChain]);
 
-  const formattedFees = useMemo(
-    () =>
-      transaction?.parsed?.fees && selectedChain
-        ? amountToMainUnit(transaction?.parsed?.fees, selectedChain.decimals)
-        : null,
-    [transaction?.parsed?.fees, selectedChain]
+  const formattedAmount = useMemo(() => {
+    if (transaction?.parsed?.validators?.target?.amount && selectedChain) {
+      return `${amountToMainUnit(
+        transaction.parsed.validators.target.amount,
+        selectedChain.decimals
+      )} ${selectedChain.ticker}`;
+    }
+    return "N/A";
+  }, [transaction?.parsed?.validators?.target?.amount, selectedChain]);
+
+  const formattedRawData = useMemo(() => {
+    if (transaction?.raw) {
+      return JSON.stringify(transaction.raw, null, 2);
+    }
+    return "";
+  }, [transaction?.raw]);
+
+  useEffect(() => {
+    if (formattedRawData) {
+      const highlighted = hljs.highlight(formattedRawData, {
+        language: "json",
+      }).value;
+      setHighlightedCode(highlighted);
+    }
+  }, [formattedRawData]);
+
+  const codeStyle = useMemo(() => {
+    return {
+      fontSize: "0.875rem",
+      padding: "1rem",
+      borderRadius: "0.375rem",
+      backgroundColor: theme === "dark" ? "#1e1e1e" : "#f5f5f5",
+      color: theme === "dark" ? "#d4d4d4" : "#24292e",
+    };
+  }, [theme]);
+
+  const renderParsedData = (
+    transaction: FinalizedTransaction | null | undefined
+  ) => {
+    if (!transaction?.parsed) return <p>No parsed data available</p>;
+
+    const {
+      id,
+      mode,
+      state,
+      blockHeight,
+      timestamp,
+      fees,
+      gas,
+      nonce,
+      memo,
+      senders,
+      recipients,
+      validators,
+    } = transaction.parsed;
+
+    const formatFees = (fees: any) => {
+      if (typeof fees === "string") {
+        return `${amountToMainUnit(fees, selectedChain?.decimals || 18)} ${
+          selectedChain?.ticker || ""
+        }`;
+      } else if (fees && fees.amount) {
+        const ticker = fees.ticker || selectedChain?.ticker || "";
+        return `${amountToMainUnit(
+          fees.amount,
+          selectedChain?.decimals || 18
+        )} ${ticker}`;
+      }
+      return "N/A";
+    };
+
+    const formatAmount = () => {
+      if (recipients && recipients[0]?.amount) {
+        return `${amountToMainUnit(
+          recipients[0].amount,
+          selectedChain?.decimals || 18
+        )} ${selectedChain?.ticker || ""}`;
+      } else if (validators?.target?.amount) {
+        return `${amountToMainUnit(
+          validators.target.amount,
+          selectedChain?.decimals || 18
+        )} ${selectedChain?.ticker || ""}`;
+      }
+      return "N/A";
+    };
+
+    const formatRecipient = () => {
+      if (recipients && recipients[0]?.address) {
+        return recipients[0].address;
+      } else if (validators?.target?.address) {
+        return validators.target.address;
+      }
+      return "N/A";
+    };
+
+    return (
+      <dl className="grid gap-3">
+        <DataItem label="ID" value={id} />
+        <DataItem label="Type" value={mode} />
+        <DataItem label="State" value={state} />
+        <DataItem label="Block height" value={blockHeight} />
+        <DataItem
+          label="Date"
+          value={
+            timestamp
+              ? formatDistanceToNow(new Date(Number(timestamp)), {
+                  addSuffix: true,
+                })
+              : "N/A"
+          }
+        />
+        <DataItem label="Amount" value={formatAmount()} />
+        <DataItem label="Fees" value={formatFees(fees)} />
+        <DataItem label="Gas" value={gas || "N/A"} />
+        <DataItem
+          label="Sender"
+          value={(senders && senders[0]?.address) || "N/A"}
+        />
+        <DataItem label="Recipient" value={formatRecipient()} />
+        <DataItem label="Nonce" value={nonce || "N/A"} />
+        <DataItem label="Memo" value={memo || "N/A"} />
+      </dl>
+    );
+  };
+
+  const DataItem = ({
+    label,
+    value,
+  }: {
+    label: string;
+    value?: string | number | bigint;
+  }) => (
+    <div className="flex items-center justify-between">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd>{value?.toString() || "N/A"}</dd>
+    </div>
   );
 
   return (
@@ -189,104 +312,8 @@ function DataContent() {
               </Tooltip>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="grid gap-3">
-              {transaction && !transaction?.parsed ? (
-                <>Parsing unavailable for this transaction</>
-              ) : (
-                <dl className="grid gap-3">
-                  <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">ID</dt>
-                    <dd>{transaction?.parsed?.id}</dd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">Type</dt>
-                    <dd>{transaction?.parsed?.mode}</dd>
-                  </div>
-                  {/* TODO Move to a specific "tokens" section ? */}
-                  {transaction?.parsed?.tokenId && (
-                    <div className="flex items-center justify-between">
-                      <dt className="text-muted-foreground"> Token ID</dt>
-                      <dd>{transaction?.parsed?.tokenId}</dd>
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">State</dt>
-                    <dd>{transaction?.parsed?.state}</dd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">Block height</dt>
-                    <dd>{transaction?.parsed?.blockHeight}</dd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">Date</dt>
-                    <dd>
-                      {transaction?.parsed?.timestamp &&
-                        new Date(transaction.parsed.timestamp).toUTCString()}
-                    </dd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">Amount</dt>
-                    <dd>
-                      {transaction &&
-                        `${formattedAmount} ${selectedChain?.ticker}`}
-                    </dd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">Fees</dt>
-                    <dd>
-                      {transaction &&
-                        `${formattedFees} ${selectedChain?.ticker}`}
-                    </dd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">Gas</dt>
-                    <dd>{transaction?.parsed?.gas}</dd>
-                  </div>
-                  {/* TODO Handle multiple senders */}
-                  <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">Sender</dt>
-                    <dd>
-                      {transaction?.parsed?.senders?.length &&
-                        transaction?.parsed?.senders[0].address}
-                    </dd>
-                  </div>
-                  {/* TODO Handle multiple recipients */}
-                  {transaction?.parsed?.recipients?.length && (
-                    <div className="flex items-center justify-between">
-                      <dt className="text-muted-foreground">Recipient</dt>
-                      <dd>{transaction?.parsed?.recipients[0].address}</dd>
-                    </div>
-                  )}
-                  {/* TODO Move to a specific "staking" section ? */}
-                  {transaction?.parsed?.validators?.source && (
-                    <div className="flex items-center justify-between">
-                      <dt className="text-muted-foreground">
-                        Source validator
-                      </dt>
-                      <dd>{transaction?.parsed?.validators.source.address}</dd>
-                    </div>
-                  )}
-                  {/* TODO Move to a specific "staking" section ? */}
-                  {transaction?.parsed?.validators?.target && (
-                    <div className="flex items-center justify-between">
-                      <dt className="text-muted-foreground">
-                        Target validator
-                      </dt>
-                      <dd>{transaction?.parsed?.validators.target.address}</dd>
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">Nonce</dt>
-                    <dd>{transaction?.parsed?.nonce}</dd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">Memo</dt>
-                    <dd>{transaction?.parsed?.memo}</dd>
-                  </div>
-                </dl>
-              )}
-            </div>
+          <CardContent className="max-h-[50vh] overflow-y-auto">
+            {renderParsedData(transaction)}
           </CardContent>
         </Card>
 
@@ -299,12 +326,15 @@ function DataContent() {
               </Tooltip>
             </div>
           </CardHeader>
-          <CardContent>
-            <Textarea
-              readOnly
-              value={JSON.stringify(transaction?.raw)}
-              className="text-s text-gray-500 mt-4"
-            />
+          <CardContent className="max-h-[50vh] overflow-y-auto p-4">
+            <div style={codeStyle}>
+              <pre className="text-sm overflow-x-auto h-full">
+                <code
+                  className="language-json"
+                  dangerouslySetInnerHTML={{ __html: highlightedCode }}
+                />
+              </pre>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -319,37 +349,3 @@ export default function Data() {
     </Suspense>
   );
 }
-/*
-export type FinalizedTransaction = {
-  parsed?: {
-    chainId: string;
-    id: string;
-    mode: TransactionMode;
-    tokenId?: string;
-    state: string;
-    blockHeight?: bigint;
-    timestamp?: number;
-    senders: {
-      address: string;
-    }[];
-    recipients: {
-      address: string;
-      amount: bigint;
-    }[];
-    validators?: {
-      source?: {
-        address: string;
-      };
-      target?: {
-        address: string;
-        amount: bigint;
-      };
-    };
-    fees: bigint;
-    gas?: bigint;
-    nonce?: bigint;
-    memo?: string;
-  };
-  raw: unknown; // The raw transaction as returned from the node (or explorer when necessary)
-};
-*/
