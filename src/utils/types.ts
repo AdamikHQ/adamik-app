@@ -235,4 +235,10 @@ export type TokenInfo = {
   ticker: string;
   decimals: string;
   contractAddress: string;
+
+export type BackendErrorResponse = {
+  status: {
+    errors: Array<{ message: string }>;
+    warnings: Array<{ message: string }>;
+  };
 };
