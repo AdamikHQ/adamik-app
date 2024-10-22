@@ -226,3 +226,13 @@ export type SupportedBlockchain = Chain & {
   logo?: string;
   labels?: string[]; // To define the list of features supported
 };
+
+export type TokenInfo = {
+  chainId: string;
+  type: string;
+  id: string;
+  name: string;
+  ticker: string;
+  decimals: string;
+  contractAddress: string;
+};
