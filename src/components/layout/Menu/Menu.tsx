@@ -1,6 +1,12 @@
 "use client";
 
-import { HandCoins, PieChart, SquareStack, Search } from "lucide-react";
+import {
+  HandCoins,
+  PieChart,
+  SquareStack,
+  Search,
+  History,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import { MobileMenu } from "./MobileMenu";
 import { SideMenu } from "./SideMenu";
@@ -22,6 +28,11 @@ const menu = [
     title: "Data",
     icon: Search,
     href: "/data",
+  },
+  {
+    title: "Transaction History",
+    icon: History,
+    href: "/history",
   },
   {
     title: "Supported chains",
