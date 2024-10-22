@@ -2,12 +2,12 @@
 
 import { Suspense, useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Info, Search } from "lucide-react";
+import { Info, Search, Copy } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { formatDistanceToNow } from "date-fns";
 import hljs from "highlight.js/lib/core";
 import json from "highlight.js/lib/languages/json";
-import { useTheme } from "next-themes"; // Or your custom theme hook
+import { useTheme } from "next-themes";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
@@ -32,11 +32,12 @@ import {
 import { amountToMainUnit } from "~/utils/helper";
 import { Chain } from "~/utils/types";
 import { FinalizedTransaction } from "~/utils/types";
+import { useToast } from "~/components/ui/use-toast";
 
 hljs.registerLanguage("json", json);
 
 function DataContent() {
-  const { theme } = useTheme(); // Or your custom theme hook
+  const { theme } = useTheme();
   const [highlightedCode, setHighlightedCode] = useState("");
 
   const searchParams = useSearchParams();
@@ -59,49 +60,13 @@ function DataContent() {
     setInput(data);
   }
 
-  const {
-    isLoading: isTransactionLoading,
-    data: transaction,
-    error,
-  } = useGetTransaction(input);
+  const { data: transaction, error } = useGetTransaction(input);
 
   const selectedChain = useMemo<Chain | undefined>(() => {
     return Object.values(supportedChains || {}).find(
       (chain) => chain.id === input.chainId
     );
   }, [supportedChains, input]);
-
-  // const formattedDate = useMemo(() => {
-  //   if (transaction?.parsed?.timestamp) {
-  //     // Create a Date object from the timestamp (which is in milliseconds)
-  //     const date = new Date(Number(transaction.parsed.timestamp));
-  //     // Check if the date is valid before formatting
-  //     if (!isNaN(date.getTime())) {
-  //       return formatDistanceToNow(date, { addSuffix: true });
-  //     }
-  //   }
-  //   return "Invalid Date";
-  // }, [transaction?.parsed?.timestamp]);
-
-  // const formattedFees = useMemo(() => {
-  //   if (transaction?.parsed?.fees && selectedChain) {
-  //     return `${amountToMainUnit(
-  //       transaction.parsed.fees,
-  //       selectedChain.decimals
-  //     )} ${selectedChain.ticker}`;
-  //   }
-  //   return null;
-  // }, [transaction?.parsed?.fees, selectedChain]);
-
-  // const formattedAmount = useMemo(() => {
-  //   if (transaction?.parsed?.validators?.target?.amount && selectedChain) {
-  //     return `${amountToMainUnit(
-  //       transaction.parsed.validators.target.amount,
-  //       selectedChain.decimals
-  //     )} ${selectedChain.ticker}`;
-  //   }
-  //   return "N/A";
-  // }, [transaction?.parsed?.validators?.target?.amount, selectedChain]);
 
   const formattedRawData = useMemo(() => {
     if (transaction?.raw) {
@@ -231,19 +196,46 @@ function DataContent() {
     </div>
   );
 
+  const { toast } = useToast();
+
+  const handleCopyRawData = () => {
+    if (formattedRawData) {
+      navigator.clipboard
+        .writeText(formattedRawData)
+        .then(() => {
+          toast({
+            title: "Copied!",
+            description: "Raw data has been copied to clipboard",
+            duration: 2000, // Toast will disappear after 2 seconds
+          });
+        })
+        .catch((error) => {
+          console.error("Failed to copy: ", error);
+          toast({
+            title: "Copy failed",
+            description: "Unable to copy raw data to clipboard",
+            variant: "destructive",
+            duration: 3000,
+          });
+        });
+    }
+  };
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold md:text-2xl">Data</h1>
-        <Tooltip text="View the API documentation for retrieving transactions">
-          <a
-            href="https://docs.adamik.io/api-reference/endpoint/get-apichains-chainid-transaction-transactionid"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
-          </a>
-        </Tooltip>
+        <div className="flex items-center">
+          <h1 className="text-lg font-semibold md:text-2xl">Data</h1>
+          <Tooltip text="View the API documentation for retrieving transaction information">
+            <a
+              href="https://docs.adamik.io/api-reference/endpoint/get-apichains-chainid-transaction-transactionid"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
+            </a>
+          </Tooltip>
+        </div>
       </div>
       <Form {...form}>
         <form
@@ -325,6 +317,14 @@ function DataContent() {
                 <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
               </Tooltip>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopyRawData}
+              className="flex items-center gap-2"
+            >
+              <Copy className="h-4 w-4" />{" "}
+            </Button>
           </CardHeader>
           <CardContent className="max-h-[50vh] overflow-y-auto p-4">
             <div style={codeStyle}>
