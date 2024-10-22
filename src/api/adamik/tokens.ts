@@ -23,11 +23,9 @@ export const getTokenInfo = async (
       const data: TokenInfo = await response.json();
       return data;
     } else {
-      console.error("getTokenInfo - backend error:", await response.text());
       return null;
     }
   } catch (error) {
-    console.error("Error fetching token info:", error);
     return null;
   }
 };
