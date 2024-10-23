@@ -2,7 +2,7 @@
 
 import { Suspense, useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Info, Search, Copy } from "lucide-react";
+import { Info, Search, Copy, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { formatDistanceToNow } from "date-fns";
 import hljs from "highlight.js/lib/core";
@@ -30,18 +30,16 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { amountToMainUnit, formatAmount } from "~/utils/helper";
-import { Chain } from "~/utils/types";
-import { FinalizedTransaction } from "~/utils/types";
+import { Chain, Token, FinalizedTransaction } from "~/utils/types";
 import { useToast } from "~/components/ui/use-toast";
 import { getTokenInfo } from "~/api/adamik/tokens";
-import { TokenInfo } from "~/utils/types";
 
 hljs.registerLanguage("json", json);
 
 function DataContent() {
   const { theme } = useTheme();
   const [highlightedCode, setHighlightedCode] = useState("");
-  const [tokenInfo, setTokenInfo] = useState<TokenInfo | null>(null);
+  const [tokenInfo, setTokenInfo] = useState<Token | null>(null);
   const [fetchTrigger, setFetchTrigger] = useState(0);
 
   const searchParams = useSearchParams();
@@ -61,8 +59,12 @@ function DataContent() {
   }>({ chainId: undefined, transactionId: undefined });
 
   function onSubmit(data: any) {
+    console.log("Search button clicked. New input:", data);
     setInput(data);
-    setFetchTrigger((prev) => prev + 1);
+    setFetchTrigger((prev) => {
+      console.log("Incrementing fetch trigger. New value:", prev + 1);
+      return prev + 1;
+    });
   }
 
   const {
@@ -73,6 +75,14 @@ function DataContent() {
     ...input,
     fetchTrigger,
   });
+
+  useEffect(() => {
+    console.log("Transaction data changed:", transaction);
+  }, [transaction]);
+
+  useEffect(() => {
+    console.log("Fetch trigger changed:", fetchTrigger);
+  }, [fetchTrigger]);
 
   const selectedChain = useMemo<Chain | undefined>(() => {
     return Object.values(supportedChains || {}).find(
@@ -109,6 +119,14 @@ function DataContent() {
   const renderParsedData = (
     transaction: FinalizedTransaction | null | undefined
   ) => {
+    if (isLoading) {
+      return (
+        <div className="flex justify-center items-center h-full">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      );
+    }
+
     if (!transaction?.parsed) return <p>No parsed data available</p>;
 
     const {
@@ -153,11 +171,11 @@ function DataContent() {
       if (recipients && recipients[0]?.amount) {
         if (tokenInfo) {
           const amount = BigInt(recipients[0].amount);
-          const decimals = parseInt(tokenInfo.decimals);
-          const formattedAmount = Number(amount) / 10 ** decimals;
-          return `${formatAmount(formattedAmount.toString(), decimals)} ${
-            tokenInfo.ticker
-          }`;
+          const formattedAmount = Number(amount) / 10 ** tokenInfo.decimals;
+          return `${formatAmount(
+            formattedAmount.toString(),
+            tokenInfo.decimals
+          )} ${tokenInfo.ticker}`;
         }
         const mainUnitAmount = amountToMainUnit(
           recipients[0].amount,
@@ -219,6 +237,29 @@ function DataContent() {
     );
   };
 
+  const renderRawData = () => {
+    if (isLoading) {
+      return (
+        <div className="flex justify-center items-center h-full">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      );
+    }
+
+    if (!formattedRawData) return <p>No raw data available</p>;
+
+    return (
+      <div style={codeStyle} className="h-full">
+        <pre className="text-sm overflow-x-auto h-full m-0">
+          <code
+            className="language-json block"
+            dangerouslySetInnerHTML={{ __html: highlightedCode }}
+          />
+        </pre>
+      </div>
+    );
+  };
+
   const DataItem = ({
     label,
     value,
@@ -275,20 +316,6 @@ function DataContent() {
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <h1 className="text-lg font-semibold md:text-2xl">Data</h1>
-          <Tooltip text="View the API documentation for retrieving transaction information">
-            <a
-              href="https://docs.adamik.io/api-reference/endpoint/get-apichains-chainid-transaction-transactionid"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
-            </a>
-          </Tooltip>
-        </div>
-      </div>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -340,7 +367,10 @@ function DataContent() {
           {!!error && (
             <div className="text-red-500 w-full break-all">{error.message}</div>
           )}
-          <Button type="submit">
+          <Button
+            type="submit"
+            onClick={() => console.log("Search button clicked")}
+          >
             <Search />
           </Button>
         </form>
@@ -356,8 +386,8 @@ function DataContent() {
               </Tooltip>
             </div>
           </CardHeader>
-          <CardContent className="max-h-[50vh] overflow-y-auto">
-            {renderParsedData(transaction)}
+          <CardContent className="max-h-[50vh] overflow-y-auto p-4">
+            <div className="mt-0">{renderParsedData(transaction)}</div>
           </CardContent>
         </Card>
 
@@ -375,18 +405,11 @@ function DataContent() {
               onClick={handleCopyRawData}
               className="flex items-center gap-2"
             >
-              <Copy className="h-4 w-4" />{" "}
+              <Copy className="h-4 w-4" />
             </Button>
           </CardHeader>
-          <CardContent className="max-h-[50vh] overflow-y-auto p-4">
-            <div style={codeStyle}>
-              <pre className="text-sm overflow-x-auto h-full">
-                <code
-                  className="language-json"
-                  dangerouslySetInnerHTML={{ __html: highlightedCode }}
-                />
-              </pre>
-            </div>
+          <CardContent className="max-h-[50vh] overflow-y-auto px-4">
+            {renderRawData()}
           </CardContent>
         </Card>
       </div>

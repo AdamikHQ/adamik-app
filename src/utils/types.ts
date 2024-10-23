@@ -1,6 +1,6 @@
 export type PortfolioAddresses = Record<string, string[]>;
 
-interface Token {
+export interface Token {
   chainId: string;
   type: string;
   id: string;
