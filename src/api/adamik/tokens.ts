@@ -1,13 +1,13 @@
 "use server";
 
 import { env, ADAMIK_API_URL } from "~/env";
-import { TokenInfo } from "~/utils/types";
+import { Token, TokenInfo } from "~/utils/types";
 
 // TODO Better API error management, consistent for all endpoints
 export const getTokenInfo = async (
   chainId: string,
   tokenId: string
-): Promise<TokenInfo | null> => {
+): Promise<Token | null> => {
   try {
     const response = await fetch(
       `${ADAMIK_API_URL}/chains/${chainId}/token/${tokenId}`,
@@ -20,7 +20,7 @@ export const getTokenInfo = async (
     );
 
     if (response.status === 200) {
-      const data: TokenInfo = await response.json();
+      const data: Token = await response.json();
       return data;
     } else {
       return null;
