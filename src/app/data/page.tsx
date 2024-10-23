@@ -29,7 +29,7 @@ import {
   FormLabel,
   FormMessage,
 } from "~/components/ui/form";
-import { amountToMainUnit } from "~/utils/helper";
+import { amountToMainUnit, formatAmount } from "~/utils/helper";
 import { Chain } from "~/utils/types";
 import { FinalizedTransaction } from "~/utils/types";
 import { useToast } from "~/components/ui/use-toast";
@@ -128,34 +128,52 @@ function DataContent() {
 
     const formatFees = (fees: any) => {
       if (typeof fees === "string") {
-        return `${amountToMainUnit(fees, selectedChain?.decimals || 18)} ${
+        const mainUnitFees = amountToMainUnit(
+          fees,
+          selectedChain?.decimals || 18
+        );
+        return `${formatAmount(mainUnitFees, selectedChain?.decimals || 18)} ${
           selectedChain?.ticker || ""
         }`;
       } else if (fees && fees.amount) {
         const ticker = fees.ticker || selectedChain?.ticker || "";
-        return `${amountToMainUnit(
+        const mainUnitFees = amountToMainUnit(
           fees.amount,
+          selectedChain?.decimals || 18
+        );
+        return `${formatAmount(
+          mainUnitFees,
           selectedChain?.decimals || 18
         )} ${ticker}`;
       }
       return "N/A";
     };
 
-    const formatAmount = () => {
+    const formatTransactionAmount = () => {
       if (recipients && recipients[0]?.amount) {
         if (tokenInfo) {
           const amount = BigInt(recipients[0].amount);
           const decimals = parseInt(tokenInfo.decimals);
           const formattedAmount = Number(amount) / 10 ** decimals;
-          return `${formattedAmount.toFixed(decimals)} ${tokenInfo.ticker}`;
+          return `${formatAmount(formattedAmount.toString(), decimals)} ${
+            tokenInfo.ticker
+          }`;
         }
-        return `${amountToMainUnit(
+        const mainUnitAmount = amountToMainUnit(
           recipients[0].amount,
+          selectedChain?.decimals || 18
+        );
+        return `${formatAmount(
+          mainUnitAmount,
           selectedChain?.decimals || 18
         )} ${selectedChain?.ticker || ""}`;
       } else if (validators?.target?.amount) {
-        return `${amountToMainUnit(
+        const mainUnitAmount = amountToMainUnit(
           validators.target.amount,
+          selectedChain?.decimals || 18
+        );
+        return `${formatAmount(
+          mainUnitAmount,
           selectedChain?.decimals || 18
         )} ${selectedChain?.ticker || ""}`;
       }
@@ -187,7 +205,7 @@ function DataContent() {
               : "N/A"
           }
         />
-        <DataItem label="Amount" value={formatAmount()} />
+        <DataItem label="Amount" value={formatTransactionAmount()} />
         <DataItem label="Fees" value={formatFees(fees)} />
         <DataItem label="Gas" value={gas || "N/A"} />
         <DataItem
