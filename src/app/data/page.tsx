@@ -2,7 +2,14 @@
 
 import { Suspense, useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Info, Search, Copy } from "lucide-react";
+import {
+  Info,
+  Search,
+  Copy,
+  Loader2,
+  ChevronRight,
+  ChevronDown,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { formatDistanceToNow } from "date-fns";
 import hljs from "highlight.js/lib/core";
@@ -29,16 +36,20 @@ import {
   FormLabel,
   FormMessage,
 } from "~/components/ui/form";
-import { amountToMainUnit } from "~/utils/helper";
-import { Chain } from "~/utils/types";
-import { FinalizedTransaction } from "~/utils/types";
+import { amountToMainUnit, formatAmount } from "~/utils/helper";
+import { Chain, Token, FinalizedTransaction } from "~/utils/types";
 import { useToast } from "~/components/ui/use-toast";
+import { getTokenInfo } from "~/api/adamik/tokens";
 
 hljs.registerLanguage("json", json);
 
 function DataContent() {
   const { theme } = useTheme();
   const [highlightedCode, setHighlightedCode] = useState("");
+  const [tokenInfo, setTokenInfo] = useState<Token | null>(null);
+  const [fetchTrigger, setFetchTrigger] = useState(0);
+  const [isRawExpanded, setIsRawExpanded] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const searchParams = useSearchParams();
   const { isLoading: isSupportedChainsLoading, data: supportedChains } =
@@ -57,10 +68,20 @@ function DataContent() {
   }>({ chainId: undefined, transactionId: undefined });
 
   function onSubmit(data: any) {
+    console.log("Search button clicked. New input:", data);
     setInput(data);
+    setFetchTrigger((prev) => prev + 1);
+    setHasSubmitted(true);
   }
 
-  const { data: transaction, error } = useGetTransaction(input);
+  const {
+    data: transaction,
+    error,
+    isLoading,
+  } = useGetTransaction({
+    ...input,
+    fetchTrigger,
+  });
 
   const selectedChain = useMemo<Chain | undefined>(() => {
     return Object.values(supportedChains || {}).find(
@@ -86,17 +107,31 @@ function DataContent() {
 
   const codeStyle = useMemo(() => {
     return {
-      fontSize: "0.875rem",
-      padding: "1rem",
+      fontSize: "0.75rem",
+      padding: "0.5rem",
       borderRadius: "0.375rem",
       backgroundColor: theme === "dark" ? "#1e1e1e" : "#f5f5f5",
       color: theme === "dark" ? "#d4d4d4" : "#24292e",
+      overflow: "auto",
+      maxHeight: "40vh",
     };
   }, [theme]);
 
   const renderParsedData = (
     transaction: FinalizedTransaction | null | undefined
   ) => {
+    if (isLoading) {
+      return (
+        <div className="flex justify-center items-center h-full">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      );
+    }
+
+    if (!hasSubmitted) {
+      return <p>Enter a valid transaction ID</p>;
+    }
+
     if (!transaction?.parsed) return <p>No parsed data available</p>;
 
     const {
@@ -116,28 +151,52 @@ function DataContent() {
 
     const formatFees = (fees: any) => {
       if (typeof fees === "string") {
-        return `${amountToMainUnit(fees, selectedChain?.decimals || 18)} ${
+        const mainUnitFees = amountToMainUnit(
+          fees,
+          selectedChain?.decimals || 18
+        );
+        return `${formatAmount(mainUnitFees, selectedChain?.decimals || 18)} ${
           selectedChain?.ticker || ""
         }`;
       } else if (fees && fees.amount) {
         const ticker = fees.ticker || selectedChain?.ticker || "";
-        return `${amountToMainUnit(
+        const mainUnitFees = amountToMainUnit(
           fees.amount,
+          selectedChain?.decimals || 18
+        );
+        return `${formatAmount(
+          mainUnitFees,
           selectedChain?.decimals || 18
         )} ${ticker}`;
       }
       return "N/A";
     };
 
-    const formatAmount = () => {
+    const formatTransactionAmount = () => {
       if (recipients && recipients[0]?.amount) {
-        return `${amountToMainUnit(
+        if (tokenInfo) {
+          const amount = BigInt(recipients[0].amount);
+          const formattedAmount = Number(amount) / 10 ** tokenInfo.decimals;
+          return `${formatAmount(
+            formattedAmount.toString(),
+            tokenInfo.decimals
+          )} ${tokenInfo.ticker}`;
+        }
+        const mainUnitAmount = amountToMainUnit(
           recipients[0].amount,
+          selectedChain?.decimals || 18
+        );
+        return `${formatAmount(
+          mainUnitAmount,
           selectedChain?.decimals || 18
         )} ${selectedChain?.ticker || ""}`;
       } else if (validators?.target?.amount) {
-        return `${amountToMainUnit(
+        const mainUnitAmount = amountToMainUnit(
           validators.target.amount,
+          selectedChain?.decimals || 18
+        );
+        return `${formatAmount(
+          mainUnitAmount,
           selectedChain?.decimals || 18
         )} ${selectedChain?.ticker || ""}`;
       }
@@ -154,7 +213,7 @@ function DataContent() {
     };
 
     return (
-      <dl className="grid gap-3">
+      <dl className="grid gap-2">
         <DataItem label="ID" value={id} />
         <DataItem label="Type" value={mode} />
         <DataItem label="State" value={state} />
@@ -169,7 +228,7 @@ function DataContent() {
               : "N/A"
           }
         />
-        <DataItem label="Amount" value={formatAmount()} />
+        <DataItem label="Amount" value={formatTransactionAmount()} />
         <DataItem label="Fees" value={formatFees(fees)} />
         <DataItem label="Gas" value={gas || "N/A"} />
         <DataItem
@@ -183,6 +242,29 @@ function DataContent() {
     );
   };
 
+  const renderRawData = () => {
+    if (isLoading) {
+      return (
+        <div className="flex justify-center items-center h-full">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      );
+    }
+
+    if (!formattedRawData) return <p>No raw data available</p>;
+
+    return (
+      <div style={codeStyle} className="h-full">
+        <pre className="text-sm overflow-x-auto h-full m-0">
+          <code
+            className="language-json block"
+            dangerouslySetInnerHTML={{ __html: highlightedCode }}
+          />
+        </pre>
+      </div>
+    );
+  };
+
   const DataItem = ({
     label,
     value,
@@ -190,9 +272,11 @@ function DataContent() {
     label: string;
     value?: string | number | bigint;
   }) => (
-    <div className="flex items-center justify-between">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd>{value?.toString() || "N/A"}</dd>
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-1">
+      <dt className="text-muted-foreground text-sm">{label}</dt>
+      <dd className="font-medium text-sm sm:text-base break-all">
+        {value?.toString() || "N/A"}
+      </dd>
     </div>
   );
 
@@ -206,11 +290,10 @@ function DataContent() {
           toast({
             title: "Copied!",
             description: "Raw data has been copied to clipboard",
-            duration: 2000, // Toast will disappear after 2 seconds
+            duration: 2000,
           });
         })
         .catch((error) => {
-          console.error("Failed to copy: ", error);
           toast({
             title: "Copy failed",
             description: "Unable to copy raw data to clipboard",
@@ -221,26 +304,45 @@ function DataContent() {
     }
   };
 
+  useEffect(() => {
+    const fetchTokenInfo = async () => {
+      if (transaction?.parsed?.mode === "transferToken" && selectedChain) {
+        const tokenAddress = (transaction.raw as any).to;
+        if (typeof tokenAddress === "string") {
+          const info = await getTokenInfo(selectedChain.id, tokenAddress);
+          setTokenInfo(info);
+        }
+      } else {
+        setTokenInfo(null);
+      }
+    };
+
+    fetchTokenInfo();
+  }, [transaction, selectedChain]);
+
+  const toggleRawExpand = () => {
+    setIsRawExpanded(!isRawExpanded);
+  };
+
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <h1 className="text-lg font-semibold md:text-2xl">Data</h1>
-          <Tooltip text="View the API documentation for retrieving transaction information">
-            <a
-              href="https://docs.adamik.io/api-reference/endpoint/get-apichains-chainid-transaction-transactionid"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
-            </a>
-          </Tooltip>
-        </div>
+    <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto w-full">
+      <div className="flex items-center">
+        <h1 className="text-lg font-semibold md:text-2xl">Data</h1>
+        <Tooltip text="View the API documentation for retrieving transaction data">
+          <a
+            href="https://docs.adamik.io/api-reference/endpoint/get-apichains-chainid-transaction-transactionid"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
+          </a>
+        </Tooltip>
       </div>
+
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="w-2/3 space-y-6"
+          className="w-full max-w-2xl space-y-4 md:space-y-6"
         >
           <FormField
             control={form.control}
@@ -250,11 +352,11 @@ function DataContent() {
                 <FormLabel>Chain</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a chain" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent className="max-h-[40vh]">
                     {!isSupportedChainsLoading &&
                       supportedChains &&
                       Object.values(supportedChains)
@@ -280,7 +382,11 @@ function DataContent() {
               <FormItem>
                 <FormLabel>Transaction ID</FormLabel>
                 <FormControl>
-                  <Input placeholder="transaction id" {...field} />
+                  <Input
+                    placeholder="transaction id"
+                    {...field}
+                    className="w-full"
+                  />
                 </FormControl>
               </FormItem>
             )}
@@ -288,13 +394,18 @@ function DataContent() {
           {!!error && (
             <div className="text-red-500 w-full break-all">{error.message}</div>
           )}
-          <Button type="submit">
-            <Search />
+          <Button
+            type="submit"
+            className="w-full sm:w-auto"
+            onClick={() => console.log("Search button clicked")}
+          >
+            <Search className="mr-2" />
+            Search
           </Button>
         </form>
       </Form>
 
-      <div className="grid gap-4 md:gap-8 grid-cols-1 lg:grid-cols-2">
+      <div className="grid gap-4 md:gap-8 grid-cols-1">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div className="flex items-center">
@@ -304,39 +415,48 @@ function DataContent() {
               </Tooltip>
             </div>
           </CardHeader>
-          <CardContent className="max-h-[50vh] overflow-y-auto">
-            {renderParsedData(transaction)}
+          <CardContent className="max-h-[40vh] lg:max-h-[50vh] overflow-y-auto p-2 lg:p-4">
+            <div className="mt-0">{renderParsedData(transaction)}</div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div className="flex items-center">
-              <CardTitle>Raw</CardTitle>
-              <Tooltip text="Raw transaction from the blockchain">
-                <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
-              </Tooltip>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopyRawData}
-              className="flex items-center gap-2"
-            >
-              <Copy className="h-4 w-4" />{" "}
-            </Button>
-          </CardHeader>
-          <CardContent className="max-h-[50vh] overflow-y-auto p-4">
-            <div style={codeStyle}>
-              <pre className="text-sm overflow-x-auto h-full">
-                <code
-                  className="language-json"
-                  dangerouslySetInnerHTML={{ __html: highlightedCode }}
-                />
-              </pre>
-            </div>
-          </CardContent>
-        </Card>
+        <div>
+          <Button
+            onClick={toggleRawExpand}
+            variant="outline"
+            className="w-full justify-between"
+          >
+            <span>Raw Data</span>
+            {isRawExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </Button>
+          {isRawExpanded && (
+            <Card className="mt-4">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div className="flex items-center">
+                  <CardTitle>Raw</CardTitle>
+                  <Tooltip text="Raw transaction from the blockchain">
+                    <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
+                  </Tooltip>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyRawData}
+                  className="flex items-center gap-2"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </CardHeader>
+              <CardContent className="max-h-[40vh] lg:max-h-[50vh] overflow-y-auto px-4">
+                {renderRawData()}
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </main>
   );
