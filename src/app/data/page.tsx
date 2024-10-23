@@ -2,7 +2,14 @@
 
 import { Suspense, useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Info, Search, Copy, Loader2 } from "lucide-react";
+import {
+  Info,
+  Search,
+  Copy,
+  Loader2,
+  ChevronRight,
+  ChevronDown,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { formatDistanceToNow } from "date-fns";
 import hljs from "highlight.js/lib/core";
@@ -41,6 +48,8 @@ function DataContent() {
   const [highlightedCode, setHighlightedCode] = useState("");
   const [tokenInfo, setTokenInfo] = useState<Token | null>(null);
   const [fetchTrigger, setFetchTrigger] = useState(0);
+  const [isRawExpanded, setIsRawExpanded] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const searchParams = useSearchParams();
   const { isLoading: isSupportedChainsLoading, data: supportedChains } =
@@ -62,6 +71,7 @@ function DataContent() {
     console.log("Search button clicked. New input:", data);
     setInput(data);
     setFetchTrigger((prev) => prev + 1);
+    setHasSubmitted(true);
   }
 
   const {
@@ -116,6 +126,10 @@ function DataContent() {
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       );
+    }
+
+    if (!hasSubmitted) {
+      return <p>Enter a valid transaction ID</p>;
     }
 
     if (!transaction?.parsed) return <p>No parsed data available</p>;
@@ -306,6 +320,10 @@ function DataContent() {
     fetchTokenInfo();
   }, [transaction, selectedChain]);
 
+  const toggleRawExpand = () => {
+    setIsRawExpanded(!isRawExpanded);
+  };
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto w-full">
       <Form {...form}>
@@ -374,7 +392,7 @@ function DataContent() {
         </form>
       </Form>
 
-      <div className="grid gap-4 md:gap-8 grid-cols-1 lg:grid-cols-2">
+      <div className="grid gap-4 md:gap-8 grid-cols-1">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div className="flex items-center">
@@ -389,27 +407,43 @@ function DataContent() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div className="flex items-center">
-              <CardTitle>Raw</CardTitle>
-              <Tooltip text="Raw transaction from the blockchain">
-                <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
-              </Tooltip>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopyRawData}
-              className="flex items-center gap-2"
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
-          </CardHeader>
-          <CardContent className="max-h-[40vh] lg:max-h-[50vh] overflow-y-auto px-4">
-            {renderRawData()}
-          </CardContent>
-        </Card>
+        <div>
+          <Button
+            onClick={toggleRawExpand}
+            variant="outline"
+            className="w-full justify-between"
+          >
+            <span>Raw Data</span>
+            {isRawExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </Button>
+          {isRawExpanded && (
+            <Card className="mt-4">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div className="flex items-center">
+                  <CardTitle>Raw</CardTitle>
+                  <Tooltip text="Raw transaction from the blockchain">
+                    <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
+                  </Tooltip>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyRawData}
+                  className="flex items-center gap-2"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </CardHeader>
+              <CardContent className="max-h-[40vh] lg:max-h-[50vh] overflow-y-auto px-4">
+                {renderRawData()}
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </main>
   );
