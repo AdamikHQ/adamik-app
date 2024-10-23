@@ -1,6 +1,6 @@
 export type PortfolioAddresses = Record<string, string[]>;
 
-interface Token {
+export interface Token {
   chainId: string;
   type: string;
   id: string;
@@ -227,7 +227,16 @@ export type SupportedBlockchain = Chain & {
   labels?: string[]; // To define the list of features supported
 };
 
-// Add this new type definition
+export type TokenInfo = {
+  chainId: string;
+  type: string;
+  id: string;
+  name: string;
+  ticker: string;
+  decimals: string;
+  contractAddress: string;
+};
+
 export type BackendErrorResponse = {
   status: {
     errors: Array<{ message: string }>;
