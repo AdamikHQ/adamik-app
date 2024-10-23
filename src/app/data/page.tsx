@@ -61,10 +61,7 @@ function DataContent() {
   function onSubmit(data: any) {
     console.log("Search button clicked. New input:", data);
     setInput(data);
-    setFetchTrigger((prev) => {
-      console.log("Incrementing fetch trigger. New value:", prev + 1);
-      return prev + 1;
-    });
+    setFetchTrigger((prev) => prev + 1);
   }
 
   const {
@@ -75,14 +72,6 @@ function DataContent() {
     ...input,
     fetchTrigger,
   });
-
-  useEffect(() => {
-    console.log("Transaction data changed:", transaction);
-  }, [transaction]);
-
-  useEffect(() => {
-    console.log("Fetch trigger changed:", fetchTrigger);
-  }, [fetchTrigger]);
 
   const selectedChain = useMemo<Chain | undefined>(() => {
     return Object.values(supportedChains || {}).find(
@@ -108,11 +97,13 @@ function DataContent() {
 
   const codeStyle = useMemo(() => {
     return {
-      fontSize: "0.875rem",
-      padding: "1rem",
+      fontSize: "0.75rem",
+      padding: "0.5rem",
       borderRadius: "0.375rem",
       backgroundColor: theme === "dark" ? "#1e1e1e" : "#f5f5f5",
       color: theme === "dark" ? "#d4d4d4" : "#24292e",
+      overflow: "auto",
+      maxHeight: "40vh",
     };
   }, [theme]);
 
@@ -208,7 +199,7 @@ function DataContent() {
     };
 
     return (
-      <dl className="grid gap-3">
+      <dl className="grid gap-2">
         <DataItem label="ID" value={id} />
         <DataItem label="Type" value={mode} />
         <DataItem label="State" value={state} />
@@ -267,9 +258,11 @@ function DataContent() {
     label: string;
     value?: string | number | bigint;
   }) => (
-    <div className="flex items-center justify-between">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd>{value?.toString() || "N/A"}</dd>
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-1">
+      <dt className="text-muted-foreground text-sm">{label}</dt>
+      <dd className="font-medium text-sm sm:text-base break-all">
+        {value?.toString() || "N/A"}
+      </dd>
     </div>
   );
 
@@ -302,7 +295,6 @@ function DataContent() {
       if (transaction?.parsed?.mode === "transferToken" && selectedChain) {
         const tokenAddress = (transaction.raw as any).to;
         if (typeof tokenAddress === "string") {
-          // Fetch token info using the chain ID and token address
           const info = await getTokenInfo(selectedChain.id, tokenAddress);
           setTokenInfo(info);
         }
@@ -315,11 +307,11 @@ function DataContent() {
   }, [transaction, selectedChain]);
 
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
+    <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto w-full">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="w-2/3 space-y-6"
+          className="w-full max-w-2xl space-y-4 md:space-y-6"
         >
           <FormField
             control={form.control}
@@ -329,11 +321,11 @@ function DataContent() {
                 <FormLabel>Chain</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a chain" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent className="max-h-[40vh]">
                     {!isSupportedChainsLoading &&
                       supportedChains &&
                       Object.values(supportedChains)
@@ -359,7 +351,11 @@ function DataContent() {
               <FormItem>
                 <FormLabel>Transaction ID</FormLabel>
                 <FormControl>
-                  <Input placeholder="transaction id" {...field} />
+                  <Input
+                    placeholder="transaction id"
+                    {...field}
+                    className="w-full"
+                  />
                 </FormControl>
               </FormItem>
             )}
@@ -369,9 +365,11 @@ function DataContent() {
           )}
           <Button
             type="submit"
+            className="w-full sm:w-auto"
             onClick={() => console.log("Search button clicked")}
           >
-            <Search />
+            <Search className="mr-2" />
+            Search
           </Button>
         </form>
       </Form>
@@ -386,7 +384,7 @@ function DataContent() {
               </Tooltip>
             </div>
           </CardHeader>
-          <CardContent className="max-h-[50vh] overflow-y-auto p-4">
+          <CardContent className="max-h-[40vh] lg:max-h-[50vh] overflow-y-auto p-2 lg:p-4">
             <div className="mt-0">{renderParsedData(transaction)}</div>
           </CardContent>
         </Card>
@@ -408,7 +406,7 @@ function DataContent() {
               <Copy className="h-4 w-4" />
             </Button>
           </CardHeader>
-          <CardContent className="max-h-[50vh] overflow-y-auto px-4">
+          <CardContent className="max-h-[40vh] lg:max-h-[50vh] overflow-y-auto px-4">
             {renderRawData()}
           </CardContent>
         </Card>
