@@ -174,7 +174,7 @@ export type Chain = {
   supportedFeatures: ChainSupportedFeatures;
 };
 
-type ChainSupportedFeatures = {
+export type ChainSupportedFeatures = {
   read: {
     account: {
       balances: {
