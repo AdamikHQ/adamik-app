@@ -127,7 +127,8 @@ function TransactionHistoryContent() {
 
         const features: ChainSupportedFeatures = chain.supportedFeatures;
 
-        return features.read?.account?.transactions;
+        // Check if the chain supports native transaction history
+        return features.read?.account?.transactions?.native;
       })
     );
   }, [groupedAccounts, chainsDetails]);
