@@ -17,30 +17,24 @@ export const getAccountHistory = async (
     return null;
   }
 
-  const response = await fetch(
-    `${ADAMIK_API_URL}/api/account/history?include=parsed`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: env.ADAMIK_API_KEY,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        chainId,
-        accountId,
-      }),
-    }
-  );
+  const response = await fetch(`${ADAMIK_API_URL}/account/history`, {
+    method: "POST",
+    headers: {
+      Authorization: env.ADAMIK_API_KEY,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      chainId,
+      accountId,
+    }),
+  });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    console.error(
-      "Account history - backend error:",
-      JSON.stringify(errorData)
-    );
-    throw new Error(`Failed to fetch account history: ${response.statusText}`);
+  const result = await response.json();
+
+  if (response.status === 200) {
+    return result;
+  } else {
+    console.error("Account history - backend error:", JSON.stringify(result));
+    return null;
   }
-
-  const result: AccountHistoryResponse = await response.json();
-  return result;
 };

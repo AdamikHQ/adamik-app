@@ -31,6 +31,7 @@ import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { WalletSelection } from "~/components/wallets/WalletSelection";
+import { getAccountHistory } from "~/api/adamik/history";
 
 // Define a new type for grouped accounts
 type GroupedAccount = {
@@ -138,19 +139,14 @@ function TransactionHistoryContent() {
 
   const handleAccountClick = async (account: GroupedAccount) => {
     setSelectedAccount(account);
-    // Simulating API call for transaction history
-    const mockApiCall = new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          transactions: [
-            { id: 1, amount: 100, type: "send" },
-            { id: 2, amount: 50, type: "receive" },
-          ],
-        });
-      }, 1000);
-    });
-    const history = await mockApiCall;
-    setTransactionHistory(history);
+
+    try {
+      const history = await getAccountHistory(account.chainId, account.address);
+      setTransactionHistory(history);
+    } catch (error) {
+      console.error("Error fetching transaction history:", error);
+      setTransactionHistory(null);
+    }
   };
 
   return (
