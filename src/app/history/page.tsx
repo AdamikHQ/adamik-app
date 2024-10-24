@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
-import { Info, Loader2 } from "lucide-react";
+import { Suspense, useState, useMemo } from "react";
+import { Info, Loader2, ChevronRight } from "lucide-react";
 import {
   Tooltip,
   TooltipProvider,
@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { Asset } from "~/utils/types";
+import { Chain, ChainSupportedFeatures, Asset } from "~/utils/types";
 import { useAccountStateBatch } from "~/hooks/useAccountStateBatch";
 import {
   calculateAssets,
@@ -29,13 +29,32 @@ import {
 } from "../portfolio/helpers";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
-import { Chain, ChainSupportedFeatures } from "~/utils/types";
+import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
+import { WalletSelection } from "~/components/wallets/WalletSelection";
+
+// Define a new type for grouped accounts
+type GroupedAccount = {
+  address: string;
+  chainId: string;
+  mainAsset: Asset | null;
+  assets: Asset[];
+};
 
 function TransactionHistoryContent() {
-  const { addresses: walletAddresses, isShowroom } = useWallet();
+  const {
+    addresses: walletAddresses,
+    isShowroom,
+    setShowroom,
+    setWalletMenuOpen,
+  } = useWallet();
   const { isLoading: isSupportedChainsLoading, data: supportedChains } =
     useChains();
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
+
+  const [selectedAccount, setSelectedAccount] = useState<GroupedAccount | null>(
+    null
+  );
+  const [transactionHistory, setTransactionHistory] = useState<any>(null);
 
   const displayAddresses = isShowroom ? showroomAddresses : walletAddresses;
   const { data: addressesData, isLoading: isAddressesLoading } =
@@ -75,48 +94,63 @@ function TransactionHistoryContent() {
 
   const groupedAccounts = useMemo(() => {
     return assets.reduce((acc, asset) => {
-      if (!acc[asset.address]) {
-        acc[asset.address] = {
+      if (!acc[asset.chainId]) {
+        acc[asset.chainId] = {};
+      }
+
+      if (!acc[asset.chainId][asset.address]) {
+        acc[asset.chainId][asset.address] = {
           address: asset.address,
           chainId: asset.chainId,
           mainAsset: asset.isToken ? null : asset,
           assets: [],
         };
       }
+
       if (asset.isToken) {
-        acc[asset.address].assets.push(asset);
-      } else if (!acc[asset.address].mainAsset) {
-        acc[asset.address].mainAsset = asset;
+        acc[asset.chainId][asset.address].assets.push(asset);
+      } else if (!acc[asset.chainId][asset.address].mainAsset) {
+        acc[asset.chainId][asset.address].mainAsset = asset;
       }
+
       return acc;
-    }, {} as Record<string, { address: string; chainId: string; mainAsset: Asset | null; assets: Asset[] }>);
+    }, {} as Record<string, Record<string, GroupedAccount>>);
   }, [assets]);
 
   const filteredAccounts = useMemo(() => {
-    return Object.values(groupedAccounts).filter((account) => {
-      const chain = chainsDetails?.find(
-        (chain: Chain) => chain.id === account.chainId
-      );
-      if (!chain) return false;
+    return Object.values(groupedAccounts).flatMap((addresses) =>
+      Object.values(addresses).filter((account) => {
+        const chain = chainsDetails?.find(
+          (chain: Chain) => chain.id === account.chainId
+        );
+        if (!chain) return false;
 
-      const features: ChainSupportedFeatures = chain.supportedFeatures;
+        const features: ChainSupportedFeatures = chain.supportedFeatures;
 
-      // Check if the read.account.transactions field exists
-      if (!features.read?.account?.transactions) {
-        return false;
-      }
-
-      // If the field exists, check if any transaction type is supported
-      return (
-        features.read.account.transactions.native ||
-        features.read.account.transactions.tokens ||
-        features.read.account.transactions.staking
-      );
-    });
+        return features.read?.account?.transactions;
+      })
+    );
   }, [groupedAccounts, chainsDetails]);
 
   const isLoading =
     isAddressesLoading || isAssetDetailsLoading || isSupportedChainsLoading;
+
+  const handleAccountClick = async (account: GroupedAccount) => {
+    setSelectedAccount(account);
+    // Simulating API call for transaction history
+    const mockApiCall = new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          transactions: [
+            { id: 1, amount: 100, type: "send" },
+            { id: 2, amount: 50, type: "receive" },
+          ],
+        });
+      }, 1000);
+    });
+    const history = await mockApiCall;
+    setTransactionHistory(history);
+  };
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
@@ -135,71 +169,80 @@ function TransactionHistoryContent() {
             </a>
           </Tooltip>
         </div>
+
+        <WalletSelection />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Available Accounts</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <Loader2 className="animate-spin" />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[80px]"></TableHead>
-                  <TableHead>Address</TableHead>
-                  <TableHead>Assets Count</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAccounts.length > 0 ? (
-                  filteredAccounts.map((account) => (
-                    <TooltipProvider key={account.address} delayDuration={100}>
-                      <TableRow>
-                        <TableCell>
-                          <div className="relative">
-                            <Tooltip
-                              text={account.mainAsset?.name || "Unknown"}
-                            >
-                              <TooltipTrigger>
-                                <Avatar className="w-[38px] h-[38px]">
-                                  <AvatarImage
-                                    src={account.mainAsset?.logo}
-                                    alt={account.mainAsset?.name}
-                                  />
-                                  <AvatarFallback>
-                                    {account.mainAsset?.name?.slice(0, 2) ||
-                                      "??"}
-                                  </AvatarFallback>
-                                </Avatar>
-                              </TooltipTrigger>
-                            </Tooltip>
-                          </div>
-                        </TableCell>
-                        <TableCell>{account.address}</TableCell>
-                        <TableCell>
-                          {account.assets.length + (account.mainAsset ? 1 : 0)}
-                        </TableCell>
-                      </TableRow>
-                    </TooltipProvider>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={3}>
-                      No accounts found. Please make sure you have connected
-                      your wallet.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      {isShowroom ? <ShowroomBanner /> : null}
 
-      {/* Add your transaction history content here */}
+      <div className="flex gap-4">
+        <Card className="w-1/2">
+          <CardHeader>
+            <CardTitle>Available Accounts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Loader2 className="animate-spin" />
+            ) : filteredAccounts.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[80px]"></TableHead>
+                    <TableHead>Address</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAccounts.map((account) => (
+                    <TableRow
+                      key={`${account.chainId}-${account.address}`} // Use a unique key
+                      className="cursor-pointer hover:bg-gray-800"
+                      onClick={() => handleAccountClick(account)}
+                    >
+                      <TableCell>
+                        <Avatar className="w-[38px] h-[38px]">
+                          <AvatarImage
+                            src={account.mainAsset?.logo} // Access from mainAsset
+                            alt={account.mainAsset?.name} // Access from mainAsset
+                          />
+                          <AvatarFallback>
+                            {account.mainAsset?.name?.slice(0, 2) || "??"}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TableCell>
+                      <TableCell className="flex justify-between items-center">
+                        <p>{account.address}</p>
+                        <ChevronRight className="w-4 h-4 text-gray-500" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <p>
+                No accounts found with transaction history support. Please
+                connect a wallet with supported chains.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="w-1/2">
+          <CardHeader>
+            <CardTitle>Transaction History</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {selectedAccount ? (
+              transactionHistory ? (
+                <pre>{JSON.stringify(transactionHistory, null, 2)}</pre>
+              ) : (
+                <Loader2 className="animate-spin" />
+              )
+            ) : (
+              <p>Select an account to view its transaction history.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </main>
   );
 }
