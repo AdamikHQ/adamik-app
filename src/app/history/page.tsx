@@ -33,7 +33,6 @@ import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { WalletSelection } from "~/components/wallets/WalletSelection";
 import { getAccountHistory } from "~/api/adamik/history";
 
-// Define a new type for grouped accounts
 type GroupedAccount = {
   address: string;
   chainId: string;
@@ -56,6 +55,7 @@ function TransactionHistoryContent() {
     null
   );
   const [transactionHistory, setTransactionHistory] = useState<any>(null);
+  const [isFetchingHistory, setIsFetchingHistory] = useState(false);
 
   const displayAddresses = isShowroom ? showroomAddresses : walletAddresses;
   const { data: addressesData, isLoading: isAddressesLoading } =
@@ -139,6 +139,7 @@ function TransactionHistoryContent() {
 
   const handleAccountClick = async (account: GroupedAccount) => {
     setSelectedAccount(account);
+    setIsFetchingHistory(true);
 
     try {
       const history = await getAccountHistory(account.chainId, account.address);
@@ -146,6 +147,8 @@ function TransactionHistoryContent() {
     } catch (error) {
       console.error("Error fetching transaction history:", error);
       setTransactionHistory(null);
+    } finally {
+      setIsFetchingHistory(false);
     }
   };
 
@@ -191,15 +194,15 @@ function TransactionHistoryContent() {
                 <TableBody>
                   {filteredAccounts.map((account) => (
                     <TableRow
-                      key={`${account.chainId}-${account.address}`} // Use a unique key
+                      key={`${account.chainId}-${account.address}`}
                       className="cursor-pointer hover:bg-gray-800"
                       onClick={() => handleAccountClick(account)}
                     >
                       <TableCell>
                         <Avatar className="w-[38px] h-[38px]">
                           <AvatarImage
-                            src={account.mainAsset?.logo} // Access from mainAsset
-                            alt={account.mainAsset?.name} // Access from mainAsset
+                            src={account.mainAsset?.logo}
+                            alt={account.mainAsset?.name}
                           />
                           <AvatarFallback>
                             {account.mainAsset?.name?.slice(0, 2) || "??"}
@@ -229,10 +232,12 @@ function TransactionHistoryContent() {
           </CardHeader>
           <CardContent>
             {selectedAccount ? (
-              transactionHistory ? (
+              isFetchingHistory ? (
+                <Loader2 className="animate-spin" />
+              ) : transactionHistory ? (
                 <pre>{JSON.stringify(transactionHistory, null, 2)}</pre>
               ) : (
-                <Loader2 className="animate-spin" />
+                <p>No transaction history available.</p>
               )
             ) : (
               <p>Select an account to view its transaction history.</p>
