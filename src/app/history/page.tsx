@@ -6,7 +6,6 @@ import {
   Loader2,
   ChevronRight,
   Send,
-  Download,
   HelpCircle,
   SendHorizonal,
   HandshakeIcon,
@@ -15,11 +14,7 @@ import {
   Search,
   ChevronLeft,
 } from "lucide-react";
-import {
-  Tooltip,
-  TooltipProvider,
-  TooltipTrigger,
-} from "~/components/ui/tooltip";
+import { Tooltip } from "~/components/ui/tooltip";
 import { useWallet } from "~/hooks/useWallet";
 import { useChains } from "~/hooks/useChains";
 import { showroomAddresses } from "../../utils/showroomAddresses";
@@ -47,7 +42,7 @@ import { WalletSelection } from "~/components/wallets/WalletSelection";
 import { getAccountHistory } from "~/api/adamik/history";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
-import { formatAssetAmount } from "~/utils/assetFormatters";
+import { formatAssetAmountBatch } from "~/utils/assetFormatters";
 
 type GroupedAccount = {
   address: string;
@@ -77,6 +72,30 @@ type ParsedTransaction = {
       };
     };
   };
+};
+
+// Add this helper function
+const getAmountKey = (parsed: ParsedTransaction["parsed"]) => {
+  if (
+    (parsed.mode === "delegate" ||
+      parsed.mode === "undelegate" ||
+      parsed.mode === "claimRewards") &&
+    parsed.validators?.target
+  ) {
+    return `${parsed.chainId}-native-${parsed.validators.target.amount}`;
+  }
+
+  if (parsed.mode === "transferToken" && parsed.tokenId) {
+    return `${parsed.chainId}-token-${parsed.tokenId}-${
+      parsed.recipients?.[0]?.amount || "0"
+    }`;
+  }
+
+  if (parsed.recipients?.[0]) {
+    return `${parsed.chainId}-native-${parsed.recipients[0].amount}`;
+  }
+
+  return "";
 };
 
 function TransactionHistoryContent() {
@@ -217,79 +236,103 @@ function TransactionHistoryContent() {
     }
   };
 
-  const formatTransactionAmount = async (
-    amount: string,
-    chainId: string,
-    type: "native" | "token",
-    tokenId?: string
-  ) => {
-    // Use cache to prevent unnecessary re-formatting
-    const cacheKey = `${amount}-${chainId}-${type}-${tokenId || ""}`;
-    if (formattedAmounts[cacheKey]) {
-      return formattedAmounts[cacheKey];
-    }
+  const [formattedTransactions, setFormattedTransactions] = useState<
+    Record<
+      string,
+      {
+        formattedAmount: string;
+        formattedFee: string;
+      }
+    >
+  >({});
 
-    const result = await formatAssetAmount({
-      asset: {
-        chainId,
-        type,
-        tokenId,
-      },
-      amount,
-      chainData: supportedChains,
-      maximumFractionDigits: 6,
-    });
+  // Batch format all transactions when they're loaded
+  useEffect(() => {
+    if (!transactionHistory?.transactions || isFetchingHistory) return;
 
-    const formatted = `${result.formatted} ${result.ticker}`;
-    setFormattedAmounts((prev) => ({
-      ...prev,
-      [cacheKey]: formatted,
-    }));
+    const formatTransactions = async () => {
+      const formatRequests = transactionHistory.transactions.flatMap(
+        (tx: ParsedTransaction) => {
+          const requests = [];
 
-    return formatted;
-  };
+          // Add fee request
+          requests.push({
+            asset: { chainId: tx.parsed.chainId, type: "native" },
+            amount: tx.parsed.fees.amount,
+            chainData: supportedChains,
+            maximumFractionDigits: 6,
+          });
 
-  const renderTransaction = async (tx: ParsedTransaction) => {
+          // Add amount request based on transaction type
+          if (
+            (tx.parsed.mode === "delegate" ||
+              tx.parsed.mode === "undelegate" ||
+              tx.parsed.mode === "claimRewards") &&
+            tx.parsed.validators?.target
+          ) {
+            requests.push({
+              asset: { chainId: tx.parsed.chainId, type: "native" },
+              amount: tx.parsed.validators.target.amount,
+              chainData: supportedChains,
+              maximumFractionDigits: 6,
+            });
+          } else if (tx.parsed.mode === "transferToken" && tx.parsed.tokenId) {
+            requests.push({
+              asset: {
+                chainId: tx.parsed.chainId,
+                type: "token",
+                tokenId: tx.parsed.tokenId,
+              },
+              amount: tx.parsed.recipients?.[0]?.amount || "0",
+              chainData: supportedChains,
+              maximumFractionDigits: 6,
+            });
+          } else if (tx.parsed.recipients?.[0]) {
+            requests.push({
+              asset: { chainId: tx.parsed.chainId, type: "native" },
+              amount: tx.parsed.recipients[0].amount,
+              chainData: supportedChains,
+              maximumFractionDigits: 6,
+            });
+          }
+
+          return requests;
+        }
+      );
+
+      // Batch format all amounts
+      const results = await formatAssetAmountBatch(formatRequests);
+
+      // Process results into formatted transactions
+      const formatted: Record<
+        string,
+        { formattedAmount: string; formattedFee: string }
+      > = {};
+      transactionHistory.transactions.forEach((tx: ParsedTransaction) => {
+        const feeKey = `${tx.parsed.chainId}-native-${tx.parsed.fees.amount}`;
+        const amountKey = getAmountKey(tx.parsed); // Helper to get the right key based on tx type
+
+        formatted[tx.parsed.id] = {
+          formattedFee: `${results[feeKey].formatted} ${results[feeKey].ticker}`,
+          formattedAmount: results[amountKey]
+            ? `${results[amountKey].formatted} ${results[amountKey].ticker}`
+            : "",
+        };
+      });
+
+      setFormattedTransactions(formatted);
+    };
+
+    formatTransactions();
+  }, [transactionHistory, supportedChains]);
+
+  // Update renderTransaction to be synchronous
+  const renderTransaction = (tx: ParsedTransaction) => {
     const { parsed } = tx;
-
-    // Always format fees as native asset
-    const formattedFee = await formatTransactionAmount(
-      parsed.fees.amount,
-      parsed.chainId,
-      "native"
-    );
-
-    // Format transaction amount based on transaction type
-    let formattedAmount = "";
-    if (
-      (parsed.mode === "delegate" ||
-        parsed.mode === "undelegate" ||
-        parsed.mode === "claimRewards") &&
-      parsed.validators?.target
-    ) {
-      // TODO: handle claimed reward amounts that are not in native currency (like IBC token rewards claimed)
-      // Currently assuming all validator-related amounts are in native currency
-      formattedAmount = await formatTransactionAmount(
-        parsed.validators.target.amount,
-        parsed.chainId,
-        "native"
-      );
-    } else if (parsed.mode === "transferToken" && parsed.tokenId) {
-      // Token transfer
-      formattedAmount = await formatTransactionAmount(
-        parsed.recipients?.[0]?.amount || "0",
-        parsed.chainId,
-        "token",
-        parsed.tokenId
-      );
-    } else if (parsed.recipients?.[0]) {
-      // Native transfer
-      formattedAmount = await formatTransactionAmount(
-        parsed.recipients[0].amount,
-        parsed.chainId,
-        "native"
-      );
-    }
+    const formatted = formattedTransactions[parsed.id] || {
+      formattedAmount: "",
+      formattedFee: "",
+    };
 
     return (
       <div className="p-3 sm:p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
@@ -360,7 +403,7 @@ function TransactionHistoryContent() {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground w-16">Amount:</span>
-              <span className="font-medium">{formattedAmount}</span>
+              <span className="font-medium">{formatted.formattedAmount}</span>
             </div>
           </div>
         )}
@@ -381,14 +424,14 @@ function TransactionHistoryContent() {
                 <span className="text-muted-foreground w-16">
                   {parsed.mode === "claimRewards" ? "Claimed:" : "Amount:"}
                 </span>
-                <span className="font-medium">{formattedAmount}</span>
+                <span className="font-medium">{formatted.formattedAmount}</span>
               </div>
             </div>
           )}
 
         {/* Always show fee */}
         <div className="mt-3 text-sm text-muted-foreground">
-          Fee: {formattedFee}
+          Fee: {formatted.formattedFee}
         </div>
       </div>
     );
@@ -414,10 +457,6 @@ function TransactionHistoryContent() {
 
     return () => window.removeEventListener("resize", checkMobileView);
   }, []);
-
-  const [formattedAmounts, setFormattedAmounts] = useState<
-    Record<string, string>
-  >({});
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
