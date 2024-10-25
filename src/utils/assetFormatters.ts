@@ -11,7 +11,7 @@ interface AssetIdentifier {
   tokenId?: string;
 }
 
-interface FormatAssetAmountOptions {
+export interface FormatAssetAmountOptions {
   asset: AssetIdentifier;
   amount: string | number;
   chainData?: Record<string, Chain> | null; // Allow null
@@ -19,7 +19,7 @@ interface FormatAssetAmountOptions {
   minimumFractionDigits?: number;
 }
 
-interface FormatAssetAmountResult {
+export interface FormatAssetAmountResult {
   formatted: string; // The formatted amount
   ticker: string; // The asset ticker
 }
