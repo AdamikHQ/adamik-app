@@ -584,7 +584,14 @@ function TransactionHistoryContent() {
                   </div>
                 </div>
               )}
-              <CardTitle>Transaction History</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle>Transaction History</CardTitle>
+                {transactionHistory && !isFetchingHistory && (
+                  <span className="text-sm text-muted-foreground">
+                    ({transactionHistory.transactions.length} operations)
+                  </span>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {selectedAccount ? (
