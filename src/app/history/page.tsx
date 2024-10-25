@@ -461,24 +461,6 @@ function TransactionHistoryContent() {
     return () => window.removeEventListener("resize", checkMobileView);
   }, []);
 
-  // Add this useEffect to track formatting state
-  const [isFormattingAmounts, setIsFormattingAmounts] = useState(false);
-
-  // Add this useEffect to track formatting state
-  useEffect(() => {
-    if (!transactionHistory?.transactions) return;
-    setIsFormattingAmounts(true);
-
-    // Check if all transactions have formatted amounts
-    const allFormatted = transactionHistory.transactions.every(
-      (tx: ParsedTransaction) => formattedTransactions[tx.parsed.id]
-    );
-
-    if (allFormatted) {
-      setIsFormattingAmounts(false);
-    }
-  }, [transactionHistory, formattedTransactions, isFetchingHistory]); // Added isFetchingHistory
-
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
       {/* Header section */}
