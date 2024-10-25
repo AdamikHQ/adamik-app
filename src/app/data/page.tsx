@@ -36,13 +36,17 @@ import {
   FormLabel,
   FormMessage,
 } from "~/components/ui/form";
-import { amountToMainUnit, formatAmount } from "~/utils/helper";
 import { formatAssetAmount } from "~/utils/assetFormatters";
 import { Chain, Token, FinalizedTransaction } from "~/utils/types";
 import { useToast } from "~/components/ui/use-toast";
 import { getTokenInfo } from "~/api/adamik/tokens";
 
 hljs.registerLanguage("json", json);
+
+interface TransactionFees {
+  amount: string;
+  ticker?: string;
+}
 
 function DataContent() {
   const { theme } = useTheme();
@@ -52,6 +56,7 @@ function DataContent() {
   const [isRawExpanded, setIsRawExpanded] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [formattedAmount, setFormattedAmount] = useState<string>("N/A");
+  const [formattedFees, setFormattedFees] = useState<string>("N/A");
 
   const searchParams = useSearchParams();
   const { isLoading: isSupportedChainsLoading, data: supportedChains } =
@@ -171,6 +176,28 @@ function DataContent() {
     updateFormattedAmount();
   }, [transaction, selectedChain, supportedChains]);
 
+  useEffect(() => {
+    const updateFormattedFees = async () => {
+      if (!transaction?.parsed?.fees) return;
+
+      const result = await formatAssetAmount({
+        asset: {
+          chainId: selectedChain?.id || "",
+          type: "native", // fees are always in native currency
+        },
+        amount:
+          typeof transaction.parsed.fees === "string"
+            ? transaction.parsed.fees
+            : (transaction.parsed.fees as TransactionFees).amount,
+        chainData: supportedChains,
+      });
+
+      setFormattedFees(`${result.formatted} ${result.ticker}`);
+    };
+
+    updateFormattedFees();
+  }, [transaction, selectedChain, supportedChains]);
+
   const renderParsedData = (
     transaction: FinalizedTransaction | null | undefined
   ) => {
@@ -203,30 +230,10 @@ function DataContent() {
       validators,
     } = transaction.parsed;
 
-    const formatFees = (fees: any) => {
-      if (typeof fees === "string") {
-        const mainUnitFees = amountToMainUnit(
-          fees,
-          selectedChain?.decimals || 18
-        );
-        return `${formatAmount(mainUnitFees, selectedChain?.decimals || 18)} ${
-          selectedChain?.ticker || ""
-        }`;
-      } else if (fees && fees.amount) {
-        const ticker = fees.ticker || selectedChain?.ticker || "";
-        const mainUnitFees = amountToMainUnit(
-          fees.amount,
-          selectedChain?.decimals || 18
-        );
-        return `${formatAmount(
-          mainUnitFees,
-          selectedChain?.decimals || 18
-        )} ${ticker}`;
-      }
-      return "N/A";
-    };
-
     const formatRecipient = () => {
+      if (!transaction?.parsed) return "N/A";
+      const { recipients, validators } = transaction.parsed;
+
       if (recipients && recipients[0]?.address) {
         return recipients[0].address;
       } else if (validators?.target?.address) {
@@ -254,7 +261,7 @@ function DataContent() {
           }
         />
         <DataItem label="Amount" value={formattedAmount} />
-        <DataItem label="Fees" value={formatFees(fees)} />
+        <DataItem label="Fees" value={formattedFees} />
         <DataItem label="Gas" value={gas || "N/A"} />
         <DataItem
           label="Sender"
