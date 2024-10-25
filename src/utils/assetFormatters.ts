@@ -3,15 +3,22 @@ import { amountToMainUnit, formatAmount } from "./helper";
 import { getTokenInfo } from "~/api/adamik/tokens";
 import { getChains } from "~/api/adamik/chains";
 
-type AssetType = "native" | "token";
+// Add simple caches at the top
+const tokenCache: Record<string, { decimals: number; ticker: string }> = {};
+const chainCache: Record<string, Chain> = {};
+const CACHE_TIMEOUT = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+const cacheTimestamps: Record<string, number> = {};
 
-interface AssetIdentifier {
+// Export the types
+export type AssetType = "native" | "token";
+
+export interface AssetIdentifier {
   chainId: string;
   type: AssetType;
   tokenId?: string;
 }
 
-interface FormatAssetAmountOptions {
+export interface FormatAssetAmountOptions {
   asset: AssetIdentifier;
   amount: string | number;
   chainData?: Record<string, Chain> | null; // Allow null
@@ -19,7 +26,7 @@ interface FormatAssetAmountOptions {
   minimumFractionDigits?: number;
 }
 
-interface FormatAssetAmountResult {
+export interface FormatAssetAmountResult {
   formatted: string; // The formatted amount
   ticker: string; // The asset ticker
 }
@@ -41,28 +48,44 @@ export async function formatAssetAmount({
     let ticker: string = "";
 
     if (asset.type === "native") {
-      const chains = chainData || (await getChains());
-      if (!chains) {
-        return { formatted: "0", ticker: "" };
+      // Use provided chainData or check cache first
+      const chain = chainData?.[asset.chainId] || chainCache[asset.chainId];
+
+      if (
+        !chain ||
+        (cacheTimestamps[asset.chainId] &&
+          Date.now() - cacheTimestamps[asset.chainId] > CACHE_TIMEOUT)
+      ) {
+        const chains = await getChains();
+        if (!chains) return { formatted: "0", ticker: "" };
+
+        chainCache[asset.chainId] = chains[asset.chainId];
+        cacheTimestamps[asset.chainId] = Date.now();
       }
 
-      const chain = chains[asset.chainId];
-      if (!chain) {
-        return { formatted: "0", ticker: "" };
-      }
-      decimals = chain.decimals;
-      ticker = chain.ticker;
+      decimals = chainCache[asset.chainId].decimals;
+      ticker = chainCache[asset.chainId].ticker;
     } else {
-      if (!asset.tokenId) {
-        return { formatted: "0", ticker: "" };
+      if (!asset.tokenId) return { formatted: "0", ticker: "" };
+
+      // Check token cache
+      const cacheKey = `${asset.chainId}-${asset.tokenId}`;
+      if (
+        !tokenCache[cacheKey] ||
+        Date.now() - cacheTimestamps[cacheKey] > CACHE_TIMEOUT
+      ) {
+        const token = await getTokenInfo(asset.chainId, asset.tokenId);
+        if (!token) return { formatted: "0", ticker: "" };
+
+        tokenCache[cacheKey] = {
+          decimals: token.decimals,
+          ticker: token.ticker,
+        };
+        cacheTimestamps[cacheKey] = Date.now();
       }
 
-      const token = await getTokenInfo(asset.chainId, asset.tokenId);
-      if (!token) {
-        return { formatted: "0", ticker: "" };
-      }
-      decimals = token.decimals;
-      ticker = token.ticker;
+      decimals = tokenCache[cacheKey].decimals;
+      ticker = tokenCache[cacheKey].ticker;
     }
 
     const mainUnitAmount = amountToMainUnit(amount.toString(), decimals);
