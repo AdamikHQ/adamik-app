@@ -12,6 +12,7 @@ import {
   HandshakeIcon,
   HandCoins,
   LogOut,
+  Search,
 } from "lucide-react";
 import {
   Tooltip,
@@ -44,6 +45,7 @@ import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { WalletSelection } from "~/components/wallets/WalletSelection";
 import { getAccountHistory } from "~/api/adamik/history";
 import { formatDistanceToNow } from "date-fns";
+import Link from "next/link";
 
 type GroupedAccount = {
   address: string;
@@ -213,16 +215,9 @@ function TransactionHistoryContent() {
 
   const renderTransaction = (tx: ParsedTransaction) => {
     const { parsed } = tx;
-    const time = formatDistanceToNow(new Date(Number(parsed.timestamp)), {
-      addSuffix: true,
-    });
-
     return (
-      <div
-        key={parsed.id}
-        className="border-b border-gray-800 p-4 hover:bg-gray-900/50"
-      >
-        <div className="flex items-center justify-between mb-2">
+      <div className="p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <span className="text-xl">
               {getTransactionTypeIcon(parsed.mode)}
@@ -238,22 +233,36 @@ function TransactionHistoryContent() {
               {parsed.state}
             </span>
           </div>
-          <span className="text-sm text-gray-400">{time}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {formatDistanceToNow(new Date(Number(parsed.timestamp)), {
+                addSuffix: true,
+              })}
+            </span>
+            <Link
+              href={`/data?chainId=${selectedAccount?.chainId}&transactionId=${parsed.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Search className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
 
         {parsed.senders && parsed.recipients && (
-          <div className="text-sm space-y-1">
+          <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2">
-              <span className="text-gray-400">From:</span>
+              <span className="text-muted-foreground w-16">From:</span>
               <span className="font-mono">{parsed.senders[0].address}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-gray-400">To:</span>
+              <span className="text-muted-foreground w-16">To:</span>
               <span className="font-mono">{parsed.recipients[0].address}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-gray-400">Amount:</span>
-              <span>
+              <span className="text-muted-foreground w-16">Amount:</span>
+              <span className="font-medium">
                 {formatAmount(parsed.recipients[0].amount, parsed.fees.ticker)}
               </span>
             </div>
@@ -261,16 +270,16 @@ function TransactionHistoryContent() {
         )}
 
         {parsed.validators && (
-          <div className="text-sm space-y-1">
+          <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2">
-              <span className="text-gray-400">Validator:</span>
+              <span className="text-muted-foreground w-16">Validator:</span>
               <span className="font-mono">
                 {parsed.validators.target.address}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-gray-400">Amount:</span>
-              <span>
+              <span className="text-muted-foreground w-16">Amount:</span>
+              <span className="font-medium">
                 {formatAmount(
                   parsed.validators.target.amount,
                   parsed.fees.ticker
@@ -280,7 +289,7 @@ function TransactionHistoryContent() {
           </div>
         )}
 
-        <div className="mt-2 text-sm text-gray-400">
+        <div className="mt-3 text-sm text-muted-foreground">
           Fee: {formatAmount(parsed.fees.amount, parsed.fees.ticker)}
         </div>
       </div>
@@ -336,7 +345,11 @@ function TransactionHistoryContent() {
                   {filteredAccounts.map((account) => (
                     <TableRow
                       key={`${account.chainId}-${account.address}`}
-                      className="cursor-pointer hover:bg-gray-800"
+                      className={`cursor-pointer transition-colors ${
+                        selectedAccount?.address === account.address
+                          ? "bg-accent/80 hover:bg-accent" // Highlight for selected account
+                          : "hover:bg-accent/50"
+                      }`}
                       onClick={() => handleAccountClick(account)}
                     >
                       <TableCell>
@@ -351,8 +364,22 @@ function TransactionHistoryContent() {
                         </Avatar>
                       </TableCell>
                       <TableCell className="flex justify-between items-center">
-                        <p>{account.address}</p>
-                        <ChevronRight className="w-4 h-4 text-gray-500" />
+                        <p
+                          className={
+                            selectedAccount?.address === account.address
+                              ? "font-medium"
+                              : ""
+                          }
+                        >
+                          {account.address}
+                        </p>
+                        <ChevronRight
+                          className={`w-4 h-4 ${
+                            selectedAccount?.address === account.address
+                              ? "text-foreground"
+                              : "text-muted-foreground"
+                          }`}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -376,9 +403,11 @@ function TransactionHistoryContent() {
               isFetchingHistory ? (
                 <Loader2 className="animate-spin" />
               ) : transactionHistory ? (
-                <div className="space-y-1 max-h-[600px] overflow-y-auto">
+                <div className="space-y-4 max-h-[600px] overflow-y-auto px-1">
                   {transactionHistory.transactions.map(
-                    (tx: ParsedTransaction) => renderTransaction(tx)
+                    (tx: ParsedTransaction) => (
+                      <div key={tx.parsed.id}>{renderTransaction(tx)}</div>
+                    )
                   )}
                 </div>
               ) : (
