@@ -1,7 +1,18 @@
 "use client";
 
-import { Suspense, useState, useMemo } from "react";
-import { Info, Loader2, ChevronRight } from "lucide-react";
+import { Suspense, useState, useMemo, useEffect } from "react";
+import {
+  Info,
+  Loader2,
+  ChevronRight,
+  Send,
+  Download,
+  HelpCircle,
+  SendHorizonal,
+  HandshakeIcon,
+  HandCoins,
+  LogOut,
+} from "lucide-react";
 import {
   Tooltip,
   TooltipProvider,
@@ -32,12 +43,34 @@ import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { WalletSelection } from "~/components/wallets/WalletSelection";
 import { getAccountHistory } from "~/api/adamik/history";
+import { formatDistanceToNow } from "date-fns";
 
 type GroupedAccount = {
   address: string;
   chainId: string;
   mainAsset: Asset | null;
   assets: Asset[];
+};
+
+type ParsedTransaction = {
+  parsed: {
+    id: string;
+    mode: string;
+    state: string;
+    timestamp: string;
+    fees: {
+      amount: string;
+      ticker: string;
+    };
+    senders?: Array<{ address: string }>;
+    recipients?: Array<{ address: string; amount: string }>;
+    validators?: {
+      target: {
+        address: string;
+        amount: string;
+      };
+    };
+  };
 };
 
 function TransactionHistoryContent() {
@@ -152,6 +185,114 @@ function TransactionHistoryContent() {
     }
   };
 
+  const formatAmount = (amount: string, ticker: string) => {
+    // Convert from base units (like wei or uatom) to main units
+    const decimals = ticker.startsWith("u") ? 6 : 18;
+    const value = Number(amount) / Math.pow(10, decimals);
+    return `${value.toLocaleString(undefined, {
+      maximumFractionDigits: 6,
+    })} ${ticker.replace("u", "")}`;
+  };
+
+  const getTransactionTypeIcon = (mode: string) => {
+    switch (mode) {
+      case "transfer":
+        return <Send className="w-5 h-5" />; // Icon for transfer
+      case "transferToken":
+        return <SendHorizonal className="w-5 h-5" />; // Icon for token transfer
+      case "delegate":
+        return <HandshakeIcon className="w-5 h-5" />; // Icon for delegate
+      case "undelegate":
+        return <LogOut className="w-5 h-5" />; // Icon for undelegate
+      case "claimRewards":
+        return <HandCoins className="w-5 h-5" />; // Icon for claim rewards
+      default:
+        return <HelpCircle className="w-5 h-5" />; // Icon for unknown
+    }
+  };
+
+  const renderTransaction = (tx: ParsedTransaction) => {
+    const { parsed } = tx;
+    const time = formatDistanceToNow(new Date(Number(parsed.timestamp)), {
+      addSuffix: true,
+    });
+
+    return (
+      <div
+        key={parsed.id}
+        className="border-b border-gray-800 p-4 hover:bg-gray-900/50"
+      >
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">
+              {getTransactionTypeIcon(parsed.mode)}
+            </span>
+            <span className="capitalize font-medium">{parsed.mode}</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-xs ${
+                parsed.state === "confirmed"
+                  ? "bg-green-900/50 text-green-300"
+                  : "bg-red-900/50 text-red-300"
+              }`}
+            >
+              {parsed.state}
+            </span>
+          </div>
+          <span className="text-sm text-gray-400">{time}</span>
+        </div>
+
+        {parsed.senders && parsed.recipients && (
+          <div className="text-sm space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400">From:</span>
+              <span className="font-mono">{parsed.senders[0].address}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400">To:</span>
+              <span className="font-mono">{parsed.recipients[0].address}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400">Amount:</span>
+              <span>
+                {formatAmount(parsed.recipients[0].amount, parsed.fees.ticker)}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {parsed.validators && (
+          <div className="text-sm space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400">Validator:</span>
+              <span className="font-mono">
+                {parsed.validators.target.address}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400">Amount:</span>
+              <span>
+                {formatAmount(
+                  parsed.validators.target.amount,
+                  parsed.fees.ticker
+                )}
+              </span>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-2 text-sm text-gray-400">
+          Fee: {formatAmount(parsed.fees.amount, parsed.fees.ticker)}
+        </div>
+      </div>
+    );
+  };
+
+  // Reset selections when wallet addresses or showroom mode changes
+  useEffect(() => {
+    setSelectedAccount(null);
+    setTransactionHistory(null);
+  }, [walletAddresses, isShowroom]);
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
       <div className="flex items-center justify-between">
@@ -235,7 +376,11 @@ function TransactionHistoryContent() {
               isFetchingHistory ? (
                 <Loader2 className="animate-spin" />
               ) : transactionHistory ? (
-                <pre>{JSON.stringify(transactionHistory, null, 2)}</pre>
+                <div className="space-y-1 max-h-[600px] overflow-y-auto">
+                  {transactionHistory.transactions.map(
+                    (tx: ParsedTransaction) => renderTransaction(tx)
+                  )}
+                </div>
               ) : (
                 <p>No transaction history available.</p>
               )
