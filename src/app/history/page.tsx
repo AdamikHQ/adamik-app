@@ -216,8 +216,8 @@ function TransactionHistoryContent() {
   const renderTransaction = (tx: ParsedTransaction) => {
     const { parsed } = tx;
     return (
-      <div className="p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
-        <div className="flex items-center justify-between mb-3">
+      <div className="p-3 sm:p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 mb-3">
           <div className="flex items-center gap-2">
             <span className="text-xl">
               {getTransactionTypeIcon(parsed.mode)}
@@ -252,13 +252,33 @@ function TransactionHistoryContent() {
 
         {parsed.senders && parsed.recipients && (
           <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
               <span className="text-muted-foreground w-16">From:</span>
-              <span className="font-mono">{parsed.senders[0].address}</span>
+              <span className="font-mono break-all">
+                <span className="sm:hidden">
+                  {`${parsed.senders[0].address.slice(
+                    0,
+                    6
+                  )}...${parsed.senders[0].address.slice(-4)}`}
+                </span>
+                <span className="hidden sm:inline">
+                  {parsed.senders[0].address}
+                </span>
+              </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
               <span className="text-muted-foreground w-16">To:</span>
-              <span className="font-mono">{parsed.recipients[0].address}</span>
+              <span className="font-mono break-all">
+                <span className="sm:hidden">
+                  {`${parsed.recipients[0].address.slice(
+                    0,
+                    6
+                  )}...${parsed.recipients[0].address.slice(-4)}`}
+                </span>
+                <span className="hidden sm:inline">
+                  {parsed.recipients[0].address}
+                </span>
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground w-16">Amount:</span>
@@ -271,10 +291,18 @@ function TransactionHistoryContent() {
 
         {parsed.validators && (
           <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
               <span className="text-muted-foreground w-16">Validator:</span>
-              <span className="font-mono">
-                {parsed.validators.target.address}
+              <span className="font-mono break-all">
+                <span className="sm:hidden">
+                  {`${parsed.validators.target.address.slice(
+                    0,
+                    6
+                  )}...${parsed.validators.target.address.slice(-4)}`}
+                </span>
+                <span className="hidden sm:inline">
+                  {parsed.validators.target.address}
+                </span>
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -304,7 +332,8 @@ function TransactionHistoryContent() {
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
-      <div className="flex items-center justify-between">
+      {/* Header section - make it stack on mobile */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center">
           <h1 className="text-lg font-semibold md:text-2xl">
             Transaction History
@@ -325,8 +354,10 @@ function TransactionHistoryContent() {
 
       {isShowroom ? <ShowroomBanner /> : null}
 
-      <div className="flex gap-4">
-        <Card className="w-1/2">
+      {/* Main content - stack cards vertically on mobile */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        {/* Accounts card - full width on mobile */}
+        <Card className="w-full lg:w-1/2">
           <CardHeader>
             <CardTitle>Available Accounts</CardTitle>
           </CardHeader>
@@ -338,7 +369,11 @@ function TransactionHistoryContent() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px]"></TableHead>
-                    <TableHead>Address</TableHead>
+                    {/* Hide full address on mobile, show truncated version */}
+                    <TableHead>
+                      <span className="hidden sm:inline">Address</span>
+                      <span className="sm:hidden">Addr.</span>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -347,7 +382,7 @@ function TransactionHistoryContent() {
                       key={`${account.chainId}-${account.address}`}
                       className={`cursor-pointer transition-colors ${
                         selectedAccount?.address === account.address
-                          ? "bg-accent/80 hover:bg-accent" // Highlight for selected account
+                          ? "bg-accent/80 hover:bg-accent"
                           : "hover:bg-accent/50"
                       }`}
                       onClick={() => handleAccountClick(account)}
@@ -364,14 +399,27 @@ function TransactionHistoryContent() {
                         </Avatar>
                       </TableCell>
                       <TableCell className="flex justify-between items-center">
+                        {/* Truncate address on mobile */}
                         <p
-                          className={
+                          className={`${
                             selectedAccount?.address === account.address
                               ? "font-medium"
                               : ""
-                          }
+                          } hidden sm:block`}
                         >
                           {account.address}
+                        </p>
+                        <p
+                          className={`${
+                            selectedAccount?.address === account.address
+                              ? "font-medium"
+                              : ""
+                          } sm:hidden`}
+                        >
+                          {`${account.address.slice(
+                            0,
+                            6
+                          )}...${account.address.slice(-4)}`}
                         </p>
                         <ChevronRight
                           className={`w-4 h-4 ${
@@ -386,7 +434,7 @@ function TransactionHistoryContent() {
                 </TableBody>
               </Table>
             ) : (
-              <p>
+              <p className="text-sm">
                 No accounts found with transaction history support. Please
                 connect a wallet with supported chains.
               </p>
@@ -394,7 +442,8 @@ function TransactionHistoryContent() {
           </CardContent>
         </Card>
 
-        <Card className="w-1/2">
+        {/* Transaction History card - full width on mobile */}
+        <Card className="w-full lg:w-1/2">
           <CardHeader>
             <CardTitle>Transaction History</CardTitle>
           </CardHeader>
@@ -403,7 +452,7 @@ function TransactionHistoryContent() {
               isFetchingHistory ? (
                 <Loader2 className="animate-spin" />
               ) : transactionHistory ? (
-                <div className="space-y-4 max-h-[600px] overflow-y-auto px-1">
+                <div className="space-y-4 max-h-[400px] lg:max-h-[600px] overflow-y-auto px-1">
                   {transactionHistory.transactions.map(
                     (tx: ParsedTransaction) => (
                       <div key={tx.parsed.id}>{renderTransaction(tx)}</div>
@@ -411,10 +460,12 @@ function TransactionHistoryContent() {
                   )}
                 </div>
               ) : (
-                <p>No transaction history available.</p>
+                <p className="text-sm">No transaction history available.</p>
               )
             ) : (
-              <p>Select an account to view its transaction history.</p>
+              <p className="text-sm">
+                Select an account to view its transaction history.
+              </p>
             )}
           </CardContent>
         </Card>
