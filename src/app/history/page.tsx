@@ -13,6 +13,7 @@ import {
   HandCoins,
   LogOut,
   Search,
+  ChevronLeft,
 } from "lucide-react";
 import {
   Tooltip,
@@ -330,13 +331,39 @@ function TransactionHistoryContent() {
     setTransactionHistory(null);
   }, [walletAddresses, isShowroom]);
 
+  // Add state to track mobile view
+  const [isMobileView, setIsMobileView] = useState(false);
+
+  // Add useEffect to detect mobile viewport
+  useEffect(() => {
+    const checkMobileView = () => {
+      setIsMobileView(window.innerWidth < 1024); // lg breakpoint
+    };
+
+    checkMobileView();
+    window.addEventListener("resize", checkMobileView);
+
+    return () => window.removeEventListener("resize", checkMobileView);
+  }, []);
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
-      {/* Header section - make it stack on mobile */}
+      {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center">
+          {/* Show back button on mobile when viewing transactions */}
+          {isMobileView && selectedAccount && (
+            <button
+              onClick={() => setSelectedAccount(null)}
+              className="mr-3 hover:text-accent-foreground transition-colors"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+          )}
           <h1 className="text-lg font-semibold md:text-2xl">
-            Transaction History
+            {isMobileView && selectedAccount
+              ? "Transaction History"
+              : "Transaction History"}
           </h1>
           <Tooltip text="View the API documentation for retrieving transaction history">
             <a
@@ -354,121 +381,149 @@ function TransactionHistoryContent() {
 
       {isShowroom ? <ShowroomBanner /> : null}
 
-      {/* Main content - stack cards vertically on mobile */}
+      {/* Main content - Conditional rendering based on viewport and selection */}
       <div className="flex flex-col lg:flex-row gap-4">
-        {/* Accounts card - full width on mobile */}
-        <Card className="w-full lg:w-1/2">
-          <CardHeader>
-            <CardTitle>Available Accounts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Loader2 className="animate-spin" />
-            ) : filteredAccounts.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[80px]"></TableHead>
-                    {/* Hide full address on mobile, show truncated version */}
-                    <TableHead>
-                      <span className="hidden sm:inline">Address</span>
-                      <span className="sm:hidden">Addr.</span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAccounts.map((account) => (
-                    <TableRow
-                      key={`${account.chainId}-${account.address}`}
-                      className={`cursor-pointer transition-colors ${
-                        selectedAccount?.address === account.address
-                          ? "bg-accent/80 hover:bg-accent"
-                          : "hover:bg-accent/50"
-                      }`}
-                      onClick={() => handleAccountClick(account)}
-                    >
-                      <TableCell>
-                        <Avatar className="w-[38px] h-[38px]">
-                          <AvatarImage
-                            src={account.mainAsset?.logo}
-                            alt={account.mainAsset?.name}
-                          />
-                          <AvatarFallback>
-                            {account.mainAsset?.name?.slice(0, 2) || "??"}
-                          </AvatarFallback>
-                        </Avatar>
-                      </TableCell>
-                      <TableCell className="flex justify-between items-center">
-                        {/* Truncate address on mobile */}
-                        <p
-                          className={`${
-                            selectedAccount?.address === account.address
-                              ? "font-medium"
-                              : ""
-                          } hidden sm:block`}
-                        >
-                          {account.address}
-                        </p>
-                        <p
-                          className={`${
-                            selectedAccount?.address === account.address
-                              ? "font-medium"
-                              : ""
-                          } sm:hidden`}
-                        >
-                          {`${account.address.slice(
-                            0,
-                            6
-                          )}...${account.address.slice(-4)}`}
-                        </p>
-                        <ChevronRight
-                          className={`w-4 h-4 ${
-                            selectedAccount?.address === account.address
-                              ? "text-foreground"
-                              : "text-muted-foreground"
-                          }`}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <p className="text-sm">
-                No accounts found with transaction history support. Please
-                connect a wallet with supported chains.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Transaction History card - full width on mobile */}
-        <Card className="w-full lg:w-1/2">
-          <CardHeader>
-            <CardTitle>Transaction History</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {selectedAccount ? (
-              isFetchingHistory ? (
+        {/* Show accounts list if: desktop OR (mobile AND no selection) */}
+        {(!isMobileView || (isMobileView && !selectedAccount)) && (
+          <Card className="w-full lg:w-1/2">
+            <CardHeader>
+              <CardTitle>Available Accounts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
                 <Loader2 className="animate-spin" />
-              ) : transactionHistory ? (
-                <div className="space-y-4 max-h-[400px] lg:max-h-[600px] overflow-y-auto px-1">
-                  {transactionHistory.transactions.map(
-                    (tx: ParsedTransaction) => (
-                      <div key={tx.parsed.id}>{renderTransaction(tx)}</div>
-                    )
-                  )}
-                </div>
+              ) : filteredAccounts.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[80px]"></TableHead>
+                      {/* Hide full address on mobile, show truncated version */}
+                      <TableHead>
+                        <span className="hidden sm:inline">Address</span>
+                        <span className="sm:hidden">Addr.</span>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredAccounts.map((account) => (
+                      <TableRow
+                        key={`${account.chainId}-${account.address}`}
+                        className={`cursor-pointer transition-colors ${
+                          selectedAccount?.address === account.address
+                            ? "bg-accent/80 hover:bg-accent"
+                            : "hover:bg-accent/50"
+                        }`}
+                        onClick={() => handleAccountClick(account)}
+                      >
+                        <TableCell>
+                          <Avatar className="w-[38px] h-[38px]">
+                            <AvatarImage
+                              src={account.mainAsset?.logo}
+                              alt={account.mainAsset?.name}
+                            />
+                            <AvatarFallback>
+                              {account.mainAsset?.name?.slice(0, 2) || "??"}
+                            </AvatarFallback>
+                          </Avatar>
+                        </TableCell>
+                        <TableCell className="flex justify-between items-center">
+                          {/* Truncate address on mobile */}
+                          <p
+                            className={`${
+                              selectedAccount?.address === account.address
+                                ? "font-medium"
+                                : ""
+                            } hidden sm:block`}
+                          >
+                            {account.address}
+                          </p>
+                          <p
+                            className={`${
+                              selectedAccount?.address === account.address
+                                ? "font-medium"
+                                : ""
+                            } sm:hidden`}
+                          >
+                            {`${account.address.slice(
+                              0,
+                              6
+                            )}...${account.address.slice(-4)}`}
+                          </p>
+                          <ChevronRight
+                            className={`w-4 h-4 ${
+                              selectedAccount?.address === account.address
+                                ? "text-foreground"
+                                : "text-muted-foreground"
+                            }`}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               ) : (
-                <p className="text-sm">No transaction history available.</p>
-              )
-            ) : (
-              <p className="text-sm">
-                Select an account to view its transaction history.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+                <p className="text-sm">
+                  No accounts found with transaction history support. Please
+                  connect a wallet with supported chains.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Show transaction history if: desktop OR (mobile AND has selection) */}
+        {(!isMobileView || (isMobileView && selectedAccount)) && (
+          <Card className="w-full lg:w-1/2">
+            <CardHeader>
+              {isMobileView && selectedAccount && (
+                <div className="mb-2">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="w-[38px] h-[38px]">
+                      <AvatarImage
+                        src={selectedAccount.mainAsset?.logo}
+                        alt={selectedAccount.mainAsset?.name}
+                      />
+                      <AvatarFallback>
+                        {selectedAccount.mainAsset?.name?.slice(0, 2) || "??"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="text-sm">
+                      <p className="font-medium">Selected Account</p>
+                      <p className="text-muted-foreground">
+                        {`${selectedAccount.address.slice(
+                          0,
+                          6
+                        )}...${selectedAccount.address.slice(-4)}`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <CardTitle>Transaction History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {selectedAccount ? (
+                isFetchingHistory ? (
+                  <Loader2 className="animate-spin" />
+                ) : transactionHistory ? (
+                  <div className="space-y-4 max-h-[400px] lg:max-h-[600px] overflow-y-auto px-1">
+                    {transactionHistory.transactions.map(
+                      (tx: ParsedTransaction) => (
+                        <div key={tx.parsed.id}>{renderTransaction(tx)}</div>
+                      )
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm">No transaction history available.</p>
+                )
+              ) : (
+                <p className="text-sm">
+                  Select an account to view its transaction history.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </main>
   );
