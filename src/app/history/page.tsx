@@ -409,7 +409,8 @@ function TransactionHistoryContent() {
                       <TableRow
                         key={`${account.chainId}-${account.address}`}
                         className={`cursor-pointer transition-colors ${
-                          selectedAccount?.address === account.address
+                          selectedAccount?.address === account.address &&
+                          selectedAccount?.chainId === account.chainId // Add chainId check
                             ? "bg-accent/80 hover:bg-accent"
                             : "hover:bg-accent/50"
                         }`}
@@ -427,31 +428,20 @@ function TransactionHistoryContent() {
                           </Avatar>
                         </TableCell>
                         <TableCell className="flex justify-between items-center">
-                          {/* Truncate address on mobile */}
                           <p
-                            className={`${
-                              selectedAccount?.address === account.address
+                            className={
+                              selectedAccount?.address === account.address &&
+                              selectedAccount?.chainId === account.chainId // Add chainId check
                                 ? "font-medium"
                                 : ""
-                            } hidden sm:block`}
+                            }
                           >
                             {account.address}
                           </p>
-                          <p
-                            className={`${
-                              selectedAccount?.address === account.address
-                                ? "font-medium"
-                                : ""
-                            } sm:hidden`}
-                          >
-                            {`${account.address.slice(
-                              0,
-                              6
-                            )}...${account.address.slice(-4)}`}
-                          </p>
                           <ChevronRight
                             className={`w-4 h-4 ${
-                              selectedAccount?.address === account.address
+                              selectedAccount?.address === account.address &&
+                              selectedAccount?.chainId === account.chainId // Add chainId check
                                 ? "text-foreground"
                                 : "text-muted-foreground"
                             }`}
