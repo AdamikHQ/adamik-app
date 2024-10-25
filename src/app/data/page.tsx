@@ -37,6 +37,7 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { amountToMainUnit, formatAmount } from "~/utils/helper";
+import { formatAssetAmount } from "~/utils/assetFormatters";
 import { Chain, Token, FinalizedTransaction } from "~/utils/types";
 import { useToast } from "~/components/ui/use-toast";
 import { getTokenInfo } from "~/api/adamik/tokens";
@@ -50,6 +51,7 @@ function DataContent() {
   const [fetchTrigger, setFetchTrigger] = useState(0);
   const [isRawExpanded, setIsRawExpanded] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [formattedAmount, setFormattedAmount] = useState<string>("N/A");
 
   const searchParams = useSearchParams();
   const { isLoading: isSupportedChainsLoading, data: supportedChains } =
@@ -117,6 +119,58 @@ function DataContent() {
     };
   }, [theme]);
 
+  useEffect(() => {
+    const updateFormattedAmount = async () => {
+      if (!transaction?.parsed) return;
+
+      const { recipients, validators } = transaction.parsed;
+
+      if (recipients && recipients[0]?.amount) {
+        if (transaction?.parsed?.mode === "transferToken") {
+          const result = await formatAssetAmount({
+            asset: {
+              chainId: selectedChain?.id || "",
+              type: "token",
+              tokenId: (transaction.raw as any).to,
+            },
+            amount: recipients[0].amount,
+            chainData: supportedChains,
+          });
+          setFormattedAmount(`${result.formatted} ${result.ticker}`);
+          return;
+        }
+
+        const result = await formatAssetAmount({
+          asset: {
+            chainId: selectedChain?.id || "",
+            type: "native",
+          },
+          amount: recipients[0].amount,
+          chainData: supportedChains,
+        });
+        setFormattedAmount(`${result.formatted} ${result.ticker}`);
+        return;
+      }
+
+      if (validators?.target?.amount) {
+        const result = await formatAssetAmount({
+          asset: {
+            chainId: selectedChain?.id || "",
+            type: "native",
+          },
+          amount: validators.target.amount,
+          chainData: supportedChains,
+        });
+        setFormattedAmount(`${result.formatted} ${result.ticker}`);
+        return;
+      }
+
+      setFormattedAmount("N/A");
+    };
+
+    updateFormattedAmount();
+  }, [transaction, selectedChain, supportedChains]);
+
   const renderParsedData = (
     transaction: FinalizedTransaction | null | undefined
   ) => {
@@ -172,37 +226,6 @@ function DataContent() {
       return "N/A";
     };
 
-    const formatTransactionAmount = () => {
-      if (recipients && recipients[0]?.amount) {
-        if (tokenInfo) {
-          const amount = BigInt(recipients[0].amount);
-          const formattedAmount = Number(amount) / 10 ** tokenInfo.decimals;
-          return `${formatAmount(
-            formattedAmount.toString(),
-            tokenInfo.decimals
-          )} ${tokenInfo.ticker}`;
-        }
-        const mainUnitAmount = amountToMainUnit(
-          recipients[0].amount,
-          selectedChain?.decimals || 18
-        );
-        return `${formatAmount(
-          mainUnitAmount,
-          selectedChain?.decimals || 18
-        )} ${selectedChain?.ticker || ""}`;
-      } else if (validators?.target?.amount) {
-        const mainUnitAmount = amountToMainUnit(
-          validators.target.amount,
-          selectedChain?.decimals || 18
-        );
-        return `${formatAmount(
-          mainUnitAmount,
-          selectedChain?.decimals || 18
-        )} ${selectedChain?.ticker || ""}`;
-      }
-      return "N/A";
-    };
-
     const formatRecipient = () => {
       if (recipients && recipients[0]?.address) {
         return recipients[0].address;
@@ -230,7 +253,7 @@ function DataContent() {
               : "N/A"
           }
         />
-        <DataItem label="Amount" value={formatTransactionAmount()} />
+        <DataItem label="Amount" value={formattedAmount} />
         <DataItem label="Fees" value={formatFees(fees)} />
         <DataItem label="Gas" value={gas || "N/A"} />
         <DataItem

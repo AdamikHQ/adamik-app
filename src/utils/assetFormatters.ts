@@ -14,15 +14,20 @@ interface AssetIdentifier {
 interface FormatAssetAmountOptions {
   asset: AssetIdentifier;
   amount: string | number;
-  chainData?: Record<string, Chain>; // Optional chain data to avoid refetching
+  chainData?: Record<string, Chain> | null; // Allow null
   maximumFractionDigits?: number;
   minimumFractionDigits?: number;
+}
+
+interface FormatAssetAmountResult {
+  formatted: string; // The formatted amount
+  ticker: string; // The asset ticker
 }
 
 /**
  * Formats an asset amount considering its native chain decimals or token-specific decimals
  * @param options FormatAssetAmountOptions object containing asset identifier and amount
- * @returns Promise<string> Formatted amount string
+ * @returns Promise<FormatAssetAmountResult> Formatted amount string and ticker
  */
 export async function formatAssetAmount({
   asset,
@@ -30,50 +35,48 @@ export async function formatAssetAmount({
   chainData,
   maximumFractionDigits,
   minimumFractionDigits,
-}: FormatAssetAmountOptions): Promise<string> {
+}: FormatAssetAmountOptions): Promise<FormatAssetAmountResult> {
   try {
     let decimals: number;
+    let ticker: string = "";
 
     if (asset.type === "native") {
-      // Get chain data either from provided data or fetch it
       const chains = chainData || (await getChains());
       if (!chains) {
-        console.warn(`Failed to fetch chain data for ${asset.chainId}`);
-        return "0";
+        return { formatted: "0", ticker: "" };
       }
 
       const chain = chains[asset.chainId];
       if (!chain) {
-        console.warn(`Chain ${asset.chainId} not found in supported chains`);
-        return "0";
+        return { formatted: "0", ticker: "" };
       }
       decimals = chain.decimals;
+      ticker = chain.ticker;
     } else {
-      // Get token decimals
       if (!asset.tokenId) {
-        console.warn("Token ID is required for token assets");
-        return "0";
+        return { formatted: "0", ticker: "" };
       }
 
       const token = await getTokenInfo(asset.chainId, asset.tokenId);
       if (!token) {
-        console.warn(
-          `Token ${asset.tokenId} not found for chain ${asset.chainId}`
-        );
-        return "0";
+        return { formatted: "0", ticker: "" };
       }
       decimals = token.decimals;
+      ticker = token.ticker;
     }
 
-    // Convert from smallest unit to main unit
     const mainUnitAmount = amountToMainUnit(amount.toString(), decimals);
-    if (!mainUnitAmount) return "0";
+    if (!mainUnitAmount) return { formatted: "0", ticker: "" };
 
-    // Format the amount with specified or default decimal places
-    return formatAmount(mainUnitAmount, maximumFractionDigits ?? decimals);
+    const formatted = formatAmount(
+      mainUnitAmount,
+      maximumFractionDigits ?? decimals
+    );
+
+    return { formatted, ticker };
   } catch (error) {
     console.error("Error formatting asset amount:", error);
-    return "0";
+    return { formatted: "0", ticker: "" };
   }
 }
 
