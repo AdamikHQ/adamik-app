@@ -310,16 +310,13 @@ function TransactionHistoryContent() {
       > = {};
       transactionHistory.transactions.forEach((tx: ParsedTransaction) => {
         const feeKey = `${tx.parsed.chainId}-native-${tx.parsed.fees.amount}`;
-        const amountKey = getAmountKey(tx.parsed);
+        const amountKey = getAmountKey(tx.parsed); // Helper to get the right key based on tx type
 
         formatted[tx.parsed.id] = {
-          formattedFee: results[feeKey]
-            ? `${results[feeKey].formatted} ${results[feeKey].ticker}`
-            : "0",
-          formattedAmount:
-            results[amountKey] && amountKey
-              ? `${results[amountKey].formatted} ${results[amountKey].ticker}`
-              : "",
+          formattedFee: `${results[feeKey].formatted} ${results[feeKey].ticker}`,
+          formattedAmount: results[amountKey]
+            ? `${results[amountKey].formatted} ${results[amountKey].ticker}`
+            : "",
         };
       });
 
