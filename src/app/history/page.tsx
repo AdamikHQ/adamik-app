@@ -466,17 +466,8 @@ function TransactionHistoryContent() {
 
   // Add this useEffect to track formatting state
   useEffect(() => {
-    // Reset formatting state when fetching starts
-    if (isFetchingHistory) {
-      setIsFormattingAmounts(true);
-      return;
-    }
-
-    // If no transactions, don't proceed
-    if (!transactionHistory?.transactions) {
-      setIsFormattingAmounts(false);
-      return;
-    }
+    if (!transactionHistory?.transactions) return;
+    setIsFormattingAmounts(true);
 
     // Check if all transactions have formatted amounts
     const allFormatted = transactionHistory.transactions.every(
@@ -486,11 +477,7 @@ function TransactionHistoryContent() {
     if (allFormatted) {
       setIsFormattingAmounts(false);
     }
-  }, [
-    transactionHistory,
-    formattedTransactions,
-    isFetchingHistory, // Added to dependency array
-  ]);
+  }, [transactionHistory, formattedTransactions, isFetchingHistory]); // Added isFetchingHistory
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
