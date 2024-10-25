@@ -47,6 +47,7 @@ import { WalletSelection } from "~/components/wallets/WalletSelection";
 import { getAccountHistory } from "~/api/adamik/history";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import { formatAssetAmount } from "~/utils/assetFormatters";
 
 type GroupedAccount = {
   address: string;
@@ -61,6 +62,8 @@ type ParsedTransaction = {
     mode: string;
     state: string;
     timestamp: string;
+    chainId: string;
+    tokenId?: string;
     fees: {
       amount: string;
       ticker: string;
@@ -214,8 +217,80 @@ function TransactionHistoryContent() {
     }
   };
 
-  const renderTransaction = (tx: ParsedTransaction) => {
+  const formatTransactionAmount = async (
+    amount: string,
+    chainId: string,
+    type: "native" | "token",
+    tokenId?: string
+  ) => {
+    // Use cache to prevent unnecessary re-formatting
+    const cacheKey = `${amount}-${chainId}-${type}-${tokenId || ""}`;
+    if (formattedAmounts[cacheKey]) {
+      return formattedAmounts[cacheKey];
+    }
+
+    const result = await formatAssetAmount({
+      asset: {
+        chainId,
+        type,
+        tokenId,
+      },
+      amount,
+      chainData: supportedChains,
+      maximumFractionDigits: 6,
+    });
+
+    const formatted = `${result.formatted} ${result.ticker}`;
+    setFormattedAmounts((prev) => ({
+      ...prev,
+      [cacheKey]: formatted,
+    }));
+
+    return formatted;
+  };
+
+  const renderTransaction = async (tx: ParsedTransaction) => {
     const { parsed } = tx;
+
+    // Always format fees as native asset
+    const formattedFee = await formatTransactionAmount(
+      parsed.fees.amount,
+      parsed.chainId,
+      "native"
+    );
+
+    // Format transaction amount based on transaction type
+    let formattedAmount = "";
+    if (
+      (parsed.mode === "delegate" ||
+        parsed.mode === "undelegate" ||
+        parsed.mode === "claimRewards") &&
+      parsed.validators?.target
+    ) {
+      // TODO: handle claimed reward amounts that are not in native currency (like IBC token rewards claimed)
+      // Currently assuming all validator-related amounts are in native currency
+      formattedAmount = await formatTransactionAmount(
+        parsed.validators.target.amount,
+        parsed.chainId,
+        "native"
+      );
+    } else if (parsed.mode === "transferToken" && parsed.tokenId) {
+      // Token transfer
+      formattedAmount = await formatTransactionAmount(
+        parsed.recipients?.[0]?.amount || "0",
+        parsed.chainId,
+        "token",
+        parsed.tokenId
+      );
+    } else if (parsed.recipients?.[0]) {
+      // Native transfer
+      formattedAmount = await formatTransactionAmount(
+        parsed.recipients[0].amount,
+        parsed.chainId,
+        "native"
+      );
+    }
+
     return (
       <div className="p-3 sm:p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 mb-3">
@@ -251,11 +326,13 @@ function TransactionHistoryContent() {
           </div>
         </div>
 
+        {/* Show for transfers */}
         {parsed.senders && parsed.recipients && (
           <div className="space-y-2 text-sm">
             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
               <span className="text-muted-foreground w-16">From:</span>
               <span className="font-mono break-all">
+                {/* Show truncated address on mobile, full address on desktop */}
                 <span className="sm:hidden">
                   {`${parsed.senders[0].address.slice(
                     0,
@@ -283,43 +360,35 @@ function TransactionHistoryContent() {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground w-16">Amount:</span>
-              <span className="font-medium">
-                {formatAmount(parsed.recipients[0].amount, parsed.fees.ticker)}
-              </span>
+              <span className="font-medium">{formattedAmount}</span>
             </div>
           </div>
         )}
 
-        {parsed.validators && (
-          <div className="space-y-2 text-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-              <span className="text-muted-foreground w-16">Validator:</span>
-              <span className="font-mono break-all">
-                <span className="sm:hidden">
-                  {`${parsed.validators.target.address.slice(
-                    0,
-                    6
-                  )}...${parsed.validators.target.address.slice(-4)}`}
-                </span>
-                <span className="hidden sm:inline">
+        {/* Show for delegations, undelegations, and claim rewards */}
+        {parsed.validators &&
+          (parsed.mode === "delegate" ||
+            parsed.mode === "undelegate" ||
+            parsed.mode === "claimRewards") && (
+            <div className="space-y-2 text-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                <span className="text-muted-foreground w-16">Validator:</span>
+                <span className="font-mono break-all">
                   {parsed.validators.target.address}
                 </span>
-              </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-16">
+                  {parsed.mode === "claimRewards" ? "Claimed:" : "Amount:"}
+                </span>
+                <span className="font-medium">{formattedAmount}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground w-16">Amount:</span>
-              <span className="font-medium">
-                {formatAmount(
-                  parsed.validators.target.amount,
-                  parsed.fees.ticker
-                )}
-              </span>
-            </div>
-          </div>
-        )}
+          )}
 
+        {/* Always show fee */}
         <div className="mt-3 text-sm text-muted-foreground">
-          Fee: {formatAmount(parsed.fees.amount, parsed.fees.ticker)}
+          Fee: {formattedFee}
         </div>
       </div>
     );
@@ -345,6 +414,10 @@ function TransactionHistoryContent() {
 
     return () => window.removeEventListener("resize", checkMobileView);
   }, []);
+
+  const [formattedAmounts, setFormattedAmounts] = useState<
+    Record<string, string>
+  >({});
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
