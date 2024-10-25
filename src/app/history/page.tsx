@@ -47,6 +47,11 @@ import { WalletSelection } from "~/components/wallets/WalletSelection";
 import { getAccountHistory } from "~/api/adamik/history";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import {
+  formatAssetAmount,
+  FormatAssetAmountOptions,
+  FormatAssetAmountResult,
+} from "~/utils/assetFormatters";
 
 type GroupedAccount = {
   address: string;
@@ -74,6 +79,22 @@ type ParsedTransaction = {
       };
     };
   };
+};
+
+const getTransactionTypeIcon = (mode: string) => {
+  switch (mode) {
+    case "transferToken":
+    case "transfer":
+      return <Send className="w-4 h-4" />;
+    case "delegate":
+      return <HandshakeIcon className="w-4 h-4" />;
+    case "undelegate":
+      return <LogOut className="w-4 h-4" />;
+    case "claimRewards":
+      return <HandCoins className="w-4 h-4" />;
+    default:
+      return <HelpCircle className="w-4 h-4" />;
+  }
 };
 
 function TransactionHistoryContent() {
@@ -188,34 +209,98 @@ function TransactionHistoryContent() {
     }
   };
 
-  const formatAmount = (amount: string, ticker: string) => {
-    // Convert from base units (like wei or uatom) to main units
-    const decimals = ticker.startsWith("u") ? 6 : 18;
-    const value = Number(amount) / Math.pow(10, decimals);
-    return `${value.toLocaleString(undefined, {
-      maximumFractionDigits: 6,
-    })} ${ticker.replace("u", "")}`;
-  };
+  // Add state for formatted amounts
+  const [formattedTransactions, setFormattedTransactions] = useState<
+    Record<
+      string,
+      {
+        formattedAmount: string;
+        formattedFee: string;
+      }
+    >
+  >({});
+  const [isFormattingAmounts, setIsFormattingAmounts] = useState(true);
 
-  const getTransactionTypeIcon = (mode: string) => {
-    switch (mode) {
-      case "transfer":
-        return <Send className="w-5 h-5" />; // Icon for transfer
-      case "transferToken":
-        return <SendHorizonal className="w-5 h-5" />; // Icon for token transfer
-      case "delegate":
-        return <HandshakeIcon className="w-5 h-5" />; // Icon for delegate
-      case "undelegate":
-        return <LogOut className="w-5 h-5" />; // Icon for undelegate
-      case "claimRewards":
-        return <HandCoins className="w-5 h-5" />; // Icon for claim rewards
-      default:
-        return <HelpCircle className="w-5 h-5" />; // Icon for unknown
-    }
-  };
+  // Add effect to format amounts when transaction history changes
+  useEffect(() => {
+    if (!transactionHistory?.transactions || isFetchingHistory) return;
+    setIsFormattingAmounts(true);
 
+    const formatTransactions = async () => {
+      const formatted: Record<
+        string,
+        { formattedAmount: string; formattedFee: string }
+      > = {};
+
+      for (const tx of transactionHistory.transactions) {
+        const { parsed } = tx;
+
+        // Format fee
+        const feeResult = await formatAssetAmount({
+          asset: { chainId: parsed.chainId, type: "native" },
+          amount: parsed.fees.amount,
+          chainData: supportedChains,
+          maximumFractionDigits: 6,
+        });
+
+        // Format amount based on transaction type
+        let amountResult: FormatAssetAmountResult | null = null;
+
+        if (
+          (parsed.mode === "delegate" ||
+            parsed.mode === "undelegate" ||
+            parsed.mode === "claimRewards") &&
+          parsed.validators?.target
+        ) {
+          amountResult = await formatAssetAmount({
+            asset: { chainId: parsed.chainId, type: "native" },
+            amount: parsed.validators.target.amount,
+            chainData: supportedChains,
+            maximumFractionDigits: 6,
+          });
+        } else if (parsed.mode === "transferToken" && parsed.tokenId) {
+          amountResult = await formatAssetAmount({
+            asset: {
+              chainId: parsed.chainId,
+              type: "token",
+              tokenId: parsed.tokenId,
+            },
+            amount: parsed.recipients?.[0]?.amount || "0",
+            chainData: supportedChains,
+            maximumFractionDigits: 6,
+          });
+        } else if (parsed.recipients?.[0]) {
+          amountResult = await formatAssetAmount({
+            asset: { chainId: parsed.chainId, type: "native" },
+            amount: parsed.recipients[0].amount,
+            chainData: supportedChains,
+            maximumFractionDigits: 6,
+          });
+        }
+
+        formatted[parsed.id] = {
+          formattedFee: `${feeResult.formatted} ${feeResult.ticker}`,
+          formattedAmount: amountResult
+            ? `${amountResult.formatted} ${amountResult.ticker}`
+            : "",
+        };
+      }
+
+      setFormattedTransactions(formatted);
+      setIsFormattingAmounts(false);
+    };
+
+    formatTransactions();
+  }, [transactionHistory, supportedChains, isFetchingHistory]);
+
+  // Update renderTransaction to use formatted amounts
   const renderTransaction = (tx: ParsedTransaction) => {
     const { parsed } = tx;
+    const formatted = formattedTransactions[parsed.id] || {
+      formattedAmount: "",
+      formattedFee: "",
+    };
+
     return (
       <div className="p-3 sm:p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 mb-3">
@@ -282,10 +367,14 @@ function TransactionHistoryContent() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-muted-foreground w-16">Amount:</span>
-              <span className="font-medium">
-                {formatAmount(parsed.recipients[0].amount, parsed.fees.ticker)}
+              <span className="text-muted-foreground w-16">
+                {parsed.mode === "claimRewards" ? "Claimed:" : "Amount:"}
               </span>
+              {isFormattingAmounts ? (
+                <div className="h-5 w-24 animate-pulse bg-accent/50 rounded" />
+              ) : (
+                <span className="font-medium">{formatted.formattedAmount}</span>
+              )}
             </div>
           </div>
         )}
@@ -309,9 +398,10 @@ function TransactionHistoryContent() {
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground w-16">Amount:</span>
               <span className="font-medium">
-                {formatAmount(
-                  parsed.validators.target.amount,
-                  parsed.fees.ticker
+                {isFormattingAmounts ? (
+                  <div className="inline-block h-4 w-16 animate-pulse bg-accent/50 rounded" />
+                ) : (
+                  formatted.formattedAmount
                 )}
               </span>
             </div>
@@ -319,7 +409,12 @@ function TransactionHistoryContent() {
         )}
 
         <div className="mt-3 text-sm text-muted-foreground">
-          Fee: {formatAmount(parsed.fees.amount, parsed.fees.ticker)}
+          Fee:{" "}
+          {isFormattingAmounts ? (
+            <div className="inline-block h-4 w-16 animate-pulse bg-accent/50 rounded" />
+          ) : (
+            formatted.formattedFee
+          )}
         </div>
       </div>
     );
