@@ -213,7 +213,9 @@ function DataContent() {
     };
 
     return (
-      <dl className="grid gap-2">
+      <div className="flex flex-col gap-6">
+        {" "}
+        {/* Add gap-6 for more vertical spacing */}
         <DataItem label="ID" value={id} />
         <DataItem label="Type" value={mode} />
         <DataItem label="State" value={state} />
@@ -238,7 +240,7 @@ function DataContent() {
         <DataItem label="Recipient" value={formatRecipient()} />
         <DataItem label="Nonce" value={nonce || "N/A"} />
         <DataItem label="Memo" value={memo || "N/A"} />
-      </dl>
+      </div>
     );
   };
 
@@ -323,6 +325,23 @@ function DataContent() {
   const toggleRawExpand = () => {
     setIsRawExpanded(!isRawExpanded);
   };
+
+  // Add this effect to trigger search when URL params are present
+  useEffect(() => {
+    const chainId = searchParams.get("chainId");
+    const transactionId = searchParams.get("transactionId");
+
+    if (chainId && transactionId) {
+      // Set form values
+      form.setValue("chainId", chainId);
+      form.setValue("transactionId", transactionId);
+
+      // Trigger search
+      setInput({ chainId, transactionId });
+      setFetchTrigger((prev) => prev + 1);
+      setHasSubmitted(true);
+    }
+  }, [searchParams, form.setValue]);
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto w-full">
@@ -415,7 +434,8 @@ function DataContent() {
               </Tooltip>
             </div>
           </CardHeader>
-          <CardContent className="max-h-[40vh] lg:max-h-[50vh] overflow-y-auto p-2 lg:p-4">
+          {/* Remove max-height constraints and keep overflow-y-auto just in case */}
+          <CardContent className="overflow-y-auto p-2 lg:p-4">
             <div className="mt-0">{renderParsedData(transaction)}</div>
           </CardContent>
         </Card>
