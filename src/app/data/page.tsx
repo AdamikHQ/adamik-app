@@ -326,7 +326,7 @@ function DataContent() {
     setIsRawExpanded(!isRawExpanded);
   };
 
-  // Add this effect to trigger search when URL params are present
+  // Update this useEffect to include form in dependencies
   useEffect(() => {
     const chainId = searchParams.get("chainId");
     const transactionId = searchParams.get("transactionId");
@@ -341,7 +341,7 @@ function DataContent() {
       setFetchTrigger((prev) => prev + 1);
       setHasSubmitted(true);
     }
-  }, [searchParams, form.setValue]);
+  }, [searchParams, form]); // Add form to the dependency array
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto w-full">
