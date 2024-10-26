@@ -1,7 +1,7 @@
 "use server";
 
 import { env, ADAMIK_API_URL } from "~/env";
-import { Token, TokenInfo } from "~/utils/types";
+import { Token } from "~/utils/types";
 
 // TODO Better API error management, consistent for all endpoints
 export const getTokenInfo = async (
