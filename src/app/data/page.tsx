@@ -443,11 +443,7 @@ function DataContent() {
           {!!error && (
             <div className="text-red-500 w-full break-all">{error.message}</div>
           )}
-          <Button
-            type="submit"
-            className="w-full sm:w-auto"
-            onClick={() => console.log("Search button clicked")}
-          >
+          <Button type="submit" className="w-full sm:w-auto" onClick={() => {}}>
             <Search className="mr-2" />
             Search
           </Button>
