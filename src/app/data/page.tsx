@@ -135,8 +135,8 @@ function DataContent() {
           const result = await formatAssetAmount({
             asset: {
               chainId: selectedChain?.id || "",
-              type: "token",
-              tokenId: (transaction.raw as any).to,
+              isToken: true,
+              assetId: (transaction.raw as any).to,
             },
             amount: recipients[0].amount,
             chainData: supportedChains,
@@ -148,7 +148,7 @@ function DataContent() {
         const result = await formatAssetAmount({
           asset: {
             chainId: selectedChain?.id || "",
-            type: "native",
+            isToken: false,
           },
           amount: recipients[0].amount,
           chainData: supportedChains,
@@ -161,7 +161,7 @@ function DataContent() {
         const result = await formatAssetAmount({
           asset: {
             chainId: selectedChain?.id || "",
-            type: "native",
+            isToken: false,
           },
           amount: validators.target.amount,
           chainData: supportedChains,
@@ -183,7 +183,7 @@ function DataContent() {
       const result = await formatAssetAmount({
         asset: {
           chainId: selectedChain?.id || "",
-          type: "native", // fees are always in native currency
+          isToken: false, // fees are always in native currency
         },
         amount:
           typeof transaction.parsed.fees === "string"

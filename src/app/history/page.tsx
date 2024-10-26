@@ -237,7 +237,10 @@ function TransactionHistoryContent() {
 
         // Format fee
         const feeResult = await formatAssetAmount({
-          asset: { chainId: parsed.chainId, type: "native" },
+          asset: {
+            chainId: parsed.chainId,
+            isToken: false,
+          },
           amount: parsed.fees.amount,
           chainData: supportedChains,
           maximumFractionDigits: 6,
@@ -253,7 +256,10 @@ function TransactionHistoryContent() {
           parsed.validators?.target
         ) {
           amountResult = await formatAssetAmount({
-            asset: { chainId: parsed.chainId, type: "native" },
+            asset: {
+              chainId: parsed.chainId,
+              isToken: false,
+            },
             amount: parsed.validators.target.amount,
             chainData: supportedChains,
             maximumFractionDigits: 6,
@@ -262,8 +268,8 @@ function TransactionHistoryContent() {
           amountResult = await formatAssetAmount({
             asset: {
               chainId: parsed.chainId,
-              type: "token",
-              tokenId: parsed.tokenId,
+              isToken: true,
+              assetId: parsed.tokenId,
             },
             amount: parsed.recipients?.[0]?.amount || "0",
             chainData: supportedChains,
@@ -271,7 +277,10 @@ function TransactionHistoryContent() {
           });
         } else if (parsed.recipients?.[0]) {
           amountResult = await formatAssetAmount({
-            asset: { chainId: parsed.chainId, type: "native" },
+            asset: {
+              chainId: parsed.chainId,
+              isToken: false,
+            },
             amount: parsed.recipients[0].amount,
             chainData: supportedChains,
             maximumFractionDigits: 6,

@@ -1,20 +1,15 @@
-import { Chain } from "./types";
+import { Chain, Asset } from "./types";
 import { amountToMainUnit, formatAmount } from "./helper";
 import { getTokenInfo } from "~/api/adamik/tokens";
 import { getChains } from "~/api/adamik/chains";
 
-type AssetType = "native" | "token";
-
-interface AssetIdentifier {
-  chainId: string;
-  type: AssetType;
-  tokenId?: string;
-}
+// Use a subset of Asset properties that we need
+type AssetIdentifier = Pick<Asset, "chainId" | "isToken" | "assetId">;
 
 export interface FormatAssetAmountOptions {
   asset: AssetIdentifier;
   amount: string | number;
-  chainData?: Record<string, Chain> | null; // Allow null
+  chainData?: Record<string, Chain> | null;
   maximumFractionDigits?: number;
   minimumFractionDigits?: number;
 }
@@ -40,7 +35,7 @@ export async function formatAssetAmount({
     let decimals: number;
     let ticker: string = "";
 
-    if (asset.type === "native") {
+    if (!asset.isToken) {
       const chains = chainData || (await getChains());
       if (!chains) {
         return { formatted: "0", ticker: "" };
@@ -53,11 +48,11 @@ export async function formatAssetAmount({
       decimals = chain.decimals;
       ticker = chain.ticker;
     } else {
-      if (!asset.tokenId) {
+      if (!asset.assetId) {
         return { formatted: "0", ticker: "" };
       }
 
-      const token = await getTokenInfo(asset.chainId, asset.tokenId);
+      const token = await getTokenInfo(asset.chainId, asset.assetId);
       if (!token) {
         return { formatted: "0", ticker: "" };
       }
