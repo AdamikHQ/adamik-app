@@ -227,16 +227,6 @@ export type SupportedBlockchain = Chain & {
   labels?: string[]; // To define the list of features supported
 };
 
-export type TokenInfo = {
-  chainId: string;
-  type: string;
-  id: string;
-  name: string;
-  ticker: string;
-  decimals: string;
-  contractAddress: string;
-};
-
 export type BackendErrorResponse = {
   status: {
     errors: Array<{ message: string }>;
