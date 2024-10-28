@@ -110,6 +110,14 @@
   border-radius: 50%;
 }
 
+.tooltip-history {
+  background-color: orange;
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+  border-radius: 50%;
+}
+
 .tooltip-content {
   visibility: hidden;
   opacity: 0;
