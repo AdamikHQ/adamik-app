@@ -39,7 +39,7 @@ import {
 import { formatAssetAmount } from "~/utils/assetFormatters";
 import { Chain, Token, FinalizedTransaction } from "~/utils/types";
 import { useToast } from "~/components/ui/use-toast";
-import { getTokenInfo } from "~/api/adamik/tokens";
+import { getTokenInfo } from "~/api/adamik/token";
 
 hljs.registerLanguage("json", json);
 
@@ -47,7 +47,6 @@ interface TransactionFees {
   amount: string;
   ticker?: string;
 }
-
 
 function DataContent() {
   const { theme } = useTheme();
@@ -58,7 +57,6 @@ function DataContent() {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [formattedAmount, setFormattedAmount] = useState<string>("N/A");
   const [formattedFees, setFormattedFees] = useState<string>("N/A");
-
 
   const searchParams = useSearchParams();
   const { isLoading: isSupportedChainsLoading, data: supportedChains } =
@@ -199,7 +197,6 @@ function DataContent() {
 
     updateFormattedFees();
   }, [transaction, selectedChain, supportedChains]);
-
 
   const renderParsedData = (
     transaction: FinalizedTransaction | null | undefined
