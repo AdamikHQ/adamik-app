@@ -4,10 +4,10 @@ import { getTokenInfo } from "~/api/adamik/token";
 import { getChains } from "~/api/adamik/chains";
 
 // Use a subset of Asset properties that we need
-type AssetIdentifier = Pick<Asset, "chainId" | "isToken" | "assetId">;
+type AssetFormatInfo = Pick<Asset, "chainId" | "isToken" | "assetId">;
 
 export interface FormatAssetAmountOptions {
-  asset: AssetIdentifier;
+  asset: AssetFormatInfo;
   amount: string | number;
   chainData?: Record<string, Chain> | null;
   maximumFractionDigits?: number;
