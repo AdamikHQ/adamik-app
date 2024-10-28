@@ -37,16 +37,16 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { formatAssetAmount } from "~/utils/assetFormatters";
-import { Chain, Token, FinalizedTransaction } from "~/utils/types";
+import {
+  Chain,
+  Token,
+  FinalizedTransaction,
+  TransactionFees,
+} from "~/utils/types";
 import { useToast } from "~/components/ui/use-toast";
 import { getTokenInfo } from "~/api/adamik/token";
 
 hljs.registerLanguage("json", json);
-
-interface TransactionFees {
-  amount: string;
-  ticker?: string;
-}
 
 function DataContent() {
   const { theme } = useTheme();
