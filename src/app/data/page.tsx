@@ -183,7 +183,7 @@ function DataContent() {
       const result = await formatAssetAmount({
         asset: {
           chainId: selectedChain?.id || "",
-          isToken: false, // fees are always in native currency
+          isToken: false, // Fees are currently assumed to be in native currency (NOTE: This won't always be the case)
         },
         amount:
           typeof transaction.parsed.fees === "string"
