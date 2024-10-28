@@ -238,3 +238,24 @@ export interface TransactionFees {
   amount: string;
   ticker?: string;
 }
+
+export type ParsedTransaction = {
+  parsed: {
+    id: string;
+    mode: string;
+    state: string;
+    timestamp: string;
+    fees: {
+      amount: string;
+      ticker: string;
+    };
+    senders?: Array<{ address: string }>;
+    recipients?: Array<{ address: string; amount: string }>;
+    validators?: {
+      target: {
+        address: string;
+        amount: string;
+      };
+    };
+  };
+};
