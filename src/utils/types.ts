@@ -233,3 +233,8 @@ export type BackendErrorResponse = {
     warnings: Array<{ message: string }>;
   };
 };
+
+export interface TransactionFees {
+  amount: string;
+  ticker?: string;
+}
