@@ -1,6 +1,6 @@
 import { Chain, Asset } from "./types";
 import { amountToMainUnit, formatAmount } from "./helper";
-import { getTokenInfo } from "~/api/adamik/tokens";
+import { getTokenInfo } from "~/api/adamik/token";
 import { getChains } from "~/api/adamik/chains";
 
 // Use a subset of Asset properties that we need
