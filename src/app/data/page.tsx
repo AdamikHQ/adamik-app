@@ -48,6 +48,7 @@ interface TransactionFees {
   ticker?: string;
 }
 
+
 function DataContent() {
   const { theme } = useTheme();
   const [highlightedCode, setHighlightedCode] = useState("");
@@ -57,6 +58,7 @@ function DataContent() {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [formattedAmount, setFormattedAmount] = useState<string>("N/A");
   const [formattedFees, setFormattedFees] = useState<string>("N/A");
+
 
   const searchParams = useSearchParams();
   const { isLoading: isSupportedChainsLoading, data: supportedChains } =
@@ -197,6 +199,7 @@ function DataContent() {
 
     updateFormattedFees();
   }, [transaction, selectedChain, supportedChains]);
+
 
   const renderParsedData = (
     transaction: FinalizedTransaction | null | undefined
