@@ -15,11 +15,7 @@ import {
   Search,
   ChevronLeft,
 } from "lucide-react";
-import {
-  Tooltip,
-  TooltipProvider,
-  TooltipTrigger,
-} from "~/components/ui/tooltip";
+import { Tooltip } from "~/components/ui/tooltip";
 import { useWallet } from "~/hooks/useWallet";
 import { useChains } from "~/hooks/useChains";
 import { showroomAddresses } from "../../utils/showroomAddresses";
@@ -33,7 +29,12 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { Chain, ChainSupportedFeatures, Asset } from "~/utils/types";
+import {
+  Chain,
+  ChainSupportedFeatures,
+  Asset,
+  ParsedTransaction,
+} from "~/utils/types";
 import { useAccountStateBatch } from "~/hooks/useAccountStateBatch";
 import {
   calculateAssets,
@@ -58,27 +59,6 @@ type GroupedAccount = {
   chainId: string;
   mainAsset: Asset | null;
   assets: Asset[];
-};
-
-type ParsedTransaction = {
-  parsed: {
-    id: string;
-    mode: string;
-    state: string;
-    timestamp: string;
-    fees: {
-      amount: string;
-      ticker: string;
-    };
-    senders?: Array<{ address: string }>;
-    recipients?: Array<{ address: string; amount: string }>;
-    validators?: {
-      target: {
-        address: string;
-        amount: string;
-      };
-    };
-  };
 };
 
 const getTransactionTypeIcon = (mode: string) => {
