@@ -59,10 +59,13 @@ export default function SupportedChains() {
       if (chain.supportedFeatures.read.account.balances.staking) {
         labels.push("staking");
       }
+      if (chain.supportedFeatures.read.account.transactions.native) {
+        labels.push("history");
+      }
 
       const supportedChain = {
         ...chain,
-        labels, // Add labels to the chain object
+        labels,
         logo: resolveLogo({
           asset: { name: chain.name, ticker: chain.ticker },
           mobulaMarketData,
@@ -109,6 +112,8 @@ export default function SupportedChains() {
         return "tooltip-token";
       case "staking":
         return "tooltip-staking";
+      case "history":
+        return "tooltip-history";
       default:
         return "";
     }
@@ -156,6 +161,17 @@ export default function SupportedChains() {
                 className="text-sm font-medium leading-none"
               >
                 Staking
+              </label>
+              <Checkbox
+                id="filter-history"
+                checked={selectedFeatures.includes("history")}
+                onCheckedChange={() => handleFeatureSelect("history")}
+              />
+              <label
+                htmlFor="filter-history"
+                className="text-sm font-medium leading-none"
+              >
+                Transaction History
               </label>
             </div>
           </div>

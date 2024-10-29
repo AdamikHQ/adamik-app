@@ -36,10 +36,15 @@ import {
   FormLabel,
   FormMessage,
 } from "~/components/ui/form";
-import { amountToMainUnit, formatAmount } from "~/utils/helper";
-import { Chain, Token, FinalizedTransaction } from "~/utils/types";
+import { formatAssetAmount } from "~/utils/assetFormatters";
+import {
+  Chain,
+  Token,
+  FinalizedTransaction,
+  TransactionFees,
+} from "~/utils/types";
 import { useToast } from "~/components/ui/use-toast";
-import { getTokenInfo } from "~/api/adamik/tokens";
+import { getTokenInfo } from "~/api/adamik/token";
 
 hljs.registerLanguage("json", json);
 
@@ -50,6 +55,8 @@ function DataContent() {
   const [fetchTrigger, setFetchTrigger] = useState(0);
   const [isRawExpanded, setIsRawExpanded] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [formattedAmount, setFormattedAmount] = useState<string>("N/A");
+  const [formattedFees, setFormattedFees] = useState<string>("N/A");
 
   const searchParams = useSearchParams();
   const { isLoading: isSupportedChainsLoading, data: supportedChains } =
@@ -117,6 +124,80 @@ function DataContent() {
     };
   }, [theme]);
 
+  useEffect(() => {
+    const updateFormattedAmount = async () => {
+      if (!transaction?.parsed) return;
+
+      const { recipients, validators } = transaction.parsed;
+
+      if (recipients && recipients[0]?.amount) {
+        if (transaction?.parsed?.mode === "transferToken") {
+          const result = await formatAssetAmount({
+            asset: {
+              chainId: selectedChain?.id || "",
+              isToken: true,
+              assetId: (transaction.raw as any).to,
+            },
+            amount: recipients[0].amount,
+            chainData: supportedChains,
+          });
+          setFormattedAmount(`${result.formatted} ${result.ticker}`);
+          return;
+        }
+
+        const result = await formatAssetAmount({
+          asset: {
+            chainId: selectedChain?.id || "",
+            isToken: false,
+          },
+          amount: recipients[0].amount,
+          chainData: supportedChains,
+        });
+        setFormattedAmount(`${result.formatted} ${result.ticker}`);
+        return;
+      }
+
+      if (validators?.target?.amount) {
+        const result = await formatAssetAmount({
+          asset: {
+            chainId: selectedChain?.id || "",
+            isToken: false,
+          },
+          amount: validators.target.amount,
+          chainData: supportedChains,
+        });
+        setFormattedAmount(`${result.formatted} ${result.ticker}`);
+        return;
+      }
+
+      setFormattedAmount("N/A");
+    };
+
+    updateFormattedAmount();
+  }, [transaction, selectedChain, supportedChains]);
+
+  useEffect(() => {
+    const updateFormattedFees = async () => {
+      if (!transaction?.parsed?.fees) return;
+
+      const result = await formatAssetAmount({
+        asset: {
+          chainId: selectedChain?.id || "",
+          isToken: false, // Fees are currently assumed to be in native currency (NOTE: This won't always be the case)
+        },
+        amount:
+          typeof transaction.parsed.fees === "string"
+            ? transaction.parsed.fees
+            : (transaction.parsed.fees as TransactionFees).amount,
+        chainData: supportedChains,
+      });
+
+      setFormattedFees(`${result.formatted} ${result.ticker}`);
+    };
+
+    updateFormattedFees();
+  }, [transaction, selectedChain, supportedChains]);
+
   const renderParsedData = (
     transaction: FinalizedTransaction | null | undefined
   ) => {
@@ -149,61 +230,10 @@ function DataContent() {
       validators,
     } = transaction.parsed;
 
-    const formatFees = (fees: any) => {
-      if (typeof fees === "string") {
-        const mainUnitFees = amountToMainUnit(
-          fees,
-          selectedChain?.decimals || 18
-        );
-        return `${formatAmount(mainUnitFees, selectedChain?.decimals || 18)} ${
-          selectedChain?.ticker || ""
-        }`;
-      } else if (fees && fees.amount) {
-        const ticker = fees.ticker || selectedChain?.ticker || "";
-        const mainUnitFees = amountToMainUnit(
-          fees.amount,
-          selectedChain?.decimals || 18
-        );
-        return `${formatAmount(
-          mainUnitFees,
-          selectedChain?.decimals || 18
-        )} ${ticker}`;
-      }
-      return "N/A";
-    };
-
-    const formatTransactionAmount = () => {
-      if (recipients && recipients[0]?.amount) {
-        if (tokenInfo) {
-          const amount = BigInt(recipients[0].amount);
-          const formattedAmount = Number(amount) / 10 ** tokenInfo.decimals;
-          return `${formatAmount(
-            formattedAmount.toString(),
-            tokenInfo.decimals
-          )} ${tokenInfo.ticker}`;
-        }
-        const mainUnitAmount = amountToMainUnit(
-          recipients[0].amount,
-          selectedChain?.decimals || 18
-        );
-        return `${formatAmount(
-          mainUnitAmount,
-          selectedChain?.decimals || 18
-        )} ${selectedChain?.ticker || ""}`;
-      } else if (validators?.target?.amount) {
-        const mainUnitAmount = amountToMainUnit(
-          validators.target.amount,
-          selectedChain?.decimals || 18
-        );
-        return `${formatAmount(
-          mainUnitAmount,
-          selectedChain?.decimals || 18
-        )} ${selectedChain?.ticker || ""}`;
-      }
-      return "N/A";
-    };
-
     const formatRecipient = () => {
+      if (!transaction?.parsed) return "N/A";
+      const { recipients, validators } = transaction.parsed;
+
       if (recipients && recipients[0]?.address) {
         return recipients[0].address;
       } else if (validators?.target?.address) {
@@ -213,7 +243,9 @@ function DataContent() {
     };
 
     return (
-      <dl className="grid gap-2">
+      <div className="flex flex-col gap-6">
+        {" "}
+        {/* Add gap-6 for more vertical spacing */}
         <DataItem label="ID" value={id} />
         <DataItem label="Type" value={mode} />
         <DataItem label="State" value={state} />
@@ -228,8 +260,8 @@ function DataContent() {
               : "N/A"
           }
         />
-        <DataItem label="Amount" value={formatTransactionAmount()} />
-        <DataItem label="Fees" value={formatFees(fees)} />
+        <DataItem label="Amount" value={formattedAmount} />
+        <DataItem label="Fees" value={formattedFees} />
         <DataItem label="Gas" value={gas || "N/A"} />
         <DataItem
           label="Sender"
@@ -238,7 +270,7 @@ function DataContent() {
         <DataItem label="Recipient" value={formatRecipient()} />
         <DataItem label="Nonce" value={nonce || "N/A"} />
         <DataItem label="Memo" value={memo || "N/A"} />
-      </dl>
+      </div>
     );
   };
 
@@ -324,6 +356,20 @@ function DataContent() {
     setIsRawExpanded(!isRawExpanded);
   };
 
+  useEffect(() => {
+    const chainId = searchParams.get("chainId");
+    const transactionId = searchParams.get("transactionId");
+
+    if (chainId && transactionId) {
+      form.setValue("chainId", chainId);
+      form.setValue("transactionId", transactionId);
+
+      setInput({ chainId, transactionId });
+      setFetchTrigger((prev) => prev + 1);
+      setHasSubmitted(true);
+    }
+  }, [searchParams, form]);
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto w-full">
       <div className="flex items-center">
@@ -394,11 +440,7 @@ function DataContent() {
           {!!error && (
             <div className="text-red-500 w-full break-all">{error.message}</div>
           )}
-          <Button
-            type="submit"
-            className="w-full sm:w-auto"
-            onClick={() => console.log("Search button clicked")}
-          >
+          <Button type="submit" className="w-full sm:w-auto" onClick={() => {}}>
             <Search className="mr-2" />
             Search
           </Button>
@@ -415,7 +457,8 @@ function DataContent() {
               </Tooltip>
             </div>
           </CardHeader>
-          <CardContent className="max-h-[40vh] lg:max-h-[50vh] overflow-y-auto p-2 lg:p-4">
+          {/* Remove max-height constraints and keep overflow-y-auto just in case */}
+          <CardContent className="overflow-y-auto p-2 lg:p-4">
             <div className="mt-0">{renderParsedData(transaction)}</div>
           </CardContent>
         </Card>

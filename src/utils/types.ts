@@ -174,7 +174,7 @@ export type Chain = {
   supportedFeatures: ChainSupportedFeatures;
 };
 
-type ChainSupportedFeatures = {
+export type ChainSupportedFeatures = {
   read: {
     account: {
       balances: {
@@ -227,19 +227,35 @@ export type SupportedBlockchain = Chain & {
   labels?: string[]; // To define the list of features supported
 };
 
-export type TokenInfo = {
-  chainId: string;
-  type: string;
-  id: string;
-  name: string;
-  ticker: string;
-  decimals: string;
-  contractAddress: string;
-};
-
 export type BackendErrorResponse = {
   status: {
     errors: Array<{ message: string }>;
     warnings: Array<{ message: string }>;
+  };
+};
+
+export interface TransactionFees {
+  amount: string;
+  ticker?: string;
+}
+
+export type ParsedTransaction = {
+  parsed: {
+    id: string;
+    mode: string;
+    state: string;
+    timestamp: string;
+    fees: {
+      amount: string;
+      ticker: string;
+    };
+    senders?: Array<{ address: string }>;
+    recipients?: Array<{ address: string; amount: string }>;
+    validators?: {
+      target: {
+        address: string;
+        amount: string;
+      };
+    };
   };
 };
