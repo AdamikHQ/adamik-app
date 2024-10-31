@@ -105,7 +105,7 @@ export function StakingTransactionForm({
         transactionData.sender = selectedStakingPosition.addresses[0]; // Automatically use the first address from staking position
       }
 
-      if (formInput.amount && !formInput.useMaxAmount) {
+      if (formInput.amount !== undefined && !formInput.useMaxAmount) {
         transactionData.amount = amountToSmallestUnit(
           formInput.amount.toString(),
           decimals

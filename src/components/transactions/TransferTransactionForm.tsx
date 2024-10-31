@@ -63,7 +63,7 @@ export function TransferTransactionForm({
         format: "json", // FIXME Not always the default, should come from chains config
       };
 
-      if (formInput.amount && !formInput.useMaxAmount) {
+      if (formInput.amount !== undefined && !formInput.useMaxAmount) {
         transactionData.amount = amountToSmallestUnit(
           formInput.amount.toString(),
           decimals
