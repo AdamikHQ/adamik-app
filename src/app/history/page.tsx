@@ -273,6 +273,42 @@ function TransactionHistoryContent() {
     return () => window.removeEventListener("resize", checkMobileView);
   }, []);
 
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!selectedAccount) return;
+
+      setIsFetchingHistory(true);
+      try {
+        const history = await getAccountHistory(
+          selectedAccount.chainId,
+          selectedAccount.address
+        );
+
+        // Add null check before setting the transaction history
+        if (history && history.transactions) {
+          // Filter out empty transactions (the ones that are {})
+          const validTransactions = history.transactions.filter(
+            (tx) => tx && Object.keys(tx).length > 0
+          );
+
+          setTransactionHistory({
+            ...history,
+            transactions: validTransactions,
+          });
+        } else {
+          setTransactionHistory(null);
+        }
+      } catch (error) {
+        console.error("Error fetching transaction history:", error);
+        setTransactionHistory(null);
+      } finally {
+        setIsFetchingHistory(false);
+      }
+    };
+
+    fetchHistory();
+  }, [selectedAccount]);
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
       {/* Header section */}
