@@ -119,6 +119,7 @@ export function StakingTransactionForm({
 
       if (pubKey) {
         transactionData.params = {
+          kind: formInput.chainId,
           pubKey,
         };
       }

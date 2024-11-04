@@ -77,6 +77,7 @@ export function TransferTransactionForm({
 
       if (pubKey) {
         transactionData.params = {
+          kind: formInput.chainId,
           pubKey,
         };
       }
