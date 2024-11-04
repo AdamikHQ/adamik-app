@@ -119,8 +119,6 @@ export function StakingTransactionForm({
 
       if (pubKey) {
         transactionData.params = {
-          kind:
-            formInput.chainId === "cosmoshub" ? "cosmos" : formInput.chainId, // FIXME: temp will be change when kind is removed
           pubKey,
         };
       }

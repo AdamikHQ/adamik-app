@@ -92,7 +92,6 @@ export type TransactionData = {
   format?: string;
   memo?: string;
   params?: {
-    kind: string;
     pubKey?: string;
   };
 };
