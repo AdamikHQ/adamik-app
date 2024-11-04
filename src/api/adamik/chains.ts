@@ -16,8 +16,9 @@ export const getChains = async (): Promise<Record<string, Chain> | null> => {
     method: "GET",
   });
 
+  const data: GetChainsResponse = await response.json();
+
   if (response.status === 200) {
-    const data: GetChainsResponse = await response.json();
     return data?.chains;
   }
 
