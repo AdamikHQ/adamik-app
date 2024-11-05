@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useMemo, useEffect } from "react";
+import { Suspense, useState, useMemo, useEffect, useRef } from "react";
 import { Info, Loader2, ChevronRight, ChevronLeft } from "lucide-react";
 import { Tooltip } from "~/components/ui/tooltip";
 import { useWallet } from "~/hooks/useWallet";
@@ -273,6 +273,25 @@ function TransactionHistoryContent() {
     return () => window.removeEventListener("resize", checkMobileView);
   }, []);
 
+  // Add ref for the container heights
+  const accountsListRef = useRef<HTMLDivElement>(null);
+  const [listHeight, setListHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    const updateHeight = () => {
+      if (accountsListRef.current) {
+        const cardContent = accountsListRef.current.querySelector(".content");
+        if (cardContent) {
+          setListHeight(cardContent.clientHeight);
+        }
+      }
+    };
+
+    updateHeight();
+    window.addEventListener("resize", updateHeight);
+    return () => window.removeEventListener("resize", updateHeight);
+  }, []);
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
       {/* Header section */}
@@ -312,11 +331,11 @@ function TransactionHistoryContent() {
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Show accounts list if: desktop OR (mobile AND no selection) */}
         {(!isMobileView || (isMobileView && !selectedAccount)) && (
-          <Card className="w-full lg:w-1/2">
+          <Card className="w-full lg:w-1/2" ref={accountsListRef}>
             <CardHeader>
               <CardTitle>Available Accounts</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="content">
               {isLoading ? (
                 <Loader2 className="animate-spin" />
               ) : filteredAccounts.length > 0 ? (
@@ -430,7 +449,16 @@ function TransactionHistoryContent() {
                 isFetchingHistory ? (
                   <Loader2 className="animate-spin" />
                 ) : transactionHistory ? (
-                  <div className="space-y-4 max-h-[400px] lg:max-h-[600px] overflow-y-auto px-1">
+                  <div
+                    className="space-y-4 overflow-y-auto px-1"
+                    style={{
+                      maxHeight: isMobileView
+                        ? "400px"
+                        : listHeight
+                        ? `${listHeight}px`
+                        : "600px",
+                    }}
+                  >
                     {transactionHistory.transactions.map(
                       (tx: ParsedTransaction) => (
                         <div key={tx.parsed.id}>
