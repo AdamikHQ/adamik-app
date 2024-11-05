@@ -25,7 +25,7 @@ const menu = [
     href: "/stake",
   },
   {
-    title: "Data",
+    title: "Transaction Details",
     icon: Search,
     href: "/data",
   },
