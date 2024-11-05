@@ -169,7 +169,7 @@ export type Chain = {
   name: string;
   params: any;
   family: string;
-  isTestNet: boolean;
+  isTestnetFor?: string;
   nativeId: string;
   supportedFeatures: ChainSupportedFeatures;
 };

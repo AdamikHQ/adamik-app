@@ -20,7 +20,8 @@ export const getChains = async (): Promise<Record<string, Chain> | null> => {
 
   if (response.status === 200) {
     return data?.chains;
+  } else {
+    console.error("chains - backend error:", JSON.stringify(data));
+    return null;
   }
-
-  return null;
 };
