@@ -277,7 +277,6 @@ function TransactionHistoryContent() {
   const accountsListRef = useRef<HTMLDivElement>(null);
   const [listHeight, setListHeight] = useState<number | null>(null);
 
-  // Add effect to measure and update height
   useEffect(() => {
     const updateHeight = () => {
       if (accountsListRef.current) {
