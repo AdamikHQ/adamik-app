@@ -373,7 +373,9 @@ function DataContent() {
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto w-full">
       <div className="flex items-center">
-        <h1 className="text-lg font-semibold md:text-2xl">Data</h1>
+        <h1 className="text-lg font-semibold md:text-2xl">
+          Transaction Details
+        </h1>
         <Tooltip text="View the API documentation for retrieving transaction data">
           <a
             href="https://docs.adamik.io/api-reference/endpoint/get-apichains-chainid-transaction-transactionid"
