@@ -44,7 +44,7 @@ export default function SupportedChains() {
 
   const chainsWithInfo = Object.values(supportedChains)
     .reduce<SupportedBlockchain[]>((acc, chain) => {
-      if (chain.isTestNet) {
+      if (!!chain.isTestnetFor) {
         return acc;
       }
 
@@ -84,7 +84,7 @@ export default function SupportedChains() {
 
   const additionalChains = Object.values(supportedChains).reduce<string[]>(
     (acc, chain) => {
-      return chain.isTestNet && !acc.includes(chain.name)
+      return !!chain.isTestnetFor && !acc.includes(chain.name)
         ? [...acc, chain.id]
         : acc;
     },
