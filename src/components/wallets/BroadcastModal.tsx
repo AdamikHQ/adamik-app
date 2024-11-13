@@ -44,7 +44,6 @@ export const BroadcastModal = ({ onNextStep }: BroadcastProps) => {
               "Transaction has been successfully broadcasted. Your balance will be updated in a few moments",
           });
           setTransaction(undefined);
-          onNextStep();
         } else {
           setError("Unexpected response from server");
           toast({
@@ -66,14 +65,7 @@ export const BroadcastModal = ({ onNextStep }: BroadcastProps) => {
         });
       },
     });
-  }, [
-    mutate,
-    setTransaction,
-    setTransactionHash,
-    toast,
-    transaction,
-    onNextStep,
-  ]);
+  }, [mutate, setTransaction, setTransactionHash, toast, transaction]);
 
   const handleCancel = useCallback(() => {
     onNextStep();
