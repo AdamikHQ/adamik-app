@@ -38,8 +38,30 @@ export const getValidators = async (
   const result = await response.json();
 
   if (response.status !== 200) {
-    console.error("validators - backend error:", result);
+    throw new Error(
+      `Failed to fetch validators: ${response.status} ${
+        response.statusText
+      }\n${JSON.stringify(result, null, 2)}`
+    );
   }
 
   return result as ValidatorResponse;
+};
+
+export const getAllValidators = async (
+  chainId: string
+): Promise<ValidatorResponse> => {
+  let allValidators: ValidatorResponse["validators"] = [];
+  let nextPage: string | undefined = undefined;
+
+  do {
+    const response = await getValidators(chainId, { nextPage });
+    allValidators = [...allValidators, ...response.validators];
+    nextPage = response.pagination?.nextPage || undefined;
+  } while (nextPage !== undefined);
+
+  return {
+    chainId,
+    validators: allValidators,
+  };
 };
