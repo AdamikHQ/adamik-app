@@ -1,6 +1,13 @@
 "use client";
 
-import { Suspense, useState, useMemo, useEffect, useRef } from "react";
+import {
+  Suspense,
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
 import { Info, Loader2, ChevronRight, ChevronLeft } from "lucide-react";
 import { Tooltip } from "~/components/ui/tooltip";
 import { useWallet } from "~/hooks/useWallet";
@@ -61,7 +68,13 @@ function TransactionHistoryContent() {
   const [selectedAccount, setSelectedAccount] = useState<GroupedAccount | null>(
     null
   );
-  const [transactionHistory, setTransactionHistory] = useState<any>(null);
+  const [transactionHistory, setTransactionHistory] = useState<{
+    data: any[];
+    nextPage: string | null;
+  }>({
+    data: [],
+    nextPage: null,
+  });
   const [isFetchingHistory, setIsFetchingHistory] = useState(false);
 
   const displayAddresses = isShowroom ? showroomAddresses : walletAddresses;
@@ -147,19 +160,57 @@ function TransactionHistoryContent() {
   const handleAccountClick = async (account: GroupedAccount) => {
     setSelectedAccount(account);
     setIsFetchingHistory(true);
+    setTransactionHistory({ data: [], nextPage: null });
 
     try {
       const history = await getAccountHistory(account.chainId, account.address);
-      setTransactionHistory(history);
+      if (history) {
+        setTransactionHistory({
+          data: history.transactions,
+          nextPage: history.pagination?.nextPage || null,
+        });
+      }
     } catch (error) {
       console.error("Error fetching transaction history:", error);
-      setTransactionHistory(null);
     } finally {
       setIsFetchingHistory(false);
     }
   };
 
-  // Add state for formatted amounts
+  const transactionListRef = useRef<HTMLDivElement>(null);
+
+  const handleLoadMore = useCallback(async () => {
+    if (!selectedAccount || isFetchingHistory) return;
+
+    const scrollPosition = transactionListRef.current?.scrollTop;
+
+    try {
+      setIsFetchingHistory(true);
+      const result = await getAccountHistory(
+        selectedAccount.chainId,
+        selectedAccount.address,
+        { nextPage: transactionHistory.nextPage || undefined }
+      );
+
+      if (result) {
+        setTransactionHistory((prev) => ({
+          data: [...prev.data, ...result.transactions],
+          nextPage: result.pagination?.nextPage || null,
+        }));
+
+        requestAnimationFrame(() => {
+          if (transactionListRef.current && scrollPosition) {
+            transactionListRef.current.scrollTop = scrollPosition;
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error loading more transactions:", error);
+    } finally {
+      setIsFetchingHistory(false);
+    }
+  }, [selectedAccount, isFetchingHistory, transactionHistory.nextPage]);
+
   const [formattedTransactions, setFormattedTransactions] = useState<
     Record<
       string,
@@ -173,7 +224,7 @@ function TransactionHistoryContent() {
 
   // Add effect to format amounts when transaction history changes
   useEffect(() => {
-    if (!transactionHistory?.transactions || isFetchingHistory) return;
+    if (!transactionHistory?.data || isFetchingHistory) return;
     setIsFormattingAmounts(true);
 
     const formatTransactions = async () => {
@@ -182,7 +233,7 @@ function TransactionHistoryContent() {
         { formattedAmount: string; formattedFee: string }
       > = {};
 
-      for (const tx of transactionHistory.transactions) {
+      for (const tx of transactionHistory.data) {
         const { parsed } = tx;
 
         // Format fee
@@ -255,7 +306,7 @@ function TransactionHistoryContent() {
   // Reset selections when wallet addresses or showroom mode changes
   useEffect(() => {
     setSelectedAccount(null);
-    setTransactionHistory(null);
+    setTransactionHistory({ data: [], nextPage: null });
   }, [walletAddresses, isShowroom]);
 
   // Add state to track mobile view
@@ -282,22 +333,29 @@ function TransactionHistoryContent() {
       if (accountsListRef.current) {
         const cardContent = accountsListRef.current.querySelector(".content");
         if (cardContent) {
-          setListHeight(cardContent.clientHeight);
+          const contentHeight = cardContent.getBoundingClientRect().height;
+          if (cardContent.parentElement) {
+            cardContent.parentElement.style.height = "auto";
+          }
+          setListHeight(contentHeight);
         }
       }
     };
 
     updateHeight();
-    window.addEventListener("resize", updateHeight);
-    return () => window.removeEventListener("resize", updateHeight);
+
+    const observer = new ResizeObserver(updateHeight);
+    if (accountsListRef.current) {
+      observer.observe(accountsListRef.current);
+    }
+
+    return () => observer.disconnect();
   }, []);
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
-      {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center">
-          {/* Show back button on mobile when viewing transactions */}
           {isMobileView && selectedAccount && (
             <button
               onClick={() => setSelectedAccount(null)}
@@ -327,9 +385,7 @@ function TransactionHistoryContent() {
 
       {isShowroom ? <ShowroomBanner /> : null}
 
-      {/* Main content - Conditional rendering based on viewport and selection */}
       <div className="flex flex-col lg:flex-row gap-4">
-        {/* Show accounts list if: desktop OR (mobile AND no selection) */}
         {(!isMobileView || (isMobileView && !selectedAccount)) && (
           <Card className="w-full lg:w-1/2" ref={accountsListRef}>
             <CardHeader>
@@ -343,7 +399,6 @@ function TransactionHistoryContent() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[80px]"></TableHead>
-                      {/* Hide full address on mobile, show truncated version */}
                       <TableHead>
                         <span className="hidden sm:inline">Address</span>
                         <span className="sm:hidden">Addr.</span>
@@ -356,7 +411,7 @@ function TransactionHistoryContent() {
                         key={`${account.chainId}-${account.address}`}
                         className={`cursor-pointer transition-colors ${
                           selectedAccount?.address === account.address &&
-                          selectedAccount?.chainId === account.chainId // Add chainId check
+                          selectedAccount?.chainId === account.chainId
                             ? "bg-accent/80 hover:bg-accent"
                             : "hover:bg-accent/50"
                         }`}
@@ -377,7 +432,7 @@ function TransactionHistoryContent() {
                           <p
                             className={
                               selectedAccount?.address === account.address &&
-                              selectedAccount?.chainId === account.chainId // Add chainId check
+                              selectedAccount?.chainId === account.chainId
                                 ? "font-medium"
                                 : ""
                             }
@@ -387,7 +442,7 @@ function TransactionHistoryContent() {
                           <ChevronRight
                             className={`w-4 h-4 ${
                               selectedAccount?.address === account.address &&
-                              selectedAccount?.chainId === account.chainId // Add chainId check
+                              selectedAccount?.chainId === account.chainId
                                 ? "text-foreground"
                                 : "text-muted-foreground"
                             }`}
@@ -407,7 +462,6 @@ function TransactionHistoryContent() {
           </Card>
         )}
 
-        {/* Show transaction history if: desktop OR (mobile AND has selection) */}
         {(!isMobileView || (isMobileView && selectedAccount)) && (
           <Card className="w-full lg:w-1/2">
             <CardHeader>
@@ -439,7 +493,7 @@ function TransactionHistoryContent() {
                 <CardTitle>Transaction History</CardTitle>
                 {transactionHistory && !isFetchingHistory && (
                   <span className="text-sm text-muted-foreground">
-                    ({transactionHistory.transactions.length} operations)
+                    ({transactionHistory.data.length} operations)
                   </span>
                 )}
               </div>
@@ -450,26 +504,43 @@ function TransactionHistoryContent() {
                   <Loader2 className="animate-spin" />
                 ) : transactionHistory ? (
                   <div
-                    className="space-y-4 overflow-y-auto px-1"
+                    ref={transactionListRef}
+                    className="space-y-4 px-1 h-full"
                     style={{
-                      maxHeight: isMobileView
+                      minHeight: "200px",
+                      height: isMobileView
                         ? "400px"
                         : listHeight
-                        ? `${listHeight}px`
+                        ? `${Math.min(listHeight, 600)}px`
                         : "600px",
+                      overflowY: "auto",
                     }}
                   >
-                    {transactionHistory.transactions.map(
-                      (tx: ParsedTransaction) => (
-                        <div key={tx.parsed.id}>
-                          <ParsedTransactionComponent
-                            tx={tx}
-                            selectedAccountChainId={selectedAccount?.chainId}
-                            formattedTransactions={formattedTransactions}
-                            isFormattingAmounts={isFormattingAmounts}
-                          />
-                        </div>
-                      )
+                    {transactionHistory.data.map((tx: ParsedTransaction) => (
+                      <div key={tx.parsed.id}>
+                        <ParsedTransactionComponent
+                          tx={tx}
+                          selectedAccountChainId={selectedAccount?.chainId}
+                          formattedTransactions={formattedTransactions}
+                          isFormattingAmounts={isFormattingAmounts}
+                        />
+                      </div>
+                    ))}
+
+                    {transactionHistory.nextPage && (
+                      <div className="flex justify-center py-4">
+                        <button
+                          onClick={handleLoadMore}
+                          disabled={isFetchingHistory}
+                          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isFetchingHistory ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            "Load More"
+                          )}
+                        </button>
+                      </div>
                     )}
                   </div>
                 ) : (

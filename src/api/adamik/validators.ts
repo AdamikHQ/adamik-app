@@ -10,21 +10,22 @@ export type ValidatorResponse = {
     commission: string;
     stakedAmount: string;
   }[];
+  pagination?: {
+    nextPage: string | null;
+  };
 };
 
 // TODO Better API error management, consistent for all endpoints
 export const getValidators = async (
   chainId: string,
-  offset?: number,
-  limit?: number
+  options?: {
+    nextPage?: string;
+  }
 ): Promise<ValidatorResponse> => {
   const url = new URL(`${ADAMIK_API_URL}/chains/${chainId}/validators`);
 
-  if (offset) {
-    url.searchParams.set("offset", offset.toString());
-  }
-  if (limit) {
-    url.searchParams.set("limit", limit.toString());
+  if (options?.nextPage) {
+    url.searchParams.set("nextPage", options.nextPage);
   }
 
   const response = await fetch(url, {
@@ -40,5 +41,23 @@ export const getValidators = async (
     console.error("validators - backend error:", result);
   }
 
-  return result;
+  return result as ValidatorResponse;
+};
+
+export const getAllValidators = async (
+  chainId: string
+): Promise<ValidatorResponse> => {
+  let allValidators: ValidatorResponse["validators"] = [];
+  let nextPage: string | undefined = undefined;
+
+  do {
+    const response = await getValidators(chainId, { nextPage });
+    allValidators = [...allValidators, ...response.validators];
+    nextPage = response.pagination?.nextPage || undefined;
+  } while (nextPage !== undefined);
+
+  return {
+    chainId,
+    validators: allValidators,
+  };
 };

@@ -136,10 +136,16 @@ const StakingPositionSelectorList = ({
 }) => {
   const filteredPositions = useMemo(() => {
     if (mode === TransactionMode.CLAIM_REWARDS) {
-      return stakingPositions.filter(
-        (position) =>
-          position.rewardAmount && parseFloat(position.rewardAmount) > 0
-      );
+      return stakingPositions
+        .filter((position) => {
+          const rewardAmount = position.rewardAmount
+            ? parseFloat(position.rewardAmount)
+            : 0;
+          return position.rewardAmount && rewardAmount > 0;
+        })
+        .sort(
+          (a, b) => parseFloat(b.rewardAmount!) - parseFloat(a.rewardAmount!)
+        );
     }
     return stakingPositions.filter(
       (position) => position.status !== "unlocking"
@@ -210,43 +216,68 @@ const StakingPositionView = ({
       ? formatAmount(formattedRewardAmount, 3)
       : `>${MIN_REWARD_THRESHOLD}`;
   return (
-    validator && (
-      <div className="flex items-center justify-between w-full">
-        {validator.name && (
-          <div className="relative">
-            <Tooltip text={validator?.address}>
-              <TooltipTrigger>
-                <Avatar className="w-[32px] h-[32px]">
-                  <AvatarImage
-                    src={validator.chainLogo}
-                    alt={validator.chainId}
-                  />
-                </Avatar>
-              </TooltipTrigger>
-            </Tooltip>
-          </div>
-        )}
-        <div className="flex-1 text-right">{validator.name}</div>
-
-        <div className="font-bold flex-1 text-right">
-          {mode === TransactionMode.CLAIM_REWARDS ? (
-            <>
-              {stakingPosition.rewardAmount ? (
-                <div>
-                  {displayReward} {stakingPosition.ticker}
-                </div>
-              ) : (
-                "0 Rewards"
-              )}
-            </>
-          ) : (
-            <>
-              {parseFloat(stakingPosition.amount).toFixed(3)}{" "}
-              {stakingPosition.ticker}
-            </>
+    <div className="flex items-center justify-between w-full">
+      {validator ? (
+        <>
+          {validator.name && (
+            <div className="relative">
+              <Tooltip text={validator?.address}>
+                <TooltipTrigger>
+                  <Avatar className="w-[32px] h-[32px]">
+                    <AvatarImage
+                      src={validator.chainLogo}
+                      alt={validator.chainId}
+                    />
+                  </Avatar>
+                </TooltipTrigger>
+              </Tooltip>
+            </div>
           )}
-        </div>
+          <div className="flex-1 text-right truncate max-w-[200px]">
+            {stakingPosition.validatorName ||
+              `${stakingPosition.validatorAddresses[0].slice(
+                0,
+                12
+              )}...${stakingPosition.validatorAddresses[0].slice(-6)}`}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="relative">
+            <Avatar className="w-[32px] h-[32px]">
+              <AvatarImage
+                src={stakingPosition.chainLogo}
+                alt={stakingPosition.chainId}
+              />
+            </Avatar>
+          </div>
+          <div className="flex-1 text-right truncate max-w-[200px]">
+            {`${stakingPosition.validatorAddresses[0].slice(
+              0,
+              6
+            )}...${stakingPosition.validatorAddresses[0].slice(-6)}`}
+          </div>
+        </>
+      )}
+
+      <div className="font-bold flex-1 text-right">
+        {mode === TransactionMode.CLAIM_REWARDS ? (
+          <>
+            {stakingPosition.rewardAmount ? (
+              <div>
+                {displayReward} {stakingPosition.ticker}
+              </div>
+            ) : (
+              "0 Rewards"
+            )}
+          </>
+        ) : (
+          <>
+            {parseFloat(stakingPosition.amount).toFixed(3)}{" "}
+            {stakingPosition.ticker}
+          </>
+        )}
       </div>
-    )
+    </div>
   );
 };

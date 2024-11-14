@@ -1,12 +1,12 @@
-import { useQueries, useQueryClient } from "@tanstack/react-query";
-import { getValidators } from "~/api/adamik/validators";
+import { useQueries } from "@tanstack/react-query";
+import { getAllValidators } from "~/api/adamik/validators";
 
 export const useValidatorsBatch = (chainIds: string[]) => {
   return useQueries({
     queries: chainIds.map((chainId) => {
       return {
         queryKey: ["validators", chainId],
-        queryFn: async () => getValidators(chainId, 0, 500),
+        queryFn: async () => getAllValidators(chainId),
       };
     }),
     combine: (results) => {

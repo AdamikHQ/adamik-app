@@ -37,6 +37,7 @@ import {
   getAddressStakingPositions,
 } from "./helpers";
 import { StakingPositionsList } from "./StakingPositionsList";
+import { isStakingSupported } from "~/utils/helper";
 
 export default function Stake() {
   const { addresses, isShowroom, setWalletMenuOpen } = useWallet();
@@ -74,8 +75,16 @@ export default function Stake() {
     "symbols"
   );
 
+  const stakingSupportedChainIds = useMemo(
+    () =>
+      chainsDetails
+        ?.filter((chain) => isStakingSupported(chain))
+        .map((chain) => chain.id) ?? [],
+    [chainsDetails]
+  );
+
   const { data: validatorsData, isLoading: validatorLoading } =
-    useValidatorsBatch(addressesChainIds);
+    useValidatorsBatch(stakingSupportedChainIds);
 
   const isLoading =
     validatorLoading || isSupportedChainsLoading || isAddressStateLoading;
