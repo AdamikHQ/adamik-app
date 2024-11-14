@@ -170,13 +170,11 @@ function TransactionHistoryContent() {
     }
   };
 
-  // Add a ref for the transaction list container
   const transactionListRef = useRef<HTMLDivElement>(null);
 
   const handleLoadMore = async () => {
     if (!selectedAccount || isFetchingHistory) return;
 
-    // Store the current scroll position
     const scrollPosition = transactionListRef.current?.scrollTop;
 
     try {
@@ -193,7 +191,6 @@ function TransactionHistoryContent() {
           nextPage: result.pagination?.nextPage || null,
         }));
 
-        // Restore scroll position after state update
         requestAnimationFrame(() => {
           if (transactionListRef.current && scrollPosition) {
             transactionListRef.current.scrollTop = scrollPosition;
@@ -207,7 +204,6 @@ function TransactionHistoryContent() {
     }
   };
 
-  // Add state for formatted amounts
   const [formattedTransactions, setFormattedTransactions] = useState<
     Record<
       string,
@@ -354,10 +350,8 @@ function TransactionHistoryContent() {
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
-      {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center">
-          {/* Show back button on mobile when viewing transactions */}
           {isMobileView && selectedAccount && (
             <button
               onClick={() => setSelectedAccount(null)}
@@ -387,9 +381,7 @@ function TransactionHistoryContent() {
 
       {isShowroom ? <ShowroomBanner /> : null}
 
-      {/* Main content - Conditional rendering based on viewport and selection */}
       <div className="flex flex-col lg:flex-row gap-4">
-        {/* Show accounts list if: desktop OR (mobile AND no selection) */}
         {(!isMobileView || (isMobileView && !selectedAccount)) && (
           <Card className="w-full lg:w-1/2" ref={accountsListRef}>
             <CardHeader>
@@ -403,7 +395,6 @@ function TransactionHistoryContent() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[80px]"></TableHead>
-                      {/* Hide full address on mobile, show truncated version */}
                       <TableHead>
                         <span className="hidden sm:inline">Address</span>
                         <span className="sm:hidden">Addr.</span>
@@ -416,7 +407,7 @@ function TransactionHistoryContent() {
                         key={`${account.chainId}-${account.address}`}
                         className={`cursor-pointer transition-colors ${
                           selectedAccount?.address === account.address &&
-                          selectedAccount?.chainId === account.chainId // Add chainId check
+                          selectedAccount?.chainId === account.chainId
                             ? "bg-accent/80 hover:bg-accent"
                             : "hover:bg-accent/50"
                         }`}
@@ -437,7 +428,7 @@ function TransactionHistoryContent() {
                           <p
                             className={
                               selectedAccount?.address === account.address &&
-                              selectedAccount?.chainId === account.chainId // Add chainId check
+                              selectedAccount?.chainId === account.chainId
                                 ? "font-medium"
                                 : ""
                             }
@@ -447,7 +438,7 @@ function TransactionHistoryContent() {
                           <ChevronRight
                             className={`w-4 h-4 ${
                               selectedAccount?.address === account.address &&
-                              selectedAccount?.chainId === account.chainId // Add chainId check
+                              selectedAccount?.chainId === account.chainId
                                 ? "text-foreground"
                                 : "text-muted-foreground"
                             }`}
@@ -467,7 +458,6 @@ function TransactionHistoryContent() {
           </Card>
         )}
 
-        {/* Show transaction history if: desktop OR (mobile AND has selection) */}
         {(!isMobileView || (isMobileView && selectedAccount)) && (
           <Card className="w-full lg:w-1/2">
             <CardHeader>
