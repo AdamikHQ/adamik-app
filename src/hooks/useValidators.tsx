@@ -7,7 +7,7 @@ type GetValidatorParams = {
 
 export const useValidators = ({ chainId }: GetValidatorParams) => {
   return useQuery({
-    queryKey: ["validators", chainId, "all"],
+    queryKey: ["validators", chainId],
     queryFn: async () => getAllValidators(chainId),
   });
 };
