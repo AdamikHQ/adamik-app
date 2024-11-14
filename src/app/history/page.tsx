@@ -171,23 +171,24 @@ function TransactionHistoryContent() {
   };
 
   const handleLoadMore = async () => {
-    if (!selectedAccount || !transactionHistory.nextPage) return;
+    if (!selectedAccount || isFetchingHistory) return;
 
-    setIsFetchingHistory(true);
     try {
-      const history = await getAccountHistory(
+      setIsFetchingHistory(true);
+      const result = await getAccountHistory(
         selectedAccount.chainId,
         selectedAccount.address,
-        { nextPage: transactionHistory.nextPage }
+        { nextPage: transactionHistory.nextPage || undefined }
       );
-      if (history) {
-        setTransactionHistory({
-          data: [...transactionHistory.data, ...history.transactions],
-          nextPage: history.pagination?.nextPage || null,
-        });
+
+      if (result) {
+        setTransactionHistory((prev) => ({
+          data: [...prev.data, ...result.transactions],
+          nextPage: result.pagination?.nextPage || null,
+        }));
       }
     } catch (error) {
-      console.error("Error fetching more transactions:", error);
+      console.error("Error loading more transactions:", error);
     } finally {
       setIsFetchingHistory(false);
     }
@@ -498,7 +499,7 @@ function TransactionHistoryContent() {
                   <div
                     className="space-y-4 px-1 h-full"
                     style={{
-                      minHeight: "200px", // Minimum height to avoid too small containers
+                      minHeight: "200px",
                       height: isMobileView
                         ? "400px"
                         : listHeight
@@ -517,6 +518,23 @@ function TransactionHistoryContent() {
                         />
                       </div>
                     ))}
+
+                    {/* Add Load More button */}
+                    {transactionHistory.nextPage && (
+                      <div className="flex justify-center py-4">
+                        <button
+                          onClick={handleLoadMore}
+                          disabled={isFetchingHistory}
+                          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isFetchingHistory ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            "Load More"
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <p className="text-sm">No transaction history available.</p>
