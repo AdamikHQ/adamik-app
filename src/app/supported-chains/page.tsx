@@ -12,7 +12,7 @@ import { Tooltip } from "~/components/ui/tooltip"; // Import TooltipProvider
 import { useChains } from "~/hooks/useChains";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
-import { resolveLogo } from "~/utils/helper";
+import { resolveLogo, isStakingSupported } from "~/utils/helper";
 import { SupportedBlockchain } from "~/utils/types";
 
 const comingSoonIds = ["tron", "the-open-network", "solana"];
@@ -56,7 +56,7 @@ export default function SupportedChains() {
       ) {
         labels.push("token");
       }
-      if (chain.supportedFeatures.read.account.balances.staking) {
+      if (isStakingSupported(chain)) {
         labels.push("staking");
       }
       if (chain.supportedFeatures.read.account.transactions.native) {

@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { MobulaBlockchain } from "~/api/mobula/types";
+import { Chain } from "~/utils/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -106,4 +107,11 @@ export const resolveLogo = ({
 
   // If no logo is found, return an empty string
   return "";
+};
+
+export const isStakingSupported = (chain: Chain): boolean => {
+  return (
+    chain.supportedFeatures.read.account.balances.staking &&
+    chain.supportedFeatures.write.transaction.type.staking
+  );
 };
