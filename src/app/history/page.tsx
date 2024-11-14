@@ -170,8 +170,14 @@ function TransactionHistoryContent() {
     }
   };
 
+  // Add a ref for the transaction list container
+  const transactionListRef = useRef<HTMLDivElement>(null);
+
   const handleLoadMore = async () => {
     if (!selectedAccount || isFetchingHistory) return;
+
+    // Store the current scroll position
+    const scrollPosition = transactionListRef.current?.scrollTop;
 
     try {
       setIsFetchingHistory(true);
@@ -186,6 +192,13 @@ function TransactionHistoryContent() {
           data: [...prev.data, ...result.transactions],
           nextPage: result.pagination?.nextPage || null,
         }));
+
+        // Restore scroll position after state update
+        requestAnimationFrame(() => {
+          if (transactionListRef.current && scrollPosition) {
+            transactionListRef.current.scrollTop = scrollPosition;
+          }
+        });
       }
     } catch (error) {
       console.error("Error loading more transactions:", error);
@@ -497,6 +510,7 @@ function TransactionHistoryContent() {
                   <Loader2 className="animate-spin" />
                 ) : transactionHistory ? (
                   <div
+                    ref={transactionListRef}
                     className="space-y-4 px-1 h-full"
                     style={{
                       minHeight: "200px",
