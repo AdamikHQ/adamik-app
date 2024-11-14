@@ -75,10 +75,13 @@ export default function Stake() {
     "symbols"
   );
 
-  const stakingSupportedChainIds = addressesChainIds.filter((chainId) => {
-    const chain = chainsDetails?.find((c) => c.id === chainId);
-    return chain && isStakingSupported(chain);
-  });
+  const stakingSupportedChainIds = useMemo(
+    () =>
+      chainsDetails
+        ?.filter((chain) => isStakingSupported(chain))
+        .map((chain) => chain.id) ?? [],
+    [chainsDetails]
+  );
 
   const { data: validatorsData, isLoading: validatorLoading } =
     useValidatorsBatch(stakingSupportedChainIds);
