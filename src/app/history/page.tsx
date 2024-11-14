@@ -1,6 +1,13 @@
 "use client";
 
-import { Suspense, useState, useMemo, useEffect, useRef } from "react";
+import {
+  Suspense,
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
 import { Info, Loader2, ChevronRight, ChevronLeft } from "lucide-react";
 import { Tooltip } from "~/components/ui/tooltip";
 import { useWallet } from "~/hooks/useWallet";
@@ -172,7 +179,7 @@ function TransactionHistoryContent() {
 
   const transactionListRef = useRef<HTMLDivElement>(null);
 
-  const handleLoadMore = async () => {
+  const handleLoadMore = useCallback(async () => {
     if (!selectedAccount || isFetchingHistory) return;
 
     const scrollPosition = transactionListRef.current?.scrollTop;
@@ -202,7 +209,7 @@ function TransactionHistoryContent() {
     } finally {
       setIsFetchingHistory(false);
     }
-  };
+  }, [selectedAccount, isFetchingHistory, transactionHistory.nextPage]);
 
   const [formattedTransactions, setFormattedTransactions] = useState<
     Record<
