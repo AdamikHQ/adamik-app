@@ -20,16 +20,12 @@ export const getValidators = async (
   chainId: string,
   options?: {
     nextPage?: string;
-    limit?: number;
   }
 ): Promise<ValidatorResponse> => {
   const url = new URL(`${ADAMIK_API_URL}/chains/${chainId}/validators`);
 
   if (options?.nextPage) {
     url.searchParams.set("nextPage", options.nextPage);
-  }
-  if (options?.limit) {
-    url.searchParams.set("limit", options.limit.toString());
   }
 
   const response = await fetch(url, {
