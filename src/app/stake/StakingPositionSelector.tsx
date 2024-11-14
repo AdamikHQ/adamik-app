@@ -194,6 +194,7 @@ const StakingPositionView = ({
   mode: TransactionMode;
 }) => {
   const validator = useMemo(() => {
+    // FIXME Hack for Cosmos, all validatorAddresses should be handled not just the 1st one
     return (
       stakingPosition &&
       validators.find(
