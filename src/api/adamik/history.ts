@@ -7,11 +7,17 @@ interface AccountHistoryResponse {
   chainId: string;
   accountId: string;
   transactions: FinalizedTransaction[];
+  pagination?: {
+    nextPage: string | null;
+  };
 }
 
 export const getAccountHistory = async (
   chainId: string | undefined,
-  accountId: string | undefined
+  accountId: string | undefined,
+  options?: {
+    nextPage?: string;
+  }
 ): Promise<AccountHistoryResponse | null> => {
   if (!chainId || !accountId) {
     return null;
@@ -26,6 +32,7 @@ export const getAccountHistory = async (
     body: JSON.stringify({
       chainId,
       accountId,
+      nextPage: options?.nextPage,
     }),
   });
 
