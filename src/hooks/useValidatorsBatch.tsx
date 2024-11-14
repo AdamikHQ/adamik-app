@@ -5,7 +5,7 @@ export const useValidatorsBatch = (chainIds: string[]) => {
   return useQueries({
     queries: chainIds.map((chainId) => {
       return {
-        queryKey: ["validators", chainId, "all"],
+        queryKey: ["validators", chainId],
         queryFn: async () => getAllValidators(chainId),
       };
     }),
