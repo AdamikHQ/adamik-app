@@ -38,11 +38,7 @@ export const getValidators = async (
   const result = await response.json();
 
   if (response.status !== 200) {
-    throw new Error(
-      `Failed to fetch validators: ${response.status} ${
-        response.statusText
-      }\n${JSON.stringify(result, null, 2)}`
-    );
+    console.error("state - backend error:", JSON.stringify(result));
   }
 
   return result as ValidatorResponse;
