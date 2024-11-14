@@ -326,9 +326,7 @@ function TransactionHistoryContent() {
       if (accountsListRef.current) {
         const cardContent = accountsListRef.current.querySelector(".content");
         if (cardContent) {
-          // Get the actual content height including padding
           const contentHeight = cardContent.getBoundingClientRect().height;
-          // Remove any previous height to get natural height
           if (cardContent.parentElement) {
             cardContent.parentElement.style.height = "auto";
           }
@@ -339,7 +337,6 @@ function TransactionHistoryContent() {
 
     updateHeight();
 
-    // Use ResizeObserver for more accurate size tracking
     const observer = new ResizeObserver(updateHeight);
     if (accountsListRef.current) {
       observer.observe(accountsListRef.current);
@@ -523,7 +520,6 @@ function TransactionHistoryContent() {
                       </div>
                     ))}
 
-                    {/* Add Load More button */}
                     {transactionHistory.nextPage && (
                       <div className="flex justify-center py-4">
                         <button
