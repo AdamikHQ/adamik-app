@@ -61,7 +61,13 @@ function TransactionHistoryContent() {
   const [selectedAccount, setSelectedAccount] = useState<GroupedAccount | null>(
     null
   );
-  const [transactionHistory, setTransactionHistory] = useState<any>(null);
+  const [transactionHistory, setTransactionHistory] = useState<{
+    data: any[];
+    nextPage: string | null;
+  }>({
+    data: [],
+    nextPage: null,
+  });
   const [isFetchingHistory, setIsFetchingHistory] = useState(false);
 
   const displayAddresses = isShowroom ? showroomAddresses : walletAddresses;
@@ -147,13 +153,41 @@ function TransactionHistoryContent() {
   const handleAccountClick = async (account: GroupedAccount) => {
     setSelectedAccount(account);
     setIsFetchingHistory(true);
+    setTransactionHistory({ data: [], nextPage: null });
 
     try {
       const history = await getAccountHistory(account.chainId, account.address);
-      setTransactionHistory(history);
+      if (history) {
+        setTransactionHistory({
+          data: history.transactions,
+          nextPage: history.pagination?.nextPage || null,
+        });
+      }
     } catch (error) {
       console.error("Error fetching transaction history:", error);
-      setTransactionHistory(null);
+    } finally {
+      setIsFetchingHistory(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (!selectedAccount || !transactionHistory.nextPage) return;
+
+    setIsFetchingHistory(true);
+    try {
+      const history = await getAccountHistory(
+        selectedAccount.chainId,
+        selectedAccount.address,
+        { nextPage: transactionHistory.nextPage }
+      );
+      if (history) {
+        setTransactionHistory({
+          data: [...transactionHistory.data, ...history.transactions],
+          nextPage: history.pagination?.nextPage || null,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching more transactions:", error);
     } finally {
       setIsFetchingHistory(false);
     }
@@ -173,7 +207,7 @@ function TransactionHistoryContent() {
 
   // Add effect to format amounts when transaction history changes
   useEffect(() => {
-    if (!transactionHistory?.transactions || isFetchingHistory) return;
+    if (!transactionHistory?.data || isFetchingHistory) return;
     setIsFormattingAmounts(true);
 
     const formatTransactions = async () => {
@@ -182,7 +216,7 @@ function TransactionHistoryContent() {
         { formattedAmount: string; formattedFee: string }
       > = {};
 
-      for (const tx of transactionHistory.transactions) {
+      for (const tx of transactionHistory.data) {
         const { parsed } = tx;
 
         // Format fee
@@ -255,7 +289,7 @@ function TransactionHistoryContent() {
   // Reset selections when wallet addresses or showroom mode changes
   useEffect(() => {
     setSelectedAccount(null);
-    setTransactionHistory(null);
+    setTransactionHistory({ data: [], nextPage: null });
   }, [walletAddresses, isShowroom]);
 
   // Add state to track mobile view
@@ -282,14 +316,26 @@ function TransactionHistoryContent() {
       if (accountsListRef.current) {
         const cardContent = accountsListRef.current.querySelector(".content");
         if (cardContent) {
-          setListHeight(cardContent.clientHeight);
+          // Get the actual content height including padding
+          const contentHeight = cardContent.getBoundingClientRect().height;
+          // Remove any previous height to get natural height
+          if (cardContent.parentElement) {
+            cardContent.parentElement.style.height = "auto";
+          }
+          setListHeight(contentHeight);
         }
       }
     };
 
     updateHeight();
-    window.addEventListener("resize", updateHeight);
-    return () => window.removeEventListener("resize", updateHeight);
+
+    // Use ResizeObserver for more accurate size tracking
+    const observer = new ResizeObserver(updateHeight);
+    if (accountsListRef.current) {
+      observer.observe(accountsListRef.current);
+    }
+
+    return () => observer.disconnect();
   }, []);
 
   return (
@@ -439,7 +485,7 @@ function TransactionHistoryContent() {
                 <CardTitle>Transaction History</CardTitle>
                 {transactionHistory && !isFetchingHistory && (
                   <span className="text-sm text-muted-foreground">
-                    ({transactionHistory.transactions.length} operations)
+                    ({transactionHistory.data.length} operations)
                   </span>
                 )}
               </div>
@@ -450,27 +496,27 @@ function TransactionHistoryContent() {
                   <Loader2 className="animate-spin" />
                 ) : transactionHistory ? (
                   <div
-                    className="space-y-4 overflow-y-auto px-1"
+                    className="space-y-4 px-1 h-full"
                     style={{
-                      maxHeight: isMobileView
+                      minHeight: "200px", // Minimum height to avoid too small containers
+                      height: isMobileView
                         ? "400px"
                         : listHeight
-                        ? `${listHeight}px`
+                        ? `${Math.min(listHeight, 600)}px`
                         : "600px",
+                      overflowY: "auto",
                     }}
                   >
-                    {transactionHistory.transactions.map(
-                      (tx: ParsedTransaction) => (
-                        <div key={tx.parsed.id}>
-                          <ParsedTransactionComponent
-                            tx={tx}
-                            selectedAccountChainId={selectedAccount?.chainId}
-                            formattedTransactions={formattedTransactions}
-                            isFormattingAmounts={isFormattingAmounts}
-                          />
-                        </div>
-                      )
-                    )}
+                    {transactionHistory.data.map((tx: ParsedTransaction) => (
+                      <div key={tx.parsed.id}>
+                        <ParsedTransactionComponent
+                          tx={tx}
+                          selectedAccountChainId={selectedAccount?.chainId}
+                          formattedTransactions={formattedTransactions}
+                          isFormattingAmounts={isFormattingAmounts}
+                        />
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <p className="text-sm">No transaction history available.</p>
