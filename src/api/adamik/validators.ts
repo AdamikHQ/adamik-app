@@ -38,7 +38,7 @@ export const getValidators = async (
   const result = await response.json();
 
   if (response.status !== 200) {
-    console.error("state - backend error:", JSON.stringify(result));
+    console.error("validators - backend error:", result);
   }
 
   return result as ValidatorResponse;
