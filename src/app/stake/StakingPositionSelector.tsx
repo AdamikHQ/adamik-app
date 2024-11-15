@@ -165,9 +165,12 @@ const StakingPositionSelectorList = ({
                 value={`${stakingPosition.validatorName}_${i.toString()}`}
                 onSelect={(value) => {
                   const [name, index] = value.split("_");
-                  setSelectedChoice(stakingPositions[Number(index)]);
+                  const originalIndex = stakingPositions.findIndex(
+                    (pos) => pos === stakingPosition
+                  );
+                  setSelectedChoice(stakingPosition);
                   setOpen(false);
-                  onSelect(stakingPosition, i);
+                  onSelect(stakingPosition, originalIndex);
                 }}
               >
                 <StakingPositionView
