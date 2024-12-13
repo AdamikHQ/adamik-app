@@ -8,14 +8,16 @@ export const accountState = async (
   chainId: string,
   accountId: string
 ): Promise<AccountState | null> => {
-  const response = await fetch(`${ADAMIK_API_URL}/account/state`, {
-    headers: {
-      Authorization: env.ADAMIK_API_KEY,
-      "Content-Type": "application/json",
-    },
-    method: "POST",
-    body: JSON.stringify({ chainId, accountId }),
-  });
+  const response = await fetch(
+    `${ADAMIK_API_URL}/${chainId}/account/${accountId}/state`,
+    {
+      headers: {
+        Authorization: env.ADAMIK_API_KEY,
+        "Content-Type": "application/json",
+      },
+      method: "GET",
+    }
+  );
 
   const result = await response.json();
 
