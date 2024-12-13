@@ -41,7 +41,7 @@ export const MetamaskConnect: React.FC<WalletConnectorProps> = ({
         const addresses: Address[] = [];
         // NOTE Should we add all addresses in Metamask? Only the 1st one? Let the user choose?
         for (const address of metamaskAddresses) {
-          // FIXME Should loop over all supported chains for full discovery, but limited for now for performance
+          // NOTE Possible to loop over all supported chains for full discovery
           //for (const chainId of evmChainIds)
           for (const chainId of [
             "ethereum",

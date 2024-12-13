@@ -10,7 +10,7 @@ export const getTokenInfo = async (
 ): Promise<Token | null> => {
   try {
     const response = await fetch(
-      `${ADAMIK_API_URL}/chains/${chainId}/token/${tokenId}`,
+      `${ADAMIK_API_URL}/${chainId}/token/${tokenId}`,
       {
         headers: {
           Authorization: env.ADAMIK_API_KEY,
@@ -20,8 +20,8 @@ export const getTokenInfo = async (
     );
 
     if (response.status === 200) {
-      const data: Token = await response.json();
-      return data;
+      const data = await response.json();
+      return data?.token;
     } else {
       return null;
     }

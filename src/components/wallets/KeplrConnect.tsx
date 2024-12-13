@@ -26,6 +26,12 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
     chains &&
       Object.values(chains)
         .filter((chain) => chain.family === "cosmos")
+        // NOTE Possible to loop over all supported chains for full discovery
+        .filter((chain) =>
+          ["cosmoshub", "osmosis", "celestia", "dydx", "injective"].includes(
+            chain.id
+          )
+        )
         .forEach((chain) =>
           cosmosChainIdsMapping.set(chain.id, chain.nativeId)
         );
