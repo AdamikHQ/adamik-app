@@ -28,6 +28,7 @@ import {
   ChainSupportedFeatures,
   Asset,
   ParsedTransaction,
+  FinalizedTransaction,
 } from "~/utils/types";
 import { useAccountStateBatch } from "~/hooks/useAccountStateBatch";
 import {
@@ -69,7 +70,7 @@ function TransactionHistoryContent() {
     null
   );
   const [transactionHistory, setTransactionHistory] = useState<{
-    data: any[];
+    data: FinalizedTransaction[];
     nextPage: string | null;
   }>({
     data: [],
@@ -164,6 +165,7 @@ function TransactionHistoryContent() {
 
     try {
       const history = await getAccountHistory(account.chainId, account.address);
+
       if (history) {
         setTransactionHistory({
           data: history.transactions,
@@ -224,7 +226,8 @@ function TransactionHistoryContent() {
 
   // Add effect to format amounts when transaction history changes
   useEffect(() => {
-    if (!transactionHistory?.data || isFetchingHistory) return;
+    if (!selectedAccount || !transactionHistory?.data || isFetchingHistory)
+      return;
     setIsFormattingAmounts(true);
 
     const formatTransactions = async () => {
@@ -236,10 +239,14 @@ function TransactionHistoryContent() {
       for (const tx of transactionHistory.data) {
         const { parsed } = tx;
 
+        if (!parsed) {
+          continue;
+        }
+
         // Format fee
         const feeResult = await formatAssetAmount({
           asset: {
-            chainId: parsed.chainId,
+            chainId: selectedAccount.chainId,
             isToken: false,
           },
           amount: parsed.fees.amount,
@@ -258,7 +265,7 @@ function TransactionHistoryContent() {
         ) {
           amountResult = await formatAssetAmount({
             asset: {
-              chainId: parsed.chainId,
+              chainId: selectedAccount.chainId,
               isToken: false,
             },
             amount: parsed.validators.target.amount,
@@ -268,7 +275,7 @@ function TransactionHistoryContent() {
         } else if (parsed.mode === "transferToken" && parsed.tokenId) {
           amountResult = await formatAssetAmount({
             asset: {
-              chainId: parsed.chainId,
+              chainId: selectedAccount.chainId,
               isToken: true,
               assetId: parsed.tokenId,
             },
@@ -279,7 +286,7 @@ function TransactionHistoryContent() {
         } else if (parsed.recipients?.[0]) {
           amountResult = await formatAssetAmount({
             asset: {
-              chainId: parsed.chainId,
+              chainId: selectedAccount.chainId,
               isToken: false,
             },
             amount: parsed.recipients[0].amount,
@@ -301,7 +308,7 @@ function TransactionHistoryContent() {
     };
 
     formatTransactions();
-  }, [transactionHistory, supportedChains, isFetchingHistory]);
+  }, [transactionHistory, supportedChains, isFetchingHistory, selectedAccount]);
 
   // Reset selections when wallet addresses or showroom mode changes
   useEffect(() => {
@@ -516,16 +523,18 @@ function TransactionHistoryContent() {
                       overflowY: "auto",
                     }}
                   >
-                    {transactionHistory.data.map((tx: ParsedTransaction) => (
-                      <div key={tx.parsed.id}>
-                        <ParsedTransactionComponent
-                          tx={tx}
-                          selectedAccountChainId={selectedAccount?.chainId}
-                          formattedTransactions={formattedTransactions}
-                          isFormattingAmounts={isFormattingAmounts}
-                        />
-                      </div>
-                    ))}
+                    {transactionHistory.data
+                      .filter((tx) => !!tx.parsed)
+                      .map((tx: FinalizedTransaction) => (
+                        <div key={tx.parsed!.id}>
+                          <ParsedTransactionComponent
+                            tx={tx.parsed!}
+                            selectedAccountChainId={selectedAccount?.chainId}
+                            formattedTransactions={formattedTransactions}
+                            isFormattingAmounts={isFormattingAmounts}
+                          />
+                        </div>
+                      ))}
 
                     {transactionHistory.nextPage && (
                       <div className="flex justify-center py-4">
