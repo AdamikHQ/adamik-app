@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { useToast } from "~/components/ui/use-toast";
 import { useTransaction } from "~/hooks/useTransaction";
 import { useWallet } from "~/hooks/useWallet";
-import { Address, WalletConnectorProps, WalletName } from "./types";
+import { Account, WalletConnectorProps, WalletName } from "./types";
 
 export const UniSatConnect: React.FC<WalletConnectorProps> = ({
   transactionPayload,
@@ -16,7 +16,7 @@ export const UniSatConnect: React.FC<WalletConnectorProps> = ({
     try {
       const accounts = await window.unisat.requestAccounts();
 
-      const addresses: Address[] = [];
+      const addresses: Account[] = [];
       for (const address of accounts) {
         addresses.push({
           address,

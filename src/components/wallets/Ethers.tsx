@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
  * Ethers signer - FOR TESTING ONLY
  */
 export const EthersConnect: React.FC<WalletConnectorProps> = ({
+  chainId,
   transactionPayload,
 }) => {
   /*
