@@ -17,15 +17,31 @@ type BroadcastProps = {
 };
 
 export const BroadcastModal = ({ onNextStep }: BroadcastProps) => {
-  const { transaction, setTransaction, setTransactionHash } = useTransaction();
+  const {
+    chainId,
+    transaction,
+    setChainId,
+    setTransaction,
+    setTransactionHash,
+  } = useTransaction();
   const { toast } = useToast();
   const { mutate, isPending } = useBroadcastTransaction();
   const [error, setError] = useState<string | undefined>();
 
   const broadcast = useCallback(() => {
-    if (!transaction) return;
+    if (!transaction || !chainId) return;
 
-    mutate(transaction, {
+    // FIXME Hack to merge chainId into transaction, but it doesn't belong
+    // chainId should be removed from the TransactionData type, to match the API
+    const transactionWithChainId = {
+      ...transaction,
+      data: {
+        ...transaction.data,
+        chainId,
+      },
+    };
+
+    mutate(transactionWithChainId, {
       onSuccess: (response) => {
         if (response.error) {
           const errorMessage =
@@ -43,6 +59,7 @@ export const BroadcastModal = ({ onNextStep }: BroadcastProps) => {
             description:
               "Transaction has been successfully broadcasted. Your balance will be updated in a few moments",
           });
+          setChainId(undefined);
           setTransaction(undefined);
         } else {
           setError("Unexpected response from server");
@@ -65,13 +82,22 @@ export const BroadcastModal = ({ onNextStep }: BroadcastProps) => {
         });
       },
     });
-  }, [mutate, setTransaction, setTransactionHash, toast, transaction]);
+  }, [
+    mutate,
+    setChainId,
+    setTransaction,
+    setTransactionHash,
+    toast,
+    transaction,
+    chainId,
+  ]);
 
   const handleCancel = useCallback(() => {
     onNextStep();
-    setTransactionHash(undefined);
+    setChainId(undefined);
     setTransaction(undefined);
-  }, [onNextStep, setTransactionHash, setTransaction]);
+    setTransactionHash(undefined);
+  }, [onNextStep, setChainId, setTransactionHash, setTransaction]);
 
   if (!transaction?.encoded || !transaction.signature) {
     return (

@@ -4,6 +4,7 @@ import { env, ADAMIK_API_URL } from "~/env";
 import { Status, Transaction, TransactionData } from "~/utils/types";
 
 type TransactionResponse = {
+  chainId: string;
   transaction: Transaction;
   status: Status;
 };
@@ -24,7 +25,7 @@ export const transactionEncode = async (
     }
   );
 
-  const result: { transaction: Transaction; status: Status } =
+  const result: { chainId: string; transaction: Transaction; status: Status } =
     await response.json();
 
   return result;

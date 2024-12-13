@@ -48,7 +48,8 @@ export function TransferTransactionForm({
     },
   });
   const [decimals, setDecimals] = useState<number>(0);
-  const { transaction, setTransaction, setTransactionHash } = useTransaction();
+  const { transaction, setChainId, setTransaction, setTransactionHash } =
+    useTransaction();
   const [errors, setErrors] = useState("");
 
   const onSubmit = useCallback(
@@ -83,12 +84,14 @@ export function TransferTransactionForm({
 
       mutate(transactionData, {
         onSuccess: (response) => {
+          setChainId(undefined);
           setTransaction(undefined);
           setTransactionHash(undefined);
           if (response) {
             if (response?.status?.errors?.length) {
               setErrors(response.status.errors[0].message);
             } else {
+              setChainId(response.chainId);
               setTransaction(response.transaction);
             }
           } else {
@@ -96,13 +99,14 @@ export function TransferTransactionForm({
           }
         },
         onError: (error) => {
+          setChainId(undefined);
           setTransaction(undefined);
           setTransactionHash(undefined);
           setErrors(error.message);
         },
       });
     },
-    [assets, decimals, mutate, setTransaction, setTransactionHash]
+    [assets, decimals, mutate, setChainId, setTransaction, setTransactionHash]
   );
 
   if (isPending) {
