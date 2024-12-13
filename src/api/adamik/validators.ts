@@ -22,7 +22,7 @@ export const getValidators = async (
     nextPage?: string;
   }
 ): Promise<ValidatorResponse> => {
-  const url = new URL(`${ADAMIK_API_URL}/chains/${chainId}/validators`);
+  const url = new URL(`${ADAMIK_API_URL}/${chainId}/validators`);
 
   if (options?.nextPage) {
     url.searchParams.set("nextPage", options.nextPage);
