@@ -19,16 +19,17 @@ export const getAccountHistory = async (
 ): Promise<AccountHistoryResponse | null> => {
   if (!chainId || !accountId) return null;
 
-  const url = new URL(`${ADAMIK_API_URL}/account/history`);
+  const url = new URL(
+    `${ADAMIK_API_URL}/${chainId}/account/${accountId}/history`
+  );
   if (options?.nextPage) url.searchParams.set("nextPage", options.nextPage);
 
   const response = await fetch(url, {
-    method: "POST",
+    method: "GET",
     headers: {
       Authorization: env.ADAMIK_API_KEY,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ chainId, accountId }),
   });
 
   const result = await response.json();

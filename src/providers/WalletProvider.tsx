@@ -5,7 +5,7 @@ import { ChainProvider } from "@cosmos-kit/react-lite";
 import { MetaMaskProvider } from "@metamask/sdk-react";
 import { assets, chains } from "chain-registry";
 import React, { useEffect, useState } from "react";
-import { Address, IWallet } from "~/components/wallets/types";
+import { Account, IWallet } from "~/components/wallets/types";
 import { WalletContext } from "~/hooks/useWallet";
 
 const localStorage = typeof window !== "undefined" ? window.localStorage : null;
@@ -14,7 +14,7 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
   children,
 }) => {
   const [wallets, setWallets] = useState<IWallet[]>([]);
-  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [addresses, setAddresses] = useState<Account[]>([]);
   const [isShowroom, setShowroom] = useState<boolean>(false);
   const [isWalletMenuOpen, setWalletMenuOpen] = useState(false);
 
@@ -40,7 +40,7 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
     }
   };
 
-  const addAddresses = (newAddresses: Address[]) => {
+  const addAddresses = (newAddresses: Account[]) => {
     setAddresses((oldAddresses) => {
       const mergedAddresses = [...oldAddresses, ...newAddresses];
 

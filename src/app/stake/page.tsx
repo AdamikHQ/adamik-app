@@ -41,7 +41,7 @@ import { isStakingSupported } from "~/utils/helper";
 
 export default function Stake() {
   const { addresses, isShowroom, setWalletMenuOpen } = useWallet();
-  const { setTransaction } = useTransaction();
+  const { setChainId, setTransaction } = useTransaction();
   const [currentTransactionFlow, setCurrentTransactionFlow] = useState<
     TransactionMode | undefined
   >(undefined);
@@ -159,6 +159,7 @@ export default function Stake() {
         <Button
           className="col-span-2"
           onClick={() => {
+            setChainId(undefined);
             setTransaction(undefined);
             setCurrentTransactionFlow(TransactionMode.DELEGATE);
           }}
@@ -168,6 +169,7 @@ export default function Stake() {
 
         <Button
           onClick={() => {
+            setChainId(undefined);
             setTransaction(undefined);
             setCurrentTransactionFlow(TransactionMode.UNDELEGATE);
           }}
@@ -177,6 +179,7 @@ export default function Stake() {
 
         <Button
           onClick={() => {
+            setChainId(undefined);
             setTransaction(undefined);
             setCurrentTransactionFlow(TransactionMode.CLAIM_REWARDS);
           }}

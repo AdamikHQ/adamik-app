@@ -43,10 +43,10 @@ export const showroomAddresses = [
   //   chainId: "likecoin",
   //   address: "like1yvuhqg73fdzxvam9sj7mazfa38gpn7ulrps4at",
   // },
-  {
-    chainId: "bitcoin",
-    address: "bc1qekphvuz20qvdhkzywfe29r9vvtwxrszvaxzmqm",
-  },
+  // {
+  //   chainId: "bitcoin",
+  //   address: "bc1qekphvuz20qvdhkzywfe29r9vvtwxrszvaxzmqm",
+  // },
   {
     chainId: "bitcoin",
     address: "bc1q2e00eecxtjlvuzf6dpm4leqjd2pem0xkfggw8j",
@@ -55,8 +55,8 @@ export const showroomAddresses = [
     chainId: "ton",
     address: "UQAQ113dWkP2MOfXN2uv0qPFB-097flcLBhyv0_lhgXEUhwz",
   },
-  {
-    chainId: "rootstock-testnet",
-    address: "0x3dD2504c27449a78Df04284129C380f3831cAF0d",
-  },
+  // {
+  //   chainId: "rootstock-testnet",
+  //   address: "0x3dD2504c27449a78Df04284129C380f3831cAF0d",
+  // },
 ];

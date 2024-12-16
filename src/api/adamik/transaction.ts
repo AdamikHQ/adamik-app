@@ -13,7 +13,7 @@ export const getTransaction = async (
   }
 
   const response = await fetch(
-    `${ADAMIK_API_URL}/chains/${chainId}/transaction/${transactionId}?include=raw,parsed`,
+    `${ADAMIK_API_URL}/${chainId}/transaction/${transactionId}?include=raw,parsed`,
     {
       headers: {
         Authorization: env.ADAMIK_API_KEY,

@@ -62,7 +62,8 @@ export function StakingTransactionForm({
     },
   });
   const [decimals, setDecimals] = useState<number>(0);
-  const { transaction, setTransaction, setTransactionHash } = useTransaction();
+  const { transaction, setChainId, setTransaction, setTransactionHash } =
+    useTransaction();
   const [errors, setErrors] = useState("");
   const [selectedStakingPosition, setSelectedStakingPosition] = useState<
     StakingPosition | undefined
@@ -82,6 +83,7 @@ export function StakingTransactionForm({
 
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
+      setChainId(undefined);
       setTransaction(undefined);
       setTransactionHash(undefined);
       setErrors("");
@@ -125,12 +127,14 @@ export function StakingTransactionForm({
 
       mutate(transactionData, {
         onSuccess: (response) => {
+          setChainId(undefined);
           setTransaction(undefined);
           setTransactionHash(undefined);
           if (response) {
             if (response.status.errors && response.status.errors.length > 0) {
               setErrors(response.status.errors[0].message);
             } else {
+              setChainId(response.chainId);
               setTransaction(response.transaction);
             }
           } else {
@@ -138,6 +142,7 @@ export function StakingTransactionForm({
           }
         },
         onError: (error) => {
+          setChainId(undefined);
           setTransaction(undefined);
           setTransactionHash(undefined);
           setErrors(error.message);
@@ -149,6 +154,7 @@ export function StakingTransactionForm({
       decimals,
       mode,
       mutate,
+      setChainId,
       setTransaction,
       setTransactionHash,
       selectedStakingPosition,

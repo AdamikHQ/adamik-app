@@ -129,36 +129,40 @@ export type Asset = {
 };
 
 export type FinalizedTransaction = {
-  parsed?: {
-    chainId: string;
-    id: string;
-    mode: TransactionMode;
-    tokenId?: string;
-    state: string;
-    blockHeight?: string;
-    timestamp?: number;
-    senders: {
+  parsed?: ParsedTransaction;
+  raw: unknown; // The raw transaction as returned from the node (or explorer when necessary)
+};
+
+export type ParsedTransaction = {
+  id: string;
+  mode: TransactionMode;
+  tokenId?: string;
+  state: string;
+  blockHeight?: string;
+  timestamp?: number;
+  senders: {
+    address: string;
+  }[];
+  recipients: {
+    address: string;
+    amount: string;
+  }[];
+  validators?: {
+    source?: {
       address: string;
-    }[];
-    recipients: {
+    };
+    target?: {
       address: string;
       amount: string;
-    }[];
-    validators?: {
-      source?: {
-        address: string;
-      };
-      target?: {
-        address: string;
-        amount: string;
-      };
     };
-    fees: string;
-    gas?: string;
-    nonce?: string;
-    memo?: string;
   };
-  raw: unknown; // The raw transaction as returned from the node (or explorer when necessary)
+  fees: {
+    amount: string;
+    ticker?: string;
+  };
+  gas?: string;
+  nonce?: string;
+  memo?: string;
 };
 
 // Represents the configuration of a blockchain.
@@ -238,24 +242,3 @@ export interface TransactionFees {
   amount: string;
   ticker?: string;
 }
-
-export type ParsedTransaction = {
-  parsed: {
-    id: string;
-    mode: string;
-    state: string;
-    timestamp: string;
-    fees: {
-      amount: string;
-      ticker: string;
-    };
-    senders?: Array<{ address: string }>;
-    recipients?: Array<{ address: string; amount: string }>;
-    validators?: {
-      target: {
-        address: string;
-        amount: string;
-      };
-    };
-  };
-};

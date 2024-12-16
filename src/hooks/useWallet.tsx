@@ -1,12 +1,12 @@
 import React from "react";
-import { Address, IWallet } from "~/components/wallets/types";
+import { Account, IWallet } from "~/components/wallets/types";
 
 type WalletContextType = {
   wallets: IWallet[];
   addWallet: (wallet: IWallet) => void;
-  addresses: Address[];
-  addAddresses: (addresses: Address[]) => void;
-  setAddresses: (addresses: Address[]) => void;
+  addresses: Account[];
+  addAddresses: (addresses: Account[]) => void;
+  setAddresses: (addresses: Account[]) => void;
   setWalletMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isWalletMenuOpen: boolean;
   isShowroom: boolean;

@@ -2,7 +2,7 @@ import { AccountState, Asset, Chain } from "~/utils/types";
 import { amountToMainUnit, resolveLogo } from "~/utils/helper";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { MobulaBlockchain } from "~/api/mobula/types";
-import { Address } from "~/components/wallets/types";
+import { Account } from "~/components/wallets/types";
 
 export const getTickers = (data: (Chain | undefined | null)[]) => {
   const reducedArray = data.reduce<string[]>((acc, chainDetail) => {
@@ -67,7 +67,7 @@ export const getTokenTickersSortByChain = (
 
 // TODO Probably need to refacto a bit the model, to handle all the different data sources in a simpler way
 export const calculateAssets = (
-  walletAddresses: Address[],
+  walletAddresses: Account[],
   addressesData: (AccountState | undefined | null)[],
   chainsDetails: (Chain | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null,
