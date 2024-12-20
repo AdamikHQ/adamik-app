@@ -2,7 +2,7 @@ import { useSDK } from "@metamask/sdk-react";
 import React, { useCallback, useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { useToast } from "~/components/ui/use-toast";
-import { Address, WalletConnectorProps, WalletName } from "./types";
+import { Account, WalletConnectorProps, WalletName } from "./types";
 import { useTransaction } from "~/hooks/useTransaction";
 import { etherumNetworkConfig } from "~/utils/ethereumNetworks";
 import { useWallet } from "~/hooks/useWallet";
@@ -14,6 +14,7 @@ import { useChains } from "~/hooks/useChains";
  * - Each address is valid for several (all?) supported chain IDs
  */
 export const MetamaskConnect: React.FC<WalletConnectorProps> = ({
+  chainId,
   transactionPayload,
 }) => {
   const { sdk } = useSDK();
@@ -38,10 +39,10 @@ export const MetamaskConnect: React.FC<WalletConnectorProps> = ({
       const metamaskAddresses: string[] = await sdk?.connect();
 
       if (metamaskAddresses && evmChainIds) {
-        const addresses: Address[] = [];
+        const addresses: Account[] = [];
         // NOTE Should we add all addresses in Metamask? Only the 1st one? Let the user choose?
         for (const address of metamaskAddresses) {
-          // FIXME Should loop over all supported chains for full discovery, but limited for now for performance
+          // NOTE Possible to loop over all supported chains for full discovery
           //for (const chainId of evmChainIds)
           for (const chainId of [
             "ethereum",
@@ -79,7 +80,6 @@ export const MetamaskConnect: React.FC<WalletConnectorProps> = ({
     const provider = sdk?.getProvider();
 
     if (provider && transactionPayload) {
-      const chainId = transactionPayload.data.chainId;
       const chain = evmChains?.find((chain) => chain.id === chainId);
 
       if (!chain) {
@@ -119,7 +119,7 @@ export const MetamaskConnect: React.FC<WalletConnectorProps> = ({
         });
       }
     }
-  }, [sdk, evmChains, transactionPayload, setTransactionHash, toast]);
+  }, [sdk, chainId, evmChains, transactionPayload, setTransactionHash, toast]);
 
   return (
     <div className="relative w-24 h-24">

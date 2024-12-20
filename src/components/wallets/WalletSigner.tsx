@@ -20,35 +20,42 @@ import Link from "next/link";
 import { ConnectWallet } from "../../app/portfolio/ConnectWallet";
 
 export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
-  const { transaction, transactionHash, setTransactionHash } = useTransaction();
-  const { addresses, isShowroom, setWalletMenuOpen } = useWallet();
+  const { chainId, transaction, transactionHash, setTransactionHash } =
+    useTransaction();
+  const { addresses: accounts, isShowroom, setWalletMenuOpen } = useWallet();
   const router = useRouter();
-  const [chainId, setChainId] = useState<string | undefined>(undefined);
 
-  useEffect(() => {
-    if (transaction?.data?.chainId) {
-      setChainId(transaction.data.chainId);
-    }
-  }, [transaction]);
-
-  const signer = addresses.find(
-    (address) =>
-      address.chainId === transaction?.data.chainId &&
-      address.address === transaction?.data.sender
+  const signer = accounts.find(
+    (account) =>
+      account.chainId === chainId &&
+      account.address === transaction?.data.sender
   );
 
   const getSignerComponent = () => {
     switch (signer?.signer) {
       case WalletName.KEPLR:
-        return <KeplrConnect transactionPayload={transaction} />;
+        return (
+          <KeplrConnect chainId={chainId} transactionPayload={transaction} />
+        );
       case WalletName.METAMASK:
-        return <MetamaskConnect transactionPayload={transaction} />;
+        return (
+          <MetamaskConnect chainId={chainId} transactionPayload={transaction} />
+        );
       case WalletName.PERA:
-        return <PeraConnect transactionPayload={transaction} />;
+        return (
+          <PeraConnect chainId={chainId} transactionPayload={transaction} />
+        );
       case WalletName.UNISAT:
-        return <UniSatConnect transactionPayload={transaction} />;
+        return (
+          <UniSatConnect chainId={chainId} transactionPayload={transaction} />
+        );
       case WalletName.LITESCRIBE:
-        return <LitescribeConnect transactionPayload={transaction} />;
+        return (
+          <LitescribeConnect
+            chainId={chainId}
+            transactionPayload={transaction}
+          />
+        );
       default:
         return null;
     }

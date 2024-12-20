@@ -1,6 +1,6 @@
 import algosdk from "algosdk";
 import { PeraWalletConnect } from "@perawallet/connect";
-import { Address, WalletConnectorProps, WalletName } from "./types";
+import { Account, WalletConnectorProps, WalletName } from "./types";
 import { useCallback } from "react";
 import { useTransaction } from "~/hooks/useTransaction";
 import { useToast } from "~/components/ui/use-toast";
@@ -28,7 +28,7 @@ export const PeraConnect: React.FC<WalletConnectorProps> = ({
         peraAddresses = await peraWallet.connect();
       }
 
-      const addresses: Address[] = [];
+      const addresses: Account[] = [];
       for (const address of peraAddresses) {
         addresses.push({
           address,

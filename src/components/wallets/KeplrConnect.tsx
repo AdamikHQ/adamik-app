@@ -14,6 +14,7 @@ const cosmosChainIdsMapping = new Map<string, string>();
  * - Returns 1 single address for each chain ID
  */
 export const KeplrConnect: React.FC<WalletConnectorProps> = ({
+  chainId,
   transactionPayload,
 }) => {
   const { status, client } = useWalletClient("keplr-extension");
@@ -26,6 +27,13 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
     chains &&
       Object.values(chains)
         .filter((chain) => chain.family === "cosmos")
+
+        // NOTE Possible to loop over all supported chains for full discovery
+        .filter((chain) =>
+          ["cosmoshub", "osmosis", "celestia", "dydx", "injective"].includes(
+            chain.id
+          )
+        )
         .forEach((chain) =>
           cosmosChainIdsMapping.set(chain.id, chain.nativeId)
         );
@@ -77,15 +85,14 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
 
   const sign = useCallback(async () => {
     if (client && chains && transactionPayload) {
-      const chainId = transactionPayload.data.chainId;
-      const chain = Object.values(chains).find((chain) => chain.id === chainId);
+      const nativeId = chainId && cosmosChainIdsMapping.get(chainId);
 
-      if (!chain) {
+      if (!nativeId) {
         throw new Error(`${chainId} is not supported by Keplr wallet`);
       }
 
       const signedTransaction = await client.signAmino?.(
-        chain.nativeId,
+        nativeId,
         transactionPayload.data.sender,
         transactionPayload.encoded as any,
         { preferNoSetFee: true } // Tell Keplr not to recompute fees after us
@@ -98,7 +105,14 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
           signature: signedTransaction?.signature.signature,
         });
     }
-  }, [chains, client, setTransaction, transaction, transactionPayload]);
+  }, [
+    chains,
+    chainId,
+    client,
+    setTransaction,
+    transaction,
+    transactionPayload,
+  ]);
 
   return (
     <div className="relative w-24 h-24">
