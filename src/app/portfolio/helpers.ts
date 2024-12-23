@@ -156,7 +156,7 @@ export const calculateAssets = (
               address: mainChainAsset.address,
               pubKey: walletAddress.pubKey,
               assetId: tokenAccountData.token.id,
-              chainId: tokenAccountData.token.chainId,
+              chainId: mainChainAsset.chainId,
               name: tokenAccountData.token.name,
               balanceMainUnit: balanceMainUnit,
               balanceUSD: balanceUSD,

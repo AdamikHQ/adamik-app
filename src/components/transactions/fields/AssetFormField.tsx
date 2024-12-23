@@ -54,11 +54,8 @@ export function AssetFormField({
                     asset.contractAddress || asset.assetId
                   );
                 } else {
-                  form.setValue(
-                    "tokenId",
-                    undefined
-                  );
-                  form.setValue("mode", initialMode);  
+                  form.setValue("tokenId", undefined);
+                  form.setValue("mode", initialMode);
                 }
                 setDecimals(asset.decimals);
               }}
