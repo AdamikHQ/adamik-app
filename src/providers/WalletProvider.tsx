@@ -1,7 +1,7 @@
 "use client";
 
 import { wallets as cosmosWallets } from "@cosmos-kit/keplr";
-import { ChainProvider } from "@cosmos-kit/react-lite";
+import { ChainProvider as CosmosChainsProvider } from "@cosmos-kit/react-lite";
 import { MetaMaskProvider } from "@metamask/sdk-react";
 import { assets, chains } from "chain-registry";
 import React, { useEffect, useState } from "react";
@@ -76,10 +76,15 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
         },
       }}
     >
-      <ChainProvider
+      <CosmosChainsProvider
         chains={chains} // supported chains
         assetLists={assets} // supported asset lists
         wallets={cosmosWallets} // supported wallets (only keplr desktop wallet for now)
+        walletConnectOptions={{
+          signClient: {
+            projectId: "dummy", // Just to make KeplrMobile stop complaining in the console
+          },
+        }}
       >
         <WalletContext.Provider
           value={{
@@ -104,7 +109,7 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
         >
           {children}
         </WalletContext.Provider>
-      </ChainProvider>
+      </CosmosChainsProvider>
     </MetaMaskProvider>
   );
 };
