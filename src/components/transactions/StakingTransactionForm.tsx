@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDown } from "lucide-react";
-import { useCallback, useMemo, useState, useEffect, useRef } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "~/components/ui/button";
 import {
@@ -37,8 +37,6 @@ type StakingTransactionProps = {
   validators: Validator[];
   onNextStep: () => void;
 };
-
-// TODO Only works for Cosmos !!! API abstraction still needed
 
 // FIXME Some duplicate logic to put in common with ./TransferTransactionForm.tsx
 

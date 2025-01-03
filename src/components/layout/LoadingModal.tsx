@@ -1,8 +1,8 @@
 import { Loader } from "lucide-react";
 import { Modal } from "../ui/modal";
-import { useState } from "react";
+import React, { useState } from "react";
 
-const tipsList: JSX.Element[] = [
+const tipsList: React.JSX.Element[] = [
   <span key="tip-1">
     Adamik does not store your blockchain information.{" "}
     <a

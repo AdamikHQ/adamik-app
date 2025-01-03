@@ -36,11 +36,11 @@ export const MetamaskConnect: React.FC<WalletConnectorProps> = ({
 
   const getAddresses = useCallback(async () => {
     try {
-      const metamaskAddresses: string[] = await sdk?.connect();
+      const metamaskAddresses: string[] | undefined = await sdk?.connect();
 
       if (metamaskAddresses && evmChainIds) {
         const addresses: Account[] = [];
-        // NOTE Should we add all addresses in Metamask? Only the 1st one? Let the user choose?
+        // NOTE Should we add all addresses from Metamask? Only the 1st one? Let the user choose?
         for (const address of metamaskAddresses) {
           // NOTE Possible to loop over all supported chains for full discovery
           //for (const chainId of evmChainIds)

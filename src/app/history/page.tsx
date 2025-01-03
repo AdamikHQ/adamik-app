@@ -394,7 +394,7 @@ function TransactionHistoryContent() {
 
       <div className="flex flex-col lg:flex-row gap-4">
         {(!isMobileView || (isMobileView && !selectedAccount)) && (
-          <Card className="w-full lg:w-1/2" ref={accountsListRef}>
+          <Card className="w-full lg:w-1/2">
             <CardHeader>
               <CardTitle>Available Accounts</CardTitle>
             </CardHeader>
@@ -511,7 +511,6 @@ function TransactionHistoryContent() {
                   <Loader2 className="animate-spin" />
                 ) : transactionHistory ? (
                   <div
-                    ref={transactionListRef}
                     className="space-y-4 px-1 h-full"
                     style={{
                       minHeight: "200px",

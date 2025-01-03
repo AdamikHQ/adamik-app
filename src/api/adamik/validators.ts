@@ -21,7 +21,7 @@ export const getValidators = async (
   options?: {
     nextPage?: string;
   }
-): Promise<ValidatorResponse> => {
+): Promise<ValidatorResponse | null> => {
   const url = new URL(`${ADAMIK_API_URL}/${chainId}/validators`);
 
   if (options?.nextPage) {
@@ -38,10 +38,11 @@ export const getValidators = async (
   const result = await response.json();
 
   if (response.status !== 200) {
-    console.error("validators - backend error:", result);
+    console.error("validators - backend error:", JSON.stringify(result));
+    return null;
+  } else {
+    return result;
   }
-
-  return result as ValidatorResponse;
 };
 
 export const getAllValidators = async (
@@ -52,8 +53,10 @@ export const getAllValidators = async (
 
   do {
     const response = await getValidators(chainId, { nextPage });
-    allValidators = [...allValidators, ...response.validators];
-    nextPage = response.pagination?.nextPage || undefined;
+    allValidators = response
+      ? [...allValidators, ...response.validators]
+      : allValidators;
+    nextPage = (response && response.pagination?.nextPage) || undefined;
   } while (nextPage !== undefined);
 
   return {
