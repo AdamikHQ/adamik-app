@@ -55,7 +55,7 @@ export function ValidatorSelector({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[400px] p-0">
+        <PopoverContent className="w-[580px] p-0">
           <ValidatorSelectorList
             setOpen={setOpen}
             setSelectedChoice={setSelectedChoice}

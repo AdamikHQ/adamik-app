@@ -70,7 +70,7 @@ export function StakingPositionSelector({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[400px] p-0">
+        <PopoverContent className="w-[580px] p-0">
           <StakingPositionSelectorList
             setOpen={setOpen}
             setSelectedChoice={setSelectedChoice}

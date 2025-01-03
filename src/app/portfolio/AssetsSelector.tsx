@@ -30,7 +30,7 @@ type AssetsSelectorProps = {
   onSelect: (asset: Asset, index: number) => void;
 };
 
-export const AssetView = ({ asset }: { asset: Asset }) => {
+const AssetView = ({ asset }: { asset: Asset }) => {
   return (
     <div className="flex items-center justify-between w-full">
       {asset?.logo && (
@@ -95,7 +95,7 @@ export function AssetsSelector({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[400px] p-0">
+        <PopoverContent className="w-[580px] p-0">
           <AssetsSelectorList
             setOpen={setOpen}
             setSelectedChoice={setSelectedChoice}

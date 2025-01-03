@@ -23,7 +23,7 @@ export function AmountFormField({ form }: AmountFormFieldProps) {
         <FormItem>
           <FormLabel>Amount</FormLabel>
           <FormControl>
-            <>
+            <div>
               <Input type="number" placeholder="amount" {...field} />
               <FormField
                 control={form.control}
@@ -36,13 +36,13 @@ export function AmountFormField({ form }: AmountFormFieldProps) {
                         onCheckedChange={fieldSendMax.onChange}
                       />
                     </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Use Max</FormLabel>
-                    </div>
+                    <FormLabel className="space-y-1 leading-none">
+                      Use Max
+                    </FormLabel>
                   </FormItem>
                 )}
               />
-            </>
+            </div>
           </FormControl>
           <FormMessage />
         </FormItem>

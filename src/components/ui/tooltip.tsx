@@ -10,10 +10,11 @@ const TooltipProvider = TooltipPrimitive.Provider;
 
 const TooltipTrigger = TooltipPrimitive.Trigger;
 
-const TooltipContent = React.forwardRef<
-  React.ComponentRef<typeof TooltipPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
+const TooltipContent = ({
+  className,
+  sideOffset = 4,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>) => (
   <TooltipPrimitive.Content
     sideOffset={sideOffset}
     className={cn(
@@ -22,7 +23,7 @@ const TooltipContent = React.forwardRef<
     )}
     {...props}
   />
-));
+);
 TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
 const CustomTooltip = ({
