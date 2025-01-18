@@ -66,7 +66,7 @@ export function TransferTransactionForm({
 
       if (formInput.amount !== undefined && !formInput.useMaxAmount) {
         transactionData.amount = amountToSmallestUnit(
-          formInput.amount.toFixed(),
+          formInput.amount,
           decimals
         );
       }
