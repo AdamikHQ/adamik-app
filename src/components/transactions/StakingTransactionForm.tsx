@@ -107,7 +107,7 @@ export function StakingTransactionForm({
 
       if (formInput.amount !== undefined && !formInput.useMaxAmount) {
         transactionData.amount = amountToSmallestUnit(
-          formInput.amount.toString(),
+          formInput.amount.toFixed(),
           decimals
         );
       }

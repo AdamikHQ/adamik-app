@@ -60,7 +60,7 @@ export async function formatAssetAmount({
       ticker = token.ticker;
     }
 
-    const mainUnitAmount = amountToMainUnit(amount.toString(), decimals);
+    const mainUnitAmount = amountToMainUnit(Number(amount).toFixed(), decimals);
     if (!mainUnitAmount) return { formatted: "0", ticker: "" };
 
     const formatted = formatAmount(
