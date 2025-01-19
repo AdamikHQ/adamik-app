@@ -20,7 +20,7 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover";
 import { ScrollArea } from "~/components/ui/scroll-area";
-import { Tooltip, TooltipTrigger } from "~/components/ui/tooltip";
+import { Tooltip } from "~/components/ui/tooltip";
 import { formatAmount } from "~/utils/helper";
 import { Asset } from "~/utils/types";
 
@@ -36,26 +36,19 @@ const AssetView = ({ asset }: { asset: Asset }) => {
       {asset?.logo && (
         <div className="relative">
           <Tooltip text={asset.name}>
-            <TooltipTrigger>
-              <Avatar className="w-[32px] h-[32px]">
-                <AvatarImage src={asset?.logo} alt={asset.name} />
-                <AvatarFallback>{asset.name}</AvatarFallback>
-              </Avatar>
-            </TooltipTrigger>
+            <Avatar className="w-[32px] h-[32px]">
+              <AvatarImage src={asset?.logo} alt={asset.name} />
+              <AvatarFallback>{asset.name}</AvatarFallback>
+            </Avatar>
           </Tooltip>
           {asset.mainChainLogo && (
             <Tooltip text={asset.chainId}>
-              <TooltipTrigger>
-                <div className="absolute w-4 h-4 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-[6px] -end-1">
-                  <Avatar className="h-3 w-3">
-                    <AvatarImage
-                      src={asset.mainChainLogo}
-                      alt={asset.chainId}
-                    />
-                    <AvatarFallback>{asset.chainId}</AvatarFallback>
-                  </Avatar>
-                </div>
-              </TooltipTrigger>
+              <div className="absolute w-4 h-4 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-[6px] -end-1">
+                <Avatar className="h-3 w-3">
+                  <AvatarImage src={asset.mainChainLogo} alt={asset.chainId} />
+                  <AvatarFallback>{asset.chainId}</AvatarFallback>
+                </Avatar>
+              </div>
             </Tooltip>
           )}
         </div>

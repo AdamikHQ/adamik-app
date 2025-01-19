@@ -19,7 +19,7 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover";
 import { ScrollArea } from "~/components/ui/scroll-area";
-import { Tooltip, TooltipTrigger } from "~/components/ui/tooltip";
+import { Tooltip } from "~/components/ui/tooltip";
 import { StakingPosition } from "./helpers";
 import { TransactionMode, Validator } from "~/utils/types";
 import { formatAmount } from "~/utils/helper";
@@ -225,14 +225,12 @@ const StakingPositionView = ({
           {validator.name && (
             <div className="relative">
               <Tooltip text={validator?.address}>
-                <TooltipTrigger>
-                  <Avatar className="w-[32px] h-[32px]">
-                    <AvatarImage
-                      src={validator.chainLogo}
-                      alt={validator.chainId}
-                    />
-                  </Avatar>
-                </TooltipTrigger>
+                <Avatar className="w-[32px] h-[32px]">
+                  <AvatarImage
+                    src={validator.chainLogo}
+                    alt={validator.chainId}
+                  />
+                </Avatar>
               </Tooltip>
             </div>
           )}

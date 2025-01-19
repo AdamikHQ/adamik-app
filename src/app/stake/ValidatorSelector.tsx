@@ -19,7 +19,7 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover";
 import { ScrollArea } from "~/components/ui/scroll-area";
-import { Tooltip, TooltipTrigger } from "~/components/ui/tooltip";
+import { Tooltip } from "~/components/ui/tooltip";
 import { Validator } from "~/utils/types";
 
 type ValidatorSelectorProps = {
@@ -141,28 +141,24 @@ const ValidatorView = ({ validator }: { validator: Validator }) => {
       {validator?.name && (
         <div className="relative">
           <Tooltip text={validator.address}>
-            <TooltipTrigger>
-              <Avatar className="w-[32px] h-[32px]">
-                <AvatarFallback>
-                  {validator?.name[0].toUpperCase() ||
-                    validator.address[0].toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            </TooltipTrigger>
+            <Avatar className="w-[32px] h-[32px]">
+              <AvatarFallback>
+                {validator?.name[0].toUpperCase() ||
+                  validator.address[0].toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
           </Tooltip>
           {validator.chainLogo && (
             <Tooltip text={validator.chainId}>
-              <TooltipTrigger>
-                <div className="absolute w-4 h-4 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-[6px] -end-1">
-                  <Avatar className="h-3 w-3">
-                    <AvatarImage
-                      src={validator.chainLogo}
-                      alt={validator.chainId}
-                    />
-                    <AvatarFallback>{validator.chainId}</AvatarFallback>
-                  </Avatar>
-                </div>
-              </TooltipTrigger>
+              <div className="absolute w-4 h-4 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-[6px] -end-1">
+                <Avatar className="h-3 w-3">
+                  <AvatarImage
+                    src={validator.chainLogo}
+                    alt={validator.chainId}
+                  />
+                  <AvatarFallback>{validator.chainId}</AvatarFallback>
+                </Avatar>
+              </div>
             </Tooltip>
           )}
         </div>
