@@ -10,7 +10,6 @@ import {
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
 import { useToast } from "~/components/ui/use-toast";
-import { BackendErrorResponse } from "~/utils/types";
 
 type BroadcastProps = {
   onNextStep: () => void;
@@ -80,15 +79,7 @@ export const BroadcastModal = ({ onNextStep }: BroadcastProps) => {
         });
       },
     });
-  }, [
-    mutate,
-    setChainId,
-    setTransaction,
-    setTransactionHash,
-    toast,
-    transaction,
-    chainId,
-  ]);
+  }, [mutate, setTransactionHash, toast, transaction, chainId]);
 
   const handleCancel = useCallback(() => {
     onNextStep();
