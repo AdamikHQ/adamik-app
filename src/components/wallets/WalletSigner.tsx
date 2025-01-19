@@ -20,8 +20,14 @@ import Link from "next/link";
 import { ConnectWallet } from "../../app/portfolio/ConnectWallet";
 
 export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
-  const { chainId, transaction, transactionHash, setTransactionHash } =
-    useTransaction();
+  const {
+    chainId,
+    transaction,
+    transactionHash,
+    setChainId,
+    setTransaction,
+    setTransactionHash,
+  } = useTransaction();
   const { addresses: accounts, isShowroom, setWalletMenuOpen } = useWallet();
   const router = useRouter();
 
@@ -102,6 +108,8 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
 
   const handleClose = () => {
     onNextStep();
+    setChainId(undefined);
+    setTransaction(undefined);
     setTransactionHash(undefined);
   };
 

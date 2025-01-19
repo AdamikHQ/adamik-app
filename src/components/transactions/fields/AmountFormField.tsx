@@ -24,7 +24,7 @@ export function AmountFormField({ form }: AmountFormFieldProps) {
           <FormLabel>Amount</FormLabel>
           <FormControl>
             <div>
-              <Input type="number" placeholder="amount" {...field} />
+              <Input placeholder="amount" {...field} />
               <FormField
                 control={form.control}
                 name="useMaxAmount"

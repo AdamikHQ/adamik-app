@@ -59,8 +59,6 @@ export const BroadcastModal = ({ onNextStep }: BroadcastProps) => {
             description:
               "Transaction has been successfully broadcasted. Your balance will be updated in a few moments",
           });
-          setChainId(undefined);
-          setTransaction(undefined);
         } else {
           setError("Unexpected response from server");
           toast({
