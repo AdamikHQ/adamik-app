@@ -89,8 +89,8 @@ export function StakingTransactionForm({
       const transactionData: TransactionData = {
         mode,
         chainId: formInput.chainId,
-        sender: formInput.sender,
-        recipient: "",
+        senderAddress: formInput.sender,
+        recipientAddress: "",
         validatorAddress: formInput.validatorAddress ?? "",
         useMaxAmount: formInput.useMaxAmount,
         format: "json", // FIXME Not always the default, should come from chains config
@@ -102,7 +102,7 @@ export function StakingTransactionForm({
           mode === TransactionMode.CLAIM_REWARDS) &&
         selectedStakingPosition
       ) {
-        transactionData.sender = selectedStakingPosition.addresses[0]; // Automatically use the first address from staking position
+        transactionData.senderAddress = selectedStakingPosition.addresses[0]; // Automatically use the first address from staking position
       }
 
       if (formInput.amount !== undefined && !formInput.useMaxAmount) {
@@ -118,9 +118,7 @@ export function StakingTransactionForm({
       )?.pubKey;
 
       if (pubKey) {
-        transactionData.params = {
-          pubKey,
-        };
+        transactionData.senderPubKey = pubKey;
       }
 
       mutate(transactionData, {

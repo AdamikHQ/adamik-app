@@ -93,7 +93,7 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
 
       const signedTransaction = await client.signAmino?.(
         nativeId,
-        transactionPayload.data.sender,
+        transactionPayload.data.senderAddress,
         transactionPayload.encoded as any,
         { preferNoSetFee: true } // Tell Keplr not to recompute fees after us
       );
