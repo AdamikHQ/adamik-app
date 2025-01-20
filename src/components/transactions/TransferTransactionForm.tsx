@@ -58,8 +58,8 @@ export function TransferTransactionForm({
         mode: formInput.mode,
         chainId: formInput.chainId,
         tokenId: formInput.tokenId,
-        recipient: formInput.recipient ? formInput.recipient : "",
-        sender: formInput.sender,
+        senderAddress: formInput.sender,
+        recipientAddress: formInput.recipient ? formInput.recipient : "",
         useMaxAmount: formInput.useMaxAmount,
         format: "json", // FIXME Not always the default, should come from chains config
       };
@@ -77,9 +77,7 @@ export function TransferTransactionForm({
       )?.pubKey;
 
       if (pubKey) {
-        transactionData.params = {
-          pubKey,
-        };
+        transactionData.senderPubKey = pubKey;
       }
 
       mutate(transactionData, {

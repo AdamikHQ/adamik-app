@@ -79,8 +79,9 @@ export enum TransactionMode {
 // Plain transaction object without additional metadata.
 export type TransactionData = {
   mode: TransactionMode;
-  sender: string;
-  recipient?: string;
+  senderAddress: string;
+  senderPubKey?: string;
+  recipientAddress?: string;
   validatorAddress?: string;
   tokenId?: string;
   useMaxAmount: boolean;
@@ -91,9 +92,6 @@ export type TransactionData = {
   nonce?: string;
   format?: string;
   memo?: string;
-  params?: {
-    pubKey?: string;
-  };
 };
 
 // Full transaction object
