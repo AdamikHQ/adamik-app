@@ -107,7 +107,7 @@ export const MetamaskConnect: React.FC<WalletConnectorProps> = ({
 
       const txHash = await provider.request({
         method: "eth_sendTransaction",
-        params: [transactionPayload.encoded],
+        params: [JSON.parse(transactionPayload.encoded)],
       });
 
       if (typeof txHash === "string") {
