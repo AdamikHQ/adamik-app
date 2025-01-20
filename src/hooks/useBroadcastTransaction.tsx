@@ -10,7 +10,7 @@ export const useBroadcastTransaction = () => {
       setTimeout(() => {
         const addressParam = {
           chainId: transaction.data.chainId,
-          address: transaction.data.sender,
+          address: transaction.data.senderAddress,
         };
         clearAccountStateCache(addressParam);
       }, 10000); // Timeout it may seems that broadcast isn't reflected instantly
