@@ -16,7 +16,11 @@ export const transactionFormSchema = z
     stakingPositionIndex: z.number().optional(),
   })
   .superRefine(({ useMaxAmount, mode }) => {
-    if ([TransactionMode.DELEGATE].includes(mode)) {
+    if ([TransactionMode.STAKE].includes(mode)) {
+      return z.object({ targetValidatorAddress: z.string().min(1) });
+    } else if (
+      [TransactionMode.UNSTAKE, TransactionMode.CLAIM_REWARDS].includes(mode)
+    ) {
       return z.object({ validatorAddress: z.string().min(1) });
     }
     if (useMaxAmount) return z.object({ amount: z.literal(0) });

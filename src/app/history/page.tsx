@@ -258,8 +258,8 @@ function TransactionHistoryContent() {
         let amountResult: FormatAssetAmountResult | null = null;
 
         if (
-          (parsed.mode === "delegate" ||
-            parsed.mode === "undelegate" ||
+          (parsed.mode === "stake" ||
+            parsed.mode === "unstake" ||
             parsed.mode === "claimRewards") &&
           parsed.validators?.target
         ) {

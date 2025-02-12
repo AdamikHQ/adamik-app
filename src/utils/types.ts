@@ -71,8 +71,8 @@ export type AggregatedBalances = {
 export enum TransactionMode {
   TRANSFER = "transfer",
   TRANSFER_TOKEN = "transferToken",
-  DELEGATE = "delegate",
-  UNDELEGATE = "undelegate",
+  STAKE = "stake",
+  UNSTAKE = "unstake",
   CLAIM_REWARDS = "claimRewards",
 }
 
@@ -83,6 +83,8 @@ export type TransactionData = {
   senderPubKey?: string;
   recipientAddress?: string;
   validatorAddress?: string;
+  sourceValidatorAddress?: string;
+  targetValidatorAddress?: string;
   tokenId?: string;
   useMaxAmount: boolean;
   chainId: string;
