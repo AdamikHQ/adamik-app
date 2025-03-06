@@ -1,5 +1,6 @@
 "use server";
 
+import fetch from "node-fetch";
 import { env, MOBULA_API_URL } from "~/env";
 import { MobulaBlockchain } from "./types";
 
@@ -15,8 +16,7 @@ export const getMobulaBlockchains = async (): Promise<MobulaBlockchain[]> => {
   });
 
   if (response.status === 200) {
-    const data: { data: MobulaBlockchain[] } = await response.json();
-
+    const data = (await response.json()) as { data: MobulaBlockchain[] };
     return data.data;
   }
 
