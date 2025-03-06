@@ -167,48 +167,61 @@ export type ParsedTransaction = {
 
 // Represents the configuration of a blockchain.
 export type Chain = {
-  decimals: number;
-  ticker: string;
-  id: string;
-  name: string;
-  params: any;
   family: string;
-  isTestnetFor?: string;
+  id: string;
   nativeId: string;
-  supportedFeatures: ChainSupportedFeatures;
-};
-
-export type ChainSupportedFeatures = {
-  read: {
-    account: {
-      balances: {
+  name: string;
+  ticker: string;
+  decimals: number;
+  isTestnetFor?: string;
+  supportedFeatures: {
+    read: {
+      token: boolean;
+      validators: boolean;
+      transaction: {
         native: boolean;
         tokens: boolean;
         staking: boolean;
       };
-      transactions: {
-        native: boolean;
-        tokens: boolean;
-        staking: boolean;
+      account: {
+        balances: {
+          native: boolean;
+          tokens: boolean;
+          staking: boolean;
+        };
+        transactions: {
+          native: boolean;
+          tokens: boolean;
+          staking: boolean;
+        };
       };
     };
-    transaction: {
-      native: boolean;
-      tokens: boolean;
-      staking: boolean;
+    write: {
+      transaction: {
+        type: {
+          deployAccount: boolean;
+          transfer: boolean;
+          transferToken: boolean;
+          stake: boolean;
+          unstake: boolean;
+          claimRewards: boolean;
+          withdraw: boolean;
+          registerStake: boolean;
+        };
+        field: {
+          memo: boolean;
+        };
+      };
+    };
+    utils: {
+      addresses: boolean;
     };
   };
-  write: {
-    transaction: {
-      type: {
-        native: boolean;
-        tokens: boolean;
-        staking: boolean;
-      };
-      field: {
-        memo: boolean;
-      };
-    };
+  signerSpec: {
+    curve: string;
+    hashFunction: string;
+    signatureFormat: string;
+    coinType: string;
   };
 };
 
