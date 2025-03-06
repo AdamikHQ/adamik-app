@@ -217,6 +217,7 @@ export type Chain = {
   ticker: string;
   decimals: number;
   isTestnetFor?: string;
+  params: any;
   supportedFeatures: ChainSupportedFeatures;
   signerSpec: {
     curve: string;
