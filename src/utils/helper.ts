@@ -112,6 +112,6 @@ export const resolveLogo = ({
 export const isStakingSupported = (chain: Chain): boolean => {
   return (
     chain.supportedFeatures.read.account.balances.staking &&
-    chain.supportedFeatures.write.transaction.type.staking
+    chain.supportedFeatures.write.transaction.type.stake
   );
 };
