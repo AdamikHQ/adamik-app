@@ -165,7 +165,50 @@ export type ParsedTransaction = {
   memo?: string;
 };
 
-// Represents the configuration of a blockchain.
+export type ChainSupportedFeatures = {
+  read: {
+    token: boolean;
+    validators: boolean;
+    transaction: {
+      native: boolean;
+      tokens: boolean;
+      staking: boolean;
+    };
+    account: {
+      balances: {
+        native: boolean;
+        tokens: boolean;
+        staking: boolean;
+      };
+      transactions: {
+        native: boolean;
+        tokens: boolean;
+        staking: boolean;
+      };
+    };
+  };
+  write: {
+    transaction: {
+      type: {
+        deployAccount: boolean;
+        transfer: boolean;
+        transferToken: boolean;
+        stake: boolean;
+        unstake: boolean;
+        claimRewards: boolean;
+        withdraw: boolean;
+        registerStake: boolean;
+      };
+      field: {
+        memo: boolean;
+      };
+    };
+  };
+  utils: {
+    addresses: boolean;
+  };
+};
+
 export type Chain = {
   family: string;
   id: string;
@@ -174,49 +217,7 @@ export type Chain = {
   ticker: string;
   decimals: number;
   isTestnetFor?: string;
-  supportedFeatures: {
-    read: {
-      token: boolean;
-      validators: boolean;
-      transaction: {
-        native: boolean;
-        tokens: boolean;
-        staking: boolean;
-      };
-      account: {
-        balances: {
-          native: boolean;
-          tokens: boolean;
-          staking: boolean;
-        };
-        transactions: {
-          native: boolean;
-          tokens: boolean;
-          staking: boolean;
-        };
-      };
-    };
-    write: {
-      transaction: {
-        type: {
-          deployAccount: boolean;
-          transfer: boolean;
-          transferToken: boolean;
-          stake: boolean;
-          unstake: boolean;
-          claimRewards: boolean;
-          withdraw: boolean;
-          registerStake: boolean;
-        };
-        field: {
-          memo: boolean;
-        };
-      };
-    };
-    utils: {
-      addresses: boolean;
-    };
-  };
+  supportedFeatures: ChainSupportedFeatures;
   signerSpec: {
     curve: string;
     hashFunction: string;
