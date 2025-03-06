@@ -1,5 +1,6 @@
 "use server";
 
+import fetch from "node-fetch";
 import { env, MOBULA_API_URL } from "~/env";
 import { MobulaMarketData } from "./types";
 
@@ -22,9 +23,9 @@ export const getMobulaMarketMultiData = async (
   });
 
   if (response.status === 200) {
-    const data: { data: Record<string, MobulaMarketData> } =
-      await response.json();
-
+    const data = (await response.json()) as {
+      data: Record<string, MobulaMarketData>;
+    };
     return data.data;
   }
 

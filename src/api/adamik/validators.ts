@@ -28,6 +28,11 @@ export const getValidators = async (
     url.searchParams.set("nextPage", options.nextPage);
   }
 
+  console.log(`[Validators] Fetching validators for chain ${chainId}`, {
+    url: url.toString(),
+    hasNextPage: !!options?.nextPage,
+  });
+
   const response = await fetch(url, {
     headers: {
       Authorization: env.ADAMIK_API_KEY,
@@ -38,9 +43,18 @@ export const getValidators = async (
   const result = await response.json();
 
   if (response.status !== 200) {
-    console.error("validators - backend error:", JSON.stringify(result));
+    console.error("[Validators] Backend error:", {
+      status: response.status,
+      chainId,
+      error: JSON.stringify(result),
+    });
     return null;
   } else {
+    console.log("[Validators] Success:", {
+      chainId,
+      validatorCount: result.validators.length,
+      hasNextPage: !!result.pagination?.nextPage,
+    });
     return result;
   }
 };
@@ -48,16 +62,33 @@ export const getValidators = async (
 export const getAllValidators = async (
   chainId: string
 ): Promise<ValidatorResponse> => {
+  console.log(
+    `[Validators] Starting to fetch all validators for chain ${chainId}`
+  );
   let allValidators: ValidatorResponse["validators"] = [];
   let nextPage: string | undefined = undefined;
+  let pageCount = 0;
 
   do {
+    pageCount++;
+    console.log(`[Validators] Fetching page ${pageCount}`, {
+      chainId,
+      nextPage,
+      currentValidatorCount: allValidators.length,
+    });
+
     const response = await getValidators(chainId, { nextPage });
     allValidators = response
       ? [...allValidators, ...response.validators]
       : allValidators;
     nextPage = (response && response.pagination?.nextPage) || undefined;
   } while (nextPage !== undefined);
+
+  console.log("[Validators] Completed fetching all validators", {
+    chainId,
+    totalPages: pageCount,
+    totalValidators: allValidators.length,
+  });
 
   return {
     chainId,
