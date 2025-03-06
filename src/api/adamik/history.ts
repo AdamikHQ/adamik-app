@@ -1,5 +1,6 @@
 "use server";
 
+import fetch from "node-fetch";
 import { env, ADAMIK_API_URL } from "~/env";
 import { FinalizedTransaction } from "~/utils/types";
 
@@ -32,6 +33,11 @@ export const getAccountHistory = async (
     },
   });
 
-  const result = await response.json();
-  return response.status === 200 ? result : null;
+  if (!response.ok) {
+    console.error("history - backend error:", await response.text());
+    return null;
+  }
+
+  const result = (await response.json()) as AccountHistoryResponse;
+  return result;
 };
