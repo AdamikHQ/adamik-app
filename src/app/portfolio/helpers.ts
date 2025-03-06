@@ -119,7 +119,7 @@ export const calculateAssets = (
       isToken: false,
       isStakable:
         chainDetails.supportedFeatures.read.account.balances.staking ||
-        chainDetails.supportedFeatures.write.transaction.type.staking,
+        chainDetails.supportedFeatures.write.transaction.type.stake,
     };
 
     const tokenAssets =
