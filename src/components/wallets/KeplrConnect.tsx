@@ -2,10 +2,10 @@ import { useWalletClient } from "@cosmos-kit/react-lite";
 import React, { useCallback, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { useToast } from "~/components/ui/use-toast";
-import { useTransaction } from "~/hooks/useTransaction";
-import { WalletConnectorProps, WalletName } from "./types";
 import { useChains } from "~/hooks/useChains";
+import { useTransaction } from "~/hooks/useTransaction";
 import { useWallet } from "~/hooks/useWallet";
+import { WalletConnectorProps, WalletName } from "./types";
 
 const cosmosChainIdsMapping = new Map<string, string>();
 
@@ -91,7 +91,7 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
         throw new Error(`${chainId} is not supported by Keplr wallet`);
       }
 
-      const signedTransaction = await client.signAmino?.(
+      const signedTransaction = await client.signDirect?.(
         nativeId,
         transactionPayload.data.senderAddress,
         JSON.parse(transactionPayload.encoded),
