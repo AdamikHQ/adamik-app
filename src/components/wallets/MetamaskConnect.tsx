@@ -2,11 +2,11 @@ import { useSDK } from "@metamask/sdk-react";
 import React, { useCallback, useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { useToast } from "~/components/ui/use-toast";
-import { Account, WalletConnectorProps, WalletName } from "./types";
-import { useTransaction } from "~/hooks/useTransaction";
-import { etherumNetworkConfig } from "~/utils/ethereumNetworks";
-import { useWallet } from "~/hooks/useWallet";
 import { useChains } from "~/hooks/useChains";
+import { useTransaction } from "~/hooks/useTransaction";
+import { useWallet } from "~/hooks/useWallet";
+import { etherumNetworkConfig } from "~/utils/ethereumNetworks";
+import { Account, WalletConnectorProps, WalletName } from "./types";
 
 /**
  * Metamask:
