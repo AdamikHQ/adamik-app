@@ -1,18 +1,17 @@
 "use server";
 
-import { env, ADAMIK_API_URL } from "~/env";
+import fetch from "node-fetch";
+import { ADAMIK_API_URL, env } from "~/env";
 import { Status, Transaction, TransactionData } from "~/utils/types";
 
-type TransactionResponse = {
+export const transactionEncode = async (
+  transactionData: TransactionData
+): Promise<{
   chainId: string;
   transaction: Transaction;
   status: Status;
-};
-
-// TODO Better API error management, consistent for all endpoints
-export const transactionEncode = async (
-  transactionData: TransactionData
-): Promise<TransactionResponse> => {
+  // TODO Better API error management, consistent for all endpoints
+}> => {
   const response = await fetch(
     `${ADAMIK_API_URL}/${transactionData.chainId}/transaction/encode`,
     {
@@ -25,8 +24,22 @@ export const transactionEncode = async (
     }
   );
 
-  const result: { chainId: string; transaction: Transaction; status: Status } =
-    await response.json();
+  if (!response.ok) {
+    const error = (await response.json()) as {
+      status: { errors: { message: string }[] };
+    };
 
+    if (error.status.errors.length > 0) {
+      throw new Error(
+        `HTTP error! status: ${response.status}, message: ${error.status.errors[0].message}`
+      );
+    }
+  }
+
+  const result = (await response.json()) as {
+    chainId: string;
+    transaction: Transaction;
+    status: Status;
+  };
   return result;
 };

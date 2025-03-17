@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDown } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
+import { TransactionLoading } from "~/app/portfolio/TransactionLoading";
 import { Button } from "~/components/ui/button";
 import {
   Collapsible,
@@ -12,16 +13,15 @@ import {
 } from "~/components/ui/collapsible";
 import { Form } from "~/components/ui/form";
 import { Textarea } from "~/components/ui/textarea";
-import { useTransaction } from "~/hooks/useTransaction";
 import { useEncodeTransaction } from "~/hooks/useEncodeTransaction";
+import { useTransaction } from "~/hooks/useTransaction";
 import { amountToSmallestUnit } from "~/utils/helper";
 import { TransactionFormInput, transactionFormSchema } from "~/utils/schema";
 import { Asset, TransactionData, TransactionMode } from "~/utils/types";
-import { AssetFormField } from "./fields/AssetFormField";
-import { SenderFormField } from "./fields/SenderFormField";
-import { RecipientFormField } from "./fields/RecipientFormField";
 import { AmountFormField } from "./fields/AmountFormField";
-import { TransactionLoading } from "~/app/portfolio/TransactionLoading";
+import { AssetFormField } from "./fields/AssetFormField";
+import { RecipientFormField } from "./fields/RecipientFormField";
+import { SenderFormField } from "./fields/SenderFormField";
 
 type TransactionProps = {
   onNextStep: () => void;
@@ -58,8 +58,8 @@ export function TransferTransactionForm({
         mode: formInput.mode,
         chainId: formInput.chainId,
         tokenId: formInput.tokenId,
-        recipient: formInput.recipient ? formInput.recipient : "",
-        sender: formInput.sender,
+        senderAddress: formInput.sender,
+        recipientAddress: formInput.recipient ? formInput.recipient : "",
         useMaxAmount: formInput.useMaxAmount,
         format: "json", // FIXME Not always the default, should come from chains config
       };
@@ -77,9 +77,7 @@ export function TransferTransactionForm({
       )?.pubKey;
 
       if (pubKey) {
-        transactionData.params = {
-          pubKey,
-        };
+        transactionData.senderPubKey = pubKey;
       }
 
       mutate(transactionData, {
@@ -127,7 +125,7 @@ export function TransferTransactionForm({
           Sign your Transaction
         </Button>
         <Collapsible>
-          <CollapsibleTrigger className="text-sm text-gray-500 text-center mx-auto block flex items-center justify-center">
+          <CollapsibleTrigger className="text-sm text-gray-500 text-center mx-auto flex items-center justify-center">
             <ChevronDown className="mr-2" size={16} />
             Show unsigned transaction
             <ChevronDown className="ml-2" size={16} />

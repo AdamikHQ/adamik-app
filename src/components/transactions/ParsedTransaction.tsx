@@ -15,9 +15,9 @@ const getTransactionTypeIcon = (mode: string) => {
     case "transferToken":
     case "transfer":
       return <Send className="w-4 h-4" />;
-    case "delegate":
+    case "stake":
       return <HandshakeIcon className="w-4 h-4" />;
-    case "undelegate":
+    case "unstake":
       return <LogOut className="w-4 h-4" />;
     case "claimRewards":
       return <HandCoins className="w-4 h-4" />;

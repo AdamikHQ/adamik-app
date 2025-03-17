@@ -1,27 +1,44 @@
 "use server";
 
-import { env, ADAMIK_API_URL } from "~/env";
+import fetch from "node-fetch";
+import { ADAMIK_API_URL, env } from "~/env";
 import { Chain } from "~/utils/types";
 
-type GetChainsResponse = {
+interface ChainsResponse {
   chains: Record<string, Chain>;
-};
+}
 
 // TODO Better API error management, consistent for all endpoints
 export const getChains = async (): Promise<Record<string, Chain> | null> => {
-  const response = await fetch(`${ADAMIK_API_URL}/chains`, {
-    headers: {
-      Authorization: env.ADAMIK_API_KEY,
-    },
-    method: "GET",
-  });
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
-  const data: GetChainsResponse = await response.json();
+    const response = await fetch(`${ADAMIK_API_URL}/chains`, {
+      headers: {
+        Authorization: env.ADAMIK_API_KEY,
+      },
+      method: "GET",
+      signal: controller.signal,
+    });
 
-  if (response.status === 200) {
-    return data?.chains;
-  } else {
-    console.error("chains - backend error:", JSON.stringify(data));
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      console.error("chains - backend error:", await response.text());
+      return null;
+    }
+
+    const data = (await response.json()) as ChainsResponse;
+
+    if (!data || typeof data !== "object" || !("chains" in data)) {
+      console.error("Invalid response format from chains API");
+      return null;
+    }
+
+    return data.chains;
+  } catch (error) {
+    console.error("Error fetching chains:", error);
     return null;
   }
 };

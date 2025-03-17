@@ -1,5 +1,6 @@
 "use server";
 
+import fetch from "node-fetch";
 import { ADAMIK_API_URL, env } from "~/env";
 import { AccountState } from "~/utils/types";
 
@@ -8,23 +9,19 @@ export const accountState = async (
   chainId: string,
   accountId: string
 ): Promise<AccountState | null> => {
-  const response = await fetch(
-    `${ADAMIK_API_URL}/${chainId}/account/${accountId}/state`,
-    {
-      headers: {
-        Authorization: env.ADAMIK_API_KEY,
-        "Content-Type": "application/json",
-      },
-      method: "GET",
-    }
-  );
+  const url = `${ADAMIK_API_URL}/${chainId}/account/${accountId}/state`;
 
-  const result = await response.json();
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: env.ADAMIK_API_KEY,
+    },
+  });
 
-  if (response.status === 200) {
-    return result;
-  } else {
-    console.error("state - backend error:", JSON.stringify(result));
+  if (!response.ok) {
+    console.error("state - backend error:", await response.text());
     return null;
   }
+
+  return response.json() as Promise<AccountState>;
 };

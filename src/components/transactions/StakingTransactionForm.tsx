@@ -68,9 +68,9 @@ export function StakingTransactionForm({
   >();
   const label = useMemo(() => {
     switch (mode) {
-      case TransactionMode.DELEGATE:
+      case TransactionMode.STAKE:
         return "Stake";
-      case TransactionMode.UNDELEGATE:
+      case TransactionMode.UNSTAKE:
         return "Unstake";
       case TransactionMode.CLAIM_REWARDS:
         return "Claim";
@@ -89,20 +89,22 @@ export function StakingTransactionForm({
       const transactionData: TransactionData = {
         mode,
         chainId: formInput.chainId,
-        sender: formInput.sender,
-        recipient: "",
+        senderAddress: formInput.sender,
+        senderPubKey: assets.find((asset) => asset.address === formInput.sender)
+          ?.pubKey,
         validatorAddress: formInput.validatorAddress ?? "",
+        targetValidatorAddress: formInput.validatorAddress ?? "",
         useMaxAmount: formInput.useMaxAmount,
         format: "json", // FIXME Not always the default, should come from chains config
       };
 
-      // Handle auto-setting of sender for unstake or claim rewards based on selected staking position
       if (
-        (mode === TransactionMode.UNDELEGATE ||
+        (mode === TransactionMode.UNSTAKE ||
           mode === TransactionMode.CLAIM_REWARDS) &&
         selectedStakingPosition
       ) {
-        transactionData.sender = selectedStakingPosition.addresses[0]; // Automatically use the first address from staking position
+        // Handle auto-setting of sender for unstake or claim rewards based on selected staking position
+        transactionData.senderAddress = selectedStakingPosition.addresses[0]; // Automatically use the first address from staking position
       }
 
       if (formInput.amount !== undefined && !formInput.useMaxAmount) {
@@ -118,9 +120,7 @@ export function StakingTransactionForm({
       )?.pubKey;
 
       if (pubKey) {
-        transactionData.params = {
-          pubKey,
-        };
+        transactionData.senderPubKey = pubKey;
       }
 
       mutate(transactionData, {
@@ -171,7 +171,7 @@ export function StakingTransactionForm({
     }
 
     if (
-      mode === TransactionMode.UNDELEGATE ||
+      mode === TransactionMode.UNSTAKE ||
       mode === TransactionMode.CLAIM_REWARDS
     ) {
       form.setValue("sender", stakingPosition.addresses[0]);
@@ -218,18 +218,18 @@ export function StakingTransactionForm({
       <h1 className="font-bold text-xl text-center">{label}</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 px-4">
-          {mode === TransactionMode.DELEGATE && (
+          {mode === TransactionMode.STAKE && (
             <AssetFormField
               form={form}
               assets={assets}
               setDecimals={setDecimals}
-              initialMode={TransactionMode.DELEGATE}
+              initialMode={TransactionMode.STAKE}
             />
           )}
 
-          {mode === TransactionMode.DELEGATE && <SenderFormField form={form} />}
+          {mode === TransactionMode.STAKE && <SenderFormField form={form} />}
 
-          {mode === TransactionMode.DELEGATE && (
+          {mode === TransactionMode.STAKE && (
             <ValidatorFormField
               form={form}
               validators={validators}
@@ -237,7 +237,7 @@ export function StakingTransactionForm({
             />
           )}
 
-          {(mode === TransactionMode.UNDELEGATE ||
+          {(mode === TransactionMode.UNSTAKE ||
             mode === TransactionMode.CLAIM_REWARDS) && (
             <StakingPositionFormField
               mode={mode}
@@ -249,8 +249,8 @@ export function StakingTransactionForm({
             />
           )}
 
-          {(mode === TransactionMode.DELEGATE ||
-            mode === TransactionMode.UNDELEGATE) && (
+          {(mode === TransactionMode.STAKE ||
+            mode === TransactionMode.UNSTAKE) && (
             <AmountFormField form={form} />
           )}
 

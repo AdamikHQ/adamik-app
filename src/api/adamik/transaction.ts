@@ -1,7 +1,12 @@
 "use server";
 
+import fetch from "node-fetch";
 import { env, ADAMIK_API_URL } from "~/env";
 import { FinalizedTransaction } from "~/utils/types";
+
+interface ApiResponse {
+  transaction: FinalizedTransaction;
+}
 
 // TODO Better API error management, consistent for all endpoints
 export const getTransaction = async (
@@ -22,12 +27,11 @@ export const getTransaction = async (
     }
   );
 
-  const result = await response.json();
-
-  if (response.status !== 200 || !result.transaction) {
-    console.error("state - backend error:", JSON.stringify(result));
+  if (!response.ok) {
+    console.error("state - backend error:", await response.text());
     return null;
-  } else {
-    return result.transaction;
   }
+
+  const result = (await response.json()) as ApiResponse;
+  return result.transaction || null;
 };

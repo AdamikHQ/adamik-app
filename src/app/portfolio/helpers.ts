@@ -117,7 +117,9 @@ export const calculateAssets = (
       pubKey: walletAddress.pubKey,
       decimals: chainDetails.decimals,
       isToken: false,
-      isStakable: chainDetails.supportedFeatures.read.account.balances.staking,
+      isStakable:
+        chainDetails.supportedFeatures.read.account.balances.staking ||
+        chainDetails.supportedFeatures.write.transaction.type.stake,
     };
 
     const tokenAssets =

@@ -1,5 +1,6 @@
 "use server";
 
+import fetch from "node-fetch";
 import { env, ADAMIK_API_URL } from "~/env";
 import { Transaction, BackendErrorResponse } from "~/utils/types";
 
@@ -30,5 +31,5 @@ export const broadcast = async (
     return { error: result as BackendErrorResponse };
   }
 
-  return { hash: result.hash };
+  return { hash: (result as { hash: string }).hash };
 };

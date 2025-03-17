@@ -71,17 +71,20 @@ export type AggregatedBalances = {
 export enum TransactionMode {
   TRANSFER = "transfer",
   TRANSFER_TOKEN = "transferToken",
-  DELEGATE = "delegate",
-  UNDELEGATE = "undelegate",
+  STAKE = "stake",
+  UNSTAKE = "unstake",
   CLAIM_REWARDS = "claimRewards",
 }
 
 // Plain transaction object without additional metadata.
 export type TransactionData = {
   mode: TransactionMode;
-  sender: string;
-  recipient?: string;
+  senderAddress: string;
+  senderPubKey?: string;
+  recipientAddress?: string;
   validatorAddress?: string;
+  sourceValidatorAddress?: string;
+  targetValidatorAddress?: string;
   tokenId?: string;
   useMaxAmount: boolean;
   chainId: string;
@@ -91,9 +94,6 @@ export type TransactionData = {
   nonce?: string;
   format?: string;
   memo?: string;
-  params?: {
-    pubKey?: string;
-  };
 };
 
 // Full transaction object
@@ -165,21 +165,15 @@ export type ParsedTransaction = {
   memo?: string;
 };
 
-// Represents the configuration of a blockchain.
-export type Chain = {
-  decimals: number;
-  ticker: string;
-  id: string;
-  name: string;
-  params: any;
-  family: string;
-  isTestnetFor?: string;
-  nativeId: string;
-  supportedFeatures: ChainSupportedFeatures;
-};
-
 export type ChainSupportedFeatures = {
   read: {
+    token: boolean;
+    validators: boolean;
+    transaction: {
+      native: boolean;
+      tokens: boolean;
+      staking: boolean;
+    };
     account: {
       balances: {
         native: boolean;
@@ -192,23 +186,44 @@ export type ChainSupportedFeatures = {
         staking: boolean;
       };
     };
-    transaction: {
-      native: boolean;
-      tokens: boolean;
-      staking: boolean;
-    };
   };
   write: {
     transaction: {
       type: {
-        native: boolean;
-        tokens: boolean;
-        staking: boolean;
+        deployAccount: boolean;
+        transfer: boolean;
+        transferToken: boolean;
+        stake: boolean;
+        unstake: boolean;
+        claimRewards: boolean;
+        withdraw: boolean;
+        registerStake: boolean;
       };
       field: {
         memo: boolean;
       };
     };
+  };
+  utils: {
+    addresses: boolean;
+  };
+};
+
+export type Chain = {
+  family: string;
+  id: string;
+  nativeId: string;
+  name: string;
+  ticker: string;
+  decimals: number;
+  isTestnetFor?: string;
+  params: any;
+  supportedFeatures: ChainSupportedFeatures;
+  signerSpec: {
+    curve: string;
+    hashFunction: string;
+    signatureFormat: string;
+    coinType: string;
   };
 };
 

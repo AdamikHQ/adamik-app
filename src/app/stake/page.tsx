@@ -161,7 +161,7 @@ export default function Stake() {
           onClick={() => {
             setChainId(undefined);
             setTransaction(undefined);
-            setCurrentTransactionFlow(TransactionMode.DELEGATE);
+            setCurrentTransactionFlow(TransactionMode.STAKE);
           }}
         >
           Stake
@@ -171,7 +171,7 @@ export default function Stake() {
           onClick={() => {
             setChainId(undefined);
             setTransaction(undefined);
-            setCurrentTransactionFlow(TransactionMode.UNDELEGATE);
+            setCurrentTransactionFlow(TransactionMode.UNSTAKE);
           }}
         >
           Unstake

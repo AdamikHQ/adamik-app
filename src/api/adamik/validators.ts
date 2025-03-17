@@ -1,5 +1,6 @@
 "use server";
 
+import fetch from "node-fetch";
 import { env, ADAMIK_API_URL } from "~/env";
 
 export type ValidatorResponse = {
@@ -28,21 +29,18 @@ export const getValidators = async (
     url.searchParams.set("nextPage", options.nextPage);
   }
 
-  const response = await fetch(url, {
+  const response = await fetch(url.toString(), {
     headers: {
       Authorization: env.ADAMIK_API_KEY,
     },
     method: "GET",
   });
 
-  const result = await response.json();
-
-  if (response.status !== 200) {
-    console.error("validators - backend error:", JSON.stringify(result));
+  if (!response.ok) {
     return null;
-  } else {
-    return result;
   }
+
+  return (await response.json()) as ValidatorResponse;
 };
 
 export const getAllValidators = async (
