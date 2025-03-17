@@ -55,8 +55,9 @@ export const showroomAddresses = [
     chainId: "ton",
     address: "UQAQ113dWkP2MOfXN2uv0qPFB-097flcLBhyv0_lhgXEUhwz",
   },
-  // {
-  //   chainId: "rootstock-testnet",
-  //   address: "0x3dD2504c27449a78Df04284129C380f3831cAF0d",
-  // },
+  {
+    chainId: "starknet",
+    address:
+      "0x05e1dfe469A9b7a504cA84102359467453aE530cFB5Ec70FF4239f91e964A08e",
+  },
 ];
