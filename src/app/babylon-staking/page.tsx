@@ -104,81 +104,6 @@ export default function BabylonStakingPage() {
     []
   );
 
-  // Function to handle next button click
-  const handleNextStep = useCallback(async () => {
-    setIsNextButtonDisabled(true);
-
-    try {
-      switch (currentStep) {
-        case StakingStep.FORM_INPUT:
-          updateStepStatus(StakingStep.FORM_INPUT, "in-progress");
-          await fillFormInput();
-          break;
-
-        case StakingStep.ENCODE_BTC_TX:
-          updateStepStatus(StakingStep.FORM_INPUT, "complete");
-          updateStepStatus(StakingStep.ENCODE_BTC_TX, "in-progress");
-          await handleEncodeBitcoinTransaction();
-          break;
-
-        case StakingStep.SIGN_BABYLON_ADDRESS:
-          updateStepStatus(StakingStep.ENCODE_BTC_TX, "complete");
-          updateStepStatus(StakingStep.SIGN_BABYLON_ADDRESS, "in-progress");
-          await handleSignBabylonAddress();
-          break;
-
-        case StakingStep.SIGN_BTC_PSBTS:
-          updateStepStatus(StakingStep.SIGN_BABYLON_ADDRESS, "complete");
-          updateStepStatus(StakingStep.SIGN_BTC_PSBTS, "in-progress");
-          await handleSignBitcoinPSBTs();
-          break;
-
-        case StakingStep.ENCODE_BABYLON_TX:
-          updateStepStatus(StakingStep.SIGN_BTC_PSBTS, "complete");
-          updateStepStatus(StakingStep.ENCODE_BABYLON_TX, "in-progress");
-          await handleEncodeBabylonTransaction();
-          break;
-
-        case StakingStep.SIGN_BABYLON_TX:
-          updateStepStatus(StakingStep.ENCODE_BABYLON_TX, "complete");
-          updateStepStatus(StakingStep.SIGN_BABYLON_TX, "in-progress");
-          await handleSignBabylonTransaction();
-          break;
-
-        case StakingStep.BROADCAST_BABYLON_TX:
-          updateStepStatus(StakingStep.SIGN_BABYLON_TX, "complete");
-          updateStepStatus(StakingStep.BROADCAST_BABYLON_TX, "in-progress");
-          await handleBroadcastBabylonTransaction();
-          break;
-
-        case StakingStep.COMPLETE:
-          updateStepStatus(StakingStep.BROADCAST_BABYLON_TX, "complete");
-          await handleBroadcastBabylonTransaction();
-          toast({
-            title: "Success",
-            description: "Staking process completed successfully!",
-            variant: "default",
-          });
-          break;
-
-        default:
-          break;
-      }
-    } catch (error) {
-      console.error(`Error at step ${currentStep}:`, error);
-      updateStepStatus(currentStep, "error");
-      toast({
-        title: "Error",
-        description: `Failed at step ${currentStep + 1}: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
-        variant: "destructive",
-      });
-    } finally {
-      setIsNextButtonDisabled(false);
-    }
-  }, [currentStep, toast, updateStepStatus]);
-
   const fillFormInput = async () => {
     // Variables to store wallet data - will be populated either from form or direct API calls
     let bitcoinAddress = formData.bitcoinAddress;
@@ -682,6 +607,92 @@ export default function BabylonStakingPage() {
       throw error;
     }
   };
+
+  const handleNextStep = useCallback(async () => {
+    setIsNextButtonDisabled(true);
+
+    try {
+      switch (currentStep) {
+        case StakingStep.FORM_INPUT:
+          updateStepStatus(StakingStep.FORM_INPUT, "in-progress");
+          await fillFormInput();
+          break;
+
+        case StakingStep.ENCODE_BTC_TX:
+          updateStepStatus(StakingStep.FORM_INPUT, "complete");
+          updateStepStatus(StakingStep.ENCODE_BTC_TX, "in-progress");
+          await handleEncodeBitcoinTransaction();
+          break;
+
+        case StakingStep.SIGN_BABYLON_ADDRESS:
+          updateStepStatus(StakingStep.ENCODE_BTC_TX, "complete");
+          updateStepStatus(StakingStep.SIGN_BABYLON_ADDRESS, "in-progress");
+          await handleSignBabylonAddress();
+          break;
+
+        case StakingStep.SIGN_BTC_PSBTS:
+          updateStepStatus(StakingStep.SIGN_BABYLON_ADDRESS, "complete");
+          updateStepStatus(StakingStep.SIGN_BTC_PSBTS, "in-progress");
+          await handleSignBitcoinPSBTs();
+          break;
+
+        case StakingStep.ENCODE_BABYLON_TX:
+          updateStepStatus(StakingStep.SIGN_BTC_PSBTS, "complete");
+          updateStepStatus(StakingStep.ENCODE_BABYLON_TX, "in-progress");
+          await handleEncodeBabylonTransaction();
+          break;
+
+        case StakingStep.SIGN_BABYLON_TX:
+          updateStepStatus(StakingStep.ENCODE_BABYLON_TX, "complete");
+          updateStepStatus(StakingStep.SIGN_BABYLON_TX, "in-progress");
+          await handleSignBabylonTransaction();
+          break;
+
+        case StakingStep.BROADCAST_BABYLON_TX:
+          updateStepStatus(StakingStep.SIGN_BABYLON_TX, "complete");
+          updateStepStatus(StakingStep.BROADCAST_BABYLON_TX, "in-progress");
+          await handleBroadcastBabylonTransaction();
+          break;
+
+        case StakingStep.COMPLETE:
+          updateStepStatus(StakingStep.BROADCAST_BABYLON_TX, "complete");
+          await handleBroadcastBabylonTransaction();
+          toast({
+            title: "Success",
+            description: "Staking process completed successfully!",
+            variant: "default",
+          });
+          break;
+
+        default:
+          break;
+      }
+    } catch (error) {
+      console.error(`Error at step ${currentStep}:`, error);
+      updateStepStatus(currentStep, "error");
+      toast({
+        title: "Error",
+        description: `Failed at step ${currentStep + 1}: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsNextButtonDisabled(false);
+    }
+  }, [
+    currentStep,
+    toast,
+    updateStepStatus,
+    fillFormInput,
+    handleEncodeBitcoinTransaction,
+    handleSignBabylonAddress,
+    handleSignBitcoinPSBTs,
+    handleEncodeBabylonTransaction,
+    handleSignBabylonTransaction,
+    handleBroadcastBabylonTransaction,
+    setIsNextButtonDisabled,
+  ]);
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
