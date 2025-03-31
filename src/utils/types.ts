@@ -36,9 +36,10 @@ interface Reward {
 interface Balances {
   native: {
     available: string;
+    unconfirmed?: string;
     total: string;
   };
-  tokens: TokenAmount[];
+  tokens?: TokenAmount[];
   staking?: {
     total: string;
     locked: string;
@@ -74,6 +75,7 @@ export enum TransactionMode {
   STAKE = "stake",
   UNSTAKE = "unstake",
   CLAIM_REWARDS = "claimRewards",
+  REGISTER_STAKE = "registerStake",
 }
 
 // Plain transaction object without additional metadata.
@@ -94,6 +96,15 @@ export type TransactionData = {
   nonce?: string;
   format?: string;
   memo?: string;
+  params?: any;
+  // Additional fields for Babylon stake registration
+  senderForeignPubKey?: string;
+  proofOfPossession?: string;
+  validatorPubKey?: string;
+  unsignedUnbondingTransaction?: string;
+  signedStakingTransaction?: string;
+  signedSlashingTransaction?: string;
+  signedUnbondingSlashingTransaction?: string;
 };
 
 // Full transaction object

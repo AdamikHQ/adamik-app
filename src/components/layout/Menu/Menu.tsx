@@ -6,6 +6,7 @@ import {
   SquareStack,
   Search,
   History,
+  Coins,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { MobileMenu } from "./MobileMenu";
@@ -23,6 +24,11 @@ const menu = [
     title: "Stake",
     icon: HandCoins,
     href: "/stake",
+  },
+  {
+    title: "Babylon staking",
+    icon: Coins,
+    href: "/babylon-staking",
   },
   {
     title: "Transaction Details",
