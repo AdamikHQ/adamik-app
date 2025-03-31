@@ -15,11 +15,13 @@ export const UniSatConnect: React.FC<WalletConnectorProps> = ({
   const getAddresses = useCallback(async () => {
     try {
       const accounts = await window.unisat.requestAccounts();
+      const pubKey = await window.unisat.getPublicKey();
 
       const addresses: Account[] = [];
       for (const address of accounts) {
         addresses.push({
           address,
+          pubKey,
           chainId: "bitcoin",
           signer: WalletName.UNISAT,
         });
