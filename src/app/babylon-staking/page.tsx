@@ -104,7 +104,7 @@ export default function BabylonStakingPage() {
     []
   );
 
-  const fillFormInput = async () => {
+  const fillFormInput = useCallback(async () => {
     // Variables to store wallet data - will be populated either from form or direct API calls
     let bitcoinAddress = formData.bitcoinAddress;
     let bitcoinPubkey = formData.bitcoinPubkey;
@@ -216,10 +216,11 @@ export default function BabylonStakingPage() {
     }
 
     setCurrentStep(StakingStep.ENCODE_BTC_TX);
-  };
+  }, [formData, setFormData, setSigningStatus, setCurrentStep]);
 
   // Step 1: Encode Bitcoin Transaction
-  const handleEncodeBitcoinTransaction = async () => {
+  // Step 1: Encode Bitcoin Transaction
+  const handleEncodeBitcoinTransaction = useCallback(async () => {
     setSigningStatus("Encoding Bitcoin staking transaction...");
 
     // Double-check that we have the required data before proceeding
@@ -269,10 +270,16 @@ export default function BabylonStakingPage() {
         },
       });
     });
-  };
+  }, [
+    formData,
+    setBitcoinTransactionData,
+    setSigningStatus,
+    setCurrentStep,
+    encodeTransaction,
+  ]);
 
   // Step 2: Sign Babylon Address with Unisat
-  const handleSignBabylonAddress = async () => {
+  const handleSignBabylonAddress = useCallback(async () => {
     try {
       setSigningStatus("Getting Keplr account...");
 
@@ -312,10 +319,69 @@ export default function BabylonStakingPage() {
       setSigningStatus("Failed to sign Babylon address with Bitcoin wallet");
       throw error;
     }
-  };
+  }, [
+    formData.babylonAddress,
+    setBabylonAddressSignature,
+    setSigningStatus,
+    setCurrentStep,
+  ]);
 
   // Step 3: Sign Bitcoin PSBTs
-  const handleSignBitcoinPSBTs = async () => {
+  const handleSignBitcoinPSBTs = useCallback(async () => {
+    // Function to sign PSBTs one by one
+    const signPsbts = async (psbts: string[]) => {
+      try {
+        const signatures = [];
+        setSigningStatus("Signing PSBTs...");
+
+        // Check if Unisat is available
+        if (!window.unisat) {
+          throw new Error(
+            "Unisat wallet not found. Please install the Unisat extension."
+          );
+        }
+
+        // Sign each PSBT sequentially
+        for (let i = 0; i < psbts.length; i++) {
+          setSigningStatus(`Signing PSBT ${i + 1} of ${psbts.length}...`);
+          const psbt = psbts[i];
+
+          try {
+            const unisatParams = getSignPsbtDefaultOptions(
+              psbt,
+              formData.bitcoinPubkey,
+              formData.bitcoinAddress,
+              Network.SIGNET
+            );
+
+            // Sign the PSBT with Unisat
+            const signedPsbt = await window.unisat.signPsbt(psbt, unisatParams);
+            signatures.push(signedPsbt);
+            console.log(`PSBT ${i + 1} signed:`, signedPsbt);
+            setSigningStatus(`PSBT ${i + 1} signed successfully`);
+          } catch (error) {
+            console.error(`Error signing PSBT ${i + 1}:`, error);
+            setSigningStatus(`Error signing PSBT ${i + 1}`);
+            throw error;
+          }
+        }
+
+        setSigningStatus("All PSBTs signed successfully");
+        return signatures;
+      } catch (error) {
+        console.error("Error in signing process:", error);
+        setSigningStatus("Signing failed");
+        toast({
+          title: "Error",
+          description: `Failed to sign PSBTs: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+          variant: "destructive",
+        });
+        throw error;
+      }
+    };
+
     try {
       const signatures = await signPsbts([
         bitcoinTransactionData.transaction?.data?.params?.stakingPsbt,
@@ -330,10 +396,18 @@ export default function BabylonStakingPage() {
       setSigningStatus("Failed to sign PSBTs");
       throw error;
     }
-  };
+  }, [
+    bitcoinTransactionData,
+    setBitcoinSignedPsbts,
+    setSigningStatus,
+    setCurrentStep,
+    formData.bitcoinAddress,
+    formData.bitcoinPubkey,
+    toast,
+  ]);
 
   // Step 4: Encode Babylon Registration Transaction
-  const handleEncodeBabylonTransaction = async () => {
+  const handleEncodeBabylonTransaction = useCallback(async () => {
     try {
       setSigningStatus("Encoding Babylon stake registration transaction...");
 
@@ -391,10 +465,19 @@ export default function BabylonStakingPage() {
       console.error("Error preparing Babylon stake registration:", error);
       throw error;
     }
-  };
+  }, [
+    formData,
+    babylonAddressSignature,
+    bitcoinTransactionData,
+    bitcoinSignedPsbts,
+    setBabylonTransactionData,
+    setSigningStatus,
+    setCurrentStep,
+    encodeTransaction,
+  ]);
 
   // Step 5: Sign Babylon Registration Transaction with Keplr
-  const handleSignBabylonTransaction = async () => {
+  const handleSignBabylonTransaction = useCallback(async () => {
     try {
       setSigningStatus("Signing Babylon transaction with Keplr wallet...");
 
@@ -446,72 +529,16 @@ export default function BabylonStakingPage() {
       setSigningStatus("Failed to sign Babylon transaction with Keplr");
       throw error;
     }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  // Function to sign PSBTs one by one
-  const signPsbts = async (psbts: string[]) => {
-    try {
-      const signatures = [];
-      setSigningStatus("Signing PSBTs...");
-
-      // Check if Unisat is available
-      if (!window.unisat) {
-        throw new Error(
-          "Unisat wallet not found. Please install the Unisat extension."
-        );
-      }
-
-      // Sign each PSBT sequentially
-      for (let i = 0; i < psbts.length; i++) {
-        setSigningStatus(`Signing PSBT ${i + 1} of ${psbts.length}...`);
-        const psbt = psbts[i];
-
-        try {
-          const unisatParams = getSignPsbtDefaultOptions(
-            psbt,
-            formData.bitcoinPubkey,
-            formData.bitcoinAddress,
-            Network.SIGNET
-          );
-
-          // Sign the PSBT with Unisat
-          const signedPsbt = await window.unisat.signPsbt(psbt, unisatParams);
-          signatures.push(signedPsbt);
-          console.log(`PSBT ${i + 1} signed:`, signedPsbt);
-          setSigningStatus(`PSBT ${i + 1} signed successfully`);
-        } catch (error) {
-          console.error(`Error signing PSBT ${i + 1}:`, error);
-          setSigningStatus(`Error signing PSBT ${i + 1}`);
-          throw error;
-        }
-      }
-
-      setSigningStatus("All PSBTs signed successfully");
-      return signatures;
-    } catch (error) {
-      console.error("Error in signing process:", error);
-      setSigningStatus("Signing failed");
-      toast({
-        title: "Error",
-        description: `Failed to sign PSBTs: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
+  }, [
+    formData.babylonAddress,
+    babylonTransactionData,
+    setBabylonTransactionSignature,
+    setSigningStatus,
+    setCurrentStep,
+  ]);
 
   // Step 6: Broadcast Babylon Registration Transaction
-  const handleBroadcastBabylonTransaction = async () => {
+  const handleBroadcastBabylonTransaction = useCallback(async () => {
     try {
       setSigningStatus("Broadcasting Babylon transaction...");
 
@@ -606,8 +633,25 @@ export default function BabylonStakingPage() {
       setSigningStatus("Failed to prepare transaction for broadcast");
       throw error;
     }
+  }, [
+    babylonTransactionData,
+    babylonTransactionSignature,
+    setSigningStatus,
+    updateStepStatus,
+    setCurrentStep,
+    toast,
+    broadcastTransaction,
+  ]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
+  // Function to handle next button click
   const handleNextStep = useCallback(async () => {
     setIsNextButtonDisabled(true);
 
