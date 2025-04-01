@@ -91,6 +91,7 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
         throw new Error(`${chainId} is not supported by Keplr wallet`);
       }
 
+      // const signedTransaction = await client.signAmino?.(
       const signedTransaction = await client.signDirect?.(
         nativeId,
         transactionPayload.data.senderAddress,

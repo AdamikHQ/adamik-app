@@ -42,7 +42,10 @@ export type WalletConnectorProps = {
  * Unisat Wallet Interface types from {@link https://github.com/unisat-wallet/extension/blob/04cbfd6e7f7953815d35d8f77df457388fea2707/src/background/controller/wallet.ts}
  * */
 export type UnisatWalletInterface = {
-  signPsbt(psbtHex: string): Promise<string>;
-  disconnect(): Promise<void>;
+  switchChain(chain: string): Promise<any>;
   requestAccounts(): Promise<string[]>;
+  getPublicKey(): Promise<string>;
+  signMessage: (message: string, type: "ecdsa") => Promise<string>;
+  signPsbt(psbtHex: string, params?: any): Promise<string>;
+  disconnect(): Promise<void>;
 };

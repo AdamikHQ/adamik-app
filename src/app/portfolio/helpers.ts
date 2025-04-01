@@ -199,9 +199,10 @@ export const filterAndSortAssets = (
         return !(hideLowBalance && aggregatedBalances[asset.chainId] <= 1);
       })
       // Hide all asset without logo (mostly spam coins for EVM)
-      .filter((asset) => {
-        return asset?.logo !== "";
-      })
+      // FIXME Need to fix the missing assets logos
+      // .filter((asset) => {
+      //   return asset?.logo !== "";
+      // })
 
       .sort((a, b) => {
         // Highest to lowest USD balance

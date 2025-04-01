@@ -10,6 +10,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@babylonlabs-io/btc-staking-ts": "^0.3.0",
+    "@bitcoin-js/tiny-secp256k1-asmjs": "^2.2.3",
+    "@cosmjs/encoding": "^0.33.1",
     "@cosmos-kit/keplr": "^2.14.2",
     "@cosmos-kit/react-lite": "^2.15.2",
     "@hookform/resolvers": "^3.9.1",
@@ -33,11 +36,13 @@
     "@tanstack/react-query": "^5.62.10",
     "@tanstack/react-query-persist-client": "^5.62.10",
     "algosdk": "^3.0.0",
+    "bitcoinjs-lib": "^6.1.7",
     "chain-registry": "^1.69.74",
     "chart.js": "^4.4.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.4",
+    "cosmjs-types": "0.9.0",
     "date-fns": "^4.1.0",
     "highlight.js": "^11.11.1",
     "lodash": "^4.17.21",
