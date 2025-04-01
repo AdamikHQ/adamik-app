@@ -14,21 +14,16 @@ import { TransactionData, TransactionMode } from "~/utils/types";
 import { amountToSmallestUnit } from "~/utils/helper";
 import { getSignPsbtDefaultOptions, Network } from "~/components/wallets/utils";
 import { useBroadcastTransaction } from "~/hooks/useBroadcastTransaction";
-import { fromBech32 } from "@cosmjs/encoding";
-
-// Add the Keplr type to the Window interface
-declare global {
-  interface Window {
-    keplr?: any;
-  }
-}
+//import { SigningStargateClient } from "@cosmjs/stargate";
+//import { DirectSignResponse } from "@keplr-wallet/types";
+import { useWalletClient } from "@cosmos-kit/react-lite";
 
 // Define the staking steps
 enum StakingStep {
   FORM_INPUT = 0,
   ENCODE_BTC_TX = 1,
-  SIGN_BABYLON_ADDRESS = 2,
-  SIGN_BTC_PSBTS = 3,
+  SIGN_BTC_PSBTS = 2,
+  SIGN_BABYLON_ADDRESS = 3,
   ENCODE_BABYLON_TX = 4,
   SIGN_BABYLON_TX = 5,
   BROADCAST_BABYLON_TX = 6, // Commented out as requested
@@ -38,9 +33,12 @@ enum StakingStep {
 const BITCOIN_CHAIN_ID = "bitcoin-signet";
 const BABYLON_CHAIN_ID = "babylon-testnet";
 const BABYLON_NATIVE_ID = "bbn-test-5";
+const BABYLON_RPC_URL = "https://babylon-testnet-rpc.nodes.guru";
 
 export default function BabylonStakingPage() {
   const { toast } = useToast();
+
+  const { status, client: keplrClient } = useWalletClient("keplr-extension");
 
   // Add a state to track the current step
   const [currentStep, setCurrentStep] = useState<StakingStep>(
@@ -51,8 +49,8 @@ export default function BabylonStakingPage() {
   >({
     [StakingStep.FORM_INPUT]: "in-progress",
     [StakingStep.ENCODE_BTC_TX]: "pending",
-    [StakingStep.SIGN_BABYLON_ADDRESS]: "pending",
     [StakingStep.SIGN_BTC_PSBTS]: "pending",
+    [StakingStep.SIGN_BABYLON_ADDRESS]: "pending",
     [StakingStep.ENCODE_BABYLON_TX]: "pending",
     [StakingStep.SIGN_BABYLON_TX]: "pending",
     [StakingStep.BROADCAST_BABYLON_TX]: "pending",
@@ -89,6 +87,33 @@ export default function BabylonStakingPage() {
       "d23c2c25e1fcf8fd1c21b9a402c19e2e309e531e45e92fb1e9805b6056b0cc76",
     amount: "0.0005",
   });
+
+  /*
+  const [stargateClient, setStargateClient] =
+    useState<SigningStargateClient | null>(null);
+
+  // Add function to initialize SigningStargateClient
+  const initializeStargateClient = useCallback(async () => {
+    if (!client) {
+      throw new Error(
+        "Keplr wallet not found. Please install the Keplr wallet extension."
+      );
+    }
+
+    // Enable the chain first to ensure it's available in Keplr
+    await window.keplr.enable(BABYLON_NATIVE_ID);
+
+    // Initialize SigningStargateClient
+    const client = await SigningStargateClient.connectWithSigner(
+      BABYLON_RPC_URL,
+      window.keplr.getOfflineSigner(BABYLON_NATIVE_ID, {
+        preferNoSetFee: true,
+      })
+    );
+
+    setStargateClient(client);
+  }, []);
+  */
 
   // Function to update step status
   const updateStepStatus = useCallback(
@@ -168,32 +193,32 @@ export default function BabylonStakingPage() {
       setSigningStatus("Connecting to Keplr wallet...");
 
       try {
-        // First check if the Keplr browser extension is installed
-        if (!window.keplr) {
+        // Check if Keplr client is available
+        if (!keplrClient) {
           throw new Error(
             "Keplr wallet not found. Please install the Keplr wallet extension."
           );
         }
 
-        // Enable the chain
-        await window.keplr.enable(BABYLON_NATIVE_ID);
-
-        // Get the offlineSigner for this chain
-        const offlineSigner = await window.keplr.getOfflineSigner(
+        // Get the offline signer
+        const offlineSigner = await keplrClient.getOfflineSigner?.(
           BABYLON_NATIVE_ID
         );
+        if (!offlineSigner) {
+          throw new Error("Failed to get offline signer");
+        }
 
-        // Get accounts
+        // Get accounts from the signer
         const accounts = await offlineSigner.getAccounts();
         if (!accounts || accounts.length === 0) {
-          throw new Error("No Babylon accounts found in Keplr wallet");
+          throw new Error("No Babylon accounts found in wallet");
         }
 
         // Use the first account
         babylonAddress = accounts[0].address;
         babylonPubkey = Buffer.from(accounts[0].pubkey).toString("hex");
 
-        console.log(`Keplr ${BABYLON_NATIVE_ID} data:`, {
+        console.log(`Babylon wallet data:`, {
           address: babylonAddress,
           pubkey: babylonPubkey,
         });
@@ -207,18 +232,17 @@ export default function BabylonStakingPage() {
 
         setSigningStatus("Found babylon account");
       } catch (error) {
-        console.error("Failed to connect to Keplr wallet:", error);
-        setSigningStatus("Failed to connect to Keplr wallet");
+        console.error("Failed to connect to Babylon wallet:", error);
+        setSigningStatus("Failed to connect to Babylon wallet");
         throw new Error(
-          "Please connect your Keplr wallet and ensure it supports the Babylon testnet"
+          "Please connect your wallet and ensure it supports the Babylon testnet"
         );
       }
     }
 
     setCurrentStep(StakingStep.ENCODE_BTC_TX);
-  }, [formData, setFormData, setSigningStatus, setCurrentStep]);
+  }, [formData, setFormData, setSigningStatus, setCurrentStep, keplrClient]);
 
-  // Step 1: Encode Bitcoin Transaction
   // Step 1: Encode Bitcoin Transaction
   const handleEncodeBitcoinTransaction = useCallback(async () => {
     setSigningStatus("Encoding Bitcoin staking transaction...");
@@ -257,7 +281,7 @@ export default function BabylonStakingPage() {
             setBitcoinTransactionData(bitcoinData);
 
             setSigningStatus("Bitcoin transaction encoded successfully");
-            setCurrentStep(StakingStep.SIGN_BABYLON_ADDRESS);
+            setCurrentStep(StakingStep.SIGN_BTC_PSBTS);
             resolve();
           } else {
             reject(new Error("Required PSBTs not found in the response"));
@@ -278,55 +302,7 @@ export default function BabylonStakingPage() {
     encodeTransaction,
   ]);
 
-  // Step 2: Sign Babylon Address with Unisat
-  const handleSignBabylonAddress = useCallback(async () => {
-    try {
-      setSigningStatus("Getting Keplr account...");
-
-      // If we still don't have a babylonAddress, something went wrong
-      if (!formData.babylonAddress) {
-        throw new Error("Could not get Babylon address from Keplr");
-      }
-
-      setSigningStatus("Signing Babylon address with Bitcoin wallet...");
-
-      // Check if Unisat is available
-      if (!window.unisat) {
-        throw new Error(
-          "Unisat wallet not found. Please install the Unisat extension."
-        );
-      }
-
-      // Sign the keplr address with Unisat
-      const addressSignature = await window.unisat.signMessage(
-        formData.babylonAddress,
-        "ecdsa"
-      );
-
-      console.log("Babylon address signed with Bitcoin wallet:", {
-        address: formData.babylonAddress,
-        signature: addressSignature,
-      });
-
-      setBabylonAddressSignature(addressSignature);
-      setSigningStatus("Babylon address successfully signed");
-      setCurrentStep(StakingStep.SIGN_BTC_PSBTS);
-    } catch (error) {
-      console.error(
-        "Failed to sign Babylon address with Bitcoin wallet:",
-        error
-      );
-      setSigningStatus("Failed to sign Babylon address with Bitcoin wallet");
-      throw error;
-    }
-  }, [
-    formData.babylonAddress,
-    setBabylonAddressSignature,
-    setSigningStatus,
-    setCurrentStep,
-  ]);
-
-  // Step 3: Sign Bitcoin PSBTs
+  // Step 2: Sign Bitcoin PSBTs
   const handleSignBitcoinPSBTs = useCallback(async () => {
     // Function to sign PSBTs one by one
     const signPsbts = async (psbts: string[]) => {
@@ -390,7 +366,7 @@ export default function BabylonStakingPage() {
       ]);
       setBitcoinSignedPsbts(signatures);
       setSigningStatus("All PSBTs signed successfully");
-      setCurrentStep(StakingStep.ENCODE_BABYLON_TX);
+      setCurrentStep(StakingStep.SIGN_BABYLON_ADDRESS);
     } catch (error) {
       console.error("Failed to sign PSBTs:", error);
       setSigningStatus("Failed to sign PSBTs");
@@ -404,6 +380,54 @@ export default function BabylonStakingPage() {
     formData.bitcoinAddress,
     formData.bitcoinPubkey,
     toast,
+  ]);
+
+  // Step 3: Sign Babylon Address with Unisat
+  const handleSignBabylonAddress = useCallback(async () => {
+    try {
+      setSigningStatus("Getting Keplr account...");
+
+      // If we still don't have a babylonAddress, something went wrong
+      if (!formData.babylonAddress) {
+        throw new Error("Could not get Babylon address from Keplr");
+      }
+
+      setSigningStatus("Signing Babylon address with Bitcoin wallet...");
+
+      // Check if Unisat is available
+      if (!window.unisat) {
+        throw new Error(
+          "Unisat wallet not found. Please install the Unisat extension."
+        );
+      }
+
+      // Sign the keplr address with Unisat
+      const addressSignature = await window.unisat.signMessage(
+        formData.babylonAddress,
+        "ecdsa"
+      );
+
+      console.log("Babylon address signed with Bitcoin wallet:", {
+        address: formData.babylonAddress,
+        signature: addressSignature,
+      });
+
+      setBabylonAddressSignature(addressSignature);
+      setSigningStatus("Babylon address successfully signed");
+      setCurrentStep(StakingStep.ENCODE_BABYLON_TX);
+    } catch (error) {
+      console.error(
+        "Failed to sign Babylon address with Bitcoin wallet:",
+        error
+      );
+      setSigningStatus("Failed to sign Babylon address with Bitcoin wallet");
+      throw error;
+    }
+  }, [
+    formData.babylonAddress,
+    setBabylonAddressSignature,
+    setSigningStatus,
+    setCurrentStep,
   ]);
 
   // Step 4: Encode Babylon Registration Transaction
@@ -440,6 +464,10 @@ export default function BabylonStakingPage() {
         format: "json",
       };
 
+      // FIXME DEBUG TBR
+      // prettier-ignore
+      console.log("XXX - newBabylonTransactionData:", newBabylonTransactionData);
+
       return new Promise<void>((resolve, reject) => {
         encodeTransaction.mutate(newBabylonTransactionData, {
           onSuccess: (babylonData) => {
@@ -450,6 +478,10 @@ export default function BabylonStakingPage() {
             setSigningStatus("Babylon transaction encoded successfully");
 
             setBabylonTransactionData(babylonData);
+
+            // FIXME DEBUG TBR
+            // prettier-ignore
+            console.log("XXX - babylonData.transaction.encoded:", babylonData.transaction.encoded);
 
             setCurrentStep(StakingStep.SIGN_BABYLON_TX);
             resolve();
@@ -481,8 +513,8 @@ export default function BabylonStakingPage() {
     try {
       setSigningStatus("Signing Babylon transaction with Keplr wallet...");
 
-      // Check if Keplr is installed
-      if (!window.keplr) {
+      // Check if Keplr client is available
+      if (!keplrClient) {
         throw new Error(
           "Keplr wallet not found. Please install the Keplr wallet extension."
         );
@@ -500,15 +532,33 @@ export default function BabylonStakingPage() {
         throw new Error("No encoded transaction found in response");
       }
 
-      // Enable Babylon chain
-      await window.keplr.enable(BABYLON_NATIVE_ID);
+      /*
+      // Initialize StargateClient if not already initialized
+      if (!stargateClient) {
+        await initializeStargateClient();
+      }
 
-      // Sign the transaction with Keplr
-      const signResponse = await window.keplr.signDirect(
+      if (!stargateClient) {
+        throw new Error("Failed to initialize StargateClient");
+      }
+
+      // Use stargateClient to sign the transaction
+      // FIXME The data is completely wrong here
+      const signResponse = await stargateClient.sign(
+        formData.babylonAddress,
+        parsedTx.bodyBytes,
+        parsedTx.authInfoBytes,
+        parsedTx.chainId,
+        parsedTx.accountNumber
+      );
+      */
+
+      // Sign the transaction with Keplr client
+      const signResponse = await keplrClient.signDirect?.(
         BABYLON_NATIVE_ID,
         formData.babylonAddress,
         JSON.parse(encodedTransaction),
-        { preferNoSetFee: true } // Tell Keplr not to recompute fees after us
+        { preferNoSetFee: true, preferNoSetMemo: true } // Tell Keplr not to recompute fees after us
       );
 
       if (!signResponse) {
@@ -521,12 +571,12 @@ export default function BabylonStakingPage() {
       );
       setBabylonTransactionSignature(signature);
 
-      console.log("Keplr signature:", signResponse);
+      console.log("Transaction signature:", signResponse);
       setSigningStatus("Babylon transaction successfully signed");
       setCurrentStep(StakingStep.BROADCAST_BABYLON_TX);
     } catch (error) {
-      console.error("Error signing Babylon transaction with Keplr:", error);
-      setSigningStatus("Failed to sign Babylon transaction with Keplr");
+      console.error("Error signing Babylon transaction:", error);
+      setSigningStatus("Failed to sign Babylon transaction");
       throw error;
     }
   }, [
@@ -535,6 +585,9 @@ export default function BabylonStakingPage() {
     setBabylonTransactionSignature,
     setSigningStatus,
     setCurrentStep,
+    //stargateClient,
+    //initializeStargateClient,
+    keplrClient,
   ]);
 
   // Step 6: Broadcast Babylon Registration Transaction
@@ -668,20 +721,20 @@ export default function BabylonStakingPage() {
           await handleEncodeBitcoinTransaction();
           break;
 
-        case StakingStep.SIGN_BABYLON_ADDRESS:
-          updateStepStatus(StakingStep.ENCODE_BTC_TX, "complete");
-          updateStepStatus(StakingStep.SIGN_BABYLON_ADDRESS, "in-progress");
-          await handleSignBabylonAddress();
-          break;
-
         case StakingStep.SIGN_BTC_PSBTS:
-          updateStepStatus(StakingStep.SIGN_BABYLON_ADDRESS, "complete");
+          updateStepStatus(StakingStep.ENCODE_BTC_TX, "complete");
           updateStepStatus(StakingStep.SIGN_BTC_PSBTS, "in-progress");
           await handleSignBitcoinPSBTs();
           break;
 
-        case StakingStep.ENCODE_BABYLON_TX:
+        case StakingStep.SIGN_BABYLON_ADDRESS:
           updateStepStatus(StakingStep.SIGN_BTC_PSBTS, "complete");
+          updateStepStatus(StakingStep.SIGN_BABYLON_ADDRESS, "in-progress");
+          await handleSignBabylonAddress();
+          break;
+
+        case StakingStep.ENCODE_BABYLON_TX:
+          updateStepStatus(StakingStep.SIGN_BABYLON_ADDRESS, "complete");
           updateStepStatus(StakingStep.ENCODE_BABYLON_TX, "in-progress");
           await handleEncodeBabylonTransaction();
           break;
@@ -730,8 +783,8 @@ export default function BabylonStakingPage() {
     updateStepStatus,
     fillFormInput,
     handleEncodeBitcoinTransaction,
-    handleSignBabylonAddress,
     handleSignBitcoinPSBTs,
+    handleSignBabylonAddress,
     handleEncodeBabylonTransaction,
     handleSignBabylonTransaction,
     handleBroadcastBabylonTransaction,
@@ -831,10 +884,10 @@ export default function BabylonStakingPage() {
                       stepLabel = "Fill staking details";
                     else if (step === StakingStep.ENCODE_BTC_TX)
                       stepLabel = "Encode Bitcoin transaction";
-                    else if (step === StakingStep.SIGN_BABYLON_ADDRESS)
-                      stepLabel = "Sign Babylon address";
                     else if (step === StakingStep.SIGN_BTC_PSBTS)
                       stepLabel = "Sign Bitcoin PSBTs";
+                    else if (step === StakingStep.SIGN_BABYLON_ADDRESS)
+                      stepLabel = "Sign Babylon address";
                     else if (step === StakingStep.ENCODE_BABYLON_TX)
                       stepLabel = "Encode Babylon transaction";
                     else if (step === StakingStep.SIGN_BABYLON_TX)
