@@ -7,7 +7,7 @@ import {
   AdamikCurve,
   AdamikHashFunction,
   AdamikSignerSpec,
-} from "~/adamik/types";
+} from "~/utils/types";
 import { Button } from "~/components/ui/button";
 
 export const SodotConnect: React.FC<WalletConnectorProps> = ({

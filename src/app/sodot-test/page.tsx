@@ -8,7 +8,7 @@ import {
   AdamikCurve,
   AdamikHashFunction,
   AdamikSignerSpec,
-} from "~/adamik/types";
+} from "~/utils/types";
 import { encodePubKeyToAddress } from "~/api/adamik/encode";
 import { AlertCircle, CheckCircle2, Loader2, Lock, Server } from "lucide-react";
 

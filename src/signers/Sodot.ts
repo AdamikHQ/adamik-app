@@ -2,7 +2,7 @@ import {
   AdamikCurve,
   AdamikHashFunction,
   AdamikSignerSpec,
-} from "~/adamik/types";
+} from "~/utils/types";
 import { encodePubKeyToAddress } from "~/api/adamik/encode";
 
 // Helper function to determine if we're running in a production environment
