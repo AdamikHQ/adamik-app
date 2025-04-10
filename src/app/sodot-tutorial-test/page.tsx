@@ -173,6 +173,49 @@ export default function SodotTutorialTestPage() {
     }
   };
 
+  const testTronPubkey = async () => {
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      // Create tron signer spec
+      const signerSpec: AdamikSignerSpec = {
+        curve: AdamikCurve.SECP256K1,
+        coinType: "195", // Tron
+        hashFunction: AdamikHashFunction.KECCAK256,
+        signatureFormat: "r|s|v",
+      };
+
+      // Initialize the Sodot signer
+      const signer = new SodotSigner("tron", signerSpec);
+
+      // Get the pubkey
+      const pubkey = await signer.getPubkey();
+
+      // Get the address (which calls the Adamik API)
+      const address = await signer.getAddress();
+
+      // Store the results
+      setResults(
+        (prev: Results | null): Results => ({
+          ...prev,
+          chainPubkey: {
+            pubkey,
+            address,
+            chainId: "tron",
+            curve: "SECP256K1",
+          },
+        })
+      );
+      setSuccess("Successfully retrieved Tron pubkey and address");
+    } catch (e: any) {
+      setError(e.message || "Unknown error occurred");
+      console.error("Error testing Tron pubkey:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getVertexKeys = async () => {
     setLoading(true);
     setError(null);
@@ -275,6 +318,21 @@ export default function SodotTutorialTestPage() {
                   </>
                 ) : (
                   "Solana"
+                )}
+              </Button>
+              <Button
+                onClick={testTronPubkey}
+                disabled={loading}
+                variant="default"
+                className="w-full md:w-auto"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Testing...
+                  </>
+                ) : (
+                  "Tron"
                 )}
               </Button>
             </div>
