@@ -1,4 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import { getChains } from "~/api/adamik/chains";
+import { Chain } from "~/utils/types";
 
 // Helper function to get the base URL
 function getBaseUrl(req: NextApiRequest): string {
@@ -12,50 +14,6 @@ function getBaseUrl(req: NextApiRequest): string {
   return `${protocol}://${host}`;
 }
 
-// Type definitions for supported chains
-type SupportedChain = "ethereum" | "bitcoin" | "ton" | "tron" | "algorand";
-
-interface ChainConfig {
-  curve: "ecdsa" | "ed25519";
-  keyIdsEnvVar: string;
-  coinType: number;
-  derivationPath: number[];
-}
-
-// Configuration for each supported chain
-const chainConfigs: Record<SupportedChain, ChainConfig> = {
-  ethereum: {
-    curve: "ecdsa",
-    keyIdsEnvVar: "SODOT_EXISTING_ECDSA_KEY_IDS",
-    coinType: 60,
-    derivationPath: [44, 60, 0, 0, 0],
-  },
-  bitcoin: {
-    curve: "ecdsa",
-    keyIdsEnvVar: "SODOT_EXISTING_ECDSA_KEY_IDS",
-    coinType: 0,
-    derivationPath: [44, 0, 0, 0, 0],
-  },
-  ton: {
-    curve: "ecdsa", // TON uses secp256k1 (ECDSA)
-    keyIdsEnvVar: "SODOT_EXISTING_ECDSA_KEY_IDS",
-    coinType: 607, // TON coin type
-    derivationPath: [44, 607, 0, 0, 0],
-  },
-  tron: {
-    curve: "ecdsa",
-    keyIdsEnvVar: "SODOT_EXISTING_ECDSA_KEY_IDS",
-    coinType: 195,
-    derivationPath: [44, 195, 0, 0, 0],
-  },
-  algorand: {
-    curve: "ed25519",
-    keyIdsEnvVar: "SODOT_EXISTING_ED25519_KEY_IDS",
-    coinType: 283, // Algorand coin type
-    derivationPath: [44, 283, 0, 0, 0],
-  },
-};
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -68,32 +26,50 @@ export default async function handler(
       return res.status(400).json({
         status: 400,
         error: "Missing chain parameter",
-        message:
-          "Please specify a chain (ethereum, bitcoin, ton, tron, algorand)",
+        message: "Please specify a chain parameter",
       });
     }
 
-    // Validate supported chain
-    if (!Object.keys(chainConfigs).includes(chain)) {
+    // Get chain configurations from Adamik API
+    const chains = await getChains();
+
+    if (!chains) {
+      return res.status(500).json({
+        status: 500,
+        error: "Failed to fetch chain information",
+        message: "Unable to retrieve chain configurations from Adamik API",
+      });
+    }
+
+    // Find the requested chain
+    const chainConfig = chains[chain];
+
+    if (!chainConfig) {
       return res.status(400).json({
         status: 400,
         error: "Unsupported chain",
         message: `Chain '${chain}' is not supported. Use one of: ${Object.keys(
-          chainConfigs
+          chains
         ).join(", ")}`,
       });
     }
 
-    const chainName = chain as SupportedChain;
-    const config = chainConfigs[chainName];
+    // Get curve type from signerSpec
+    const curveType =
+      chainConfig.signerSpec.curve === "secp256k1" ? "ecdsa" : "ed25519";
 
     // Get key IDs for this chain's curve
-    const keyIdsStr = process.env[config.keyIdsEnvVar];
+    const keyIdsEnvVar =
+      curveType === "ecdsa"
+        ? "SODOT_EXISTING_ECDSA_KEY_IDS"
+        : "SODOT_EXISTING_ED25519_KEY_IDS";
+
+    const keyIdsStr = process.env[keyIdsEnvVar];
     if (!keyIdsStr) {
       return res.status(500).json({
         status: 500,
         error: "Missing key IDs",
-        message: `No key IDs found in ${config.keyIdsEnvVar} environment variable`,
+        message: `No key IDs found in ${keyIdsEnvVar} environment variable`,
       });
     }
 
@@ -106,12 +82,16 @@ export default async function handler(
       });
     }
 
+    // Construct derivation path based on BIP-44 standard
+    const coinType = parseInt(chainConfig.signerSpec.coinType);
+    const derivationPath = [44, coinType, 0, 0, 0];
+
     const baseUrl = getBaseUrl(req);
     const vertexId = 0; // We only need to use one vertex for derivation
 
     // Use the appropriate vertex to derive the public key
     const response = await fetch(
-      `${baseUrl}/api/sodot-proxy/${config.curve}/derive-pubkey?vertex=${vertexId}`,
+      `${baseUrl}/api/sodot-proxy/${curveType}/derive-pubkey?vertex=${vertexId}`,
       {
         method: "POST",
         headers: {
@@ -119,7 +99,7 @@ export default async function handler(
         },
         body: JSON.stringify({
           key_id: keyIds[vertexId],
-          derivation_path: config.derivationPath,
+          derivation_path: derivationPath,
         }),
       }
     );
@@ -136,7 +116,7 @@ export default async function handler(
 
     // Format the response based on chain/curve
     let pubkey;
-    if (config.curve === "ed25519") {
+    if (curveType === "ed25519") {
       // ED25519 response format: { pubkey: "..." }
       pubkey = result.data.pubkey;
       if (!pubkey) {
@@ -144,7 +124,7 @@ export default async function handler(
       }
     } else {
       // SECP256K1 response format: { compressed: "...", uncompressed: "..." }
-      if (chainName === "ethereum" || chainName === "tron") {
+      if (chainConfig.family === "evm") {
         pubkey = result.data.uncompressed;
         if (!pubkey) {
           throw new Error("Uncompressed pubkey missing from response");
@@ -157,19 +137,13 @@ export default async function handler(
       }
     }
 
-    // Add prefix if needed for Solana (ED25519 keys in Solana often need a prefix)
-    if (chainName === "ton" && !pubkey.startsWith("0x")) {
-      // Some TON implementations might need a prefix
-      pubkey = pubkey;
-    }
-
-    // Return just the pubkey to the client
+    // Return the pubkey to the client
     return res.status(200).json({
       status: 200,
       data: {
         pubkey,
-        curve: config.curve,
-        chain: chainName,
+        curve: curveType,
+        chain: chain,
       },
     });
   } catch (error: any) {

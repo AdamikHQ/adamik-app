@@ -198,6 +198,26 @@ export class SodotSigner {
         }
       }
 
+      // For development, use mock key IDs when env vars are not available
+      if (process.env.NODE_ENV !== "production") {
+        console.log(
+          `[Sodot] Using mock key ID for ${curve} vertex ${vertexId} in development`
+        );
+        // Use predictable mock key IDs based on curve and vertex
+        const mockKeyIds = {
+          ecdsa: ["mock_ecdsa_key_0", "mock_ecdsa_key_1", "mock_ecdsa_key_2"],
+          ed25519: [
+            "mock_ed25519_key_0",
+            "mock_ed25519_key_1",
+            "mock_ed25519_key_2",
+          ],
+        };
+
+        if (vertexId < mockKeyIds[curve].length) {
+          return mockKeyIds[curve][vertexId];
+        }
+      }
+
       throw new Error("No existing key ID found in environment variables");
     } catch (error) {
       console.error(

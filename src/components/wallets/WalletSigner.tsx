@@ -7,15 +7,10 @@ import { toast } from "~/components/ui/use-toast";
 import { useTransaction } from "~/hooks/useTransaction";
 import { useWallet } from "~/hooks/useWallet";
 import { BroadcastModal } from "./BroadcastModal";
-import { KeplrConnect } from "./KeplrConnect";
-import { MetamaskConnect } from "./MetamaskConnect";
-import { PeraConnect } from "./PeraConnect";
 import { WalletName } from "./types";
 import { Modal } from "~/components/ui/modal";
-import { UniSatConnect } from "./UniSatConnect";
-import { LitescribeConnect } from "./LitescribeConnect";
+import { SodotConnect } from "./SodotConnect";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ConnectWallet } from "../../app/portfolio/ConnectWallet";
 
@@ -38,33 +33,14 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
   );
 
   const getSignerComponent = () => {
-    switch (signer?.signer) {
-      case WalletName.KEPLR:
-        return (
-          <KeplrConnect chainId={chainId} transactionPayload={transaction} />
-        );
-      case WalletName.METAMASK:
-        return (
-          <MetamaskConnect chainId={chainId} transactionPayload={transaction} />
-        );
-      case WalletName.PERA:
-        return (
-          <PeraConnect chainId={chainId} transactionPayload={transaction} />
-        );
-      case WalletName.UNISAT:
-        return (
-          <UniSatConnect chainId={chainId} transactionPayload={transaction} />
-        );
-      case WalletName.LITESCRIBE:
-        return (
-          <LitescribeConnect
-            chainId={chainId}
-            transactionPayload={transaction}
-          />
-        );
-      default:
-        return null;
+    // Only support Sodot wallet
+    if (signer?.signer === WalletName.SODOT) {
+      return (
+        <SodotConnect chainId={chainId} transactionPayload={transaction} />
+      );
     }
+    // No other supported wallets
+    return null;
   };
 
   const handleCopyToClipboard = () => {
@@ -87,22 +63,6 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
           });
         }
       );
-    }
-  };
-
-  const shortenHash = (hash: string) => {
-    return `${hash.slice(0, 6)}...${hash.slice(-6)}`;
-  };
-
-  const handleViewTx = () => {
-    if (transactionHash && chainId) {
-      const url = `/data?chainId=${chainId}&transactionId=${transactionHash}`;
-      router.push(url);
-    } else {
-      console.error("Missing transactionHash or chainId", {
-        transactionHash,
-        chainId,
-      });
     }
   };
 
@@ -182,12 +142,14 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
   return (
     <div>
       <h1 className="font-extrabold text-2xl text-center mb-4">
-        Sign with your wallet
+        Sign with Sodot Wallet
       </h1>
       <div className="mb-8 text-center">
         Please verify your transaction before approving
       </div>
-      <div className="flex flex-row gap-4">{getSignerComponent()}</div>
+      <div className="flex flex-row gap-4 justify-center">
+        {getSignerComponent()}
+      </div>
     </div>
   );
 };
