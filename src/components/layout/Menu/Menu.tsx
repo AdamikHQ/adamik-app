@@ -6,6 +6,7 @@ import {
   SquareStack,
   Search,
   History,
+  KeyRound,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { MobileMenu } from "./MobileMenu";
@@ -38,6 +39,11 @@ const menu = [
     title: "Supported chains",
     icon: SquareStack,
     href: "/supported-chains",
+  },
+  {
+    title: "Sodot Test",
+    icon: KeyRound,
+    href: "/sodot-tutorial-test",
   },
 ];
 
