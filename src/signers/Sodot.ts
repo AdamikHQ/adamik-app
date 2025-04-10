@@ -26,132 +26,50 @@ const ensureUrlFormat = (url: string): string => {
 export class SodotSigner {
   private chainId: string;
   private signerSpec: AdamikSignerSpec;
-  private vertices: Array<{ url: string; apiKey: string }>;
+  private n = 3;
+  private t = 2;
   private keyIds: string[] = [];
+
+  // Define vertices based on the environment - all API calls go through the proxy
+  private SODOT_VERTICES = [
+    {
+      url: "/api/sodot-proxy",
+      vertexParam: "0",
+    },
+    {
+      url: "/api/sodot-proxy",
+      vertexParam: "1",
+    },
+    {
+      url: "/api/sodot-proxy",
+      vertexParam: "2",
+    },
+  ];
 
   constructor(chainId: string, signerSpec: AdamikSignerSpec) {
     this.chainId = chainId;
     this.signerSpec = signerSpec;
 
-    // Initialize vertices from environment variables
-    // First try server-side env vars (preferred), then fallback to client-side
-    const vertexUrl0 =
-      process.env.SODOT_VERTEX_URL_0 ||
-      process.env.NEXT_PUBLIC_SODOT_VERTEX_URL_0 ||
-      "";
-    const vertexApiKey0 =
-      process.env.SODOT_VERTEX_API_KEY_0 ||
-      process.env.NEXT_PUBLIC_SODOT_VERTEX_API_KEY_0 ||
-      "";
-    const vertexUrl1 =
-      process.env.SODOT_VERTEX_URL_1 ||
-      process.env.NEXT_PUBLIC_SODOT_VERTEX_URL_1 ||
-      "";
-    const vertexApiKey1 =
-      process.env.SODOT_VERTEX_API_KEY_1 ||
-      process.env.NEXT_PUBLIC_SODOT_VERTEX_API_KEY_1 ||
-      "";
-    const vertexUrl2 =
-      process.env.SODOT_VERTEX_URL_2 ||
-      process.env.NEXT_PUBLIC_SODOT_VERTEX_URL_2 ||
-      "";
-    const vertexApiKey2 =
-      process.env.SODOT_VERTEX_API_KEY_2 ||
-      process.env.NEXT_PUBLIC_SODOT_VERTEX_API_KEY_2 ||
-      "";
-
-    this.vertices = [
-      {
-        url: ensureUrlFormat(vertexUrl0),
-        apiKey: vertexApiKey0,
-      },
-      {
-        url: ensureUrlFormat(vertexUrl1),
-        apiKey: vertexApiKey1,
-      },
-      {
-        url: ensureUrlFormat(vertexUrl2),
-        apiKey: vertexApiKey2,
-      },
-    ];
-
-    // Log the vertex URLs for debugging
-    console.log(
-      `[Sodot] Vertex URLs:`,
-      this.vertices.map((v) => v.url)
-    );
-
-    // Initialize key IDs based on curve type
-    const serverSideKeyIds =
-      process.env.SODOT_EXISTING_ECDSA_KEY_IDS ||
-      process.env.SODOT_EXISTING_ED25519_KEY_IDS ||
-      "";
-    const clientSideKeyIds =
-      process.env.NEXT_PUBLIC_SODOT_EXISTING_ECDSA_KEY_IDS ||
-      process.env.NEXT_PUBLIC_SODOT_EXISTING_ED25519_KEY_IDS ||
-      "";
-
-    switch (signerSpec.curve) {
-      case AdamikCurve.SECP256K1:
-        this.keyIds = (
-          process.env.SODOT_EXISTING_ECDSA_KEY_IDS ||
-          process.env.NEXT_PUBLIC_SODOT_EXISTING_ECDSA_KEY_IDS ||
-          ""
-        )
-          .split(",")
-          .filter(Boolean);
-        console.log(
-          `[Sodot] Initialized SECP256K1 key IDs for chain ${chainId}:`,
-          this.keyIds
-        );
-        break;
-      case AdamikCurve.ED25519:
-        this.keyIds = (
-          process.env.SODOT_EXISTING_ED25519_KEY_IDS ||
-          process.env.NEXT_PUBLIC_SODOT_EXISTING_ED25519_KEY_IDS ||
-          ""
-        )
-          .split(",")
-          .filter(Boolean);
-        console.log(
-          `[Sodot] Initialized ED25519 key IDs for chain ${chainId}:`,
-          this.keyIds
-        );
-        break;
-      default:
-        throw new Error(`Unsupported curve: ${signerSpec.curve}`);
-    }
-
-    // Warn if vertices configuration is incomplete, but don't throw an error
-    if (this.vertices.some((v) => !v.url || !v.apiKey)) {
-      console.warn(
-        "[Sodot] Vertices configuration is incomplete. Some vertices may not work."
-      );
-    }
-
-    // Log the full configuration
-    console.log(`[Sodot] Initialized for chain ${chainId} with:`, {
-      curve: signerSpec.curve,
-      keyIds: this.keyIds,
-      vertices: this.vertices.map((v) => ({
-        url: v.url,
-        hasApiKey: !!v.apiKey,
-      })),
-    });
+    // Initialize key IDs based on curve type - these will be managed by the server
+    console.log(`[Sodot] Initialized for ${signerSpec.curve} chain ${chainId}`);
   }
 
-  private async makeRequest(
-    vertexIndex: number,
-    endpoint: string,
-    method: string = "POST",
+  private adamikCurveToSodotCurve(curve: AdamikCurve): "ecdsa" | "ed25519" {
+    return curve === AdamikCurve.SECP256K1 ? "ecdsa" : "ed25519";
+  }
+
+  private async callVertexEndpoint(
+    vertexId: number,
+    path: string,
+    method: string = "GET",
     body?: any,
     retryCount: number = 0
   ): Promise<any> {
-    const vertex = this.vertices[vertexIndex];
-    if (!vertex) throw new Error(`Vertex ${vertexIndex} not found`);
+    const vertex = this.SODOT_VERTICES[vertexId];
+    if (!vertex) throw new Error(`Vertex ${vertexId} not found`);
 
-    console.log(`[Sodot] Making request to vertex ${vertexIndex}:`, {
-      endpoint,
+    console.log(`[Sodot] Making request to vertex ${vertexId}:`, {
+      path,
       method,
       body,
       retryCount,
@@ -160,33 +78,35 @@ export class SodotSigner {
     try {
       // Add a unique timestamp to prevent caching issues
       const timestamp = new Date().getTime();
+      const url = `${vertex.url}${path}?vertex=${vertex.vertexParam}&t=${timestamp}`;
 
-      const response = await fetch(`/api/sodot?t=${timestamp}`, {
-        method: "POST",
+      const options: RequestInit = {
+        method: method,
         headers: {
           "Content-Type": "application/json",
           "Cache-Control": "no-cache, no-store, must-revalidate",
           Pragma: "no-cache",
         },
-        body: JSON.stringify({
-          vertexIndex,
-          endpoint,
-          method,
-          body,
-        }),
-        // Prevent caching issues
         cache: "no-store",
-      });
+      };
+
+      // Add body for POST, PUT, PATCH requests
+      if (["POST", "PUT", "PATCH"].includes(method) && body) {
+        options.body = JSON.stringify(body);
+      }
+
+      console.log(`[Sodot] Fetching ${url} with options:`, options);
+      const response = await fetch(url, options);
 
       console.log(
-        `[Sodot] Response status from vertex ${vertexIndex}:`,
+        `[Sodot] Response status from vertex ${vertexId}:`,
         response.status
       );
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error(
-          `[Sodot] Error response from vertex ${vertexIndex}:`,
+          `[Sodot] Error response from vertex ${vertexId}:`,
           errorText
         );
         throw new Error(
@@ -194,198 +114,165 @@ export class SodotSigner {
         );
       }
 
-      // Get the response text
-      const responseText = await response.text();
-      console.log(
-        `[Sodot] Raw response text from vertex ${vertexIndex}:`,
-        responseText
-      );
+      const contentType = response.headers.get("content-type") || "";
 
-      // Check if the response is empty
-      if (!responseText || responseText.trim() === "") {
-        console.error(`[Sodot] Empty response from vertex ${vertexIndex}`);
+      // Handle response based on content type
+      if (contentType.includes("application/json")) {
+        try {
+          const data = await response.json();
+          console.log(`[Sodot] Parsed JSON from vertex ${vertexId}:`, data);
+          return data;
+        } catch (e) {
+          console.error(
+            `[Sodot] Failed to parse response as JSON from vertex ${vertexId}:`,
+            e
+          );
 
-        // Retry up to 3 times on empty response
-        if (retryCount < 3) {
-          console.log(
-            `[Sodot] Retrying request to vertex ${vertexIndex} (${
+          // Retry on JSON parse error
+          if (retryCount < 3) {
+            console.log(
+              `[Sodot] Retrying request to vertex ${vertexId} (${
+                retryCount + 1
+              }/3)`
+            );
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            return this.callVertexEndpoint(
+              vertexId,
+              path,
+              method,
+              body,
               retryCount + 1
-            }/3)`
-          );
-          // Wait a short time before retrying
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          return this.makeRequest(
-            vertexIndex,
-            endpoint,
-            method,
-            body,
-            retryCount + 1
-          );
+            );
+          }
+
+          throw e;
         }
-
-        throw new Error("Empty response from server");
-      }
-
-      // Parse the JSON response
-      try {
-        const data = JSON.parse(responseText);
-        console.log(`[Sodot] Parsed JSON from vertex ${vertexIndex}:`, data);
-        return data;
-      } catch (e) {
-        console.error(
-          `[Sodot] Failed to parse response as JSON from vertex ${vertexIndex}:`,
-          e
-        );
-        console.error(
-          `[Sodot] Raw response that failed to parse:`,
-          responseText
-        );
-
-        // Retry up to 3 times on JSON parse error
-        if (retryCount < 3) {
-          console.log(
-            `[Sodot] Retrying request to vertex ${vertexIndex} (${
-              retryCount + 1
-            }/3)`
-          );
-          // Wait a short time before retrying
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          return this.makeRequest(
-            vertexIndex,
-            endpoint,
-            method,
-            body,
-            retryCount + 1
-          );
-        }
-
-        throw new Error("Invalid JSON response from server");
+      } else {
+        // Handle text response
+        const text = await response.text();
+        console.log(`[Sodot] Text response from vertex ${vertexId}:`, text);
+        return text;
       }
     } catch (error: any) {
-      console.error(`[Sodot] Request error for vertex ${vertexIndex}:`, error);
+      console.error(`[Sodot] Request error for vertex ${vertexId}:`, error);
 
-      // Retry up to 3 times on network errors
-      if (error.message.includes("Failed to fetch") && retryCount < 3) {
+      // Retry on network errors
+      if (retryCount < 3) {
         console.log(
-          `[Sodot] Retrying request to vertex ${vertexIndex} (${
-            retryCount + 1
-          }/3)`
+          `[Sodot] Retrying request to vertex ${vertexId} (${retryCount + 1}/3)`
         );
-        // Wait a short time before retrying
         await new Promise((resolve) => setTimeout(resolve, 500));
-        return this.makeRequest(
-          vertexIndex,
-          endpoint,
+        return this.callVertexEndpoint(
+          vertexId,
+          path,
           method,
           body,
           retryCount + 1
         );
       }
 
-      throw new Error(
-        `Failed to make request to vertex ${vertexIndex}: ${error.message}`
-      );
+      throw error;
     }
   }
 
-  private adamikCurveToSodotCurve(curve: AdamikCurve): "ecdsa" | "ed25519" {
-    return curve === AdamikCurve.SECP256K1 ? "ecdsa" : "ed25519";
+  private async createRoomWithVertex(vertexId: number, roomSize: number) {
+    return this.callVertexEndpoint(vertexId, "/create-room", "POST", {
+      room_size: roomSize,
+    });
+  }
+
+  private async getKeyId(vertexId: number, curve: "ecdsa" | "ed25519") {
+    try {
+      // Use environment variables to get existing key IDs
+      const keyIdsEnvVar =
+        curve === "ecdsa"
+          ? process.env.SODOT_EXISTING_ECDSA_KEY_IDS ||
+            process.env.NEXT_PUBLIC_SODOT_EXISTING_ECDSA_KEY_IDS
+          : process.env.SODOT_EXISTING_ED25519_KEY_IDS ||
+            process.env.NEXT_PUBLIC_SODOT_EXISTING_ED25519_KEY_IDS;
+
+      if (keyIdsEnvVar) {
+        const keyIds = keyIdsEnvVar.split(",");
+        if (keyIds.length > vertexId && keyIds[vertexId]) {
+          return keyIds[vertexId];
+        }
+      }
+
+      throw new Error("No existing key ID found in environment variables");
+    } catch (error) {
+      console.error(
+        `[Sodot] Error getting key ID for vertex ${vertexId}:`,
+        error
+      );
+      throw error;
+    }
+  }
+
+  private async derivePubkeyWithVertex(
+    vertexId: number,
+    derivationPath: number[],
+    curve: "ecdsa" | "ed25519"
+  ) {
+    // First, get the key ID if we don't have it yet
+    if (!this.keyIds[vertexId]) {
+      const keyId = await this.getKeyId(vertexId, curve);
+      this.keyIds[vertexId] = keyId;
+      console.log(
+        `[Sodot] Retrieved key ID for vertex ${vertexId}: ${this.keyIds[vertexId]}`
+      );
+    }
+
+    const keyId = this.keyIds[vertexId];
+    console.log(`[Sodot] Using key ID for derivation: ${keyId}`);
+
+    const result = await this.callVertexEndpoint(
+      vertexId,
+      `/${curve}/derive-pubkey`,
+      "POST",
+      {
+        key_id: keyId,
+        derivation_path: derivationPath,
+      }
+    );
+
+    // Handle different response formats based on curve and chain
+    if (curve === "ed25519" && result.pubkey) {
+      return result.pubkey;
+    } else if (curve === "ecdsa") {
+      // For Ethereum and EVM chains, use uncompressed format
+      if (
+        this.chainId === "ethereum" ||
+        this.chainId === "base" ||
+        this.chainId === "arbitrum" ||
+        this.chainId === "linea"
+      ) {
+        return result.uncompressed || result.pubkey;
+      } else {
+        // For other chains like Bitcoin, use compressed format
+        return result.compressed || result.pubkey;
+      }
+    }
+
+    // Fallback to any available format
+    return result.pubkey || result.compressed || result.uncompressed;
   }
 
   public async getPubkey(): Promise<string> {
     try {
-      if (this.keyIds.length === 0) {
-        throw new Error("No key IDs available");
-      }
-
-      const keyId = this.keyIds[0];
       const curve = this.adamikCurveToSodotCurve(this.signerSpec.curve);
 
       console.log(
-        `[Sodot] Getting pubkey for chain ${this.chainId} with curve ${curve}, keyId: ${keyId}`
+        `[Sodot] Getting pubkey for chain ${this.chainId} with curve ${curve}`
       );
 
-      // Make a POST request directly to the API route
-      const response = await fetch("/api/sodot", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          vertexIndex: 0,
-          endpoint: `/${curve}/derive-pubkey`,
-          method: "POST",
-          body: {
-            key_id: keyId,
-            derivation_path: [44, Number(this.signerSpec.coinType), 0, 0, 0],
-          },
-        }),
-      });
+      const pubkey = await this.derivePubkeyWithVertex(
+        0,
+        [44, Number(this.signerSpec.coinType), 0, 0, 0],
+        curve
+      );
 
-      // Get the response text
-      const responseText = await response.text();
-      console.log(`[Sodot] Raw response:`, responseText);
-
-      // If the response is empty, throw an error
-      if (!responseText || responseText.trim() === "") {
-        throw new Error("Empty response received");
-      }
-
-      // Parse the response
-      try {
-        const data = JSON.parse(responseText);
-        console.log(`[Sodot] Parsed response:`, data);
-
-        // Handle different response formats based on curve
-        if (curve === "ed25519" && data.pubkey) {
-          // For ED25519, return the pubkey directly
-          console.log(`[Sodot] Using ED25519 pubkey:`, data.pubkey);
-          return data.pubkey;
-        } else if (curve === "ecdsa") {
-          // For ECDSA, use the appropriate format based on the chain
-          if (
-            this.chainId === "ethereum" ||
-            this.chainId === "base" ||
-            this.chainId === "arbitrum" ||
-            this.chainId === "linea"
-          ) {
-            // Ethereum and EVM chains need uncompressed format
-            if (data.uncompressed) {
-              console.log(
-                `[Sodot] Using uncompressed pubkey for EVM chain:`,
-                data.uncompressed
-              );
-              return data.uncompressed;
-            }
-          } else {
-            // Non-EVM chains like Bitcoin use compressed format
-            if (data.compressed) {
-              console.log(
-                `[Sodot] Using compressed pubkey for non-EVM chain:`,
-                data.compressed
-              );
-              return data.compressed;
-            }
-          }
-        }
-
-        // Fallback handling for any format
-        if (data.pubkey) {
-          console.log(`[Sodot] Using pubkey:`, data.pubkey);
-          return data.pubkey;
-        } else if (data.compressed) {
-          console.log(`[Sodot] Using compressed pubkey:`, data.compressed);
-          return data.compressed;
-        } else if (data.uncompressed) {
-          console.log(`[Sodot] Using uncompressed pubkey:`, data.uncompressed);
-          return data.uncompressed;
-        } else {
-          throw new Error(`Unknown response format: ${JSON.stringify(data)}`);
-        }
-      } catch (e: any) {
-        console.error(`[Sodot] Failed to parse JSON:`, e);
-        throw new Error(`Failed to parse response as JSON: ${e.message}`);
-      }
+      console.log(`[Sodot] Retrieved pubkey: ${pubkey}`);
+      return pubkey;
     } catch (error: any) {
       console.error(`[Sodot] Error getting pubkey:`, error);
       throw new Error(`Failed to get pubkey: ${error.message}`);
@@ -393,42 +280,79 @@ export class SodotSigner {
   }
 
   public async signTransaction(encodedMessage: string): Promise<string> {
-    // Create a signing room
-    const roomResponse = await this.makeRequest(0, "/create-room", "POST", {
-      room_size: this.vertices.length,
-    });
+    try {
+      // Ensure we have key IDs
+      const curve = this.adamikCurveToSodotCurve(this.signerSpec.curve);
 
-    // Sign the transaction with each vertex
-    const curve = this.adamikCurveToSodotCurve(this.signerSpec.curve);
-    const signatures = await Promise.all(
-      this.vertices.map((_, index) =>
-        this.makeRequest(index, `/${curve}/sign`, "POST", {
-          room_uuid: roomResponse.room_uuid,
-          key_id: this.keyIds[index],
-          msg: encodedMessage,
-          derivation_path: [44, Number(this.signerSpec.coinType), 0, 0, 0],
-        })
-      )
-    );
+      // Get key IDs if we don't have them yet
+      if (this.keyIds.length === 0 || this.keyIds.some((id) => !id)) {
+        for (let i = 0; i < this.n; i++) {
+          if (!this.keyIds[i]) {
+            const keysResult = await this.callVertexEndpoint(
+              i,
+              `/v1/keys?curve=${curve}`,
+              "GET"
+            );
 
-    // Handle different signature formats
-    const signature = signatures[0]; // Use the first signature (they should all be identical)
-
-    if ("signature" in signature) {
-      return signature.signature;
-    } else if ("r" in signature && "s" in signature) {
-      // For ECDSA signatures
-      const format = this.signerSpec.signatureFormat;
-      if (format === "der") {
-        return signature.der;
-      } else {
-        // Handle other formats as needed
-        return `${signature.r}${signature.s}${signature.v.toString(16)}`;
+            if (keysResult && keysResult.keyId) {
+              this.keyIds[i] = keysResult.keyId;
+              console.log(
+                `[Sodot] Retrieved key ID for vertex ${i}: ${this.keyIds[i]}`
+              );
+            } else {
+              throw new Error(`Failed to get key ID for vertex ${i}`);
+            }
+          }
+        }
       }
-    }
 
-    // Fallback for unknown formats
-    return JSON.stringify(signature);
+      // Create a signing room
+      const roomResponse = await this.createRoomWithVertex(0, this.n);
+      const roomUuid = roomResponse.room_uuid;
+      console.log(`[Sodot] Created signing room: ${roomUuid}`);
+
+      // Ensure the message is properly formatted
+      let formattedMsg = encodedMessage;
+      if (formattedMsg.startsWith("0x")) {
+        formattedMsg = formattedMsg.substring(2);
+      }
+
+      // Sign the transaction with each vertex
+      console.log(`[Sodot] Signing message with room ${roomUuid}`);
+      const signatures = await Promise.all(
+        this.keyIds.map((keyId, index) =>
+          this.callVertexEndpoint(index, `/${curve}/sign`, "POST", {
+            room_uuid: roomUuid,
+            key_id: keyId,
+            msg: formattedMsg,
+            derivation_path: [44, Number(this.signerSpec.coinType), 0, 0, 0],
+          })
+        )
+      );
+
+      // Handle different signature formats
+      const signature = signatures[0]; // Use the first signature
+      console.log(`[Sodot] Received signature:`, signature);
+
+      if ("signature" in signature) {
+        return signature.signature;
+      } else if ("r" in signature && "s" in signature) {
+        // For ECDSA signatures
+        const format = this.signerSpec.signatureFormat;
+        if (format === "der") {
+          return signature.der;
+        } else {
+          // Handle other formats as needed
+          return `${signature.r}${signature.s}${signature.v.toString(16)}`;
+        }
+      }
+
+      // Fallback for unknown formats
+      return JSON.stringify(signature);
+    } catch (error: any) {
+      console.error(`[Sodot] Error signing transaction:`, error);
+      throw new Error(`Failed to sign transaction: ${error.message}`);
+    }
   }
 
   public async getAddress(): Promise<string> {

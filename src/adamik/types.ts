@@ -1,3 +1,5 @@
+//TODO, move to utils/types.ts
+
 export enum AdamikCurve {
   SECP256K1 = "secp256k1",
   ED25519 = "ed25519",
