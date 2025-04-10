@@ -11,11 +11,10 @@ export interface IWallet {
   id: string;
   families: string[];
   icon: string;
-  withoutBroadcast: boolean;
   connect: () => Promise<string[]>;
   getAddresses: () => Promise<string[]>;
-  getDiscoveryMethod?: () => Promise<string[]>; // pubKey for cosmos, address for ethereum
-  changeAddressEvent?: (callback: (address: string) => void) => void;
+  getPubkey: () => Promise<string>;
+  signTransaction: (encodedMessage: string) => Promise<string>;
 }
 
 export type Account = {
@@ -26,11 +25,7 @@ export type Account = {
 };
 
 export enum WalletName {
-  METAMASK = "metamask",
-  KEPLR = "keplr",
-  PERA = "pera",
-  UNISAT = "unisat",
-  LITESCRIBE = "litescribe",
+  SODOT = "sodot",
 }
 
 export type WalletConnectorProps = {
