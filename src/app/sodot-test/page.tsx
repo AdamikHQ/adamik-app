@@ -9,6 +9,7 @@ import {
   AdamikHashFunction,
   AdamikSignerSpec,
 } from "~/adamik/types";
+import { encodePubKeyToAddress } from "~/api/adamik/encode";
 import { AlertCircle, CheckCircle2, Loader2, Lock, Server } from "lucide-react";
 
 type VertexKeysResult = {
@@ -38,35 +39,59 @@ type Results = {
   chainPubkey?: ChainPubkeyResult;
 };
 
-export default function SodotTutorialTestPage() {
+export default function SodotTestPage() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Results | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Add effect to monitor state changes
+  console.log("Component render - Current state:", {
+    results,
+    error,
+    success,
+    loading,
+  });
 
   const testEthereumPubkey = async () => {
     setLoading(true);
     setError(null);
     setSuccess(null);
     try {
-      // Create ethereum signer spec
-      const signerSpec: AdamikSignerSpec = {
-        curve: AdamikCurve.SECP256K1,
-        coinType: "60", // Ethereum
-        hashFunction: AdamikHashFunction.KECCAK256,
-        signatureFormat: "r|s|v",
-      };
+      console.log("Starting Ethereum pubkey test");
 
-      // Initialize the Sodot signer
-      const signer = new SodotSigner("ethereum", signerSpec);
+      // Call our backend endpoint for Ethereum pubkey
+      console.log("Fetching pubkey from backend");
+      const response = await fetch(
+        "/api/sodot-proxy/derive-chain-pubkey?chain=ethereum",
+        {
+          method: "GET",
+          cache: "no-store",
+        }
+      );
 
-      // Get the pubkey
-      const pubkey = await signer.getPubkey();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
 
-      // Get the address (which calls the Adamik API)
-      const address = await signer.getAddress();
+      const data = await response.json();
+      console.log("Received pubkey data:", data);
+
+      // Get the pubkey from the response
+      const pubkey = data.data.pubkey;
+      console.log("Extracted pubkey:", pubkey);
+
+      // Use the Adamik API to get the address from the pubkey
+      console.log("Calling encodePubKeyToAddress for Ethereum");
+      const addressResult = await encodePubKeyToAddress(pubkey, "ethereum");
+      console.log("Received address result:", addressResult);
+      const address = addressResult.address;
 
       // Store the results
+      console.log("Setting state with pubkey and address");
       setResults(
         (prev: Results | null): Results => ({
           ...prev,
@@ -78,11 +103,13 @@ export default function SodotTutorialTestPage() {
           },
         })
       );
+      console.log("State updated, setting success message");
       setSuccess("Successfully retrieved Ethereum pubkey and address");
     } catch (e: any) {
+      console.error("Error in testEthereumPubkey:", e);
       setError(e.message || "Unknown error occurred");
-      console.error("Error testing Ethereum pubkey:", e);
     } finally {
+      console.log("Setting loading to false");
       setLoading(false);
     }
   };
@@ -92,24 +119,40 @@ export default function SodotTutorialTestPage() {
     setError(null);
     setSuccess(null);
     try {
-      // Create bitcoin signer spec
-      const signerSpec: AdamikSignerSpec = {
-        curve: AdamikCurve.SECP256K1,
-        coinType: "0", // Bitcoin
-        hashFunction: AdamikHashFunction.SHA256,
-        signatureFormat: "der",
-      };
+      console.log("Starting Bitcoin pubkey test");
 
-      // Initialize the Sodot signer
-      const signer = new SodotSigner("bitcoin", signerSpec);
+      // Call our backend endpoint for Bitcoin pubkey
+      console.log("Fetching pubkey from backend");
+      const response = await fetch(
+        "/api/sodot-proxy/derive-chain-pubkey?chain=bitcoin",
+        {
+          method: "GET",
+          cache: "no-store",
+        }
+      );
 
-      // Get the pubkey
-      const pubkey = await signer.getPubkey();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
 
-      // Get the address (which calls the Adamik API)
-      const address = await signer.getAddress();
+      const data = await response.json();
+      console.log("Received pubkey data:", data);
+
+      // Get the pubkey from the response
+      const pubkey = data.data.pubkey;
+      console.log("Extracted pubkey:", pubkey);
+
+      // Use the Adamik API to get the address from the pubkey
+      console.log("Calling encodePubKeyToAddress for Bitcoin");
+      const addressResult = await encodePubKeyToAddress(pubkey, "bitcoin");
+      console.log("Received address result:", addressResult);
+      const address = addressResult.address;
 
       // Store the results
+      console.log("Setting state with pubkey and address");
       setResults(
         (prev: Results | null): Results => ({
           ...prev,
@@ -121,54 +164,74 @@ export default function SodotTutorialTestPage() {
           },
         })
       );
+      console.log("State updated, setting success message");
       setSuccess("Successfully retrieved Bitcoin pubkey and address");
     } catch (e: any) {
+      console.error("Error in testBitcoinPubkey:", e);
       setError(e.message || "Unknown error occurred");
-      console.error("Error testing Bitcoin pubkey:", e);
     } finally {
+      console.log("Setting loading to false");
       setLoading(false);
     }
   };
 
-  const testSolanaPubkey = async () => {
+  const testTONPubkey = async () => {
     setLoading(true);
     setError(null);
     setSuccess(null);
     try {
-      // Create solana signer spec
-      const signerSpec: AdamikSignerSpec = {
-        curve: AdamikCurve.ED25519,
-        coinType: "501", // Solana
-        hashFunction: AdamikHashFunction.SHA256,
-        signatureFormat: "signature",
-      };
+      console.log("Starting TON pubkey test");
 
-      // Initialize the Sodot signer
-      const signer = new SodotSigner("solana", signerSpec);
+      // Call our backend endpoint for TON pubkey
+      console.log("Fetching pubkey from backend");
+      const response = await fetch(
+        "/api/sodot-proxy/derive-chain-pubkey?chain=ton",
+        {
+          method: "GET",
+          cache: "no-store",
+        }
+      );
 
-      // Get the pubkey
-      const pubkey = await signer.getPubkey();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
 
-      // Get the address (which calls the Adamik API)
-      const address = await signer.getAddress();
+      const data = await response.json();
+      console.log("Received pubkey data:", data);
+
+      // Get the pubkey from the response
+      const pubkey = data.data.pubkey;
+      console.log("Extracted TON pubkey:", pubkey);
+
+      // Use the Adamik API to get the address from the pubkey
+      console.log("Calling encodePubKeyToAddress for TON");
+      const addressResult = await encodePubKeyToAddress(pubkey, "ton");
+      console.log("Received TON address result:", addressResult);
+      const address = addressResult.address;
 
       // Store the results
+      console.log("Setting state with TON pubkey and address");
       setResults(
         (prev: Results | null): Results => ({
           ...prev,
           chainPubkey: {
             pubkey,
             address,
-            chainId: "solana",
-            curve: "ED25519",
+            chainId: "ton",
+            curve: "SECP256K1",
           },
         })
       );
-      setSuccess("Successfully retrieved Solana pubkey and address");
+      console.log("State updated, setting success message");
+      setSuccess("Successfully retrieved TON pubkey and address");
     } catch (e: any) {
+      console.error("Error in testTONPubkey:", e);
       setError(e.message || "Unknown error occurred");
-      console.error("Error testing Solana pubkey:", e);
     } finally {
+      console.log("Setting loading to false");
       setLoading(false);
     }
   };
@@ -178,24 +241,40 @@ export default function SodotTutorialTestPage() {
     setError(null);
     setSuccess(null);
     try {
-      // Create tron signer spec
-      const signerSpec: AdamikSignerSpec = {
-        curve: AdamikCurve.SECP256K1,
-        coinType: "195", // Tron
-        hashFunction: AdamikHashFunction.KECCAK256,
-        signatureFormat: "r|s|v",
-      };
+      console.log("Starting Tron pubkey test");
 
-      // Initialize the Sodot signer
-      const signer = new SodotSigner("tron", signerSpec);
+      // Call our backend endpoint for Tron pubkey
+      console.log("Fetching pubkey from backend");
+      const response = await fetch(
+        "/api/sodot-proxy/derive-chain-pubkey?chain=tron",
+        {
+          method: "GET",
+          cache: "no-store",
+        }
+      );
 
-      // Get the pubkey
-      const pubkey = await signer.getPubkey();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
 
-      // Get the address (which calls the Adamik API)
-      const address = await signer.getAddress();
+      const data = await response.json();
+      console.log("Received pubkey data:", data);
+
+      // Get the pubkey from the response
+      const pubkey = data.data.pubkey;
+      console.log("Extracted pubkey:", pubkey);
+
+      // Use the Adamik API to get the address from the pubkey
+      console.log("Calling encodePubKeyToAddress for Tron");
+      const addressResult = await encodePubKeyToAddress(pubkey, "tron");
+      console.log("Received address result:", addressResult);
+      const address = addressResult.address;
 
       // Store the results
+      console.log("Setting state with pubkey and address");
       setResults(
         (prev: Results | null): Results => ({
           ...prev,
@@ -207,11 +286,74 @@ export default function SodotTutorialTestPage() {
           },
         })
       );
+      console.log("State updated, setting success message");
       setSuccess("Successfully retrieved Tron pubkey and address");
     } catch (e: any) {
+      console.error("Error in testTronPubkey:", e);
       setError(e.message || "Unknown error occurred");
-      console.error("Error testing Tron pubkey:", e);
     } finally {
+      console.log("Setting loading to false");
+      setLoading(false);
+    }
+  };
+
+  const testAlgorandPubkey = async () => {
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      console.log("Starting Algorand pubkey test");
+
+      // Call our backend endpoint for Algorand pubkey
+      console.log("Fetching pubkey from backend");
+      const response = await fetch(
+        "/api/sodot-proxy/derive-chain-pubkey?chain=algorand",
+        {
+          method: "GET",
+          cache: "no-store",
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+      console.log("Received pubkey data:", data);
+
+      // Get the pubkey from the response
+      const pubkey = data.data.pubkey;
+      console.log("Extracted Algorand pubkey:", pubkey);
+
+      // Use the Adamik API to get the address from the pubkey
+      console.log("Calling encodePubKeyToAddress for Algorand");
+      const addressResult = await encodePubKeyToAddress(pubkey, "algorand");
+      console.log("Received Algorand address result:", addressResult);
+      const address = addressResult.address;
+
+      // Store the results
+      console.log("Setting state with Algorand pubkey and address");
+      setResults(
+        (prev: Results | null): Results => ({
+          ...prev,
+          chainPubkey: {
+            pubkey,
+            address,
+            chainId: "algorand",
+            curve: "ED25519",
+          },
+        })
+      );
+      console.log("State updated, setting success message");
+      setSuccess("Successfully retrieved Algorand pubkey and address");
+    } catch (e: any) {
+      console.error("Error in testAlgorandPubkey:", e);
+      setError(e.message || "Unknown error occurred");
+    } finally {
+      console.log("Setting loading to false");
       setLoading(false);
     }
   };
@@ -225,6 +367,10 @@ export default function SodotTutorialTestPage() {
         method: "GET",
         cache: "no-store",
       });
+
+      if (!response.ok) {
+        throw new Error(`Failed to get keys: ${response.status}`);
+      }
 
       const data = await response.json();
 
@@ -259,7 +405,7 @@ export default function SodotTutorialTestPage() {
             <CardTitle>Connection Test</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="flex flex-col md:flex-row gap-4 mb-6 flex-wrap">
               <Button
                 onClick={getVertexKeys}
                 disabled={loading}
@@ -306,7 +452,7 @@ export default function SodotTutorialTestPage() {
                 )}
               </Button>
               <Button
-                onClick={testSolanaPubkey}
+                onClick={testTONPubkey}
                 disabled={loading}
                 variant="default"
                 className="w-full md:w-auto"
@@ -317,7 +463,7 @@ export default function SodotTutorialTestPage() {
                     Testing...
                   </>
                 ) : (
-                  "Solana"
+                  "TON"
                 )}
               </Button>
               <Button
@@ -333,6 +479,21 @@ export default function SodotTutorialTestPage() {
                   </>
                 ) : (
                   "Tron"
+                )}
+              </Button>
+              <Button
+                onClick={testAlgorandPubkey}
+                disabled={loading}
+                variant="default"
+                className="w-full md:w-auto"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Testing...
+                  </>
+                ) : (
+                  "Algorand"
                 )}
               </Button>
             </div>
@@ -354,45 +515,60 @@ export default function SodotTutorialTestPage() {
             {results && (
               <div className="space-y-4">
                 {results.chainPubkey && (
-                  <div className="bg-gray-100 p-4 rounded">
-                    <h2 className="font-bold">Pubkey Results:</h2>
-                    <div>Chain: {results.chainPubkey.chainId}</div>
-                    <div>Curve: {results.chainPubkey.curve}</div>
-                    <div className="break-all">
+                  <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded">
+                    <h2 className="font-bold text-black dark:text-white">
+                      Pubkey Results:
+                    </h2>
+                    <div className="text-black dark:text-white">
+                      Chain: {results.chainPubkey.chainId}
+                    </div>
+                    <div className="text-black dark:text-white">
+                      Curve: {results.chainPubkey.curve}
+                    </div>
+                    <div className="break-all text-black dark:text-white">
                       Pubkey: {results.chainPubkey.pubkey}
                     </div>
-                    <div className="break-all">
+                    <div className="break-all text-black dark:text-white">
                       Address: {results.chainPubkey.address}
                     </div>
                   </div>
                 )}
 
+                {/* Debug output */}
+                <pre className="bg-gray-200 dark:bg-gray-700 p-4 rounded text-xs overflow-auto text-black dark:text-white">
+                  {JSON.stringify({ results, success, error }, null, 2)}
+                </pre>
+
                 {results.vertexKeys &&
                   results.vertexKeys.data &&
                   results.vertexKeys.data.vertices &&
                   results.vertexKeys.data.vertices.length > 0 && (
-                    <div className="bg-gray-100 p-4 rounded">
-                      <h2 className="font-bold mb-2">Vertex Keys:</h2>
+                    <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded">
+                      <h2 className="font-bold mb-2 text-black dark:text-white">
+                        Vertex Keys:
+                      </h2>
                       <div className="space-y-4">
                         {results.vertexKeys.data.vertices.map((vertex) => (
                           <div key={vertex.id} className="border-t pt-2">
-                            <h3 className="font-semibold">
+                            <h3 className="font-semibold text-black dark:text-white">
                               Vertex {vertex.id}
                             </h3>
-                            <div>Status: {vertex.status}</div>
+                            <div className="text-black dark:text-white">
+                              Status: {vertex.status}
+                            </div>
                             {vertex.error && (
                               <div className="text-red-500">
                                 Error: {vertex.error}
                               </div>
                             )}
                             {vertex.compressed && (
-                              <div className="break-all">
+                              <div className="break-all text-black dark:text-white">
                                 <span className="font-medium">Compressed:</span>{" "}
                                 {vertex.compressed}
                               </div>
                             )}
                             {vertex.uncompressed && (
-                              <div className="break-all">
+                              <div className="break-all text-black dark:text-white">
                                 <span className="font-medium">
                                   Uncompressed:
                                 </span>{" "}
@@ -438,7 +614,7 @@ export default function SodotTutorialTestPage() {
               </li>
               <li>
                 Support for multiple blockchain cryptography (ECDSA for
-                Bitcoin/Ethereum, ED25519 for Solana)
+                Bitcoin/Ethereum/TON/Tron, ED25519 for Algorand)
               </li>
               <li>Integration with Adamik API for address derivation</li>
             </ul>
