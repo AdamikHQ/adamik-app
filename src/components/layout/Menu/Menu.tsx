@@ -43,7 +43,7 @@ const menu = [
   {
     title: "Sodot Test",
     icon: KeyRound,
-    href: "/sodot-tutorial-test",
+    href: "/sodot-test",
   },
 ];
 

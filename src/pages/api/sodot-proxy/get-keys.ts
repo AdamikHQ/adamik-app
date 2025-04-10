@@ -1,11 +1,24 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import { env } from "~/env";
+
+// Helper function to get the base URL
+function getBaseUrl(req: NextApiRequest): string {
+  // Prefer Vercel URL if available (for production)
+  if (process.env.NEXT_PUBLIC_VERCEL_URL) {
+    return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
+  }
+  // Use request headers for local development
+  const protocol = req.headers["x-forwarded-proto"] || "http";
+  const host = req.headers.host || "localhost:3000";
+  return `${protocol}://${host}`;
+}
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   try {
-    // First check if we have the key IDs
+    // Check if we have the pre-configured key IDs
     const keyIds = process.env.SODOT_EXISTING_ECDSA_KEY_IDS?.split(",");
 
     if (!keyIds || keyIds.length < 3) {
@@ -16,7 +29,9 @@ export default async function handler(
       });
     }
 
-    // Make parallel requests to all vertices
+    const baseUrl = getBaseUrl(req);
+
+    // Make parallel requests to derive pubkeys from all vertices
     const vertexPromises = [0, 1, 2].map(async (vertexId) => {
       try {
         const keyId = keyIds[vertexId];
@@ -24,12 +39,9 @@ export default async function handler(
           throw new Error(`No key ID found for vertex ${vertexId}`);
         }
 
+        // Use our proxy to call derive-pubkey
         const response = await fetch(
-          `${
-            process.env.NEXT_PUBLIC_VERCEL_URL ||
-            req.headers.origin ||
-            "http://localhost:3000"
-          }/api/sodot-proxy/ecdsa/derive-pubkey?vertex=${vertexId}`,
+          `${baseUrl}/api/sodot-proxy/ecdsa/derive-pubkey?vertex=${vertexId}`,
           {
             method: "POST",
             headers: {
@@ -37,13 +49,16 @@ export default async function handler(
             },
             body: JSON.stringify({
               key_id: keyId,
-              derivation_path: [44, 60, 0, 0, 0],
+              derivation_path: [44, 60, 0, 0, 0], // Default Ethereum path
             }),
           }
         );
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorText = await response.text();
+          throw new Error(
+            `HTTP error! status: ${response.status} - ${errorText}`
+          );
         }
 
         const result = await response.json();
@@ -58,7 +73,7 @@ export default async function handler(
           uncompressed: result.data.uncompressed,
         };
       } catch (e: any) {
-        console.error(`Error getting keys from vertex ${vertexId}:`, e);
+        console.error(`Error getting pubkey from vertex ${vertexId}:`, e);
         return {
           vertexId,
           status: 500,
@@ -82,6 +97,7 @@ export default async function handler(
       },
     });
   } catch (error: any) {
+    console.error("Error in get-keys handler:", error);
     return res.status(500).json({
       status: 500,
       error: "Failed to get keys",
