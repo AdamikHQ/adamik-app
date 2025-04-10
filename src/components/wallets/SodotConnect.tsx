@@ -2,16 +2,11 @@ import React, { useCallback, useState, useEffect } from "react";
 import { useToast } from "~/components/ui/use-toast";
 import { useWallet } from "~/hooks/useWallet";
 import { Account, WalletConnectorProps, WalletName } from "./types";
-import { SodotSigner } from "~/signers/Sodot";
-import {
-  AdamikCurve,
-  AdamikHashFunction,
-  AdamikSignerSpec,
-  Chain,
-} from "~/utils/types";
+import { Chain } from "~/utils/types";
 import { Button } from "~/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { getChains } from "~/api/adamik/chains";
+import { encodePubKeyToAddress } from "~/api/adamik/encode";
 import {
   Select,
   SelectContent,
@@ -20,6 +15,9 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Card } from "~/components/ui/card";
+
+// Default chains to show in the UI
+const DEFAULT_CHAINS = ["ethereum", "bitcoin", "solana"];
 
 export const SodotConnect: React.FC<WalletConnectorProps> = ({
   chainId: providedChainId,
@@ -41,6 +39,16 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
         const chainsData = await getChains();
         if (chainsData) {
           setChains(chainsData);
+
+          // Auto-select first chain if none provided and we're not in transaction mode
+          if (!providedChainId && !selectedChainId && !transactionPayload) {
+            const firstDefaultChain = DEFAULT_CHAINS.find(
+              (id) => chainsData[id]
+            );
+            if (firstDefaultChain) {
+              setSelectedChainId(firstDefaultChain);
+            }
+          }
         } else {
           setError("Failed to load chain information");
         }
@@ -51,7 +59,7 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
     };
 
     fetchChains();
-  }, []);
+  }, [providedChainId, selectedChainId, transactionPayload]);
 
   // Update selected chain when providedChainId changes
   useEffect(() => {
@@ -59,6 +67,52 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
       setSelectedChainId(providedChainId);
     }
   }, [providedChainId]);
+
+  const getAddressForChain = async (chainId: string) => {
+    if (!chains || !chains[chainId]) {
+      throw new Error(`Chain ${chainId} not supported`);
+    }
+
+    // Call our backend endpoint for the chain pubkey
+    console.log(`[SodotConnect] Fetching pubkey for ${chainId}`);
+    const response = await fetch(
+      `/api/sodot-proxy/derive-chain-pubkey?chain=${chainId}`,
+      {
+        method: "GET",
+        cache: "no-store",
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.message || `HTTP error! status: ${response.status}`
+      );
+    }
+
+    const data = await response.json();
+    console.log(`[SodotConnect] Received pubkey data for ${chainId}:`, data);
+
+    // Get the pubkey from the response
+    const pubkey = data.data.pubkey;
+    console.log(`[SodotConnect] Extracted ${chainId} pubkey:`, pubkey);
+
+    // Use the encodePubKeyToAddress API endpoint directly
+    console.log(`[SodotConnect] Encoding address for ${chainId}`);
+
+    try {
+      const { address } = await encodePubKeyToAddress(pubkey, chainId);
+      console.log(`[SodotConnect] Address for ${chainId}:`, address);
+      return { pubkey, address };
+    } catch (e) {
+      console.error(`[SodotConnect] Error encoding address:`, e);
+      throw new Error(
+        `Failed to encode address: ${
+          e instanceof Error ? e.message : String(e)
+        }`
+      );
+    }
+  };
 
   const getAddresses = useCallback(async () => {
     if (!chains || !selectedChainId) {
@@ -69,37 +123,11 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
       return;
     }
 
-    const chain = chains[selectedChainId];
-    if (!chain) {
-      toast({
-        description: `Chain ${selectedChainId} not supported`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     setLoading(true);
+    setError(null);
 
     try {
-      // Create signer spec from the chain data
-      const signerSpec: AdamikSignerSpec = {
-        curve:
-          chain.signerSpec.curve === "secp256k1"
-            ? AdamikCurve.SECP256K1
-            : AdamikCurve.ED25519,
-        hashFunction:
-          chain.signerSpec.hashFunction === "keccak256"
-            ? AdamikHashFunction.KECCAK256
-            : AdamikHashFunction.SHA256,
-        coinType: chain.signerSpec.coinType,
-        signatureFormat: chain.signerSpec.signatureFormat,
-      };
-
-      const sodotSigner = new SodotSigner(selectedChainId, signerSpec);
-
-      // Get public key and address
-      const pubkey = await sodotSigner.getPubkey();
-      const address = await sodotSigner.getAddress();
+      const { pubkey, address } = await getAddressForChain(selectedChainId);
 
       // Create account with the address and public key
       const account: Account = {
@@ -112,8 +140,9 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
       addAddresses([account]);
 
       toast({
-        description:
-          "Connected to Sodot Wallet, please check portfolio page to see your assets",
+        description: `Connected Sodot Wallet for ${
+          chains[selectedChainId]?.name || selectedChainId
+        }`,
       });
     } catch (e) {
       console.error("Sodot connection error:", e);
@@ -131,38 +160,30 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
   const sign = useCallback(async () => {
     if (!transactionPayload || !chains || !providedChainId) return;
 
-    const chain = chains[providedChainId];
-    if (!chain) {
-      toast({
-        description: `Chain ${providedChainId} not supported`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     setLoading(true);
 
     try {
-      // Create signer spec from the chain data
-      const signerSpec: AdamikSignerSpec = {
-        curve:
-          chain.signerSpec.curve === "secp256k1"
-            ? AdamikCurve.SECP256K1
-            : AdamikCurve.ED25519,
-        hashFunction:
-          chain.signerSpec.hashFunction === "keccak256"
-            ? AdamikHashFunction.KECCAK256
-            : AdamikHashFunction.SHA256,
-        coinType: chain.signerSpec.coinType,
-        signatureFormat: chain.signerSpec.signatureFormat,
-      };
+      // Call the API to sign the transaction
+      const response = await fetch(`/api/sodot-proxy/${providedChainId}/sign`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          transaction: transactionPayload.encoded,
+        }),
+      });
 
-      const sodotSigner = new SodotSigner(providedChainId, signerSpec);
-      const signature = await sodotSigner.signTransaction(
-        transactionPayload.encoded
-      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
 
-      // Handle the signature as needed
+      const data = await response.json();
+      const signature = data.signature;
+
       console.log("Transaction signed:", signature);
 
       toast({
@@ -218,7 +239,7 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
     );
   }
 
-  // If no chainId is provided, show chain selector
+  // If no chainId is provided, show chain selector with default chains
   return (
     <Card className="p-4 w-full">
       <h3 className="text-lg font-medium mb-4">Connect Sodot Wallet</h3>
@@ -234,10 +255,24 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
               <SelectValue placeholder="Select a chain" />
             </SelectTrigger>
             <SelectContent>
+              {/* Show default chains first */}
+              {DEFAULT_CHAINS.map(
+                (chainId) =>
+                  chains[chainId] && (
+                    <SelectItem key={chainId} value={chainId}>
+                      {chains[chainId].name} ({chains[chainId].ticker})
+                    </SelectItem>
+                  )
+              )}
+              <SelectItem disabled value="divider">
+                — All Chains —
+              </SelectItem>
+              {/* Then show all chains */}
               {Object.entries(chains)
+                .filter(([chainId]) => !DEFAULT_CHAINS.includes(chainId))
                 .sort(([, a], [, b]) => a.name.localeCompare(b.name))
-                .map(([id, chain]) => (
-                  <SelectItem key={id} value={id}>
+                .map(([chainId, chain]) => (
+                  <SelectItem key={chainId} value={chainId}>
                     {chain.name} ({chain.ticker})
                   </SelectItem>
                 ))}

@@ -183,38 +183,66 @@ export class SodotSigner {
 
   private async getKeyId(vertexId: number, curve: "ecdsa" | "ed25519") {
     try {
-      // Use environment variables to get existing key IDs
-      const keyIdsEnvVar =
-        curve === "ecdsa"
-          ? process.env.SODOT_EXISTING_ECDSA_KEY_IDS ||
-            process.env.NEXT_PUBLIC_SODOT_EXISTING_ECDSA_KEY_IDS
-          : process.env.SODOT_EXISTING_ED25519_KEY_IDS ||
-            process.env.NEXT_PUBLIC_SODOT_EXISTING_ED25519_KEY_IDS;
+      // In client-side code, we need to use the NEXT_PUBLIC_ environment variables
+      // or server environment variables proxied through API routes
+      let keyIdsStr: string | undefined;
 
-      if (keyIdsEnvVar) {
-        const keyIds = keyIdsEnvVar.split(",");
-        if (keyIds.length > vertexId && keyIds[vertexId]) {
-          return keyIds[vertexId];
+      // First try using the browser-accessible environment variables
+      if (typeof window !== "undefined") {
+        const envVar =
+          curve === "ecdsa"
+            ? "NEXT_PUBLIC_SODOT_EXISTING_ECDSA_KEY_IDS"
+            : "NEXT_PUBLIC_SODOT_EXISTING_ED25519_KEY_IDS";
+
+        keyIdsStr = process.env[envVar];
+        console.log(
+          `[Sodot] Attempting to use client-side env var ${envVar}:`,
+          keyIdsStr ? "found" : "not found"
+        );
+      }
+
+      // If not found, try to fetch the key IDs from the server
+      if (!keyIdsStr) {
+        console.log(
+          `[Sodot] Client-side key IDs not found, fetching from server API`
+        );
+        try {
+          const response = await fetch(
+            `/api/sodot-proxy/get-key-ids?curve=${curve}`,
+            {
+              method: "GET",
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            keyIdsStr = data.keyIds;
+            console.log(
+              `[Sodot] Server provided key IDs:`,
+              keyIdsStr ? "success" : "failed"
+            );
+          } else {
+            console.error(
+              `[Sodot] Failed to get key IDs from server:`,
+              await response.text()
+            );
+          }
+        } catch (err) {
+          console.error(`[Sodot] Error fetching key IDs from server:`, err);
         }
       }
 
-      // For development, use mock key IDs when env vars are not available
-      if (process.env.NODE_ENV !== "production") {
-        console.log(
-          `[Sodot] Using mock key ID for ${curve} vertex ${vertexId} in development`
-        );
-        // Use predictable mock key IDs based on curve and vertex
-        const mockKeyIds = {
-          ecdsa: ["mock_ecdsa_key_0", "mock_ecdsa_key_1", "mock_ecdsa_key_2"],
-          ed25519: [
-            "mock_ed25519_key_0",
-            "mock_ed25519_key_1",
-            "mock_ed25519_key_2",
-          ],
-        };
-
-        if (vertexId < mockKeyIds[curve].length) {
-          return mockKeyIds[curve][vertexId];
+      // If we have key IDs, use them
+      if (keyIdsStr) {
+        const keyIds = keyIdsStr.split(",");
+        if (keyIds.length > vertexId && keyIds[vertexId]) {
+          console.log(
+            `[Sodot] Using key ID for vertex ${vertexId}: ${keyIds[
+              vertexId
+            ].substring(0, 8)}...`
+          );
+          return keyIds[vertexId];
         }
       }
 
