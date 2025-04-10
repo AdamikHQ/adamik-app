@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { SodotSigner } from "~/signers/Sodot";
@@ -10,7 +10,23 @@ import {
   AdamikSignerSpec,
 } from "~/utils/types";
 import { encodePubKeyToAddress } from "~/api/adamik/encode";
-import { AlertCircle, CheckCircle2, Loader2, Lock, Server } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  Lock,
+  Server,
+  ChevronDown,
+} from "lucide-react";
+import { getChains } from "~/api/adamik/chains";
+import { Chain } from "~/utils/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 
 type VertexKeysResult = {
   status?: number;
@@ -44,6 +60,23 @@ export default function SodotTestPage() {
   const [results, setResults] = useState<Results | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [chains, setChains] = useState<Record<string, Chain> | null>(null);
+  const [selectedChain, setSelectedChain] = useState<string>("");
+
+  // Fetch chains when component mounts
+  useEffect(() => {
+    const fetchChains = async () => {
+      try {
+        const chainsData = await getChains();
+        setChains(chainsData);
+      } catch (e) {
+        console.error("Error fetching chains:", e);
+        setError("Failed to load chain information");
+      }
+    };
+
+    fetchChains();
+  }, []);
 
   // Add effect to monitor state changes
   console.log("Component render - Current state:", {
@@ -51,19 +84,32 @@ export default function SodotTestPage() {
     error,
     success,
     loading,
+    chains,
+    selectedChain,
   });
 
-  const testEthereumPubkey = async () => {
+  const testChainPubkey = async () => {
+    if (!chains || !selectedChain) {
+      setError("Please select a chain first");
+      return;
+    }
+
+    if (!chains[selectedChain]) {
+      setError(`Chain ${selectedChain} not found in available chains`);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSuccess(null);
-    try {
-      console.log("Starting Ethereum pubkey test");
 
-      // Call our backend endpoint for Ethereum pubkey
+    try {
+      console.log(`Starting ${selectedChain} pubkey test`);
+
+      // Call our backend endpoint for the chain pubkey
       console.log("Fetching pubkey from backend");
       const response = await fetch(
-        "/api/sodot-proxy/derive-chain-pubkey?chain=ethereum",
+        `/api/sodot-proxy/derive-chain-pubkey?chain=${selectedChain}`,
         {
           method: "GET",
           cache: "no-store",
@@ -82,31 +128,35 @@ export default function SodotTestPage() {
 
       // Get the pubkey from the response
       const pubkey = data.data.pubkey;
-      console.log("Extracted pubkey:", pubkey);
+      console.log(`Extracted ${selectedChain} pubkey:`, pubkey);
 
       // Use the Adamik API to get the address from the pubkey
-      console.log("Calling encodePubKeyToAddress for Ethereum");
-      const addressResult = await encodePubKeyToAddress(pubkey, "ethereum");
-      console.log("Received address result:", addressResult);
+      console.log(`Calling encodePubKeyToAddress for ${selectedChain}`);
+      const addressResult = await encodePubKeyToAddress(pubkey, selectedChain);
+      console.log(`Received ${selectedChain} address result:`, addressResult);
       const address = addressResult.address;
 
       // Store the results
       console.log("Setting state with pubkey and address");
+      const chainInfo = chains[selectedChain];
+      const curveType =
+        chainInfo.signerSpec.curve === "secp256k1" ? "SECP256K1" : "ED25519";
+
       setResults(
         (prev: Results | null): Results => ({
           ...prev,
           chainPubkey: {
             pubkey,
             address,
-            chainId: "ethereum",
-            curve: "SECP256K1",
+            chainId: selectedChain,
+            curve: curveType,
           },
         })
       );
       console.log("State updated, setting success message");
-      setSuccess("Successfully retrieved Ethereum pubkey and address");
+      setSuccess(`Successfully retrieved ${selectedChain} pubkey and address`);
     } catch (e: any) {
-      console.error("Error in testEthereumPubkey:", e);
+      console.error(`Error in testChainPubkey for ${selectedChain}:`, e);
       setError(e.message || "Unknown error occurred");
     } finally {
       console.log("Setting loading to false");
@@ -114,249 +164,15 @@ export default function SodotTestPage() {
     }
   };
 
-  const testBitcoinPubkey = async () => {
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-    try {
-      console.log("Starting Bitcoin pubkey test");
-
-      // Call our backend endpoint for Bitcoin pubkey
-      console.log("Fetching pubkey from backend");
-      const response = await fetch(
-        "/api/sodot-proxy/derive-chain-pubkey?chain=bitcoin",
-        {
-          method: "GET",
-          cache: "no-store",
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      const data = await response.json();
-      console.log("Received pubkey data:", data);
-
-      // Get the pubkey from the response
-      const pubkey = data.data.pubkey;
-      console.log("Extracted pubkey:", pubkey);
-
-      // Use the Adamik API to get the address from the pubkey
-      console.log("Calling encodePubKeyToAddress for Bitcoin");
-      const addressResult = await encodePubKeyToAddress(pubkey, "bitcoin");
-      console.log("Received address result:", addressResult);
-      const address = addressResult.address;
-
-      // Store the results
-      console.log("Setting state with pubkey and address");
-      setResults(
-        (prev: Results | null): Results => ({
-          ...prev,
-          chainPubkey: {
-            pubkey,
-            address,
-            chainId: "bitcoin",
-            curve: "SECP256K1",
-          },
-        })
-      );
-      console.log("State updated, setting success message");
-      setSuccess("Successfully retrieved Bitcoin pubkey and address");
-    } catch (e: any) {
-      console.error("Error in testBitcoinPubkey:", e);
-      setError(e.message || "Unknown error occurred");
-    } finally {
-      console.log("Setting loading to false");
-      setLoading(false);
-    }
-  };
-
-  const testTONPubkey = async () => {
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-    try {
-      console.log("Starting TON pubkey test");
-
-      // Call our backend endpoint for TON pubkey
-      console.log("Fetching pubkey from backend");
-      const response = await fetch(
-        "/api/sodot-proxy/derive-chain-pubkey?chain=ton",
-        {
-          method: "GET",
-          cache: "no-store",
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      const data = await response.json();
-      console.log("Received pubkey data:", data);
-
-      // Get the pubkey from the response
-      const pubkey = data.data.pubkey;
-      console.log("Extracted TON pubkey:", pubkey);
-
-      // Use the Adamik API to get the address from the pubkey
-      console.log("Calling encodePubKeyToAddress for TON");
-      const addressResult = await encodePubKeyToAddress(pubkey, "ton");
-      console.log("Received TON address result:", addressResult);
-      const address = addressResult.address;
-
-      // Store the results
-      console.log("Setting state with TON pubkey and address");
-      setResults(
-        (prev: Results | null): Results => ({
-          ...prev,
-          chainPubkey: {
-            pubkey,
-            address,
-            chainId: "ton",
-            curve: "SECP256K1",
-          },
-        })
-      );
-      console.log("State updated, setting success message");
-      setSuccess("Successfully retrieved TON pubkey and address");
-    } catch (e: any) {
-      console.error("Error in testTONPubkey:", e);
-      setError(e.message || "Unknown error occurred");
-    } finally {
-      console.log("Setting loading to false");
-      setLoading(false);
-    }
-  };
-
-  const testTronPubkey = async () => {
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-    try {
-      console.log("Starting Tron pubkey test");
-
-      // Call our backend endpoint for Tron pubkey
-      console.log("Fetching pubkey from backend");
-      const response = await fetch(
-        "/api/sodot-proxy/derive-chain-pubkey?chain=tron",
-        {
-          method: "GET",
-          cache: "no-store",
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      const data = await response.json();
-      console.log("Received pubkey data:", data);
-
-      // Get the pubkey from the response
-      const pubkey = data.data.pubkey;
-      console.log("Extracted pubkey:", pubkey);
-
-      // Use the Adamik API to get the address from the pubkey
-      console.log("Calling encodePubKeyToAddress for Tron");
-      const addressResult = await encodePubKeyToAddress(pubkey, "tron");
-      console.log("Received address result:", addressResult);
-      const address = addressResult.address;
-
-      // Store the results
-      console.log("Setting state with pubkey and address");
-      setResults(
-        (prev: Results | null): Results => ({
-          ...prev,
-          chainPubkey: {
-            pubkey,
-            address,
-            chainId: "tron",
-            curve: "SECP256K1",
-          },
-        })
-      );
-      console.log("State updated, setting success message");
-      setSuccess("Successfully retrieved Tron pubkey and address");
-    } catch (e: any) {
-      console.error("Error in testTronPubkey:", e);
-      setError(e.message || "Unknown error occurred");
-    } finally {
-      console.log("Setting loading to false");
-      setLoading(false);
-    }
-  };
-
-  const testAlgorandPubkey = async () => {
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-    try {
-      console.log("Starting Algorand pubkey test");
-
-      // Call our backend endpoint for Algorand pubkey
-      console.log("Fetching pubkey from backend");
-      const response = await fetch(
-        "/api/sodot-proxy/derive-chain-pubkey?chain=algorand",
-        {
-          method: "GET",
-          cache: "no-store",
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      const data = await response.json();
-      console.log("Received pubkey data:", data);
-
-      // Get the pubkey from the response
-      const pubkey = data.data.pubkey;
-      console.log("Extracted Algorand pubkey:", pubkey);
-
-      // Use the Adamik API to get the address from the pubkey
-      console.log("Calling encodePubKeyToAddress for Algorand");
-      const addressResult = await encodePubKeyToAddress(pubkey, "algorand");
-      console.log("Received Algorand address result:", addressResult);
-      const address = addressResult.address;
-
-      // Store the results
-      console.log("Setting state with Algorand pubkey and address");
-      setResults(
-        (prev: Results | null): Results => ({
-          ...prev,
-          chainPubkey: {
-            pubkey,
-            address,
-            chainId: "algorand",
-            curve: "ED25519",
-          },
-        })
-      );
-      console.log("State updated, setting success message");
-      setSuccess("Successfully retrieved Algorand pubkey and address");
-    } catch (e: any) {
-      console.error("Error in testAlgorandPubkey:", e);
-      setError(e.message || "Unknown error occurred");
-    } finally {
-      console.log("Setting loading to false");
-      setLoading(false);
-    }
-  };
+  const testSupportedChains = [
+    "ethereum",
+    "bitcoin",
+    "ton",
+    "tron",
+    "algorand",
+    "solana",
+    "cosmos",
+  ];
 
   const getVertexKeys = async () => {
     setLoading(true);
@@ -405,7 +221,7 @@ export default function SodotTestPage() {
             <CardTitle>Connection Test</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col md:flex-row gap-4 mb-6 flex-wrap">
+            <div className="flex flex-col gap-4 mb-6">
               <Button
                 onClick={getVertexKeys}
                 disabled={loading}
@@ -421,81 +237,55 @@ export default function SodotTestPage() {
                   "Get Vertex Keys"
                 )}
               </Button>
-              <Button
-                onClick={testEthereumPubkey}
-                disabled={loading}
-                variant="default"
-                className="w-full md:w-auto"
-              >
-                {loading ? (
+
+              <div className="flex flex-col md:flex-row gap-4 items-center">
+                {chains ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Testing...
+                    <div className="w-full md:w-64">
+                      <Select
+                        value={selectedChain}
+                        onValueChange={setSelectedChain}
+                        disabled={loading}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select chain" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(chains)
+                            .sort(([, a], [, b]) =>
+                              a.name.localeCompare(b.name)
+                            )
+                            .map(([chainId, chain]) => (
+                              <SelectItem key={chainId} value={chainId}>
+                                {chain.name} ({chain.ticker})
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <Button
+                      onClick={testChainPubkey}
+                      disabled={loading || !selectedChain}
+                      variant="default"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Testing...
+                        </>
+                      ) : (
+                        "Test Connection"
+                      )}
+                    </Button>
                   </>
                 ) : (
-                  "Ethereum"
-                )}
-              </Button>
-              <Button
-                onClick={testBitcoinPubkey}
-                disabled={loading}
-                variant="default"
-                className="w-full md:w-auto"
-              >
-                {loading ? (
-                  <>
+                  <div className="flex items-center">
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Testing...
-                  </>
-                ) : (
-                  "Bitcoin"
+                    Loading chains...
+                  </div>
                 )}
-              </Button>
-              <Button
-                onClick={testTONPubkey}
-                disabled={loading}
-                variant="default"
-                className="w-full md:w-auto"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Testing...
-                  </>
-                ) : (
-                  "TON"
-                )}
-              </Button>
-              <Button
-                onClick={testTronPubkey}
-                disabled={loading}
-                variant="default"
-                className="w-full md:w-auto"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Testing...
-                  </>
-                ) : (
-                  "Tron"
-                )}
-              </Button>
-              <Button
-                onClick={testAlgorandPubkey}
-                disabled={loading}
-                variant="default"
-                className="w-full md:w-auto"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Testing...
-                  </>
-                ) : (
-                  "Algorand"
-                )}
-              </Button>
+              </div>
             </div>
 
             {error && (
