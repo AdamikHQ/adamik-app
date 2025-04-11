@@ -2,27 +2,121 @@ import { useEffect, useState } from "react";
 import { Modal } from "../ui/modal";
 import { useWallet } from "~/hooks/useWallet";
 import { Button } from "../ui/button";
+import { getChains } from "~/api/adamik/chains";
+import { getPreferredChains } from "~/config/wallet-chains";
+import { encodePubKeyToAddress } from "~/api/adamik/encode";
+import { Account, WalletName } from "../wallets/types";
+import { useToast } from "~/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
 
 export const WelcomeModal = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  const { setShowroom, setWalletMenuOpen } = useWallet();
+  const { setShowroom, addAddresses } = useWallet();
+  const { toast } = useToast();
+  const [isConnecting, setIsConnecting] = useState(false);
 
   useEffect(() => {
     setIsModalOpen(true);
   }, []);
 
-  const handleShowroomMode = (isShowroom: boolean) => {
-    // Close the welcome modal
-    setIsModalOpen(false);
+  // Direct connection function that bypasses the modal entirely
+  const connectWalletDirectly = async () => {
+    setIsConnecting(true);
 
+    try {
+      // Close the welcome modal immediately
+      setIsModalOpen(false);
+
+      // Show a toast to indicate connection is in progress
+      toast({
+        description: "Connecting wallet...",
+        duration: 3000,
+      });
+
+      // Fetch chains data
+      const chainsData = await getChains();
+      if (!chainsData) {
+        throw new Error("Failed to load chain information");
+      }
+
+      const preferredChains = getPreferredChains(chainsData);
+      if (preferredChains.length === 0) {
+        throw new Error("No chains configured for connection");
+      }
+
+      // Connect to all chains
+      let successCount = 0;
+      let failedCount = 0;
+
+      // Process each chain
+      for (const chainId of preferredChains) {
+        try {
+          // Get chain public key
+          const pubkeyResponse = await fetch(
+            `/api/sodot-proxy/derive-chain-pubkey?chain=${chainId}`,
+            {
+              method: "GET",
+              cache: "no-store",
+            }
+          );
+
+          if (!pubkeyResponse.ok) {
+            throw new Error(`Failed to get pubkey for ${chainId}`);
+          }
+
+          const pubkeyData = await pubkeyResponse.json();
+          const pubkey = pubkeyData.data.pubkey;
+
+          // Derive address from pubkey
+          const { address } = await encodePubKeyToAddress(pubkey, chainId);
+
+          // Create and add account
+          const account: Account = {
+            address,
+            chainId,
+            pubKey: pubkey,
+            signer: WalletName.SODOT,
+          };
+
+          addAddresses([account]);
+          successCount++;
+        } catch (err) {
+          console.error(`Failed to connect to ${chainId}:`, err);
+          failedCount++;
+        }
+      }
+
+      // Show final result
+      toast({
+        description: `Connected to ${successCount} chains${
+          failedCount > 0 ? `, ${failedCount} failed` : ""
+        }`,
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error("Error connecting wallet:", error);
+      toast({
+        description:
+          error instanceof Error ? error.message : "Connection failed",
+        variant: "destructive",
+        duration: 3000,
+      });
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleShowroomMode = (isShowroom: boolean) => {
     // Set showroom mode based on user selection
     setShowroom(isShowroom);
 
-    // If not using showroom mode, open the wallet connection modal
-    // This matches the behavior of clicking the top-right Connect Wallet button
-    if (!isShowroom) {
-      setWalletMenuOpen(true);
+    // If using showroom mode, close modal immediately
+    if (isShowroom) {
+      setIsModalOpen(false);
+    } else {
+      // If not using showroom mode, directly connect wallet
+      connectWalletDirectly();
     }
   };
 
@@ -101,8 +195,16 @@ export const WelcomeModal = () => {
                 <Button
                   className="w-48"
                   onClick={() => handleShowroomMode(false)}
+                  disabled={isConnecting}
                 >
-                  Add Wallet
+                  {isConnecting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Connecting...
+                    </>
+                  ) : (
+                    "Add Wallet"
+                  )}
                 </Button>
               </div>
             </>
