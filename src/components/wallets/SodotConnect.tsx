@@ -67,23 +67,6 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
     }
   }, [providedChainId]);
 
-  // Auto connect when using non-transaction mode
-  useEffect(() => {
-    if (
-      chains &&
-      selectedChainId &&
-      !transactionPayload &&
-      !providedChainId &&
-      !autoConnectInProgress
-    ) {
-      // Auto-connect the wallet when chains are loaded and chain is selected
-      setAutoConnectInProgress(true);
-      getAddresses().finally(() => {
-        setAutoConnectInProgress(false);
-      });
-    }
-  }, [chains, selectedChainId, transactionPayload, providedChainId]);
-
   const getAddressForChain = async (chainId: string) => {
     if (!chains || !chains[chainId]) {
       throw new Error(`Chain ${chainId} not supported`);
@@ -171,7 +154,31 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [selectedChainId, addAddresses, toast, chains]);
+  }, [selectedChainId, addAddresses, toast, chains, getAddressForChain]);
+
+  // Auto connect when using non-transaction mode
+  useEffect(() => {
+    if (
+      chains &&
+      selectedChainId &&
+      !transactionPayload &&
+      !providedChainId &&
+      !autoConnectInProgress
+    ) {
+      // Auto-connect the wallet when chains are loaded and chain is selected
+      setAutoConnectInProgress(true);
+      getAddresses().finally(() => {
+        setAutoConnectInProgress(false);
+      });
+    }
+  }, [
+    chains,
+    selectedChainId,
+    transactionPayload,
+    providedChainId,
+    autoConnectInProgress,
+    getAddresses,
+  ]);
 
   const sign = useCallback(async () => {
     if (!transactionPayload || !chains || !providedChainId) return;
