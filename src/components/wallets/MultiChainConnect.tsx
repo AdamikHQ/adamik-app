@@ -41,32 +41,6 @@ export const MultiChainConnect: React.FC<{
   const [failedChains, setFailedChains] = useState<string[]>([]);
   const [configuredChains, setConfiguredChains] = useState<string[]>([]);
 
-  // If hideButton is true, don't render anything
-  if (hideButton) {
-    return null;
-  }
-
-  // Fetch chains data when component mounts
-  useEffect(() => {
-    const fetchChains = async () => {
-      try {
-        const chainsData = await getChains();
-        if (chainsData) {
-          setChains(chainsData);
-          const preferredChains = getPreferredChains(chainsData);
-          setConfiguredChains(preferredChains);
-        } else {
-          setError("Failed to load chain information");
-        }
-      } catch (e) {
-        console.error("Error fetching chains:", e);
-        setError("Failed to load chain information");
-      }
-    };
-
-    fetchChains();
-  }, []);
-
   const getAddressForChain = async (chainId: string) => {
     if (!chains || !chains[chainId]) {
       throw new Error(`Chain ${chainId} not supported`);
@@ -115,6 +89,27 @@ export const MultiChainConnect: React.FC<{
       );
     }
   };
+
+  // Fetch chains data when component mounts
+  useEffect(() => {
+    const fetchChains = async () => {
+      try {
+        const chainsData = await getChains();
+        if (chainsData) {
+          setChains(chainsData);
+          const preferredChains = getPreferredChains(chainsData);
+          setConfiguredChains(preferredChains);
+        } else {
+          setError("Failed to load chain information");
+        }
+      } catch (e) {
+        console.error("Error fetching chains:", e);
+        setError("Failed to load chain information");
+      }
+    };
+
+    fetchChains();
+  }, []);
 
   // Handle successful chain connection
   const handleSuccessfulConnection = useCallback(
@@ -216,6 +211,7 @@ export const MultiChainConnect: React.FC<{
     successCount,
     failedChains.length,
     toast,
+    getAddressForChain,
   ]);
 
   // Clean up when finished
@@ -240,6 +236,11 @@ export const MultiChainConnect: React.FC<{
     failedChains.length,
     toast,
   ]);
+
+  // If hideButton is true, don't render anything - moved after hooks to avoid conditional hook calls
+  if (hideButton) {
+    return null;
+  }
 
   if (error) {
     return (

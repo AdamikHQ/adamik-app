@@ -382,7 +382,8 @@ export default function SodotTestPage() {
           <CardContent>
             <p className="mb-4">
               This demo showcases Threshold Signature Scheme (TSS) integration
-              using Sodot's secure MPC protocol. The implementation features:
+              using Sodot&apos;s secure MPC protocol. The implementation
+              features:
             </p>
             <ul className="list-disc pl-6 space-y-2">
               <li>
