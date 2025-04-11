@@ -55,7 +55,9 @@ export function WalletConnect() {
         className="font-medium"
       >
         {hasConnectedWallets
-          ? `${addresses.length} ${addresses.length === 1 ? "Chain" : "Chains"}`
+          ? `${addresses.length} ${
+              addresses.length === 1 ? "Chain" : "Chains"
+            }${isShowroom ? " (Demo)" : ""}`
           : "Connect Wallet"}
       </Button>
 

@@ -5,7 +5,7 @@ import "./globals.css";
 import { Menu } from "~/components/layout/Menu/Menu";
 import { Toaster } from "~/components/ui/toaster";
 import { WalletModal } from "~/components/wallets/WalletModal";
-import { WalletConnect, ConnectedChains } from "~/components";
+import { WalletConnect } from "~/components";
 
 export const metadata: Metadata = {
   title: "Adamik App",
@@ -38,7 +38,6 @@ export default function RootLayout({
           </div>
           <Toaster />
           <WalletModal />
-          <ConnectedChains />
         </AppProviders>
       </body>
     </html>

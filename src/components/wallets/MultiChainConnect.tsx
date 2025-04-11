@@ -26,7 +26,7 @@ export const MultiChainConnect: React.FC<{
   hideButton = false,
 }) => {
   const { toast } = useToast();
-  const { addAddresses } = useWallet();
+  const { addAddresses, isShowroom } = useWallet();
   const [loading, setLoading] = useState(false);
   const [chains, setChains] = useState<Record<string, Chain> | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -267,7 +267,7 @@ export const MultiChainConnect: React.FC<{
           {connectedCount}/{configuredChains.length}
         </>
       ) : (
-        <>Connect Wallet</>
+        <>Connect {isShowroom ? "Demo " : ""}Wallet</>
       )}
     </Button>
   );
