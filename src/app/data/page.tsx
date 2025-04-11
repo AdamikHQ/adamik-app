@@ -378,7 +378,7 @@ function DataContent() {
         </h1>
         <Tooltip text="View the API documentation for retrieving transaction data">
           <a
-            href="https://docs.adamik.io/api-reference/endpoint/get-apichains-chainid-transaction-transactionid"
+            href="https://docs.adamik.io/api-reference/transaction/get-transaction-details"
             target="_blank"
             rel="noopener noreferrer"
           >
