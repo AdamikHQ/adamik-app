@@ -1,7 +1,9 @@
 import { Loader } from "lucide-react";
 import { Modal } from "../ui/modal";
-import React, { useState } from "react";
+import React, { useMemo } from "react";
+import { useLoadingState } from "~/hooks/useLoadingState";
 
+// Move tipsList outside component to prevent recreation on each render
 const tipsList: React.JSX.Element[] = [
   <span key="tip-1">
     Adamik does not store your blockchain information.{" "}
@@ -95,37 +97,53 @@ const tipsList: React.JSX.Element[] = [
   </span>,
 ];
 
-function randomIntFromInterval(min: number, max: number) {
+const randomIntFromInterval = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1) + min);
-}
+};
 
 export const LoadingModal = () => {
-  const [randomIndex] = useState(randomIntFromInterval(0, tipsList.length - 1));
+  // Use the new loading state management with minimum display time
+  const { isLoading } = useLoadingState(true, {
+    minimumLoadingTime: 500,
+    debounceDelay: 200,
+  });
+
+  // Memoize the random tip selection to prevent recalculation on re-renders
+  const randomTip = useMemo(() => {
+    const index = randomIntFromInterval(0, tipsList.length - 1);
+    return tipsList[index];
+  }, []); // Empty dependency array as we want this to be stable across re-renders
+
+  // Memoize the modal content to prevent unnecessary re-renders
+  const modalContent = useMemo(
+    () => (
+      <div className="flex items-center flex-col gap-4">
+        <h1 className="text-2xl font-semibold text-center">
+          Loading blockchain data
+        </h1>
+        <p className="text-center text-sm text-gray-400">
+          Please wait while Adamik processes your request. <br />
+          This may take up to 15 seconds.
+        </p>
+        <Loader className="animate-spin h-12 w-12 text-blue-500" />
+        <div
+          className="mt-4 p-4 border-t border-gray-400 dark:border-gray-600 w-full text-center text-sm bg-gray-300 dark:bg-gray-800 rounded-lg"
+          aria-live="polite"
+        >
+          <span className="font-semibold">Did you know?</span> <br />
+          <br />
+          {randomTip}
+        </div>
+      </div>
+    ),
+    [randomTip]
+  );
 
   return (
     <Modal
-      open={true}
+      open={isLoading}
       displayCloseButton={false}
-      modalContent={
-        <div className="flex items-center flex-col gap-4">
-          <h1 className="text-2xl font-semibold text-center">
-            Loading blockchain data
-          </h1>
-          <p className="text-center text-sm text-gray-400">
-            Please wait while Adamik processes your request. <br />
-            This may take up to 15 seconds.
-          </p>
-          <Loader className="animate-spin h-12 w-12 text-blue-500" />
-          <div
-            className="mt-4 p-4 border-t border-gray-400 dark:border-gray-600 w-full text-center text-sm bg-gray-300 dark:bg-gray-800 rounded-lg"
-            aria-live="polite"
-          >
-            <span className="font-semibold">Did you know?</span> <br />
-            <br />
-            {tipsList[randomIndex]}
-          </div>
-        </div>
-      }
+      modalContent={modalContent}
     />
   );
 };
