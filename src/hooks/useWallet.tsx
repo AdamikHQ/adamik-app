@@ -6,6 +6,7 @@ type WalletContextType = {
   addWallet: (wallet: IWallet) => void;
   addresses: Account[];
   addAddresses: (addresses: Account[]) => void;
+  removeAddresses: (addresses: Account[]) => void;
   setAddresses: (addresses: Account[]) => void;
   setWalletMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isWalletMenuOpen: boolean;
@@ -20,6 +21,7 @@ export const WalletContext = React.createContext<WalletContextType>({
   addWallet: () => {},
   addresses: [],
   addAddresses: () => {},
+  removeAddresses: () => {},
   setAddresses: () => {},
   setWalletMenuOpen: () => {},
   isWalletMenuOpen: false,

@@ -6,6 +6,7 @@ import { Button } from "~/components/ui/button";
 import { Switch } from "~/components/ui/switch";
 import { Label } from "~/components/ui/label";
 import { MultiChainConnect } from "./wallets/MultiChainConnect";
+import { ChainSelector } from "./wallets/ChainSelector";
 
 /**
  * WalletConnect
@@ -47,19 +48,19 @@ export function WalletConnect() {
 
   return (
     <div className="flex items-center gap-2 p-2 rounded-lg bg-black/90 shadow-lg border border-gray-800">
-      {/* Connect Wallet Button */}
-      <Button
-        size="sm"
-        variant={hasConnectedWallets ? "secondary" : "default"}
-        onClick={() => setWalletMenuOpen(true)}
-        className="font-medium"
-      >
-        {hasConnectedWallets
-          ? `${addresses.length} ${
-              addresses.length === 1 ? "Chain" : "Chains"
-            }${isShowroom ? " (Demo)" : ""}`
-          : "Connect Wallet"}
-      </Button>
+      {/* Chain Selector */}
+      {hasConnectedWallets ? (
+        <ChainSelector />
+      ) : (
+        <Button
+          size="sm"
+          variant="default"
+          onClick={() => setWalletMenuOpen(true)}
+          className="font-medium"
+        >
+          Connect Wallet
+        </Button>
+      )}
 
       {/* Demo Mode Toggle */}
       <div className="flex items-center px-3 h-9 rounded-md border border-gray-700 bg-black/80 text-white text-sm">
