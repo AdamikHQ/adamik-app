@@ -184,7 +184,6 @@ export default function Portfolio() {
             </a>
           </Tooltip>
         </div>
-        <WalletSelection />
       </div>
 
       {isShowroom ? <ShowroomBanner /> : null}

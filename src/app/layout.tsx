@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Menu } from "~/components/layout/Menu/Menu";
 import { Toaster } from "~/components/ui/toaster";
+import { WalletModal } from "~/components/wallets/WalletModal";
+import { WalletConnect, ConnectedChains } from "~/components";
 
 export const metadata: Metadata = {
   title: "Adamik App",
@@ -23,9 +25,20 @@ export default function RootLayout({
         )}
       >
         <AppProviders>
-          <Menu />
+          <div className="flex flex-row w-full">
+            <Menu />
+            <main className="flex-1 relative">
+              {/* Top right wallet connection UI */}
+              <div className="absolute top-4 right-4 z-[100]">
+                <WalletConnect />
+              </div>
+
+              {children}
+            </main>
+          </div>
           <Toaster />
-          {children}
+          <WalletModal />
+          <ConnectedChains />
         </AppProviders>
       </body>
     </html>

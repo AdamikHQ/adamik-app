@@ -147,8 +147,6 @@ export default function Stake() {
             </a>
           </Tooltip>
         </div>
-
-        <WalletSelection />
       </div>
 
       {isShowroom ? <ShowroomBanner /> : null}

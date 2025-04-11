@@ -39,7 +39,6 @@ import {
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
-import { WalletSelection } from "~/components/wallets/WalletSelection";
 import { getAccountHistory } from "~/api/adamik/history";
 import {
   formatAssetAmount,
@@ -386,8 +385,6 @@ function TransactionHistoryContent() {
             </a>
           </Tooltip>
         </div>
-
-        <WalletSelection />
       </div>
 
       {isShowroom ? <ShowroomBanner /> : null}
