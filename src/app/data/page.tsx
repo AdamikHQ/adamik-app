@@ -58,21 +58,30 @@ function DataContent() {
   const [formattedAmount, setFormattedAmount] = useState<string>("N/A");
   const [formattedFees, setFormattedFees] = useState<string>("N/A");
 
-  const searchParams = useSearchParams();
+  const rawSearchParams = useSearchParams();
+  // Create a safe version of searchParams with default values
+  const searchParams = {
+    chainId: rawSearchParams?.get("chainId") ?? "",
+    transactionId: rawSearchParams?.get("transactionId") ?? "",
+  };
+
   const { isLoading: isSupportedChainsLoading, data: supportedChains } =
     useChains();
 
   const form = useForm({
     defaultValues: {
-      chainId: searchParams.get("chainId") || "",
-      transactionId: searchParams.get("transactionId") || "",
+      chainId: searchParams.chainId,
+      transactionId: searchParams.transactionId,
     },
   });
 
   const [input, setInput] = useState<{
     chainId: string | undefined;
     transactionId: string | undefined;
-  }>({ chainId: undefined, transactionId: undefined });
+  }>({
+    chainId: searchParams.chainId || undefined,
+    transactionId: searchParams.transactionId || undefined,
+  });
 
   function onSubmit(data: any) {
     console.log("Search button clicked. New input:", data);
@@ -357,8 +366,8 @@ function DataContent() {
   };
 
   useEffect(() => {
-    const chainId = searchParams.get("chainId");
-    const transactionId = searchParams.get("transactionId");
+    const chainId = searchParams.chainId;
+    const transactionId = searchParams.transactionId;
 
     if (chainId && transactionId) {
       form.setValue("chainId", chainId);
