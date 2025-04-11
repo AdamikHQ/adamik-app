@@ -1,4 +1,10 @@
-import React, { useCallback, useState, useEffect } from "react";
+import React, {
+  useCallback,
+  useState,
+  useEffect,
+  RefObject,
+  forwardRef,
+} from "react";
 import { useToast } from "~/components/ui/use-toast";
 import { useWallet } from "~/hooks/useWallet";
 import { Account, WalletName } from "./types";
@@ -255,6 +261,7 @@ export const MultiChainConnect: React.FC<{
   // Button is only visible when not hidden with hideButton prop
   return (
     <Button
+      id="multi-chain-connect-button"
       variant={variant}
       size={size}
       className={`${className} bg-primary hover:bg-primary/90 text-primary-foreground font-medium`}

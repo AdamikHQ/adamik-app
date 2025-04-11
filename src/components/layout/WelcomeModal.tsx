@@ -13,9 +13,17 @@ export const WelcomeModal = () => {
   }, []);
 
   const handleShowroomMode = (isShowroom: boolean) => {
+    // Close the welcome modal
     setIsModalOpen(false);
+
+    // Set showroom mode based on user selection
     setShowroom(isShowroom);
-    setWalletMenuOpen(!isShowroom);
+
+    // If not using showroom mode, open the wallet connection modal
+    // This matches the behavior of clicking the top-right Connect Wallet button
+    if (!isShowroom) {
+      setWalletMenuOpen(true);
+    }
   };
 
   const handleNextStep = () => {
@@ -76,8 +84,8 @@ export const WelcomeModal = () => {
               <div className="flex flex-col gap-2 text-center text-sm text-gray-400">
                 <p>Easily switch between modes using the toggle</p>
                 <video
-                  className="w-1/4 h-auto mt-4 rounded-lg mx-auto" // Set width to 50%, add mx-auto for centering
-                  src="/toggle.mp4" // Replace with the video file path
+                  className="w-1/4 h-auto mt-4 rounded-lg mx-auto"
+                  src="/toggle.mp4"
                   autoPlay
                   loop
                   muted
