@@ -45,12 +45,14 @@ export const WelcomeModal = () => {
         throw new Error("No chains configured for connection");
       }
 
-      // Connect to all chains
-      let successCount = 0;
-      let failedCount = 0;
+      // Connect to all chains in parallel
+      toast({
+        description: `Connecting to ${preferredChains.length} chains...`,
+        duration: 2000,
+      });
 
-      // Process each chain
-      for (const chainId of preferredChains) {
+      // Create an array of promises for all chain connections
+      const connectionPromises = preferredChains.map(async (chainId) => {
         try {
           // Get chain public key
           const pubkeyResponse = await fetch(
@@ -71,21 +73,44 @@ export const WelcomeModal = () => {
           // Derive address from pubkey
           const { address } = await encodePubKeyToAddress(pubkey, chainId);
 
-          // Create and add account
-          const account: Account = {
-            address,
-            chainId,
-            pubKey: pubkey,
-            signer: WalletName.SODOT,
+          // Return account object
+          return {
+            success: true,
+            account: {
+              address,
+              chainId,
+              pubKey: pubkey,
+              signer: WalletName.SODOT,
+            },
           };
-
-          addAddresses([account]);
-          successCount++;
         } catch (err) {
           console.error(`Failed to connect to ${chainId}:`, err);
-          failedCount++;
+          return {
+            success: false,
+            chainId,
+            error: err instanceof Error ? err.message : String(err),
+          };
         }
+      });
+
+      // Wait for all connections to complete
+      const results = await Promise.all(connectionPromises);
+
+      // Process results
+      const successfulAccounts = results
+        .filter((result) => result.success)
+        .map(
+          (result) => (result as { success: true; account: Account }).account
+        );
+
+      // Add all successful accounts at once
+      if (successfulAccounts.length > 0) {
+        addAddresses(successfulAccounts);
       }
+
+      // Count successes and failures
+      const successCount = successfulAccounts.length;
+      const failedCount = results.length - successCount;
 
       // Show final result
       toast({
