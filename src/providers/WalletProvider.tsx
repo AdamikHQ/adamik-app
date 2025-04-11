@@ -84,6 +84,31 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
     });
   };
 
+  const removeAddresses = (addressesToRemove: Account[]) => {
+    setAddresses((oldAddresses) => {
+      const remainingAddresses = oldAddresses.filter(
+        (addr) =>
+          !addressesToRemove.some(
+            (toRemove) =>
+              toRemove.address === addr.address &&
+              toRemove.chainId === addr.chainId
+          )
+      );
+
+      // Only save to localStorage if not in showroom mode
+      if (!isShowroom) {
+        localStorage?.setItem(
+          "AdamikClientAddresses",
+          JSON.stringify(remainingAddresses)
+        );
+        // Update real wallet addresses as well
+        setRealWalletAddresses(remainingAddresses);
+      }
+
+      return remainingAddresses;
+    });
+  };
+
   // Improved setShowroom function that properly handles address switching
   const handleSetShowroom = (showroomState: boolean) => {
     // Save the current state to client state
@@ -147,6 +172,7 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
             addresses,
             setAddresses,
             addAddresses,
+            removeAddresses,
             setWalletMenuOpen,
             isWalletMenuOpen,
             isShowroom,
