@@ -38,6 +38,7 @@ import {
 } from "./helpers";
 import { StakingPositionsList } from "./StakingPositionsList";
 import { isStakingSupported } from "~/utils/helper";
+import { WalletConnect } from "~/components";
 
 export default function Stake() {
   const { addresses, isShowroom, setWalletMenuOpen } = useWallet();
@@ -134,12 +135,12 @@ export default function Stake() {
       {isLoading && !isInAccountStateBatchCache(displayAddresses) ? (
         <LoadingModal />
       ) : null}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between p-4">
         <div className="flex items-center">
           <h1 className="text-lg font-semibold md:text-2xl">Staking Portal</h1>
-          <Tooltip text="Click to view the API documentation for retrieving balances">
+          <Tooltip text="View the API documentation for staking">
             <a
-              href="https://docs.adamik.io/api-reference/endpoint/post-apichains-chainid-validators"
+              href="https://docs.adamik.io/api-reference/chain/get-chain-validators"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -147,6 +148,7 @@ export default function Stake() {
             </a>
           </Tooltip>
         </div>
+        <WalletConnect />
       </div>
 
       {isShowroom ? <ShowroomBanner /> : null}

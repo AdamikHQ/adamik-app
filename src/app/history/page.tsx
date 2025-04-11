@@ -46,6 +46,8 @@ import {
   FormatAssetAmountResult,
 } from "~/utils/assetFormatters";
 import { ParsedTransactionComponent } from "~/components/transactions/ParsedTransaction";
+import { WalletConnect } from "~/components";
+import { LoadingModal } from "~/components/layout/LoadingModal";
 
 type GroupedAccount = {
   address: string;
@@ -360,24 +362,15 @@ function TransactionHistoryContent() {
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {isLoading ? <LoadingModal /> : null}
+      <div className="flex items-center justify-between p-4">
         <div className="flex items-center">
-          {isMobileView && selectedAccount && (
-            <button
-              onClick={() => setSelectedAccount(null)}
-              className="mr-3 hover:text-accent-foreground transition-colors"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-          )}
           <h1 className="text-lg font-semibold md:text-2xl">
-            {isMobileView && selectedAccount
-              ? "Transaction History"
-              : "Transaction History"}
+            Transaction History
           </h1>
-          <Tooltip text="View the API documentation for retrieving transaction history">
+          <Tooltip text="View the API documentation for transaction history">
             <a
-              href="https://docs.adamik.io/api-reference/endpoint/post-apiaccounthistory"
+              href="https://docs.adamik.io/api-reference/account/get-account-history"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -385,6 +378,7 @@ function TransactionHistoryContent() {
             </a>
           </Tooltip>
         </div>
+        <WalletConnect />
       </div>
 
       {isShowroom ? <ShowroomBanner /> : null}

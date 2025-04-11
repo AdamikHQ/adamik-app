@@ -35,6 +35,7 @@ import {
   getTokenContractAddresses,
   getTokenTickers,
 } from "./helpers";
+import { WalletConnect } from "~/components";
 
 export default function Portfolio() {
   const {
@@ -171,12 +172,12 @@ export default function Portfolio() {
       {isLoading && !isInAccountStateBatchCache(displayAddresses) ? (
         <LoadingModal />
       ) : null}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between p-4">
         <div className="flex items-center">
           <h1 className="text-lg font-semibold md:text-2xl">Portfolio</h1>
           <Tooltip text="View the API documentation for retrieving balances">
             <a
-              href="https://docs.adamik.io/api-reference/endpoint/post-apiaddressstate"
+              href="https://docs.adamik.io/api-reference/account/get-account-state-balances"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -184,6 +185,7 @@ export default function Portfolio() {
             </a>
           </Tooltip>
         </div>
+        <WalletConnect />
       </div>
 
       {isShowroom ? <ShowroomBanner /> : null}
