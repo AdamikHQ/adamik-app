@@ -7,17 +7,10 @@ import { Button } from "~/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { getChains } from "~/api/adamik/chains";
 import { encodePubKeyToAddress } from "~/api/adamik/encode";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
 import { Card } from "~/components/ui/card";
+import { defaultChain, getPreferredChains } from "~/config/wallet-chains";
 
-// Default chains to show in the UI
-const DEFAULT_CHAINS = ["ethereum", "bitcoin", "solana"];
+// Removed DEFAULT_CHAINS constant as it's now in the config file
 
 export const SodotConnect: React.FC<WalletConnectorProps> = ({
   chainId: providedChainId,
@@ -31,6 +24,7 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
   const [selectedChainId, setSelectedChainId] = useState<string>(
     providedChainId || ""
   );
+  const [autoConnectInProgress, setAutoConnectInProgress] = useState(false);
 
   // Fetch chains data when component mounts
   useEffect(() => {
@@ -42,11 +36,16 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
 
           // Auto-select first chain if none provided and we're not in transaction mode
           if (!providedChainId && !selectedChainId && !transactionPayload) {
-            const firstDefaultChain = DEFAULT_CHAINS.find(
-              (id) => chainsData[id]
-            );
-            if (firstDefaultChain) {
-              setSelectedChainId(firstDefaultChain);
+            const preferredChains = getPreferredChains(chainsData);
+            const firstAvailableChain =
+              preferredChains.length > 0
+                ? preferredChains[0]
+                : defaultChain in chainsData
+                ? defaultChain
+                : Object.keys(chainsData)[0];
+
+            if (firstAvailableChain) {
+              setSelectedChainId(firstAvailableChain);
             }
           }
         } else {
@@ -67,6 +66,23 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
       setSelectedChainId(providedChainId);
     }
   }, [providedChainId]);
+
+  // Auto connect when using non-transaction mode
+  useEffect(() => {
+    if (
+      chains &&
+      selectedChainId &&
+      !transactionPayload &&
+      !providedChainId &&
+      !autoConnectInProgress
+    ) {
+      // Auto-connect the wallet when chains are loaded and chain is selected
+      setAutoConnectInProgress(true);
+      getAddresses().finally(() => {
+        setAutoConnectInProgress(false);
+      });
+    }
+  }, [chains, selectedChainId, transactionPayload, providedChainId]);
 
   const getAddressForChain = async (chainId: string) => {
     if (!chains || !chains[chainId]) {
@@ -239,52 +255,17 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
     );
   }
 
-  // If no chainId is provided, show chain selector with default chains
+  // Otherwise, just show the connect button
   return (
     <Card className="p-4 w-full">
       <h3 className="text-lg font-medium mb-4">Connect Sodot Wallet</h3>
       <div className="space-y-4">
-        <div>
-          <label className="text-sm font-medium">Select Chain</label>
-          <Select
-            value={selectedChainId}
-            onValueChange={setSelectedChainId}
-            disabled={loading}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a chain" />
-            </SelectTrigger>
-            <SelectContent>
-              {/* Show default chains first */}
-              {DEFAULT_CHAINS.map(
-                (chainId) =>
-                  chains[chainId] && (
-                    <SelectItem key={chainId} value={chainId}>
-                      {chains[chainId].name} ({chains[chainId].ticker})
-                    </SelectItem>
-                  )
-              )}
-              <SelectItem disabled value="divider">
-                — All Chains —
-              </SelectItem>
-              {/* Then show all chains */}
-              {Object.entries(chains)
-                .filter(([chainId]) => !DEFAULT_CHAINS.includes(chainId))
-                .sort(([, a], [, b]) => a.name.localeCompare(b.name))
-                .map(([chainId, chain]) => (
-                  <SelectItem key={chainId} value={chainId}>
-                    {chain.name} ({chain.ticker})
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-        </div>
         <Button
           className="w-full"
           onClick={() => getAddresses()}
-          disabled={!selectedChainId || loading}
+          disabled={!selectedChainId || loading || autoConnectInProgress}
         >
-          {loading ? (
+          {loading || autoConnectInProgress ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Connecting...
