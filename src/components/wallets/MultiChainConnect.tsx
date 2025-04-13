@@ -105,19 +105,35 @@ export const MultiChainConnect: React.FC<{
 
   // When opening the selection modal, pre-select already connected chains
   useEffect(() => {
-    if (isSelectionOpen && !isShowroom && uniqueConnectedChainIds.length > 0) {
-      setSelectedChains((prev) => {
-        // Add connected chains to selections if not already selected
-        const newSelections = [...prev];
-        uniqueConnectedChainIds.forEach((chainId) => {
-          if (!newSelections.includes(chainId)) {
-            newSelections.push(chainId);
+    if (isSelectionOpen && !isShowroom) {
+      // First try to load any previously selected chains from localStorage
+      try {
+        const clientState = localStorage.getItem("AdamikClientState");
+        if (clientState) {
+          const parsedState = JSON.parse(clientState);
+          if (
+            parsedState.defaultChains &&
+            Array.isArray(parsedState.defaultChains)
+          ) {
+            // Load user's custom selection
+            setSelectedChains(parsedState.defaultChains);
+            return;
           }
-        });
-        return newSelections;
-      });
+        }
+      } catch (error) {
+        console.error("Error loading previously selected chains:", error);
+      }
+
+      // If no custom selection exists, use connected chains
+      if (uniqueConnectedChainIds.length > 0) {
+        setSelectedChains(uniqueConnectedChainIds);
+      } else if (chains) {
+        // If nothing else, fall back to default chains from config
+        const preferredChains = getPreferredChains(chains);
+        setSelectedChains(preferredChains);
+      }
     }
-  }, [isSelectionOpen, isShowroom, uniqueConnectedChainIds]);
+  }, [isSelectionOpen, isShowroom, uniqueConnectedChainIds, chains]);
 
   // Filter and sort chains based on search query and selection status
   const { selectedChainsList, unselectedChainsList } = React.useMemo(() => {
@@ -432,6 +448,22 @@ export const MultiChainConnect: React.FC<{
                 </Button>
                 <Button
                   onClick={() => {
+                    // Save the selected chains to localStorage for future use
+                    try {
+                      const clientState =
+                        localStorage.getItem("AdamikClientState") || "{}";
+                      const parsedState = JSON.parse(clientState);
+                      localStorage.setItem(
+                        "AdamikClientState",
+                        JSON.stringify({
+                          ...parsedState,
+                          defaultChains: selectedChains,
+                        })
+                      );
+                    } catch (error) {
+                      console.error("Error saving selected chains:", error);
+                    }
+
                     setIsSelectionOpen(false);
 
                     // If no chains are selected, disconnect all current chains
