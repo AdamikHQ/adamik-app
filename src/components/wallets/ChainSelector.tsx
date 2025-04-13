@@ -9,7 +9,7 @@ import {
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { useToast } from "~/components/ui/use-toast";
 import { useWallet } from "~/hooks/useWallet";
-import { getChains } from "~/api/adamik/chains";
+import { useChains } from "~/hooks/useChains";
 import { Chain } from "~/utils/types";
 import { getPreferredChains } from "~/config/wallet-chains";
 import { encodePubKeyToAddress } from "~/api/adamik/encode";
@@ -19,34 +19,17 @@ import { ChevronDown } from "lucide-react";
 export function ChainSelector() {
   const { toast } = useToast();
   const { addresses, addAddresses, removeAddresses } = useWallet();
-  const [chains, setChains] = useState<Record<string, Chain> | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedChains, setSelectedChains] = useState<string[]>([]);
+  const { data: chains, isLoading: chainsLoading } = useChains();
 
-  // Fetch chains on mount
   useEffect(() => {
-    const fetchChains = async () => {
-      try {
-        const chainsData = await getChains();
-        if (chainsData) {
-          setChains(chainsData);
-          // Set initially selected chains based on wallet-chains.ts
-          const preferredChains = getPreferredChains(chainsData);
-          setSelectedChains(preferredChains);
-        }
-      } catch (e) {
-        console.error("Error fetching chains:", e);
-        toast({
-          description: "Failed to load chain information",
-          variant: "destructive",
-        });
-      }
-    };
+    if (chains) {
+      const preferredChains = getPreferredChains(chains);
+      setSelectedChains(preferredChains);
+    }
+  }, [chains]);
 
-    fetchChains();
-  }, [toast]);
-
-  // Update selected chains when addresses change
   useEffect(() => {
     const connectedChainIds = addresses.map((addr) => addr.chainId);
     setSelectedChains(connectedChainIds);
@@ -57,7 +40,6 @@ export function ChainSelector() {
 
     setLoading(true);
     try {
-      // Get chain public key
       const response = await fetch(
         `/api/sodot-proxy/derive-chain-pubkey?chain=${chainId}`,
         {
@@ -72,11 +54,8 @@ export function ChainSelector() {
 
       const data = await response.json();
       const pubkey = data.data.pubkey;
-
-      // Get address from public key
       const { address } = await encodePubKeyToAddress(pubkey, chainId);
 
-      // Create and add account
       const account: Account = {
         address,
         chainId,

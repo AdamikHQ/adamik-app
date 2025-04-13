@@ -1,7 +1,9 @@
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { CHAINS_QUERY_KEY } from "~/hooks/useChains";
+import { getChains } from "~/api/adamik/chains";
 
 export const queryCache = new QueryCache();
 
@@ -24,6 +26,16 @@ export const QueryProvider: React.FC<React.PropsWithChildren> = ({
   const localStoragePersister = createSyncStoragePersister({
     storage: typeof window !== "undefined" ? window.localStorage : null,
   });
+
+  // Prefetch chains data when the provider mounts
+  useEffect(() => {
+    queryClient.prefetchQuery({
+      queryKey: CHAINS_QUERY_KEY,
+      queryFn: async () => getChains(),
+      staleTime: 24 * 60 * 60 * 1000, // 24 hours
+      gcTime: 24 * 60 * 60 * 1000, // 24 hours
+    });
+  }, [queryClient]);
 
   return (
     <PersistQueryClientProvider

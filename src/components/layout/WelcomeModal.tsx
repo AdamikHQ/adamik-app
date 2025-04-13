@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Modal } from "../ui/modal";
 import { useWallet } from "~/hooks/useWallet";
 import { Button } from "../ui/button";
-import { getChains } from "~/api/adamik/chains";
+import { useChains } from "~/hooks/useChains";
 import { getPreferredChains } from "~/config/wallet-chains";
 import { encodePubKeyToAddress } from "~/api/adamik/encode";
 import { Account, WalletName } from "../wallets/types";
@@ -15,6 +15,7 @@ export const WelcomeModal = () => {
   const { setShowroom, addAddresses } = useWallet();
   const { toast } = useToast();
   const [isConnecting, setIsConnecting] = useState(false);
+  const { data: chains } = useChains();
 
   useEffect(() => {
     setIsModalOpen(true);
@@ -35,12 +36,11 @@ export const WelcomeModal = () => {
       });
 
       // Fetch chains data
-      const chainsData = await getChains();
-      if (!chainsData) {
+      if (!chains) {
         throw new Error("Failed to load chain information");
       }
 
-      const preferredChains = getPreferredChains(chainsData);
+      const preferredChains = getPreferredChains(chains);
       if (preferredChains.length === 0) {
         throw new Error("No chains configured for connection");
       }
