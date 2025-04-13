@@ -103,9 +103,10 @@ const randomIntFromInterval = (min: number, max: number) => {
 
 export const LoadingModal = () => {
   // Use the new loading state management with minimum display time
+  // Increase debounce delay to 500ms to prevent brief flashes during navigation
   const { isLoading } = useLoadingState(true, {
     minimumLoadingTime: 500,
-    debounceDelay: 200,
+    debounceDelay: 500,
   });
 
   // Memoize the random tip selection to prevent recalculation on re-renders
