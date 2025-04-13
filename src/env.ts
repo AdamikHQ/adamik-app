@@ -33,7 +33,12 @@ const env = createEnv({
    * Client-side Environment variables, available on both server and client.
    */
   client: {
-    NEXT_PUBLIC_ADAMIK_API_TEST_URL: z.string().url(),
+    // Make NEXT_PUBLIC_ADAMIK_API_TEST_URL optional with a default value
+    NEXT_PUBLIC_ADAMIK_API_TEST_URL: z
+      .string()
+      .url()
+      .optional()
+      .default("https://api.adamik.io/api"),
   },
 
   /*
