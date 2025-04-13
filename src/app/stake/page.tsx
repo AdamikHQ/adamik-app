@@ -1,8 +1,7 @@
 "use client";
 
 import { Info } from "lucide-react";
-import { useMemo, useState, useCallback } from "react";
-import { LoadingModal } from "~/components/layout/LoadingModal";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { Button } from "~/components/ui/button";
 import { Modal } from "~/components/ui/modal";
@@ -42,6 +41,7 @@ import { StakingPositionsList } from "./StakingPositionsList";
 import { isStakingSupported } from "~/utils/helper";
 import { WalletConnect } from "~/components";
 import { useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 
 export default function Stake() {
   const { addresses, isShowroom, setWalletMenuOpen } = useWallet();
@@ -52,6 +52,7 @@ export default function Stake() {
   const [stepper, setStepper] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [loadingToastId, setLoadingToastId] = useState<string | null>(null);
 
   const displayAddresses = isShowroom ? showroomAddresses : addresses;
   const addressesChainIds = displayAddresses.reduce<string[]>(
@@ -93,6 +94,53 @@ export default function Stake() {
 
   const isLoading =
     validatorLoading || isSupportedChainsLoading || isAddressStateLoading;
+
+  // Handle loading state with toast instead of modal
+  useEffect(() => {
+    // Only show loading toast for initial data loading and only if we don't have data in cache
+    const shouldShowLoadingToast =
+      isLoading &&
+      !isInAccountStateBatchCache(displayAddresses) &&
+      (!addressesData || !validatorsData || !chainsDetails);
+
+    if (shouldShowLoadingToast && !loadingToastId) {
+      // Show a toast with loading indicator
+      const toastResult = toast({
+        description: (
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Loading staking data...</span>
+          </div>
+        ),
+        duration: 30000, // Set a reasonable max duration
+      });
+
+      setLoadingToastId(toastResult.id);
+    } else if (!isLoading && loadingToastId) {
+      // Create a new toast to update users that loading is complete
+      toast({
+        description: "Staking data loaded successfully",
+        duration: 2000,
+      });
+
+      // Clear the loading toast ID
+      setLoadingToastId(null);
+    }
+
+    // Cleanup function
+    return () => {
+      // The toast will auto-dismiss when component unmounts
+      setLoadingToastId(null);
+    };
+  }, [
+    isLoading,
+    displayAddresses,
+    addressesData,
+    validatorsData,
+    chainsDetails,
+    toast,
+    loadingToastId,
+  ]);
 
   const aggregatedBalances = aggregateStakingBalances(
     addressesData,
@@ -274,9 +322,6 @@ export default function Stake() {
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
-      {isLoading && !isInAccountStateBatchCache(displayAddresses) ? (
-        <LoadingModal />
-      ) : null}
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center">
           <h1 className="text-lg font-semibold md:text-2xl">Staking Portal</h1>
