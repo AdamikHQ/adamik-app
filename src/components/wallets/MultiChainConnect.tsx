@@ -8,23 +8,67 @@ import React, {
 import { useToast } from "~/components/ui/use-toast";
 import { useWallet } from "~/hooks/useWallet";
 import { Account, WalletName } from "./types";
-import { Chain } from "~/utils/types";
+import { Chain, SupportedBlockchain } from "~/utils/types";
 import { Button } from "~/components/ui/button";
-import { Loader2, ChevronRight } from "lucide-react";
+import { Loader2, ChevronRight, Search, Check } from "lucide-react";
 import { useChains } from "~/hooks/useChains";
 import { encodePubKeyToAddress } from "~/api/adamik/encode";
 import { getPreferredChains } from "~/config/wallet-chains";
+import { Input } from "~/components/ui/input";
+import { ScrollArea } from "~/components/ui/scroll-area";
+
+/**
+ * ChainItem component for rendering individual chain items
+ */
+const ChainItem = forwardRef<
+  HTMLDivElement,
+  {
+    chainId: string;
+    chain: SupportedBlockchain;
+    isSelected: boolean;
+    onToggle: () => void;
+  }
+>(({ chainId, chain, isSelected, onToggle }, ref) => (
+  <div
+    ref={ref}
+    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer hover:bg-accent ${
+      isSelected ? "bg-accent" : ""
+    }`}
+    onClick={onToggle}
+  >
+    <div className="flex items-center gap-3">
+      {chain.logo && (
+        <img
+          src={chain.logo}
+          alt={`${chain.name} logo`}
+          className="w-6 h-6 rounded-full"
+        />
+      )}
+      <span>{chain.name}</span>
+    </div>
+    {isSelected && <Check className="w-4 h-4 text-primary" />}
+  </div>
+));
+
+ChainItem.displayName = "ChainItem";
+
+/**
+ * Separator component for visual division
+ */
+const Separator = ({ className = "" }: { className?: string }) => (
+  <div className={`h-px bg-border ${className}`} />
+);
 
 /**
  * MultiChainConnect component
  * Automatically connects to all chains defined in the wallet-chains.ts config file
- * Simplified to just a button for top-right placement
+ * Enhanced with search and better organization of chains
  */
 export const MultiChainConnect: React.FC<{
   variant?: "default" | "outline" | "secondary" | "ghost" | "link";
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
-  hideButton?: boolean; // Add hideButton prop to hide the button when needed
+  hideButton?: boolean;
 }> = ({
   variant = "default",
   size = "default",
@@ -39,6 +83,9 @@ export const MultiChainConnect: React.FC<{
   const [successCount, setSuccessCount] = useState(0);
   const [failedChains, setFailedChains] = useState<string[]>([]);
   const [configuredChains, setConfiguredChains] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedChains, setSelectedChains] = useState<string[]>([]);
+  const [isSelectionOpen, setIsSelectionOpen] = useState(false);
   const { data: chains, isLoading: chainsLoading } = useChains();
 
   useEffect(() => {
@@ -47,6 +94,37 @@ export const MultiChainConnect: React.FC<{
       setConfiguredChains(preferredChains);
     }
   }, [chains]);
+
+  // Filter and sort chains based on search query and selection status
+  const { selectedChainsList, unselectedChainsList } = React.useMemo(() => {
+    if (!chains) return { selectedChainsList: [], unselectedChainsList: [] };
+
+    const allChains = Object.entries(chains)
+      .filter(([chainId, chain]) => {
+        const matchesSearch = chain.name
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
+        return matchesSearch;
+      })
+      .sort((a, b) => a[1].name.localeCompare(b[1].name));
+
+    return {
+      selectedChainsList: allChains.filter(([chainId]) =>
+        selectedChains.includes(chainId)
+      ),
+      unselectedChainsList: allChains.filter(
+        ([chainId]) => !selectedChains.includes(chainId)
+      ),
+    };
+  }, [chains, searchQuery, selectedChains]);
+
+  const toggleChain = (chainId: string) => {
+    setSelectedChains((prev) =>
+      prev.includes(chainId)
+        ? prev.filter((id) => id !== chainId)
+        : [...prev, chainId]
+    );
+  };
 
   const getAddressForChain = async (chainId: string) => {
     if (!chains || !chains[chainId]) {
@@ -221,22 +299,107 @@ export const MultiChainConnect: React.FC<{
 
   // Button is only visible when not hidden with hideButton prop
   return (
-    <Button
-      id="multi-chain-connect-button"
-      variant={variant}
-      size={size}
-      className={`${className} bg-primary hover:bg-primary/90 text-primary-foreground font-medium`}
-      onClick={connectAllChains}
-      disabled={loading || configuredChains.length === 0}
-    >
-      {loading ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          {connectedCount}/{configuredChains.length}
-        </>
-      ) : (
-        <>Connect {isShowroom ? "Demo " : ""}Wallet</>
+    <div className="relative">
+      <Button
+        variant={variant}
+        size={size}
+        className={className}
+        onClick={() => setIsSelectionOpen(true)}
+        disabled={loading || isShowroom}
+      >
+        {loading ? (
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        ) : (
+          <ChevronRight className="w-4 h-4 mr-2" />
+        )}
+        {selectedChains.length > 0
+          ? `${selectedChains.length} Chains Selected`
+          : "Select Chains"}
+      </Button>
+
+      {isSelectionOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="w-full max-w-md p-6 bg-background rounded-lg shadow-lg">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold">Select Chains</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsSelectionOpen(false)}
+                >
+                  Close
+                </Button>
+              </div>
+
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search chains..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+
+              <ScrollArea className="h-[400px] rounded-md border p-4">
+                {selectedChainsList.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="font-medium text-sm text-muted-foreground">
+                      Selected Chains ({selectedChainsList.length})
+                    </h3>
+                    {selectedChainsList.map(([chainId, chain]) => (
+                      <ChainItem
+                        key={chainId}
+                        chainId={chainId}
+                        chain={chain}
+                        isSelected={true}
+                        onToggle={() => toggleChain(chainId)}
+                      />
+                    ))}
+                    <Separator className="my-4" />
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <h3 className="font-medium text-sm text-muted-foreground">
+                    Available Chains ({unselectedChainsList.length})
+                  </h3>
+                  {unselectedChainsList.map(([chainId, chain]) => (
+                    <ChainItem
+                      key={chainId}
+                      chainId={chainId}
+                      chain={chain}
+                      isSelected={false}
+                      onToggle={() => toggleChain(chainId)}
+                    />
+                  ))}
+                </div>
+              </ScrollArea>
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedChains([])}
+                  disabled={selectedChains.length === 0}
+                >
+                  Clear All
+                </Button>
+                <Button
+                  onClick={() => {
+                    setConfiguredChains(selectedChains);
+                    setIsSelectionOpen(false);
+                    connectAllChains();
+                  }}
+                  disabled={selectedChains.length === 0}
+                >
+                  Connect ({selectedChains.length})
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
-    </Button>
+    </div>
   );
 };
