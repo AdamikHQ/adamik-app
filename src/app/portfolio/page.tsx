@@ -36,6 +36,8 @@ import {
   getTokenTickers,
 } from "./helpers";
 import { WalletConnect } from "~/components";
+import { useQueryClient } from "@tanstack/react-query";
+import { accountState } from "~/api/adamik/accountState";
 
 export default function Portfolio() {
   const {
@@ -45,6 +47,7 @@ export default function Portfolio() {
   } = useWallet();
 
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const displayAddresses = isShowroom ? showroomAddresses : walletAddresses;
   const addressesChainIds = displayAddresses.reduce<string[]>(
     (acc, { chainId }) => {
@@ -158,11 +161,53 @@ export default function Portfolio() {
     stakingBalances.unstakingBalance;
 
   const refreshPositions = () => {
-    toast({ description: "Refreshing portfolio..." });
-    assets.forEach((asset) => {
+    console.log("🔄 Starting refresh for addresses:", displayAddresses);
+
+    // Initial toast
+    toast({
+      description: `Refreshing data for ${addressesChainIds.length} chains...`,
+      duration: 3000,
+    });
+
+    // Clear cache and force immediate refetch for all account states
+    displayAddresses.forEach(({ chainId, address }) => {
+      console.log(`🗑️ Clearing cache for ${chainId}:${address}`);
       clearAccountStateCache({
-        chainId: asset.chainId,
-        address: asset.address,
+        chainId,
+        address,
+      });
+    });
+
+    // Force immediate refetch of all queries
+    console.log("♻️ Invalidating all account state queries");
+    queryClient.invalidateQueries({
+      queryKey: ["accountState"],
+      refetchType: "all",
+    });
+
+    console.log("♻️ Invalidating all market data queries");
+    queryClient.invalidateQueries({
+      queryKey: ["mobula"],
+      refetchType: "all",
+    });
+
+    // Show completion toast after queries are refetched
+    console.log("⏳ Waiting for account state queries to complete...");
+
+    // Create promises for each account state query
+    const promises = displayAddresses.map(({ chainId, address }) =>
+      queryClient.fetchQuery({
+        queryKey: ["accountState", chainId, address],
+        queryFn: () => accountState(chainId, address),
+      })
+    );
+
+    // Wait for all queries to complete
+    Promise.all(promises).then(() => {
+      console.log("✅ All account state queries completed successfully");
+      toast({
+        description: "Portfolio data updated",
+        duration: 2000,
       });
     });
   };
