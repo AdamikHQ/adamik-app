@@ -18,7 +18,7 @@ export const useChains = () => {
 // A hook that filters chains based on the showTestnets setting
 export const useFilteredChains = () => {
   const { data: allChains, ...rest } = useChains();
-  const [showTestnets, setShowTestnets] = useState(true);
+  const [showTestnets, setShowTestnets] = useState(false); // Default to false - hide testnets
 
   useEffect(() => {
     // Get the showTestnets setting from localStorage
