@@ -579,21 +579,33 @@ export const MultiChainConnect: React.FC<{
                           setSuccessCount(0);
                           setFailedChains([]);
 
+                          // Use a local variable to track successes for the toast
+                          let localSuccessCount = 0;
+                          let localFailCount = 0;
+
                           // Process each selected chain individually
                           for (const chainId of validChainsToConnect) {
                             try {
                               const result = await getAddressForChain(chainId);
                               handleSuccessfulConnection(result);
+                              localSuccessCount++;
                             } catch (error) {
                               handleFailedConnection(chainId, error as Error);
+                              localFailCount++;
                             } finally {
                               setConnectedCount((prev) => prev + 1);
                             }
                           }
 
-                          // Show the completion toast
+                          // Show the completion toast using the local count variables
                           toast({
-                            description: `Connected ${successCount} chains successfully`,
+                            description: `Connected ${localSuccessCount} chain${
+                              localSuccessCount !== 1 ? "s" : ""
+                            } successfully${
+                              localFailCount > 0
+                                ? `, ${localFailCount} failed`
+                                : ""
+                            }`,
                             duration: 2000,
                           });
 
