@@ -37,16 +37,6 @@ const menu = [
     href: "/history",
   },
   {
-    title: "Supported chains",
-    icon: SquareStack,
-    href: "/supported-chains",
-  },
-  {
-    title: "Sodot Test",
-    icon: KeyRound,
-    href: "/sodot-test",
-  },
-  {
     title: "Settings",
     icon: Settings,
     href: "/settings",
