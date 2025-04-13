@@ -1,7 +1,7 @@
 "use client";
 
 import { Info } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { LoadingModal } from "~/components/layout/LoadingModal";
 import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { Button } from "~/components/ui/button";
@@ -134,12 +134,13 @@ export default function Stake() {
     ]
   );
 
-  const refreshPositions = () => {
+  const refreshPositions = useCallback(async () => {
     console.log("🔄 Starting refresh for staking positions");
 
     let completedQueries = 0;
     const stakableAssets = assets.filter((asset) => asset.isStakable);
     const totalQueries = stakableAssets.length;
+    let isCancelled = false;
 
     // Create initial progress toast
     const progressToast = toast({
@@ -160,81 +161,116 @@ export default function Stake() {
       duration: Infinity,
     });
 
-    // Clear cache for all stakable assets
-    stakableAssets.forEach(({ chainId, address }) => {
-      console.log(`🗑️ Clearing cache for ${chainId}:${address}`);
-      clearAccountStateCache({
-        chainId,
-        address,
+    try {
+      // First, cancel any existing queries to prevent conflicts
+      await queryClient.cancelQueries({ queryKey: ["accountState"] });
+      await queryClient.cancelQueries({ queryKey: ["validators"] });
+
+      // Clear cache for all stakable assets
+      stakableAssets.forEach(({ chainId, address }) => {
+        console.log(`🗑️ Clearing cache for ${chainId}:${address}`);
+        clearAccountStateCache({
+          chainId,
+          address,
+        });
       });
-    });
 
-    // Force immediate refetch of all queries
-    console.log("♻️ Invalidating all account state queries");
-    queryClient.invalidateQueries({
-      queryKey: ["accountState"],
-      refetchType: "all",
-    });
+      // Invalidate queries but don't refetch yet
+      await queryClient.invalidateQueries({
+        queryKey: ["accountState"],
+        refetchType: "none",
+      });
 
-    console.log("♻️ Invalidating all validator queries");
-    queryClient.invalidateQueries({
-      queryKey: ["validators"],
-      refetchType: "all",
-    });
+      await queryClient.invalidateQueries({
+        queryKey: ["validators"],
+        refetchType: "none",
+      });
 
-    // Create promises for each account state query
-    const promises = stakableAssets.map(({ chainId, address }) =>
-      queryClient
-        .fetchQuery({
-          queryKey: ["accountState", chainId, address],
-          queryFn: () => accountState(chainId, address),
-        })
-        .then(() => {
-          completedQueries++;
-          // Update progress toast with new description
-          const newDescription = (
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span>Refreshing staking data...</span>
-                <span className="text-sm text-muted-foreground">
-                  {completedQueries}/{totalQueries} chains
-                </span>
-              </div>
-              <Progress
-                value={(completedQueries / totalQueries) * 100}
-                className="h-2"
-              />
-            </div>
-          );
+      // Process queries in batches to avoid overwhelming the system
+      const batchSize = 3; // Process 3 queries at a time
+      const batches = [];
 
-          progressToast.update({
-            id: progressToast.id,
-            description: newDescription,
-          });
-        })
-    );
+      for (let i = 0; i < stakableAssets.length; i += batchSize) {
+        const batch = stakableAssets.slice(i, i + batchSize);
+        batches.push(batch);
+      }
 
-    // Wait for all queries to complete
-    Promise.all(promises)
-      .then(() => {
+      for (const batch of batches) {
+        if (isCancelled) break;
+
+        await Promise.all(
+          batch.map(async ({ chainId, address }) => {
+            if (isCancelled) return;
+
+            try {
+              await queryClient.fetchQuery({
+                queryKey: ["accountState", chainId, address],
+                queryFn: () => accountState(chainId, address),
+                staleTime: 0,
+              });
+
+              completedQueries++;
+
+              // Update progress toast
+              if (!isCancelled) {
+                const newDescription = (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <span>Refreshing staking data...</span>
+                      <span className="text-sm text-muted-foreground">
+                        {completedQueries}/{totalQueries} chains
+                      </span>
+                    </div>
+                    <Progress
+                      value={(completedQueries / totalQueries) * 100}
+                      className="h-2"
+                    />
+                  </div>
+                );
+
+                progressToast.update({
+                  id: progressToast.id,
+                  description: newDescription,
+                });
+              }
+            } catch (error) {
+              if (
+                error instanceof Error &&
+                error.message.includes("CancelledError")
+              ) {
+                isCancelled = true;
+                return;
+              }
+              console.error(`Error refreshing ${chainId}:${address}:`, error);
+            }
+          })
+        );
+      }
+
+      if (!isCancelled) {
         progressToast.dismiss();
-        // Show success toast
         toast({
           description: "Staking data updated successfully",
           duration: 2000,
         });
-      })
-      .catch((error) => {
+      }
+    } catch (error) {
+      if (!isCancelled) {
         progressToast.dismiss();
-        // Show error toast
         toast({
           description: "Failed to update some staking data",
           variant: "destructive",
           duration: 3000,
         });
         console.error("Error refreshing staking positions:", error);
-      });
-  };
+      }
+    }
+
+    return () => {
+      isCancelled = true;
+      progressToast.dismiss();
+    };
+  }, [assets, queryClient, toast]);
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">

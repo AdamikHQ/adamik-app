@@ -1,7 +1,7 @@
 "use client";
 
 import { Info } from "lucide-react";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { TransferTransactionForm } from "~/components/transactions/TransferTransactionForm";
 import { Modal } from "~/components/ui/modal";
@@ -130,12 +130,14 @@ export default function Portfolio() {
       loadingToast = toast({
         description: (
           <div className="flex flex-col gap-2">
-            <div>Loading portfolio data...</div>
-            <div className="text-sm text-muted-foreground">
-              {isAddressesLoading ? "• Fetching addresses data" : ""}
-              {isAssetDetailsLoading ? "• Loading asset details" : ""}
-              {isSupportedChainsLoading ? "• Loading chain information" : ""}
-              {isMobulaMarketDataLoading ? "• Fetching market data" : ""}
+            <div className="font-medium">Loading portfolio data...</div>
+            <div className="flex flex-col space-y-1 text-sm text-muted-foreground">
+              {isAddressesLoading && <div>• Fetching addresses data</div>}
+              {isAssetDetailsLoading && <div>• Loading asset details</div>}
+              {isSupportedChainsLoading && (
+                <div>• Loading chain information</div>
+              )}
+              {isMobulaMarketDataLoading && <div>• Fetching market data</div>}
             </div>
           </div>
         ),
@@ -147,7 +149,7 @@ export default function Portfolio() {
 
       // Show completion toast
       toast({
-        description: "Portfolio data loaded successfully",
+        description: "Portfolio loaded successfully",
         duration: 2000,
       });
     }
@@ -204,18 +206,19 @@ export default function Portfolio() {
     stakingBalances.stakedBalance +
     stakingBalances.unstakingBalance;
 
-  const refreshPositions = () => {
+  const refreshPositions = useCallback(async () => {
     console.log("🔄 Starting refresh for addresses:", displayAddresses);
 
     let completedQueries = 0;
     const totalQueries = displayAddresses.length;
+    let isCancelled = false;
 
     // Create initial progress toast
     const progressToast = toast({
       description: (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <span>Refreshing portfolio data...</span>
+            <span>Refreshing portfolio...</span>
             <span className="text-sm text-muted-foreground">
               {completedQueries}/{totalQueries} chains
             </span>
@@ -229,82 +232,116 @@ export default function Portfolio() {
       duration: Infinity,
     });
 
-    // Clear cache and force immediate refetch for all account states
-    displayAddresses.forEach(({ chainId, address }) => {
-      console.log(`🗑️ Clearing cache for ${chainId}:${address}`);
-      clearAccountStateCache({
-        chainId,
-        address,
+    try {
+      // First, cancel any existing queries to prevent conflicts
+      await queryClient.cancelQueries({ queryKey: ["accountState"] });
+      await queryClient.cancelQueries({ queryKey: ["mobula"] });
+
+      // Clear cache for all addresses
+      displayAddresses.forEach(({ chainId, address }) => {
+        console.log(`🗑️ Clearing cache for ${chainId}:${address}`);
+        clearAccountStateCache({
+          chainId,
+          address,
+        });
       });
-    });
 
-    // Force immediate refetch of all queries
-    console.log("♻️ Invalidating all account state queries");
-    queryClient.invalidateQueries({
-      queryKey: ["accountState"],
-      refetchType: "all",
-    });
+      // Invalidate queries but don't refetch yet
+      await queryClient.invalidateQueries({
+        queryKey: ["accountState"],
+        refetchType: "none",
+      });
 
-    console.log("♻️ Invalidating all market data queries");
-    queryClient.invalidateQueries({
-      queryKey: ["mobula"],
-      refetchType: "all",
-    });
+      await queryClient.invalidateQueries({
+        queryKey: ["mobula"],
+        refetchType: "none",
+      });
 
-    // Create promises for each account state query
-    const promises = displayAddresses.map(({ chainId, address }) =>
-      queryClient
-        .fetchQuery({
-          queryKey: ["accountState", chainId, address],
-          queryFn: () => accountState(chainId, address),
-        })
-        .then(() => {
-          completedQueries++;
-          // Update progress toast with new description
-          const newDescription = (
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span>Refreshing portfolio data...</span>
-                <span className="text-sm text-muted-foreground">
-                  {completedQueries}/{totalQueries} chains
-                </span>
-              </div>
-              <Progress
-                value={(completedQueries / totalQueries) * 100}
-                className="h-2"
-              />
-            </div>
-          );
+      // Process queries in batches to avoid overwhelming the system
+      const batchSize = 3; // Process 3 queries at a time
+      const batches = [];
 
-          // Update the toast with just the new description
-          progressToast.update({
-            id: progressToast.id,
-            description: newDescription,
-          });
-        })
-    );
+      for (let i = 0; i < displayAddresses.length; i += batchSize) {
+        const batch = displayAddresses.slice(i, i + batchSize);
+        batches.push(batch);
+      }
 
-    // Wait for all queries to complete
-    Promise.all(promises)
-      .then(() => {
+      for (const batch of batches) {
+        if (isCancelled) break;
+
+        await Promise.all(
+          batch.map(async ({ chainId, address }) => {
+            if (isCancelled) return;
+
+            try {
+              await queryClient.fetchQuery({
+                queryKey: ["accountState", chainId, address],
+                queryFn: () => accountState(chainId, address),
+                staleTime: 0,
+              });
+
+              completedQueries++;
+
+              // Update progress toast
+              if (!isCancelled) {
+                const newDescription = (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <span>Refreshing portfolio...</span>
+                      <span className="text-sm text-muted-foreground">
+                        {completedQueries}/{totalQueries} chains
+                      </span>
+                    </div>
+                    <Progress
+                      value={(completedQueries / totalQueries) * 100}
+                      className="h-2"
+                    />
+                  </div>
+                );
+
+                progressToast.update({
+                  id: progressToast.id,
+                  description: newDescription,
+                });
+              }
+            } catch (error) {
+              if (
+                error instanceof Error &&
+                error.message.includes("CancelledError")
+              ) {
+                isCancelled = true;
+                return;
+              }
+              console.error(`Error refreshing ${chainId}:${address}:`, error);
+            }
+          })
+        );
+      }
+
+      if (!isCancelled) {
         progressToast.dismiss();
-        // Show success toast
         toast({
-          description: "Portfolio data updated successfully",
+          description: "Portfolio updated successfully",
           duration: 2000,
         });
-      })
-      .catch((error) => {
+      }
+    } catch (error) {
+      if (!isCancelled) {
         progressToast.dismiss();
-        // Show error toast
         toast({
           description: "Failed to update some portfolio data",
           variant: "destructive",
           duration: 3000,
         });
         console.error("Error refreshing positions:", error);
-      });
-  };
+      }
+    }
+
+    return () => {
+      isCancelled = true;
+      progressToast.dismiss();
+    };
+  }, [displayAddresses, queryClient, toast]);
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
