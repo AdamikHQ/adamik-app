@@ -70,10 +70,12 @@ const StakingPositionsListRow: React.FC<{
             <Tooltip text={position.chainName}>
               <TooltipTrigger>
                 <Avatar>
-                  <AvatarImage
-                    src={position.chainLogo}
-                    alt={position.chainId}
-                  />
+                  {position.chainLogo ? (
+                    <AvatarImage
+                      src={position.chainLogo}
+                      alt={position.chainId}
+                    />
+                  ) : null}
                   <AvatarFallback>{position.chainName}</AvatarFallback>
                 </Avatar>
               </TooltipTrigger>
