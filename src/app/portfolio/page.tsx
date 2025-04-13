@@ -37,6 +37,7 @@ import {
 import { WalletConnect } from "~/components";
 import { useQueryClient } from "@tanstack/react-query";
 import { accountState } from "~/api/adamik/accountState";
+import { Progress } from "~/components/ui/progress";
 
 export default function Portfolio() {
   const {
@@ -206,10 +207,27 @@ export default function Portfolio() {
   const refreshPositions = () => {
     console.log("🔄 Starting refresh for addresses:", displayAddresses);
 
-    // Initial toast
-    toast({
-      description: `Refreshing data for ${addressesChainIds.length} chains...`,
-      duration: 3000,
+    let refreshToast: ReturnType<typeof toast> | undefined;
+    let completedQueries = 0;
+    const totalQueries = displayAddresses.length;
+
+    // Initial toast with progress
+    refreshToast = toast({
+      description: (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span>Refreshing portfolio data...</span>
+            <span className="text-sm text-muted-foreground">
+              {completedQueries}/{totalQueries} chains
+            </span>
+          </div>
+          <Progress
+            value={(completedQueries / totalQueries) * 100}
+            className="h-2"
+          />
+        </div>
+      ),
+      duration: Infinity,
     });
 
     // Clear cache and force immediate refetch for all account states
@@ -234,25 +252,65 @@ export default function Portfolio() {
       refetchType: "all",
     });
 
-    // Show completion toast after queries are refetched
-    console.log("⏳ Waiting for account state queries to complete...");
-
     // Create promises for each account state query
     const promises = displayAddresses.map(({ chainId, address }) =>
-      queryClient.fetchQuery({
-        queryKey: ["accountState", chainId, address],
-        queryFn: () => accountState(chainId, address),
-      })
+      queryClient
+        .fetchQuery({
+          queryKey: ["accountState", chainId, address],
+          queryFn: () => accountState(chainId, address),
+        })
+        .then(() => {
+          completedQueries++;
+          // Update progress toast
+          const progressDescription = (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span>Refreshing portfolio data...</span>
+                <span className="text-sm text-muted-foreground">
+                  {completedQueries}/{totalQueries} chains
+                </span>
+              </div>
+              <Progress
+                value={(completedQueries / totalQueries) * 100}
+                className="h-2"
+              />
+            </div>
+          );
+
+          if (refreshToast) {
+            toast({
+              ...refreshToast,
+              description: progressDescription,
+              duration: Infinity,
+            });
+          }
+        })
     );
 
     // Wait for all queries to complete
-    Promise.all(promises).then(() => {
-      console.log("✅ All account state queries completed successfully");
-      toast({
-        description: "Portfolio data updated",
-        duration: 2000,
+    Promise.all(promises)
+      .then(() => {
+        if (refreshToast) {
+          refreshToast.dismiss();
+        }
+        // Show success toast
+        toast({
+          description: "Portfolio data updated successfully",
+          duration: 2000,
+        });
+      })
+      .catch((error) => {
+        if (refreshToast) {
+          refreshToast.dismiss();
+        }
+        // Show error toast
+        toast({
+          description: "Failed to update some portfolio data",
+          variant: "destructive",
+          duration: 3000,
+        });
+        console.error("Error refreshing positions:", error);
       });
-    });
   };
 
   return (
