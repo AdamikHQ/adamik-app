@@ -31,25 +31,8 @@ const {
   TabsTrigger,
 } = require("~/components/ui/tabs");
 
-// Define a fallback for Sodot test content
-const SodotTestContent = () => (
-  <div>
-    <h2 className="text-lg font-semibold">Sodot Test</h2>
-    <p className="text-muted-foreground">
-      This is a placeholder for the Sodot test content.
-    </p>
-  </div>
-);
-
-// Try importing the real component if it exists
-try {
-  const SodotModule = require("./tabs/SodotTest");
-  if (SodotModule && SodotModule.SodotTestContent) {
-    Object.assign(SodotTestContent, SodotModule.SodotTestContent);
-  }
-} catch (error) {
-  console.warn("Failed to load SodotTest component", error);
-}
+// Import Sodot component directly
+import { SodotTestContent as RealSodotTestContent } from "./tabs/SodotTest";
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -425,7 +408,7 @@ export default function SettingsPage() {
         <TabsContent value="sodot" className="mt-0">
           <Card className="bg-card rounded-lg border shadow-sm">
             <CardContent className="pt-6">
-              <SodotTestContent />
+              <RealSodotTestContent />
             </CardContent>
           </Card>
         </TabsContent>
