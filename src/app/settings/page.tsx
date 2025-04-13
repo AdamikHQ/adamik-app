@@ -109,45 +109,25 @@ export default function SettingsPage() {
       );
 
     const chainsWithInfo = React.useMemo(() => {
-      if (!chains) return [];
+      return Object.values(chains || {})
+        .reduce<SupportedBlockchain[]>((acc, chain) => {
+          if (!(showTestnets || !chain.isTestnetFor)) {
+            return acc;
+          }
 
-      return Object.values(chains)
-        .reduce<(SupportedBlockchain & { labels?: string[] })[]>(
-          (acc, chain) => {
-            if (!!chain.isTestnetFor) {
-              return acc;
-            }
-
-            // Determine labels based on chain features
-            const labels: string[] = [];
-            if (
-              chain.supportedFeatures?.read?.account?.balances?.tokens &&
-              chain.supportedFeatures?.read?.transaction?.tokens
-            ) {
-              labels.push("token");
-            }
-            if (isStakingSupported(chain)) {
-              labels.push("staking");
-            }
-            if (chain.supportedFeatures?.read?.account?.transactions?.native) {
-              labels.push("history");
-            }
-
-            const supportedChain = {
-              ...chain,
-              labels,
-              logo: resolveLogo({
-                asset: { name: chain.name, ticker: chain.ticker },
-                mobulaMarketData,
-                mobulaBlockChainData: mobulaBlockchains,
-              }),
-            };
-            return [...acc, supportedChain];
-          },
-          []
-        )
+          const supportedChain: SupportedBlockchain = {
+            ...chain,
+            logo: resolveLogo({
+              asset: { name: chain.name, ticker: chain.ticker },
+              mobulaMarketData,
+              mobulaBlockChainData: mobulaBlockchains,
+            }),
+            labels: [], // Initialize with empty array; labels would be populated elsewhere
+          };
+          return [...acc, supportedChain];
+        }, [])
         .sort((a, b) => a.name.localeCompare(b.name));
-    }, [chains, mobulaMarketData, mobulaBlockchains]);
+    }, [mobulaMarketData, mobulaBlockchains]);
 
     const filteredSupportedChains = selectedFeatures.length
       ? chainsWithInfo.filter((chain) =>

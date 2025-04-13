@@ -196,7 +196,7 @@ export const WelcomeModal = () => {
                 Connecting Your Wallet
               </h1>
               <div className="flex flex-col gap-2 text-center text-sm text-gray-400">
-                <p>We're connecting your wallet automatically.</p>
+                <p>We&apos;re connecting your wallet automatically.</p>
                 <p>
                   You can always switch to Demo mode later using the toggle at
                   the top.
