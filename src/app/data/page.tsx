@@ -45,6 +45,10 @@ import {
 } from "~/utils/types";
 import { useToast } from "~/components/ui/use-toast";
 import { getTokenInfo } from "~/api/adamik/token";
+import { WalletConnect } from "~/components";
+import { useWallet } from "~/hooks/useWallet";
+import { Modal } from "~/components/ui/modal";
+import { WalletSelection } from "~/components/wallets/WalletSelection";
 
 hljs.registerLanguage("json", json);
 
@@ -57,6 +61,8 @@ function DataContent() {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [formattedAmount, setFormattedAmount] = useState<string>("N/A");
   const [formattedFees, setFormattedFees] = useState<string>("N/A");
+  const [showChainsModal, setShowChainsModal] = useState(false);
+  const { isShowroom } = useWallet();
 
   const rawSearchParams = useSearchParams();
   // Create a safe version of searchParams with default values
@@ -381,85 +387,109 @@ function DataContent() {
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto w-full">
-      <div className="flex items-center">
-        <h1 className="text-lg font-semibold md:text-2xl">
-          Transaction Details
-        </h1>
-        <Tooltip text="View the API documentation for retrieving transaction data">
-          <a
-            href="https://docs.adamik.io/api-reference/transaction/get-transaction-details"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
-          </a>
-        </Tooltip>
+      <div className="flex items-center justify-between p-4">
+        <div className="flex items-center">
+          <h1 className="text-lg font-semibold md:text-2xl mr-2">
+            Transaction Details
+          </h1>
+          <Tooltip text="View the API documentation for retrieving transaction data">
+            <a
+              href="https://docs.adamik.io/api-reference/transaction/get-transaction"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Info className="w-4 h-4 text-gray-500 cursor-pointer" />
+            </a>
+          </Tooltip>
+        </div>
+        <WalletConnect />
       </div>
 
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="w-full max-w-2xl space-y-4 md:space-y-6"
-        >
-          <FormField
-            control={form.control}
-            name="chainId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Chain</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a chain" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="max-h-[40vh]">
-                    {!isSupportedChainsLoading &&
-                      supportedChains &&
-                      Object.values(supportedChains)
-                        ?.sort((chainA, chainB) =>
-                          chainA.name.localeCompare(chainB.name)
-                        )
-                        .map((chain) => (
-                          <SelectItem key={chain.id} value={chain.id}>
-                            {chain.name}
-                          </SelectItem>
-                        ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="transactionId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Transaction ID</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="transaction id"
-                    {...field}
-                    className="w-full"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          {!!error && (
-            <div className="text-red-500 w-full break-all">{error.message}</div>
-          )}
-          <Button type="submit" className="w-full sm:w-auto" onClick={() => {}}>
-            <Search className="mr-2" />
-            Search
-          </Button>
-        </form>
-      </Form>
+      <Modal
+        open={showChainsModal}
+        setOpen={setShowChainsModal}
+        modalContent={<WalletSelection position="modal" forceShow={true} />}
+      />
 
       <div className="grid gap-4 md:gap-8 grid-cols-1">
-        <Card>
+        <Card className="bg-card rounded-lg border shadow-sm">
+          <CardHeader>
+            <CardTitle>Search Transaction</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="w-full md:w-1/3">
+                    <FormField
+                      control={form.control}
+                      name="chainId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Chain</FormLabel>
+                          <FormControl>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                              disabled={isSupportedChainsLoading}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select chain" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Object.entries(supportedChains || {})
+                                  .sort(([, a], [, b]) =>
+                                    a.name.localeCompare(b.name)
+                                  )
+                                  .map(([chainId, chain]) => (
+                                    <SelectItem key={chainId} value={chainId}>
+                                      {chain.name} ({chain.ticker})
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="w-full md:flex-1">
+                    <FormField
+                      control={form.control}
+                      name="transactionId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Transaction ID</FormLabel>
+                          <div className="flex gap-2">
+                            <FormControl>
+                              <Input
+                                placeholder="Enter transaction ID"
+                                {...field}
+                              />
+                            </FormControl>
+                            <Button type="submit" disabled={isLoading}>
+                              {isLoading ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              ) : (
+                                <Search className="mr-2 h-4 w-4" />
+                              )}
+                              Search
+                            </Button>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card rounded-lg border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <div className="flex items-center">
               <CardTitle>Parsed</CardTitle>
@@ -468,8 +498,7 @@ function DataContent() {
               </Tooltip>
             </div>
           </CardHeader>
-          {/* Remove max-height constraints and keep overflow-y-auto just in case */}
-          <CardContent className="overflow-y-auto p-2 lg:p-4">
+          <CardContent className="overflow-y-auto p-4 lg:p-6">
             <div className="mt-0">{renderParsedData(transaction)}</div>
           </CardContent>
         </Card>
@@ -488,7 +517,7 @@ function DataContent() {
             )}
           </Button>
           {isRawExpanded && (
-            <Card className="mt-4">
+            <Card className="mt-4 bg-card rounded-lg border shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div className="flex items-center">
                   <CardTitle>Raw</CardTitle>
