@@ -24,6 +24,9 @@ const env = createEnv({
     SODOT_VERTEX_API_KEY_1: z.string().min(1),
     SODOT_VERTEX_URL_2: z.string().url(),
     SODOT_VERTEX_API_KEY_2: z.string().min(1),
+    // Sodot Key IDs
+    SODOT_EXISTING_ECDSA_KEY_IDS: z.string().min(1),
+    SODOT_EXISTING_ED25519_KEY_IDS: z.string().min(1),
   },
 
   /*
@@ -50,6 +53,9 @@ const env = createEnv({
     SODOT_VERTEX_API_KEY_1: process.env.SODOT_VERTEX_API_KEY_1,
     SODOT_VERTEX_URL_2: process.env.SODOT_VERTEX_URL_2,
     SODOT_VERTEX_API_KEY_2: process.env.SODOT_VERTEX_API_KEY_2,
+    // Sodot Key IDs
+    SODOT_EXISTING_ECDSA_KEY_IDS: process.env.SODOT_EXISTING_ECDSA_KEY_IDS,
+    SODOT_EXISTING_ED25519_KEY_IDS: process.env.SODOT_EXISTING_ED25519_KEY_IDS,
   },
 });
 

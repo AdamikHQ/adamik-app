@@ -24,9 +24,13 @@ export default async function handler(
       return res.status(200).send("OK");
     }
 
-    // Get the environment variables for the specific vertex
-    const vertexUrl = env[`SODOT_VERTEX_URL_${vertex}` as keyof typeof env];
-    const apiKey = env[`SODOT_VERTEX_API_KEY_${vertex}` as keyof typeof env];
+    // Get the environment variables for the specific vertex from the env object
+    const vertexUrl = env[`SODOT_VERTEX_URL_${vertex}` as keyof typeof env] as
+      | string
+      | undefined;
+    const apiKey = env[`SODOT_VERTEX_API_KEY_${vertex}` as keyof typeof env] as
+      | string
+      | undefined;
 
     if (!vertexUrl || !apiKey) {
       return res.status(500).json({
@@ -124,6 +128,7 @@ export default async function handler(
       status: 500,
       error: "Internal Proxy Error",
       message: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
     });
   }
 }
