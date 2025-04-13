@@ -8,6 +8,19 @@ interface ChainsResponse {
   chains: Record<string, Chain>;
 }
 
+// Function to get client state from cookies
+const getClientState = async (): Promise<{ showTestnets?: boolean }> => {
+  try {
+    // This is a server component, so we need to use cookies instead of localStorage
+    // For simplicity, we'll just return default values for now
+    // In a real implementation, you would extract this from cookies or headers
+    return { showTestnets: true };
+  } catch (error) {
+    console.error("Error getting client state:", error);
+    return { showTestnets: true };
+  }
+};
+
 // TODO Better API error management, consistent for all endpoints
 export const getChains = async (): Promise<Record<string, Chain> | null> => {
   try {

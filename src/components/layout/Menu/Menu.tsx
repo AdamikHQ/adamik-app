@@ -7,6 +7,7 @@ import {
   Search,
   History,
   KeyRound,
+  Settings,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { MobileMenu } from "./MobileMenu";
@@ -44,6 +45,11 @@ const menu = [
     title: "Sodot Test",
     icon: KeyRound,
     href: "/sodot-test",
+  },
+  {
+    title: "Settings",
+    icon: Settings,
+    href: "/settings",
   },
 ];
 
