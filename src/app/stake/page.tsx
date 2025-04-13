@@ -8,11 +8,13 @@ import { Button } from "~/components/ui/button";
 import { Modal } from "~/components/ui/modal";
 import { Tooltip } from "~/components/ui/tooltip";
 import { useToast } from "~/components/ui/use-toast";
+import { Progress } from "~/components/ui/progress";
 import {
   clearAccountStateCache,
   isInAccountStateBatchCache,
   useAccountStateBatch,
 } from "~/hooks/useAccountStateBatch";
+import { accountState } from "~/api/adamik/accountState";
 import { useChains } from "~/hooks/useChains";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
@@ -39,6 +41,7 @@ import {
 import { StakingPositionsList } from "./StakingPositionsList";
 import { isStakingSupported } from "~/utils/helper";
 import { WalletConnect } from "~/components";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Stake() {
   const { addresses, isShowroom, setWalletMenuOpen } = useWallet();
@@ -48,6 +51,7 @@ export default function Stake() {
   >(undefined);
   const [stepper, setStepper] = useState(0);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const displayAddresses = isShowroom ? showroomAddresses : addresses;
   const addressesChainIds = displayAddresses.reduce<string[]>(
@@ -130,6 +134,108 @@ export default function Stake() {
     ]
   );
 
+  const refreshPositions = () => {
+    console.log("🔄 Starting refresh for staking positions");
+
+    let completedQueries = 0;
+    const stakableAssets = assets.filter((asset) => asset.isStakable);
+    const totalQueries = stakableAssets.length;
+
+    // Create initial progress toast
+    const progressToast = toast({
+      description: (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span>Refreshing staking data...</span>
+            <span className="text-sm text-muted-foreground">
+              {completedQueries}/{totalQueries} chains
+            </span>
+          </div>
+          <Progress
+            value={(completedQueries / totalQueries) * 100}
+            className="h-2"
+          />
+        </div>
+      ),
+      duration: Infinity,
+    });
+
+    // Clear cache for all stakable assets
+    stakableAssets.forEach(({ chainId, address }) => {
+      console.log(`🗑️ Clearing cache for ${chainId}:${address}`);
+      clearAccountStateCache({
+        chainId,
+        address,
+      });
+    });
+
+    // Force immediate refetch of all queries
+    console.log("♻️ Invalidating all account state queries");
+    queryClient.invalidateQueries({
+      queryKey: ["accountState"],
+      refetchType: "all",
+    });
+
+    console.log("♻️ Invalidating all validator queries");
+    queryClient.invalidateQueries({
+      queryKey: ["validators"],
+      refetchType: "all",
+    });
+
+    // Create promises for each account state query
+    const promises = stakableAssets.map(({ chainId, address }) =>
+      queryClient
+        .fetchQuery({
+          queryKey: ["accountState", chainId, address],
+          queryFn: () => accountState(chainId, address),
+        })
+        .then(() => {
+          completedQueries++;
+          // Update progress toast with new description
+          const newDescription = (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span>Refreshing staking data...</span>
+                <span className="text-sm text-muted-foreground">
+                  {completedQueries}/{totalQueries} chains
+                </span>
+              </div>
+              <Progress
+                value={(completedQueries / totalQueries) * 100}
+                className="h-2"
+              />
+            </div>
+          );
+
+          progressToast.update({
+            id: progressToast.id,
+            description: newDescription,
+          });
+        })
+    );
+
+    // Wait for all queries to complete
+    Promise.all(promises)
+      .then(() => {
+        progressToast.dismiss();
+        // Show success toast
+        toast({
+          description: "Staking data updated successfully",
+          duration: 2000,
+        });
+      })
+      .catch((error) => {
+        progressToast.dismiss();
+        // Show error toast
+        toast({
+          description: "Failed to update some staking data",
+          variant: "destructive",
+          duration: 3000,
+        });
+        console.error("Error refreshing staking positions:", error);
+      });
+  };
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
       {isLoading && !isInAccountStateBatchCache(displayAddresses) ? (
@@ -190,15 +296,7 @@ export default function Stake() {
 
       <StakingPositionsList
         stakingPositions={stakingPositions}
-        refreshPositions={() => {
-          toast({ description: "Refreshing..." });
-          assets.forEach((asset) => {
-            clearAccountStateCache({
-              chainId: asset.chainId,
-              address: asset.address,
-            });
-          });
-        }}
+        refreshPositions={refreshPositions}
       />
 
       {!!currentTransactionFlow && (
