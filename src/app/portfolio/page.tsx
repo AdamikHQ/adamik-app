@@ -207,12 +207,11 @@ export default function Portfolio() {
   const refreshPositions = () => {
     console.log("🔄 Starting refresh for addresses:", displayAddresses);
 
-    let refreshToast: ReturnType<typeof toast> | undefined;
     let completedQueries = 0;
     const totalQueries = displayAddresses.length;
 
-    // Initial toast with progress
-    refreshToast = toast({
+    // Create initial progress toast
+    const progressToast = toast({
       description: (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
@@ -261,8 +260,8 @@ export default function Portfolio() {
         })
         .then(() => {
           completedQueries++;
-          // Update progress toast
-          const progressDescription = (
+          // Update progress toast with new description
+          const newDescription = (
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <span>Refreshing portfolio data...</span>
@@ -277,22 +276,18 @@ export default function Portfolio() {
             </div>
           );
 
-          if (refreshToast) {
-            toast({
-              ...refreshToast,
-              description: progressDescription,
-              duration: Infinity,
-            });
-          }
+          // Update the toast with just the new description
+          progressToast.update({
+            id: progressToast.id,
+            description: newDescription,
+          });
         })
     );
 
     // Wait for all queries to complete
     Promise.all(promises)
       .then(() => {
-        if (refreshToast) {
-          refreshToast.dismiss();
-        }
+        progressToast.dismiss();
         // Show success toast
         toast({
           description: "Portfolio data updated successfully",
@@ -300,9 +295,7 @@ export default function Portfolio() {
         });
       })
       .catch((error) => {
-        if (refreshToast) {
-          refreshToast.dismiss();
-        }
+        progressToast.dismiss();
         // Show error toast
         toast({
           description: "Failed to update some portfolio data",
