@@ -1,8 +1,7 @@
 "use client";
 
 import { Info } from "lucide-react";
-import { useMemo, useState } from "react";
-import { LoadingModal } from "~/components/layout/LoadingModal";
+import { useMemo, useState, useEffect } from "react";
 import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { TransferTransactionForm } from "~/components/transactions/TransferTransactionForm";
 import { Modal } from "~/components/ui/modal";
@@ -122,6 +121,50 @@ export default function Portfolio() {
     isSupportedChainsLoading ||
     isMobulaMarketDataLoading;
 
+  // Add loading state management with toast
+  useEffect(() => {
+    let loadingToast: ReturnType<typeof toast> | undefined;
+
+    if (isLoading) {
+      loadingToast = toast({
+        description: (
+          <div className="flex flex-col gap-2">
+            <div>Loading portfolio data...</div>
+            <div className="text-sm text-muted-foreground">
+              {isAddressesLoading ? "• Fetching addresses data" : ""}
+              {isAssetDetailsLoading ? "• Loading asset details" : ""}
+              {isSupportedChainsLoading ? "• Loading chain information" : ""}
+              {isMobulaMarketDataLoading ? "• Fetching market data" : ""}
+            </div>
+          </div>
+        ),
+        duration: Infinity,
+      });
+    } else if (loadingToast) {
+      // Dismiss the loading toast
+      loadingToast.dismiss();
+
+      // Show completion toast
+      toast({
+        description: "Portfolio data loaded successfully",
+        duration: 2000,
+      });
+    }
+
+    return () => {
+      if (loadingToast) {
+        loadingToast.dismiss();
+      }
+    };
+  }, [
+    isLoading,
+    isAddressesLoading,
+    isAssetDetailsLoading,
+    isSupportedChainsLoading,
+    isMobulaMarketDataLoading,
+    toast,
+  ]);
+
   const assets = useMemo(() => {
     return filterAndSortAssets(
       calculateAssets(
@@ -214,9 +257,6 @@ export default function Portfolio() {
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
-      {isLoading && !isInAccountStateBatchCache(displayAddresses) ? (
-        <LoadingModal />
-      ) : null}
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center">
           <h1 className="text-lg font-semibold md:text-2xl">Portfolio</h1>
