@@ -179,32 +179,35 @@ export const MultiChainConnect: React.FC<{
     );
   };
 
-  const getAddressForChain = async (chainId: string) => {
-    if (!chains || !chains[chainId]) {
-      throw new Error(`Chain ${chainId} not supported`);
-    }
-
-    const response = await fetch(
-      `/api/sodot-proxy/derive-chain-pubkey?chain=${chainId}`,
-      {
-        method: "GET",
-        cache: "no-store",
+  const getAddressForChain = useCallback(
+    async (chainId: string) => {
+      if (!chains || !chains[chainId]) {
+        throw new Error(`Chain ${chainId} not supported`);
       }
-    );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        errorData.message || `HTTP error! status: ${response.status}`
+      const response = await fetch(
+        `/api/sodot-proxy/derive-chain-pubkey?chain=${chainId}`,
+        {
+          method: "GET",
+          cache: "no-store",
+        }
       );
-    }
 
-    const data = await response.json();
-    const pubkey = data.data.pubkey;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
 
-    const { address } = await encodePubKeyToAddress(pubkey, chainId);
-    return { pubkey, address, chainId };
-  };
+      const data = await response.json();
+      const pubkey = data.data.pubkey;
+
+      const { address } = await encodePubKeyToAddress(pubkey, chainId);
+      return { pubkey, address, chainId };
+    },
+    [chains]
+  );
 
   const handleSuccessfulConnection = useCallback(
     (result: { pubkey: string; address: string; chainId: string }) => {

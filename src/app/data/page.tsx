@@ -66,10 +66,13 @@ function DataContent() {
 
   const rawSearchParams = useSearchParams();
   // Create a safe version of searchParams with default values
-  const searchParams = {
-    chainId: rawSearchParams?.get("chainId") ?? "",
-    transactionId: rawSearchParams?.get("transactionId") ?? "",
-  };
+  const searchParams = useMemo(
+    () => ({
+      chainId: rawSearchParams?.get("chainId") ?? "",
+      transactionId: rawSearchParams?.get("transactionId") ?? "",
+    }),
+    [rawSearchParams]
+  );
 
   const { isLoading: isSupportedChainsLoading, data: supportedChains } =
     useChains();

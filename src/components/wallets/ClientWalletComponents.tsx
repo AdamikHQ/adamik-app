@@ -2,7 +2,6 @@
 
 import React from "react";
 import { WalletModal } from "./WalletModal";
-import { WalletStatusIndicator } from "./WalletStatusIndicator";
 
 /**
  * ClientWalletComponents
@@ -12,7 +11,6 @@ export function ClientWalletComponents() {
   return (
     <>
       <WalletModal />
-      <WalletStatusIndicator />
     </>
   );
 }

@@ -50,32 +50,35 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
     }
   }, [providedChainId]);
 
-  const getAddressForChain = async (chainId: string) => {
-    if (!chains || !chains[chainId]) {
-      throw new Error(`Chain ${chainId} not supported`);
-    }
-
-    const response = await fetch(
-      `/api/sodot-proxy/derive-chain-pubkey?chain=${chainId}`,
-      {
-        method: "GET",
-        cache: "no-store",
+  const getAddressForChain = useCallback(
+    async (chainId: string) => {
+      if (!chains || !chains[chainId]) {
+        throw new Error(`Chain ${chainId} not supported`);
       }
-    );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        errorData.message || `HTTP error! status: ${response.status}`
+      const response = await fetch(
+        `/api/sodot-proxy/derive-chain-pubkey?chain=${chainId}`,
+        {
+          method: "GET",
+          cache: "no-store",
+        }
       );
-    }
 
-    const data = await response.json();
-    const pubkey = data.data.pubkey;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
 
-    const { address } = await encodePubKeyToAddress(pubkey, chainId);
-    return { pubkey, address };
-  };
+      const data = await response.json();
+      const pubkey = data.data.pubkey;
+
+      const { address } = await encodePubKeyToAddress(pubkey, chainId);
+      return { pubkey, address };
+    },
+    [chains]
+  );
 
   const getAddresses = useCallback(async () => {
     if (!chains || !selectedChainId) {
@@ -117,7 +120,7 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [selectedChainId, addAddresses, toast, chains]);
+  }, [selectedChainId, addAddresses, toast, chains, getAddressForChain]);
 
   // Auto connect when using non-transaction mode
   useEffect(() => {
