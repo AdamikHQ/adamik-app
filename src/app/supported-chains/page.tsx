@@ -2,14 +2,14 @@
 
 import { Info, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Tooltip } from "~/components/ui/tooltip"; // Import TooltipProvider
-import { useChains } from "~/hooks/useChains";
+import { useFilteredChains } from "~/hooks/useChains";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { resolveLogo, isStakingSupported } from "~/utils/helper";
@@ -18,12 +18,23 @@ import { SupportedBlockchain } from "~/utils/types";
 const comingSoonIds = ["tron", "the-open-network", "solana"];
 
 export default function SupportedChains() {
-  const { isLoading: supportedChainsLoading, data: supportedChains } =
-    useChains();
-  const [showTestnets, setShowTestnets] = useState(false);
+  const {
+    isLoading: supportedChainsLoading,
+    data: supportedChains,
+    showTestnets,
+  } = useFilteredChains();
+  const [localShowTestnets, setLocalShowTestnets] = useState(false);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]); // Add state for selected features
   const { isLoading: mobulaBlockchainLoading, data: mobulaBlockchains } =
     useMobulaBlockchains();
+
+  // Sync the local testnet setting with the global one
+  useEffect(() => {
+    if (typeof showTestnets === "boolean") {
+      setLocalShowTestnets(showTestnets);
+    }
+  }, [showTestnets]);
+
   const tickers = Object.values(supportedChains || {}).reduce<string[]>(
     (acc, chain) => [...acc, chain.ticker],
     []
@@ -92,7 +103,7 @@ export default function SupportedChains() {
   );
 
   const handleCheckboxChange = () => {
-    setShowTestnets(!showTestnets);
+    setLocalShowTestnets(!localShowTestnets);
   };
 
   const handleFeatureSelect = (feature: string) => {
@@ -237,7 +248,7 @@ export default function SupportedChains() {
             <div className="flex flex-row items-center mt-4">
               <Checkbox
                 id="show-testnets"
-                checked={showTestnets}
+                checked={localShowTestnets}
                 onCheckedChange={handleCheckboxChange}
                 className="mr-2"
               />
@@ -247,8 +258,11 @@ export default function SupportedChains() {
               >
                 Show testnets
               </label>
+              <span className="ml-2 text-xs text-yellow-500">
+                (This change is temporary. Go to Settings to make it permanent.)
+              </span>
             </div>
-            {showTestnets && (
+            {localShowTestnets && (
               <div className="mt-4">
                 <h2 className="text-lg font-semibold mb-2">
                   Additional Chains (Testnets)

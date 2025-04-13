@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Modal } from "../ui/modal";
 import { useWallet } from "~/hooks/useWallet";
 import { Button } from "../ui/button";
-import { useChains } from "~/hooks/useChains";
+import { useFilteredChains } from "~/hooks/useChains";
 import { getPreferredChains } from "~/config/wallet-chains";
 import { encodePubKeyToAddress } from "~/api/adamik/encode";
 import { Account, WalletName } from "../wallets/types";
@@ -15,7 +15,7 @@ export const WelcomeModal = () => {
   const { setShowroom, addAddresses } = useWallet();
   const { toast } = useToast();
   const [isConnecting, setIsConnecting] = useState(false);
-  const { data: chains } = useChains();
+  const { data: chains } = useFilteredChains();
 
   useEffect(() => {
     setIsModalOpen(true);
@@ -132,25 +132,20 @@ export const WelcomeModal = () => {
     }
   };
 
-  const handleShowroomMode = (isShowroom: boolean) => {
-    // Set showroom mode based on user selection
-    setShowroom(isShowroom);
-
-    // If using showroom mode, close modal immediately
-    if (isShowroom) {
-      setIsModalOpen(false);
-    } else {
-      // If not using showroom mode, directly connect wallet
-      connectWalletDirectly();
-    }
-  };
-
   const handleNextStep = () => {
     setCurrentStep((prevStep) => prevStep + 1);
   };
 
   const handlePreviousStep = () => {
     setCurrentStep((prevStep) => prevStep - 1);
+  };
+
+  const handleContinue = () => {
+    // Set to wallet mode (not showroom)
+    setShowroom(false);
+
+    // Connect wallet directly
+    connectWalletDirectly();
   };
 
   return (
@@ -198,37 +193,33 @@ export const WelcomeModal = () => {
                 </button>
               </div>
               <h1 className="text-2xl font-semibold text-center">
-                Use in Demo mode or Add your Wallet
+                Connecting Your Wallet
               </h1>
               <div className="flex flex-col gap-2 text-center text-sm text-gray-400">
-                <p>Easily switch between modes using the toggle</p>
-                <video
-                  className="w-1/4 h-auto mt-4 rounded-lg mx-auto"
-                  src="/toggle.mp4"
-                  autoPlay
-                  loop
-                  muted
-                />
+                <p>We're connecting your wallet automatically.</p>
+                <p>
+                  You can always switch to Demo mode later using the toggle at
+                  the top.
+                </p>
+                <div className="mt-4">
+                  <video
+                    className="w-1/4 h-auto rounded-lg mx-auto"
+                    src="/toggle.mp4"
+                    autoPlay
+                    loop
+                    muted
+                  />
+                </div>
               </div>
-              <div className="flex justify-center gap-4 w-full mt-6">
-                <Button
-                  className="w-48"
-                  onClick={() => handleShowroomMode(true)}
-                >
-                  Enter Demo
-                </Button>
-                <Button
-                  className="w-48"
-                  onClick={() => handleShowroomMode(false)}
-                  disabled={isConnecting}
-                >
+              <div className="flex justify-center w-full mt-6">
+                <Button onClick={handleContinue} disabled={isConnecting}>
                   {isConnecting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Connecting...
                     </>
                   ) : (
-                    "Add Wallet"
+                    "I understand, Let's Go!"
                   )}
                 </Button>
               </div>

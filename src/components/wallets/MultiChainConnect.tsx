@@ -4,6 +4,7 @@ import React, {
   useEffect,
   RefObject,
   forwardRef,
+  useMemo,
 } from "react";
 import { useToast } from "~/components/ui/use-toast";
 import { useWallet } from "~/hooks/useWallet";
@@ -11,7 +12,7 @@ import { Account, WalletName } from "./types";
 import { Chain, SupportedBlockchain } from "~/utils/types";
 import { Button } from "~/components/ui/button";
 import { Loader2, ChevronRight, Search, Check } from "lucide-react";
-import { useChains } from "~/hooks/useChains";
+import { useFilteredChains } from "~/hooks/useChains";
 import { encodePubKeyToAddress } from "~/api/adamik/encode";
 import { getPreferredChains } from "~/config/wallet-chains";
 import { Input } from "~/components/ui/input";
@@ -26,9 +27,10 @@ const ChainItem = forwardRef<
     chainId: string;
     chain: SupportedBlockchain;
     isSelected: boolean;
+    isConnected?: boolean;
     onToggle: () => void;
   }
->(({ chainId, chain, isSelected, onToggle }, ref) => (
+>(({ chainId, chain, isSelected, isConnected = false, onToggle }, ref) => (
   <div
     ref={ref}
     className={`flex items-center justify-between p-3 rounded-lg cursor-pointer hover:bg-accent ${
@@ -76,7 +78,7 @@ export const MultiChainConnect: React.FC<{
   hideButton = false,
 }) => {
   const { toast } = useToast();
-  const { addAddresses, isShowroom } = useWallet();
+  const { addAddresses, removeAddresses, isShowroom, addresses } = useWallet();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [connectedCount, setConnectedCount] = useState(0);
@@ -86,7 +88,13 @@ export const MultiChainConnect: React.FC<{
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedChains, setSelectedChains] = useState<string[]>([]);
   const [isSelectionOpen, setIsSelectionOpen] = useState(false);
-  const { data: chains, isLoading: chainsLoading } = useChains();
+  const { data: chains, isLoading: chainsLoading } = useFilteredChains();
+
+  // Get unique chain IDs from connected addresses
+  const uniqueConnectedChainIds = useMemo(
+    () => [...new Set(addresses.map((addr) => addr.chainId))],
+    [addresses]
+  );
 
   useEffect(() => {
     if (chains) {
@@ -94,6 +102,22 @@ export const MultiChainConnect: React.FC<{
       setConfiguredChains(preferredChains);
     }
   }, [chains]);
+
+  // When opening the selection modal, pre-select already connected chains
+  useEffect(() => {
+    if (isSelectionOpen && !isShowroom && uniqueConnectedChainIds.length > 0) {
+      setSelectedChains((prev) => {
+        // Add connected chains to selections if not already selected
+        const newSelections = [...prev];
+        uniqueConnectedChainIds.forEach((chainId) => {
+          if (!newSelections.includes(chainId)) {
+            newSelections.push(chainId);
+          }
+        });
+        return newSelections;
+      });
+    }
+  }, [isSelectionOpen, isShowroom, uniqueConnectedChainIds]);
 
   // Filter and sort chains based on search query and selection status
   const { selectedChainsList, unselectedChainsList } = React.useMemo(() => {
@@ -119,6 +143,7 @@ export const MultiChainConnect: React.FC<{
   }, [chains, searchQuery, selectedChains]);
 
   const toggleChain = (chainId: string) => {
+    // Toggle the chain in the selected list, regardless of connection status
     setSelectedChains((prev) =>
       prev.includes(chainId)
         ? prev.filter((id) => id !== chainId)
@@ -297,6 +322,26 @@ export const MultiChainConnect: React.FC<{
     );
   }
 
+  // Calculate the count for display based on mode
+  let chainCount = 0;
+  let buttonText = "Select Chains";
+
+  if (isShowroom) {
+    // In showroom mode, just count the unique chains from addresses
+    chainCount = uniqueConnectedChainIds.length;
+  } else if (uniqueConnectedChainIds.length > 0) {
+    // In regular mode with connected wallets, show actual connected chains
+    chainCount = uniqueConnectedChainIds.length;
+  } else if (selectedChains.length > 0) {
+    // In regular mode with no connections but selections made
+    chainCount = selectedChains.length;
+  }
+
+  // Set button text based on count
+  if (chainCount > 0) {
+    buttonText = `${chainCount} Chains Selected`;
+  }
+
   // Button is only visible when not hidden with hideButton prop
   return (
     <div className="relative">
@@ -312,9 +357,7 @@ export const MultiChainConnect: React.FC<{
         ) : (
           <ChevronRight className="w-4 h-4 mr-2" />
         )}
-        {selectedChains.length > 0
-          ? `${selectedChains.length} Chains Selected`
-          : "Select Chains"}
+        {buttonText}
       </Button>
 
       {isSelectionOpen && (
@@ -354,6 +397,7 @@ export const MultiChainConnect: React.FC<{
                         chainId={chainId}
                         chain={chain}
                         isSelected={true}
+                        isConnected={uniqueConnectedChainIds.includes(chainId)}
                         onToggle={() => toggleChain(chainId)}
                       />
                     ))}
@@ -371,6 +415,7 @@ export const MultiChainConnect: React.FC<{
                       chainId={chainId}
                       chain={chain}
                       isSelected={false}
+                      isConnected={uniqueConnectedChainIds.includes(chainId)}
                       onToggle={() => toggleChain(chainId)}
                     />
                   ))}
@@ -387,13 +432,82 @@ export const MultiChainConnect: React.FC<{
                 </Button>
                 <Button
                   onClick={() => {
-                    setConfiguredChains(selectedChains);
                     setIsSelectionOpen(false);
-                    connectAllChains();
+
+                    // If no chains are selected, disconnect all current chains
+                    if (selectedChains.length === 0) {
+                      const allConnectedAddresses = addresses.filter((addr) =>
+                        uniqueConnectedChainIds.includes(addr.chainId)
+                      );
+
+                      if (allConnectedAddresses.length > 0) {
+                        removeAddresses(allConnectedAddresses);
+                        toast({
+                          description: `Disconnected all chains (${allConnectedAddresses.length})`,
+                          duration: 2000,
+                        });
+                      } else {
+                        toast({
+                          description: "No connected chains to disconnect",
+                          duration: 2000,
+                        });
+                      }
+                      return;
+                    }
+
+                    // Only use the selected chains for configuration
+                    setConfiguredChains(selectedChains);
+
+                    // If there are deselected connected chains, we need to handle them
+                    // by removing them from the active connections
+                    const deselectedConnectedChains =
+                      uniqueConnectedChainIds.filter(
+                        (chainId) => !selectedChains.includes(chainId)
+                      );
+
+                    if (deselectedConnectedChains.length > 0) {
+                      // Find the addresses that need to be disconnected
+                      const addressesToRemove = addresses.filter((addr) =>
+                        deselectedConnectedChains.includes(addr.chainId)
+                      );
+
+                      // Remove the addresses for deselected chains
+                      if (addressesToRemove.length > 0) {
+                        removeAddresses(addressesToRemove);
+                        toast({
+                          description: `Disconnected ${
+                            addressesToRemove.length
+                          } chain${addressesToRemove.length > 1 ? "s" : ""}`,
+                          duration: 2000,
+                        });
+                      }
+                    }
+
+                    // Connect only the newly selected chains (those not already connected)
+                    const chainsToConnect = selectedChains.filter(
+                      (chainId) => !uniqueConnectedChainIds.includes(chainId)
+                    );
+
+                    if (chainsToConnect.length > 0) {
+                      // Update configuredChains to only include chains to connect
+                      setConfiguredChains(chainsToConnect);
+                      connectAllChains();
+                    } else if (deselectedConnectedChains.length === 0) {
+                      // If no chains were connected or disconnected, show a message
+                      toast({
+                        description: "No changes to connections",
+                        duration: 2000,
+                      });
+                    }
                   }}
-                  disabled={selectedChains.length === 0}
+                  disabled={
+                    selectedChains.length === 0 &&
+                    uniqueConnectedChainIds.length === 0
+                  }
                 >
-                  Connect ({selectedChains.length})
+                  {selectedChains.length === 0
+                    ? "Disconnect All Chains"
+                    : "Confirm Selection"}
                 </Button>
               </div>
             </div>

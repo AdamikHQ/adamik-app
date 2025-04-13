@@ -220,7 +220,7 @@ export default function Portfolio() {
           <div className="flex items-center justify-between">
             <span>Refreshing portfolio...</span>
             <span className="text-sm text-muted-foreground">
-              {completedQueries}/{totalQueries} chains
+              {completedQueries}/{totalQueries} addresses
             </span>
           </div>
           <Progress
@@ -289,7 +289,7 @@ export default function Portfolio() {
                     <div className="flex items-center justify-between">
                       <span>Refreshing portfolio...</span>
                       <span className="text-sm text-muted-foreground">
-                        {completedQueries}/{totalQueries} chains
+                        {completedQueries}/{totalQueries} addresses
                       </span>
                     </div>
                     <Progress
