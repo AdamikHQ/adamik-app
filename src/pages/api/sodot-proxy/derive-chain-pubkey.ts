@@ -3,7 +3,7 @@ import { getChains } from "~/api/adamik/chains";
 import { Chain } from "~/utils/types";
 import { env } from "~/env";
 
-// Helper function to get the base URL
+// Helper function to get the base URL (no longer used since we're making direct requests)
 function getBaseUrl(req: NextApiRequest): string {
   // For Vercel deployments, use the VERCEL_URL environment variable
   if (process.env.VERCEL_URL) {
@@ -26,8 +26,18 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
+    // Log information for debugging
+    console.log("Starting derive-chain-pubkey request");
+    console.log("Environment check:", {
+      hasEcdsaKeys: !!env.SODOT_EXISTING_ECDSA_KEY_IDS,
+      hasEd25519Keys: !!env.SODOT_EXISTING_ED25519_KEY_IDS,
+      hasVertex0Url: !!env.SODOT_VERTEX_URL_0,
+      hasVertex0Key: !!env.SODOT_VERTEX_API_KEY_0,
+    });
+
     // Extract chain from query
     const { chain } = req.query;
+    console.log("Requested chain:", chain);
 
     if (!chain || typeof chain !== "string") {
       return res.status(400).json({
@@ -38,6 +48,7 @@ export default async function handler(
     }
 
     // Get chain configurations from Adamik API
+    console.log("Fetching chain configurations");
     const chains = await getChains();
 
     if (!chains) {
@@ -50,6 +61,7 @@ export default async function handler(
 
     // Find the requested chain
     const chainConfig = chains[chain];
+    console.log("Chain config found:", !!chainConfig);
 
     if (!chainConfig) {
       return res.status(400).json({
@@ -64,6 +76,7 @@ export default async function handler(
     // Get curve type from signerSpec
     const curveType =
       chainConfig.signerSpec.curve === "secp256k1" ? "ecdsa" : "ed25519";
+    console.log("Curve type:", curveType);
 
     // Get key IDs for this chain's curve from the env object
     const keyIdsStr =
@@ -72,40 +85,45 @@ export default async function handler(
         : env.SODOT_EXISTING_ED25519_KEY_IDS;
 
     const keyIds = keyIdsStr.split(",");
-    if (keyIds.length < 3) {
+    console.log(`Found ${keyIds.length} key IDs`);
+
+    if (keyIds.length < 1) {
       return res.status(500).json({
         status: 500,
         error: "Insufficient key IDs",
-        message: `Found only ${keyIds.length} key IDs, need at least 3`,
+        message: `Found only ${keyIds.length} key IDs, need at least 1`,
       });
     }
 
     // Construct derivation path based on BIP-44 standard
     const coinType = parseInt(chainConfig.signerSpec.coinType);
     const derivationPath = [44, coinType, 0, 0, 0];
+    console.log("Derivation path:", derivationPath);
 
-    const baseUrl = getBaseUrl(req);
-    const vertexId = 0; // We only need to use one vertex for derivation
+    // Get vertex information
+    const vertexUrl = env.SODOT_VERTEX_URL_0;
+    const vertexApiKey = env.SODOT_VERTEX_API_KEY_0;
 
-    console.log(
-      `Making request to: ${baseUrl}/api/sodot-proxy/${curveType}/derive-pubkey?vertex=${vertexId}`
-    );
+    // Ensure we have the vertex information
+    if (!vertexUrl || !vertexApiKey) {
+      return res.status(500).json({
+        status: 500,
+        error: "Missing vertex configuration",
+        message: "Vertex URL or API key is missing",
+      });
+    }
 
-    // Use the appropriate vertex for direct outbound request to Sodot vertex
-    const vertexUrl =
-      curveType === "ecdsa" ? env.SODOT_VERTEX_URL_0 : env.SODOT_VERTEX_URL_0;
+    // The correct endpoint for deriving a public key
+    // NOTE: This is the key change - using the correct API path
+    const endpointUrl = `${vertexUrl}/api/v1/${curveType}/derive-pubkey`;
+    console.log("Making request to vertex:", endpointUrl);
 
-    const vertexApiKey =
-      curveType === "ecdsa"
-        ? env.SODOT_VERTEX_API_KEY_0
-        : env.SODOT_VERTEX_API_KEY_0;
-
-    // Direct request to the vertex instead of through another API route
-    const response = await fetch(`${vertexUrl}/derive-pubkey`, {
+    // Direct request to the vertex
+    const response = await fetch(endpointUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: vertexApiKey,
+        Authorization: `Bearer ${vertexApiKey}`,
       },
       body: JSON.stringify({
         key_id: keyIds[0], // Use the first key ID
@@ -114,7 +132,14 @@ export default async function handler(
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
+      let errorText = "";
+      try {
+        const errorJson = await response.json();
+        errorText = JSON.stringify(errorJson);
+      } catch {
+        errorText = await response.text();
+      }
+
       console.error(
         `Error response from vertex: ${response.status}`,
         errorText
@@ -128,13 +153,13 @@ export default async function handler(
     // Format the response based on chain/curve
     let pubkey;
     if (curveType === "ed25519") {
-      // ED25519 response format: { pubkey: "..." }
+      // ED25519 response format
       pubkey = result.pubkey;
       if (!pubkey) {
         throw new Error("ED25519 pubkey missing from response");
       }
     } else {
-      // SECP256K1 response format: { compressed: "...", uncompressed: "..." }
+      // SECP256K1 response format
       if (chainConfig.family === "evm") {
         pubkey = result.uncompressed;
         if (!pubkey) {
