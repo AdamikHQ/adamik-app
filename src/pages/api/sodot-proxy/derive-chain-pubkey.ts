@@ -114,8 +114,8 @@ export default async function handler(
     }
 
     // The correct endpoint for deriving a public key
-    // NOTE: This is the key change - using the correct API path
-    const endpointUrl = `${vertexUrl}/api/v1/${curveType}/derive-pubkey`;
+    // NOTE: Reverting to the original endpoint path format that was working
+    const endpointUrl = `${vertexUrl}/${curveType}/derive-pubkey`;
     console.log("Making request to vertex:", endpointUrl);
 
     // Direct request to the vertex
@@ -123,7 +123,7 @@ export default async function handler(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${vertexApiKey}`,
+        Authorization: `${vertexApiKey}`, // Using the API key directly without Bearer prefix
       },
       body: JSON.stringify({
         key_id: keyIds[0], // Use the first key ID
