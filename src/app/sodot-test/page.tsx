@@ -18,7 +18,7 @@ import {
   Server,
   ChevronDown,
 } from "lucide-react";
-import { getChains } from "~/api/adamik/chains";
+import { useChains } from "~/hooks/useChains";
 import { Chain } from "~/utils/types";
 import {
   Select,
@@ -60,23 +60,8 @@ export default function SodotTestPage() {
   const [results, setResults] = useState<Results | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [chains, setChains] = useState<Record<string, Chain> | null>(null);
   const [selectedChain, setSelectedChain] = useState<string>("");
-
-  // Fetch chains when component mounts
-  useEffect(() => {
-    const fetchChains = async () => {
-      try {
-        const chainsData = await getChains();
-        setChains(chainsData);
-      } catch (e) {
-        console.error("Error fetching chains:", e);
-        setError("Failed to load chain information");
-      }
-    };
-
-    fetchChains();
-  }, []);
+  const { data: chains, isLoading: chainsLoading } = useChains();
 
   // Add effect to monitor state changes
   console.log("Component render - Current state:", {

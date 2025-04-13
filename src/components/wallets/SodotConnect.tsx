@@ -5,7 +5,7 @@ import { Account, WalletConnectorProps, WalletName } from "./types";
 import { Chain } from "~/utils/types";
 import { Button } from "~/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { getChains } from "~/api/adamik/chains";
+import { useChains } from "~/hooks/useChains";
 import { encodePubKeyToAddress } from "~/api/adamik/encode";
 import { Card } from "~/components/ui/card";
 import { defaultChain, getPreferredChains } from "~/config/wallet-chains";
@@ -19,46 +19,29 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
   const { toast } = useToast();
   const { addAddresses } = useWallet();
   const [loading, setLoading] = useState(false);
-  const [chains, setChains] = useState<Record<string, Chain> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedChainId, setSelectedChainId] = useState<string>(
     providedChainId || ""
   );
   const [autoConnectInProgress, setAutoConnectInProgress] = useState(false);
+  const { data: chains, isLoading: chainsLoading } = useChains();
 
-  // Fetch chains data when component mounts
+  // Set initial chain when data is loaded
   useEffect(() => {
-    const fetchChains = async () => {
-      try {
-        const chainsData = await getChains();
-        if (chainsData) {
-          setChains(chainsData);
+    if (chains && !providedChainId && !selectedChainId && !transactionPayload) {
+      const preferredChains = getPreferredChains(chains);
+      const firstAvailableChain =
+        preferredChains.length > 0
+          ? preferredChains[0]
+          : defaultChain in chains
+          ? defaultChain
+          : Object.keys(chains)[0];
 
-          // Auto-select first chain if none provided and we're not in transaction mode
-          if (!providedChainId && !selectedChainId && !transactionPayload) {
-            const preferredChains = getPreferredChains(chainsData);
-            const firstAvailableChain =
-              preferredChains.length > 0
-                ? preferredChains[0]
-                : defaultChain in chainsData
-                ? defaultChain
-                : Object.keys(chainsData)[0];
-
-            if (firstAvailableChain) {
-              setSelectedChainId(firstAvailableChain);
-            }
-          }
-        } else {
-          setError("Failed to load chain information");
-        }
-      } catch (e) {
-        console.error("Error fetching chains:", e);
-        setError("Failed to load chain information");
+      if (firstAvailableChain) {
+        setSelectedChainId(firstAvailableChain);
       }
-    };
-
-    fetchChains();
-  }, [providedChainId, selectedChainId, transactionPayload]);
+    }
+  }, [chains, providedChainId, selectedChainId, transactionPayload]);
 
   // Update selected chain when providedChainId changes
   useEffect(() => {
@@ -72,8 +55,6 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
       throw new Error(`Chain ${chainId} not supported`);
     }
 
-    // Call our backend endpoint for the chain pubkey
-    console.log(`[SodotConnect] Fetching pubkey for ${chainId}`);
     const response = await fetch(
       `/api/sodot-proxy/derive-chain-pubkey?chain=${chainId}`,
       {
@@ -90,27 +71,10 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
     }
 
     const data = await response.json();
-    console.log(`[SodotConnect] Received pubkey data for ${chainId}:`, data);
-
-    // Get the pubkey from the response
     const pubkey = data.data.pubkey;
-    console.log(`[SodotConnect] Extracted ${chainId} pubkey:`, pubkey);
 
-    // Use the encodePubKeyToAddress API endpoint directly
-    console.log(`[SodotConnect] Encoding address for ${chainId}`);
-
-    try {
-      const { address } = await encodePubKeyToAddress(pubkey, chainId);
-      console.log(`[SodotConnect] Address for ${chainId}:`, address);
-      return { pubkey, address };
-    } catch (e) {
-      console.error(`[SodotConnect] Error encoding address:`, e);
-      throw new Error(
-        `Failed to encode address: ${
-          e instanceof Error ? e.message : String(e)
-        }`
-      );
-    }
+    const { address } = await encodePubKeyToAddress(pubkey, chainId);
+    return { pubkey, address };
   };
 
   const getAddresses = useCallback(async () => {
@@ -128,7 +92,6 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
     try {
       const { pubkey, address } = await getAddressForChain(selectedChainId);
 
-      // Create account with the address and public key
       const account: Account = {
         address: address,
         chainId: selectedChainId,
@@ -139,7 +102,7 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
       addAddresses([account]);
 
       toast({
-        description: `Connected Sodot Wallet for ${
+        description: `Connected ${
           chains[selectedChainId]?.name || selectedChainId
         }`,
       });
@@ -154,7 +117,7 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [selectedChainId, addAddresses, toast, chains, getAddressForChain]);
+  }, [selectedChainId, addAddresses, toast, chains]);
 
   // Auto connect when using non-transaction mode
   useEffect(() => {

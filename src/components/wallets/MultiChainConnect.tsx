@@ -11,7 +11,7 @@ import { Account, WalletName } from "./types";
 import { Chain } from "~/utils/types";
 import { Button } from "~/components/ui/button";
 import { Loader2, ChevronRight } from "lucide-react";
-import { getChains } from "~/api/adamik/chains";
+import { useChains } from "~/hooks/useChains";
 import { encodePubKeyToAddress } from "~/api/adamik/encode";
 import { getPreferredChains } from "~/config/wallet-chains";
 
@@ -34,20 +34,25 @@ export const MultiChainConnect: React.FC<{
   const { toast } = useToast();
   const { addAddresses, isShowroom } = useWallet();
   const [loading, setLoading] = useState(false);
-  const [chains, setChains] = useState<Record<string, Chain> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [connectedCount, setConnectedCount] = useState(0);
   const [successCount, setSuccessCount] = useState(0);
   const [failedChains, setFailedChains] = useState<string[]>([]);
   const [configuredChains, setConfiguredChains] = useState<string[]>([]);
+  const { data: chains, isLoading: chainsLoading } = useChains();
+
+  useEffect(() => {
+    if (chains) {
+      const preferredChains = getPreferredChains(chains);
+      setConfiguredChains(preferredChains);
+    }
+  }, [chains]);
 
   const getAddressForChain = async (chainId: string) => {
     if (!chains || !chains[chainId]) {
       throw new Error(`Chain ${chainId} not supported`);
     }
 
-    // Call our backend endpoint for the chain pubkey
-    console.log(`[MultiChainConnect] Fetching pubkey for ${chainId}`);
     const response = await fetch(
       `/api/sodot-proxy/derive-chain-pubkey?chain=${chainId}`,
       {
@@ -64,57 +69,14 @@ export const MultiChainConnect: React.FC<{
     }
 
     const data = await response.json();
-    console.log(
-      `[MultiChainConnect] Received pubkey data for ${chainId}:`,
-      data
-    );
-
-    // Get the pubkey from the response
     const pubkey = data.data.pubkey;
-    console.log(`[MultiChainConnect] Extracted ${chainId} pubkey:`, pubkey);
 
-    // Use the encodePubKeyToAddress API endpoint directly
-    console.log(`[MultiChainConnect] Encoding address for ${chainId}`);
-
-    try {
-      const { address } = await encodePubKeyToAddress(pubkey, chainId);
-      console.log(`[MultiChainConnect] Address for ${chainId}:`, address);
-      return { pubkey, address, chainId };
-    } catch (e) {
-      console.error(`[MultiChainConnect] Error encoding address:`, e);
-      throw new Error(
-        `Failed to encode address: ${
-          e instanceof Error ? e.message : String(e)
-        }`
-      );
-    }
+    const { address } = await encodePubKeyToAddress(pubkey, chainId);
+    return { pubkey, address, chainId };
   };
 
-  // Fetch chains data when component mounts
-  useEffect(() => {
-    const fetchChains = async () => {
-      try {
-        const chainsData = await getChains();
-        if (chainsData) {
-          setChains(chainsData);
-          const preferredChains = getPreferredChains(chainsData);
-          setConfiguredChains(preferredChains);
-        } else {
-          setError("Failed to load chain information");
-        }
-      } catch (e) {
-        console.error("Error fetching chains:", e);
-        setError("Failed to load chain information");
-      }
-    };
-
-    fetchChains();
-  }, []);
-
-  // Handle successful chain connection
   const handleSuccessfulConnection = useCallback(
     (result: { pubkey: string; address: string; chainId: string }) => {
-      // Create account with the address and public key
       const account: Account = {
         address: result.address,
         chainId: result.chainId,
@@ -122,15 +84,13 @@ export const MultiChainConnect: React.FC<{
         signer: WalletName.SODOT,
       };
 
-      // Add this account immediately
       addAddresses([account]);
 
-      // Show a brief toast for the successful connection
       toast({
         description: `Connected ${
           chains?.[result.chainId]?.name || result.chainId
         }`,
-        duration: 1500, // Short duration to avoid flooding
+        duration: 1500,
       });
 
       setSuccessCount((prev) => prev + 1);
