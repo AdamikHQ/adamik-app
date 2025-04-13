@@ -10,10 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@cosmos-kit/keplr": "^2.14.2",
-    "@cosmos-kit/react-lite": "^2.15.2",
     "@hookform/resolvers": "^3.9.1",
-    "@metamask/sdk-react": "^0.31.4",
     "@perawallet/connect": "^1.3.5",
     "@radix-ui/react-avatar": "^1.1.2",
     "@radix-ui/react-checkbox": "^1.1.3",
@@ -35,7 +32,6 @@
     "@tanstack/react-query": "^5.62.10",
     "@tanstack/react-query-persist-client": "^5.62.10",
     "algosdk": "^3.0.0",
-    "chain-registry": "^1.69.74",
     "chart.js": "^4.4.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

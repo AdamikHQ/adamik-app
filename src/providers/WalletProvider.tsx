@@ -1,9 +1,5 @@
 "use client";
 
-import { wallets as cosmosWallets } from "@cosmos-kit/keplr";
-import { ChainProvider as CosmosChainsProvider } from "@cosmos-kit/react-lite";
-import { MetaMaskProvider } from "@metamask/sdk-react";
-import { assets, chains } from "chain-registry";
 import React, { useEffect, useState } from "react";
 import { Account, IWallet } from "~/components/wallets/types";
 import { WalletContext } from "~/hooks/useWallet";
@@ -43,13 +39,6 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
 
     setShowroom(showroomState);
   }, []);
-
-  // We don't need this effect anymore as it prevents manual toggle to demo mode
-  // useEffect(() => {
-  //   if (addresses.length > 0) {
-  //     setShowroom(false);
-  //   }
-  // }, [addresses]);
 
   const addWallet = (wallet: IWallet) => {
     const exist = wallets.find((w) => w.id === wallet.id);
@@ -141,47 +130,21 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
   };
 
   return (
-    <MetaMaskProvider
-      debug={false}
-      sdkOptions={{
-        checkInstallationImmediately: false,
-        logging: { developerMode: false },
-        dappMetadata: {
-          name: "Adamik App",
-          url:
-            typeof window !== "undefined"
-              ? window.location.host
-              : "https://app.adamik.io/",
-        },
+    <WalletContext.Provider
+      value={{
+        wallets,
+        addWallet,
+        addresses,
+        setAddresses,
+        addAddresses,
+        removeAddresses,
+        setWalletMenuOpen,
+        isWalletMenuOpen,
+        isShowroom,
+        setShowroom: handleSetShowroom,
       }}
     >
-      <CosmosChainsProvider
-        chains={chains} // supported chains
-        assetLists={assets} // supported asset lists
-        wallets={cosmosWallets} // supported wallets (only keplr desktop wallet for now)
-        walletConnectOptions={{
-          signClient: {
-            projectId: "dummy", // Just to make KeplrMobile stop complaining in the console
-          },
-        }}
-      >
-        <WalletContext.Provider
-          value={{
-            wallets,
-            addWallet,
-            addresses,
-            setAddresses,
-            addAddresses,
-            removeAddresses,
-            setWalletMenuOpen,
-            isWalletMenuOpen,
-            isShowroom,
-            setShowroom: handleSetShowroom,
-          }}
-        >
-          {children}
-        </WalletContext.Provider>
-      </CosmosChainsProvider>
-    </MetaMaskProvider>
+      {children}
+    </WalletContext.Provider>
   );
 };
