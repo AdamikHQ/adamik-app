@@ -111,6 +111,14 @@ export const MultiChainConnect: React.FC<{
         const clientState = localStorage.getItem("AdamikClientState");
         if (clientState) {
           const parsedState = JSON.parse(clientState);
+
+          // Check if the user has explicitly disconnected all chains
+          if (parsedState.hasManuallyDisconnected === true) {
+            // User previously disconnected all chains, don't pre-select anything
+            setSelectedChains([]);
+            return;
+          }
+
           if (
             parsedState.defaultChains &&
             Array.isArray(parsedState.defaultChains)
@@ -124,11 +132,15 @@ export const MultiChainConnect: React.FC<{
         console.error("Error loading previously selected chains:", error);
       }
 
-      // If no custom selection exists, use connected chains
+      // If no custom selection exists, use currently connected chains
       if (uniqueConnectedChainIds.length > 0) {
         setSelectedChains(uniqueConnectedChainIds);
-      } else if (chains) {
-        // If nothing else, fall back to default chains from config
+        return;
+      }
+
+      // Only fall back to default chains if this is the user's first time (no explicit preferences)
+      // and there are no connected chains
+      if (chains) {
         const preferredChains = getPreferredChains(chains);
         setSelectedChains(preferredChains);
       }
@@ -251,8 +263,11 @@ export const MultiChainConnect: React.FC<{
     setSuccessCount(0);
     setFailedChains([]);
 
+    // Make sure configuredChains contains only valid chains
+    const validChains = configuredChains.filter((chainId) => chains[chainId]);
+
     // Process each chain individually
-    configuredChains.forEach((chainId) => {
+    validChains.forEach((chainId) => {
       getAddressForChain(chainId)
         .then((result) => {
           // Process this successful result immediately
@@ -267,7 +282,7 @@ export const MultiChainConnect: React.FC<{
           setConnectedCount((prev) => prev + 1);
 
           // Check if all chains have been processed
-          if (connectedCount + 1 >= configuredChains.length) {
+          if (connectedCount + 1 >= validChains.length) {
             // Show final summary toast when all chains have been processed
             setTimeout(() => {
               toast({
@@ -441,7 +456,11 @@ export const MultiChainConnect: React.FC<{
               <div className="flex justify-end gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => setSelectedChains([])}
+                  onClick={() => {
+                    // Just clear the selection without disconnecting
+                    setSelectedChains([]);
+                    // Don't close the modal - let user confirm with the Disconnect All button
+                  }}
                   disabled={selectedChains.length === 0}
                 >
                   Clear All
@@ -458,6 +477,8 @@ export const MultiChainConnect: React.FC<{
                         JSON.stringify({
                           ...parsedState,
                           defaultChains: selectedChains,
+                          // If user has selected at least one chain, they are no longer in "disconnected all" mode
+                          hasManuallyDisconnected: selectedChains.length === 0,
                         })
                       );
                     } catch (error) {
@@ -474,6 +495,26 @@ export const MultiChainConnect: React.FC<{
 
                       if (allConnectedAddresses.length > 0) {
                         removeAddresses(allConnectedAddresses);
+
+                        // Set flag in localStorage that user has manually disconnected all chains
+                        try {
+                          const clientState =
+                            localStorage.getItem("AdamikClientState") || "{}";
+                          const parsedState = JSON.parse(clientState);
+                          localStorage.setItem(
+                            "AdamikClientState",
+                            JSON.stringify({
+                              ...parsedState,
+                              hasManuallyDisconnected: true,
+                            })
+                          );
+                        } catch (error) {
+                          console.error(
+                            "Error saving disconnection state:",
+                            error
+                          );
+                        }
+
                         toast({
                           description: `Disconnected all chains (${allConnectedAddresses.length})`,
                           duration: 2000,
@@ -487,11 +528,9 @@ export const MultiChainConnect: React.FC<{
                       return;
                     }
 
-                    // Only use the selected chains for configuration
-                    setConfiguredChains(selectedChains);
+                    // The user has selected specific chains
 
-                    // If there are deselected connected chains, we need to handle them
-                    // by removing them from the active connections
+                    // First disconnect any deselected chains that were previously connected
                     const deselectedConnectedChains =
                       uniqueConnectedChainIds.filter(
                         (chainId) => !selectedChains.includes(chainId)
@@ -521,9 +560,49 @@ export const MultiChainConnect: React.FC<{
                     );
 
                     if (chainsToConnect.length > 0) {
-                      // Update configuredChains to only include chains to connect
+                      // Important: Only connect the chains that were explicitly selected
+                      // Don't use a reference to any other array of chains
                       setConfiguredChains(chainsToConnect);
-                      connectAllChains();
+
+                      // Immediately connect the selected chains - don't rely on side effects or default chains
+                      const validChainsToConnect = chainsToConnect.filter(
+                        (chainId) => chains && chains[chainId]
+                      );
+
+                      if (validChainsToConnect.length > 0) {
+                        // Use a local function to connect just these chains, without relying on the configuredChains state
+                        // which might be changed by other effects
+                        const connectSelectedChains = async () => {
+                          setLoading(true);
+                          setError(null);
+                          setConnectedCount(0);
+                          setSuccessCount(0);
+                          setFailedChains([]);
+
+                          // Process each selected chain individually
+                          for (const chainId of validChainsToConnect) {
+                            try {
+                              const result = await getAddressForChain(chainId);
+                              handleSuccessfulConnection(result);
+                            } catch (error) {
+                              handleFailedConnection(chainId, error as Error);
+                            } finally {
+                              setConnectedCount((prev) => prev + 1);
+                            }
+                          }
+
+                          // Show the completion toast
+                          toast({
+                            description: `Connected ${successCount} chains successfully`,
+                            duration: 2000,
+                          });
+
+                          setLoading(false);
+                        };
+
+                        // Start the connection process
+                        connectSelectedChains();
+                      }
                     } else if (deselectedConnectedChains.length === 0) {
                       // If no chains were connected or disconnected, show a message
                       toast({

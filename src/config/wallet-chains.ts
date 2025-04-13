@@ -7,7 +7,7 @@ import { Chain } from "~/utils/types";
 
 /**
  * Chain configuration objects
- * These chains will be automatically used when the user clicks on "Connect Wallet"
+ * These chains will be automatically used when the user connects a wallet for the first time
  */
 export const walletChains: string[] = [
   "optimism",
@@ -34,40 +34,20 @@ export const getPreferredChains = (
 ): string[] => {
   if (!availableChains) return [];
 
+  // Variable to track if we should hide testnets (default is true - hide testnets)
+  let shouldHideTestnets = true;
+
   // Check if we're in a browser environment
   if (typeof window !== "undefined" && window.localStorage) {
     try {
-      // Try to get user-defined chains from localStorage
+      // Try to get user settings from localStorage
       const clientState = localStorage.getItem("AdamikClientState");
       if (clientState) {
         const parsedState = JSON.parse(clientState);
 
-        // If user has saved custom default chains, use those
-        if (
-          parsedState.defaultChains &&
-          Array.isArray(parsedState.defaultChains)
-        ) {
-          // Filter to ensure all chains exist in availableChains
-          return parsedState.defaultChains.filter(
-            (chainId: string) => availableChains[chainId]
-          );
-        }
-
-        // Filter chains based on testnet setting if it exists
-        if (
-          typeof parsedState.showTestnets === "boolean" &&
-          !parsedState.showTestnets
-        ) {
-          // Filter out testnet chains
-          const filteredChains = Object.values(availableChains)
-            .filter((chain) => !chain.isTestnetFor)
-            .map((chain) => chain.id);
-
-          // If no user preferences, filter default chains
-          return walletChains.filter(
-            (chainId) =>
-              availableChains[chainId] && filteredChains.includes(chainId)
-          );
+        // Override default with user setting if it exists
+        if (typeof parsedState.showTestnets === "boolean") {
+          shouldHideTestnets = !parsedState.showTestnets;
         }
       }
     } catch (error) {
@@ -75,6 +55,19 @@ export const getPreferredChains = (
     }
   }
 
-  // Fall back to default behavior
+  // Filter chains based on testnet setting
+  if (shouldHideTestnets) {
+    // Filter out testnet chains
+    const filteredChains = Object.values(availableChains)
+      .filter((chain) => !chain.isTestnetFor)
+      .map((chain) => chain.id);
+
+    // Filter default chains based on testnet setting
+    return walletChains.filter(
+      (chainId) => availableChains[chainId] && filteredChains.includes(chainId)
+    );
+  }
+
+  // Return all available chains from the predefined list if showing testnets
   return walletChains.filter((chainId) => availableChains[chainId]);
 };
