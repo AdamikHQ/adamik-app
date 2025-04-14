@@ -35,18 +35,18 @@ export const showroomAddresses = [
     chainId: "dydx",
     address: "dydx1su4mr6el6mmct65mk0p6ghzf43ap8xgwxtfvlm",
   },
-  // {
-  //   chainId: "lum-network",
-  //   address: "lum1yvuhqg73fdzxvam9sj7mazfa38gpn7ul9h37ty",
-  // },
-  // {
-  //   chainId: "likecoin",
-  //   address: "like1yvuhqg73fdzxvam9sj7mazfa38gpn7ulrps4at",
-  // },
-  // {
-  //   chainId: "bitcoin",
-  //   address: "bc1qekphvuz20qvdhkzywfe29r9vvtwxrszvaxzmqm",
-  // },
+  {
+    chainId: "lum-network",
+    address: "lum1yvuhqg73fdzxvam9sj7mazfa38gpn7ul9h37ty",
+  },
+  {
+    chainId: "likecoin",
+    address: "like1yvuhqg73fdzxvam9sj7mazfa38gpn7ulrps4at",
+  },
+  {
+    chainId: "bitcoin",
+    address: "bc1qekphvuz20qvdhkzywfe29r9vvtwxrszvaxzmqm",
+  },
   {
     chainId: "bitcoin",
     address: "bc1q2e00eecxtjlvuzf6dpm4leqjd2pem0xkfggw8j",
