@@ -11,17 +11,37 @@ export const accountState = async (
 ): Promise<AccountState | null> => {
   const url = `${ADAMIK_API_URL}/${chainId}/account/${accountId}/state`;
 
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      Authorization: env.ADAMIK_API_KEY,
-    },
-  });
+  // Create an AbortController to handle request timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-  if (!response.ok) {
-    console.error("state - backend error:", await response.text());
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: env.ADAMIK_API_KEY,
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.error("state - backend error:", await response.text());
+      return null;
+    }
+
+    return response.json() as Promise<AccountState>;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === "AbortError") {
+      console.error(`Request timeout for ${chainId}:${accountId}`);
+    } else {
+      console.error(
+        `Error fetching account state for ${chainId}:${accountId}:`,
+        error
+      );
+    }
     return null;
   }
-
-  return response.json() as Promise<AccountState>;
 };

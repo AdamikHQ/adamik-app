@@ -65,8 +65,12 @@ export default function Portfolio() {
       addressesChainIds.includes(chain.id)
     );
 
-  const { data: addressesData, isLoading: isAddressesLoading } =
-    useAccountStateBatch(displayAddresses);
+  const {
+    data: addressesData,
+    isLoading: isAddressesLoading,
+    progress: addressesLoadingProgress,
+  } = useAccountStateBatch(displayAddresses);
+
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
   const [openTransaction, setOpenTransaction] = useState(false);
   const [hideLowBalance, setHideLowBalance] = useState(true);
@@ -132,7 +136,22 @@ export default function Portfolio() {
           <div className="flex flex-col gap-2">
             <div className="font-medium">Loading portfolio data...</div>
             <div className="flex flex-col space-y-1 text-sm text-muted-foreground">
-              {isAddressesLoading && <div>• Fetching addresses data</div>}
+              {isAddressesLoading && (
+                <div className="flex flex-col gap-1">
+                  <div>
+                    • Fetching addresses data{" "}
+                    {addressesLoadingProgress > 0
+                      ? `(${addressesLoadingProgress}%)`
+                      : ""}
+                  </div>
+                  {addressesLoadingProgress > 0 && (
+                    <Progress
+                      value={addressesLoadingProgress}
+                      className="h-1"
+                    />
+                  )}
+                </div>
+              )}
               {isAssetDetailsLoading && <div>• Loading asset details</div>}
               {isSupportedChainsLoading && (
                 <div>• Loading chain information</div>
@@ -166,6 +185,7 @@ export default function Portfolio() {
     isSupportedChainsLoading,
     isMobulaMarketDataLoading,
     toast,
+    addressesLoadingProgress,
   ]);
 
   const assets = useMemo(() => {
@@ -234,8 +254,14 @@ export default function Portfolio() {
 
     try {
       // First, cancel any existing queries to prevent conflicts
-      await queryClient.cancelQueries({ queryKey: ["accountState"] });
-      await queryClient.cancelQueries({ queryKey: ["mobula"] });
+      // Wrap in try/catch to handle CancelledError gracefully
+      try {
+        await queryClient.cancelQueries({ queryKey: ["accountState"] });
+        await queryClient.cancelQueries({ queryKey: ["mobula"] });
+      } catch (cancelError) {
+        console.log("Query cancellation:", cancelError);
+        // Continue execution - cancellation errors are expected
+      }
 
       // Clear cache for all addresses
       displayAddresses.forEach(({ chainId, address }) => {
@@ -247,15 +273,20 @@ export default function Portfolio() {
       });
 
       // Invalidate queries but don't refetch yet
-      await queryClient.invalidateQueries({
-        queryKey: ["accountState"],
-        refetchType: "none",
-      });
+      try {
+        await queryClient.invalidateQueries({
+          queryKey: ["accountState"],
+          refetchType: "none",
+        });
 
-      await queryClient.invalidateQueries({
-        queryKey: ["mobula"],
-        refetchType: "none",
-      });
+        await queryClient.invalidateQueries({
+          queryKey: ["mobula"],
+          refetchType: "none",
+        });
+      } catch (invalidateError) {
+        console.log("Query invalidation:", invalidateError);
+        // Continue execution - invalidation errors shouldn't stop the refresh
+      }
 
       // Process queries in batches to avoid overwhelming the system
       const batchSize = 3; // Process 3 queries at a time
@@ -269,7 +300,8 @@ export default function Portfolio() {
       for (const batch of batches) {
         if (isCancelled) break;
 
-        await Promise.all(
+        // Use allSettled instead of all to prevent one failure from stopping everything
+        const results = await Promise.allSettled(
           batch.map(async ({ chainId, address }) => {
             if (isCancelled) return;
 
@@ -278,44 +310,54 @@ export default function Portfolio() {
                 queryKey: ["accountState", chainId, address],
                 queryFn: () => accountState(chainId, address),
                 staleTime: 0,
+                retry: 1, // Limit retries to avoid endless attempts
               });
 
-              completedQueries++;
-
-              // Update progress toast
-              if (!isCancelled) {
-                const newDescription = (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <span>Refreshing portfolio...</span>
-                      <span className="text-sm text-muted-foreground">
-                        {completedQueries}/{totalQueries} addresses
-                      </span>
-                    </div>
-                    <Progress
-                      value={(completedQueries / totalQueries) * 100}
-                      className="h-2"
-                    />
-                  </div>
-                );
-
-                progressToast.update({
-                  id: progressToast.id,
-                  description: newDescription,
-                });
-              }
+              return { success: true, chainId, address };
             } catch (error) {
               if (
                 error instanceof Error &&
-                error.message.includes("CancelledError")
+                (error.message.includes("CancelledError") ||
+                  error.name === "CancelledError")
               ) {
                 isCancelled = true;
-                return;
+                return { success: false, cancelled: true, chainId, address };
               }
               console.error(`Error refreshing ${chainId}:${address}:`, error);
+              return { success: false, error, chainId, address };
             }
           })
         );
+
+        // Only count successful queries
+        const successfulQueries = results.filter(
+          (result) => result.status === "fulfilled" && result.value?.success
+        ).length;
+
+        completedQueries += successfulQueries;
+
+        // Update progress toast
+        if (!isCancelled) {
+          const newDescription = (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span>Refreshing portfolio...</span>
+                <span className="text-sm text-muted-foreground">
+                  {completedQueries}/{totalQueries} addresses
+                </span>
+              </div>
+              <Progress
+                value={(completedQueries / totalQueries) * 100}
+                className="h-2"
+              />
+            </div>
+          );
+
+          progressToast.update({
+            id: progressToast.id,
+            description: newDescription,
+          });
+        }
       }
 
       if (!isCancelled) {
@@ -326,7 +368,13 @@ export default function Portfolio() {
         });
       }
     } catch (error) {
-      if (!isCancelled) {
+      // Check if it's a cancellation error, which we can safely ignore
+      const isCancellationError =
+        error instanceof Error &&
+        (error.message.includes("CancelledError") ||
+          error.name === "CancelledError");
+
+      if (!isCancelled && !isCancellationError) {
         progressToast.dismiss();
         toast({
           description: "Failed to update some portfolio data",
@@ -334,6 +382,10 @@ export default function Portfolio() {
           duration: 3000,
         });
         console.error("Error refreshing positions:", error);
+      } else {
+        // For cancellation errors, just clean up the toast
+        progressToast.dismiss();
+        console.log("Refresh operation was cancelled");
       }
     }
 

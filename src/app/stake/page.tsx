@@ -211,8 +211,14 @@ export default function Stake() {
 
     try {
       // First, cancel any existing queries to prevent conflicts
-      await queryClient.cancelQueries({ queryKey: ["accountState"] });
-      await queryClient.cancelQueries({ queryKey: ["validators"] });
+      // Wrap in try/catch to handle CancelledError gracefully
+      try {
+        await queryClient.cancelQueries({ queryKey: ["accountState"] });
+        await queryClient.cancelQueries({ queryKey: ["validators"] });
+      } catch (cancelError) {
+        console.log("Query cancellation:", cancelError);
+        // Continue execution - cancellation errors are expected
+      }
 
       // Clear cache for all stakable assets
       stakableAssets.forEach(({ chainId, address }) => {
@@ -224,15 +230,20 @@ export default function Stake() {
       });
 
       // Invalidate queries but don't refetch yet
-      await queryClient.invalidateQueries({
-        queryKey: ["accountState"],
-        refetchType: "none",
-      });
+      try {
+        await queryClient.invalidateQueries({
+          queryKey: ["accountState"],
+          refetchType: "none",
+        });
 
-      await queryClient.invalidateQueries({
-        queryKey: ["validators"],
-        refetchType: "none",
-      });
+        await queryClient.invalidateQueries({
+          queryKey: ["validators"],
+          refetchType: "none",
+        });
+      } catch (invalidateError) {
+        console.log("Query invalidation:", invalidateError);
+        // Continue execution - invalidation errors shouldn't stop the refresh
+      }
 
       // Process queries in batches to avoid overwhelming the system
       const batchSize = 3; // Process 3 queries at a time
@@ -246,7 +257,8 @@ export default function Stake() {
       for (const batch of batches) {
         if (isCancelled) break;
 
-        await Promise.all(
+        // Use allSettled instead of all to prevent one failure from stopping everything
+        const results = await Promise.allSettled(
           batch.map(async ({ chainId, address }) => {
             if (isCancelled) return;
 
@@ -255,44 +267,54 @@ export default function Stake() {
                 queryKey: ["accountState", chainId, address],
                 queryFn: () => accountState(chainId, address),
                 staleTime: 0,
+                retry: 1, // Limit retries to avoid endless attempts
               });
 
-              completedQueries++;
-
-              // Update progress toast
-              if (!isCancelled) {
-                const newDescription = (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <span>Refreshing staking data...</span>
-                      <span className="text-sm text-muted-foreground">
-                        {completedQueries}/{totalQueries} chains
-                      </span>
-                    </div>
-                    <Progress
-                      value={(completedQueries / totalQueries) * 100}
-                      className="h-2"
-                    />
-                  </div>
-                );
-
-                progressToast.update({
-                  id: progressToast.id,
-                  description: newDescription,
-                });
-              }
+              return { success: true, chainId, address };
             } catch (error) {
               if (
                 error instanceof Error &&
-                error.message.includes("CancelledError")
+                (error.message.includes("CancelledError") ||
+                  error.name === "CancelledError")
               ) {
                 isCancelled = true;
-                return;
+                return { success: false, cancelled: true, chainId, address };
               }
               console.error(`Error refreshing ${chainId}:${address}:`, error);
+              return { success: false, error, chainId, address };
             }
           })
         );
+
+        // Only count successful queries
+        const successfulQueries = results.filter(
+          (result) => result.status === "fulfilled" && result.value?.success
+        ).length;
+
+        completedQueries += successfulQueries;
+
+        // Update progress toast
+        if (!isCancelled) {
+          const newDescription = (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span>Refreshing staking data...</span>
+                <span className="text-sm text-muted-foreground">
+                  {completedQueries}/{totalQueries} chains
+                </span>
+              </div>
+              <Progress
+                value={(completedQueries / totalQueries) * 100}
+                className="h-2"
+              />
+            </div>
+          );
+
+          progressToast.update({
+            id: progressToast.id,
+            description: newDescription,
+          });
+        }
       }
 
       if (!isCancelled) {
@@ -303,7 +325,13 @@ export default function Stake() {
         });
       }
     } catch (error) {
-      if (!isCancelled) {
+      // Check if it's a cancellation error, which we can safely ignore
+      const isCancellationError =
+        error instanceof Error &&
+        (error.message.includes("CancelledError") ||
+          error.name === "CancelledError");
+
+      if (!isCancelled && !isCancellationError) {
         progressToast.dismiss();
         toast({
           description: "Failed to update some staking data",
@@ -311,6 +339,10 @@ export default function Stake() {
           duration: 3000,
         });
         console.error("Error refreshing staking positions:", error);
+      } else {
+        // For cancellation errors, just clean up the toast
+        progressToast.dismiss();
+        console.log("Refresh operation was cancelled");
       }
     }
 
