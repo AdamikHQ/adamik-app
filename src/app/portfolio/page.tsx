@@ -38,6 +38,7 @@ import { WalletConnect } from "~/components";
 import { useQueryClient } from "@tanstack/react-query";
 import { accountState } from "~/api/adamik/accountState";
 import { CustomProgress } from "~/components/ui/custom-progress";
+import { PortfolioLoadingPlaceholder } from "./PortfolioLoadingPlaceholder";
 
 export default function Portfolio() {
   const {
@@ -385,33 +386,42 @@ export default function Portfolio() {
 
       {isShowroom ? <ShowroomBanner /> : null}
 
-      <AssetsBalances
-        isLoading={isLoading}
-        totalBalance={totalBalance}
-        availableBalance={availableBalance}
-        stakingBalances={stakingBalances}
-      />
-
-      <div className="grid gap-4 md:gap-8 grid-cols-1 lg:grid-cols-3">
-        <AssetsList
-          isLoading={isLoading}
-          assets={assets}
-          openTransaction={openTransaction}
-          setOpenTransaction={setOpenTransaction}
-          hideLowBalance={hideLowBalance}
-          setHideLowBalance={setHideLowBalance}
-          refreshPositions={refreshPositions}
+      {isLoading ? (
+        <PortfolioLoadingPlaceholder
+          addresses={displayAddresses}
+          chains={supportedChains}
         />
+      ) : (
+        <>
+          <AssetsBalances
+            isLoading={isLoading}
+            totalBalance={totalBalance}
+            availableBalance={availableBalance}
+            stakingBalances={stakingBalances}
+          />
 
-        <AssetsBreakdown
-          isLoading={isLoading}
-          assets={assets}
-          totalBalance={totalBalance}
-          hideLowBalance={hideLowBalance}
-          setHideLowBalance={setHideLowBalance}
-          stakingPositions={stakingPositions}
-        />
-      </div>
+          <div className="grid gap-4 md:gap-8 grid-cols-1 lg:grid-cols-3">
+            <AssetsList
+              isLoading={isLoading}
+              assets={assets}
+              openTransaction={openTransaction}
+              setOpenTransaction={setOpenTransaction}
+              hideLowBalance={hideLowBalance}
+              setHideLowBalance={setHideLowBalance}
+              refreshPositions={refreshPositions}
+            />
+
+            <AssetsBreakdown
+              isLoading={isLoading}
+              assets={assets}
+              totalBalance={totalBalance}
+              hideLowBalance={hideLowBalance}
+              setHideLowBalance={setHideLowBalance}
+              stakingPositions={stakingPositions}
+            />
+          </div>
+        </>
+      )}
 
       <Modal
         open={openTransaction}
