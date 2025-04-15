@@ -37,7 +37,7 @@ import {
 import { WalletConnect } from "~/components";
 import { useQueryClient } from "@tanstack/react-query";
 import { accountState } from "~/api/adamik/accountState";
-import { Progress } from "~/components/ui/progress";
+import { CustomProgress } from "~/components/ui/custom-progress";
 
 export default function Portfolio() {
   const {
@@ -134,31 +134,14 @@ export default function Portfolio() {
     if (isLoading) {
       loadingToast = toast({
         description: (
-          <div className="flex flex-col gap-2">
-            <div className="font-medium">Loading portfolio data...</div>
-            <div className="flex flex-col space-y-1 text-sm text-muted-foreground">
-              {isAddressesLoading && (
-                <div className="flex flex-col gap-1">
-                  <div>
-                    • Fetching addresses data{" "}
-                    {addressesLoadingProgress > 0
-                      ? `(${addressesLoadingProgress}%)`
-                      : ""}
-                  </div>
-                  {addressesLoadingProgress > 0 && (
-                    <Progress
-                      value={addressesLoadingProgress}
-                      className="h-1"
-                    />
-                  )}
-                </div>
-              )}
-              {isAssetDetailsLoading && <div>• Loading asset details</div>}
-              {isSupportedChainsLoading && (
-                <div>• Loading chain information</div>
-              )}
-              {isMobulaMarketDataLoading && <div>• Fetching market data</div>}
+          <div className="flex flex-col gap-2 w-full min-w-[300px]">
+            <div className="flex items-center justify-between w-full">
+              <span>Loading portfolio data...</span>
+              <span className="text-sm text-muted-foreground">
+                {addressesLoadingProgress}%
+              </span>
             </div>
+            <CustomProgress value={addressesLoadingProgress} />
           </div>
         ),
         duration: Infinity,
@@ -179,15 +162,7 @@ export default function Portfolio() {
         loadingToast.dismiss();
       }
     };
-  }, [
-    isLoading,
-    isAddressesLoading,
-    isAssetDetailsLoading,
-    isSupportedChainsLoading,
-    isMobulaMarketDataLoading,
-    toast,
-    addressesLoadingProgress,
-  ]);
+  }, [isLoading, isAddressesLoading, toast, addressesLoadingProgress]);
 
   const assets = useMemo(() => {
     return filterAndSortAssets(
@@ -237,17 +212,14 @@ export default function Portfolio() {
     // Create initial progress toast
     const progressToast = toast({
       description: (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2 w-full min-w-[300px]">
+          <div className="flex items-center justify-between w-full">
             <span>Refreshing portfolio...</span>
             <span className="text-sm text-muted-foreground">
               {completedQueries}/{totalQueries} addresses
             </span>
           </div>
-          <Progress
-            value={(completedQueries / totalQueries) * 100}
-            className="h-2"
-          />
+          <CustomProgress value={(completedQueries / totalQueries) * 100} />
         </div>
       ),
       duration: Infinity,
@@ -340,17 +312,14 @@ export default function Portfolio() {
         // Update progress toast
         if (!isCancelled) {
           const newDescription = (
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-2 w-full min-w-[300px]">
+              <div className="flex items-center justify-between w-full">
                 <span>Refreshing portfolio...</span>
                 <span className="text-sm text-muted-foreground">
                   {completedQueries}/{totalQueries} addresses
                 </span>
               </div>
-              <Progress
-                value={(completedQueries / totalQueries) * 100}
-                className="h-2"
-              />
+              <CustomProgress value={(completedQueries / totalQueries) * 100} />
             </div>
           );
 

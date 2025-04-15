@@ -17,7 +17,7 @@ import { encodePubKeyToAddress } from "~/api/adamik/encode";
 import { getPreferredChains } from "~/config/wallet-chains";
 import { Input } from "~/components/ui/input";
 import { ScrollArea } from "~/components/ui/scroll-area";
-import { Progress } from "~/components/ui/progress";
+import { CustomProgress } from "~/components/ui/custom-progress";
 
 /**
  * ChainItem component for rendering individual chain items
@@ -273,17 +273,14 @@ export const MultiChainConnect: React.FC<{
     // Create a single progress toast that we'll update
     const progressToast = toast({
       description: (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2 w-full min-w-[300px]">
+          <div className="flex items-center justify-between w-full">
             <span>Connecting chains...</span>
             <span className="text-sm text-muted-foreground">
               {completedCount}/{totalChains} chains
             </span>
           </div>
-          <Progress
-            value={(completedCount / totalChains) * 100}
-            className="h-2"
-          />
+          <CustomProgress value={(completedCount / totalChains) * 100} />
         </div>
       ),
       duration: Infinity,
@@ -317,17 +314,14 @@ export const MultiChainConnect: React.FC<{
         progressToast.update({
           id: progressToast.id,
           description: (
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-2 w-full min-w-[300px]">
+              <div className="flex items-center justify-between w-full">
                 <span>Connecting chains...</span>
                 <span className="text-sm text-muted-foreground">
                   {completedCount}/{totalChains} chains
                 </span>
               </div>
-              <Progress
-                value={(completedCount / totalChains) * 100}
-                className="h-2"
-              />
+              <CustomProgress value={(completedCount / totalChains) * 100} />
               {failedChains.length > 0 && (
                 <div className="text-sm text-red-500">
                   {failedChains.length} connection failure(s)
@@ -651,16 +645,15 @@ export const MultiChainConnect: React.FC<{
                           // Create a single progress toast that we'll update
                           const progressToast = toast({
                             description: (
-                              <div className="flex flex-col gap-2">
-                                <div className="flex items-center justify-between">
+                              <div className="flex flex-col gap-2 w-full min-w-[300px]">
+                                <div className="flex items-center justify-between w-full">
                                   <span>Connecting chains...</span>
                                   <span className="text-sm text-muted-foreground">
                                     {completedCount}/{totalChains} chains
                                   </span>
                                 </div>
-                                <Progress
+                                <CustomProgress
                                   value={(completedCount / totalChains) * 100}
-                                  className="h-2"
                                 />
                               </div>
                             ),
@@ -710,18 +703,17 @@ export const MultiChainConnect: React.FC<{
                               progressToast.update({
                                 id: progressToast.id,
                                 description: (
-                                  <div className="flex flex-col gap-2">
-                                    <div className="flex items-center justify-between">
+                                  <div className="flex flex-col gap-2 w-full min-w-[300px]">
+                                    <div className="flex items-center justify-between w-full">
                                       <span>Connecting chains...</span>
                                       <span className="text-sm text-muted-foreground">
                                         {completedCount}/{totalChains} chains
                                       </span>
                                     </div>
-                                    <Progress
+                                    <CustomProgress
                                       value={
                                         (completedCount / totalChains) * 100
                                       }
-                                      className="h-2"
                                     />
                                     {localFailCount > 0 && (
                                       <div className="text-sm text-red-500">
