@@ -74,8 +74,21 @@ export default function Portfolio() {
 
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
   const [openTransaction, setOpenTransaction] = useState(false);
-  const [hideLowBalance, setHideLowBalance] = useState(true);
+  const [hideLowBalance, setHideLowBalance] = useState(false);
   const [stepper, setStepper] = useState(0);
+
+  // Use the hideLowBalances setting from localStorage
+  useEffect(() => {
+    try {
+      const clientState = localStorage.getItem("AdamikClientState") || "{}";
+      const parsedState = JSON.parse(clientState);
+      if (typeof parsedState.hideLowBalances === "boolean") {
+        setHideLowBalance(parsedState.hideLowBalances);
+      }
+    } catch (error) {
+      console.error("Error reading hideLowBalances setting:", error);
+    }
+  }, []);
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
   const tokenTickers = getTokenTickers(addressesData || []);
@@ -407,7 +420,6 @@ export default function Portfolio() {
               openTransaction={openTransaction}
               setOpenTransaction={setOpenTransaction}
               hideLowBalance={hideLowBalance}
-              setHideLowBalance={setHideLowBalance}
               refreshPositions={refreshPositions}
             />
 
@@ -416,7 +428,6 @@ export default function Portfolio() {
               assets={assets}
               totalBalance={totalBalance}
               hideLowBalance={hideLowBalance}
-              setHideLowBalance={setHideLowBalance}
               stakingPositions={stakingPositions}
             />
           </div>
