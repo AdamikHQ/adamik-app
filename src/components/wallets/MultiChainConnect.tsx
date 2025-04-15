@@ -17,6 +17,7 @@ import { encodePubKeyToAddress } from "~/api/adamik/encode";
 import { getPreferredChains } from "~/config/wallet-chains";
 import { Input } from "~/components/ui/input";
 import { ScrollArea } from "~/components/ui/scroll-area";
+import { Progress } from "~/components/ui/progress";
 
 /**
  * ChainItem component for rendering individual chain items
@@ -220,35 +221,32 @@ export const MultiChainConnect: React.FC<{
 
       addAddresses([account]);
 
-      toast({
-        description: `Connected ${
+      // We no longer show individual toasts for each connection
+      console.log(
+        `Successfully connected ${
           chains?.[result.chainId]?.name || result.chainId
-        }`,
-        duration: 1500,
-      });
+        }`
+      );
 
       setSuccessCount((prev) => prev + 1);
     },
-    [addAddresses, toast, chains]
+    [addAddresses, chains]
   );
 
   // Handle failed chain connection
   const handleFailedConnection = useCallback(
     (chainId: string, error: Error) => {
       console.error(`Error connecting to ${chainId}:`, error);
-
       setFailedChains((prev) => [...prev, chainId]);
 
-      // Optionally show an error toast for each failure
-      toast({
-        description: `Failed to connect ${
-          chains?.[chainId]?.name || chainId
-        }: ${error.message}`,
-        variant: "destructive",
-        duration: 2000,
-      });
+      // We no longer show individual toasts for each failure
+      console.log(
+        `Failed to connect ${chains?.[chainId]?.name || chainId}: ${
+          error.message
+        }`
+      );
     },
-    [chains, toast]
+    [chains]
   );
 
   const connectAllChains = useCallback(async () => {
@@ -269,44 +267,84 @@ export const MultiChainConnect: React.FC<{
     // Make sure configuredChains contains only valid chains
     const validChains = configuredChains.filter((chainId) => chains[chainId]);
 
-    // Process each chain individually
-    validChains.forEach((chainId) => {
-      getAddressForChain(chainId)
-        .then((result) => {
-          // Process this successful result immediately
-          handleSuccessfulConnection(result);
-        })
-        .catch((error) => {
-          // Process this failure immediately
-          handleFailedConnection(chainId, error);
-        })
-        .finally(() => {
-          // Update connection counter
-          setConnectedCount((prev) => prev + 1);
+    let completedCount = 0;
+    const totalChains = validChains.length;
 
-          // Check if all chains have been processed
-          if (connectedCount + 1 >= validChains.length) {
-            // Show final summary toast when all chains have been processed
-            setTimeout(() => {
-              toast({
-                description: `Completed: ${successCount + 1} successful, ${
-                  failedChains.length
-                } failed`,
-              });
-
-              setLoading(false);
-            }, 500);
-          }
-        });
+    // Create a single progress toast that we'll update
+    const progressToast = toast({
+      description: (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span>Connecting chains...</span>
+            <span className="text-sm text-muted-foreground">
+              {completedCount}/{totalChains} chains
+            </span>
+          </div>
+          <Progress
+            value={(completedCount / totalChains) * 100}
+            className="h-2"
+          />
+        </div>
+      ),
+      duration: Infinity,
     });
+
+    // Process each chain individually
+    for (const chainId of validChains) {
+      try {
+        const result = await getAddressForChain(chainId);
+        handleSuccessfulConnection(result);
+      } catch (error) {
+        handleFailedConnection(chainId, error as Error);
+      } finally {
+        completedCount++;
+        setConnectedCount((prev) => prev + 1);
+
+        // Update the progress toast
+        progressToast.update({
+          id: progressToast.id,
+          description: (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span>Connecting chains...</span>
+                <span className="text-sm text-muted-foreground">
+                  {completedCount}/{totalChains} chains
+                </span>
+              </div>
+              <Progress
+                value={(completedCount / totalChains) * 100}
+                className="h-2"
+              />
+              {failedChains.length > 0 && (
+                <div className="text-sm text-red-500">
+                  {failedChains.length} connection failure(s)
+                </div>
+              )}
+            </div>
+          ),
+        });
+      }
+    }
+
+    // Dismiss the progress toast
+    progressToast.dismiss();
+
+    // Show final summary toast
+    toast({
+      description: `Connected ${successCount} chains successfully${
+        failedChains.length > 0 ? `, ${failedChains.length} failed` : ""
+      }`,
+      duration: 3000,
+    });
+
+    setLoading(false);
   }, [
     chains,
     configuredChains,
     handleSuccessfulConnection,
     handleFailedConnection,
-    connectedCount,
     successCount,
-    failedChains.length,
+    failedChains,
     toast,
     getAddressForChain,
   ]);
@@ -585,22 +623,94 @@ export const MultiChainConnect: React.FC<{
                           // Use a local variable to track successes for the toast
                           let localSuccessCount = 0;
                           let localFailCount = 0;
+                          let completedCount = 0;
+                          const totalChains = validChainsToConnect.length;
+
+                          // Create a single progress toast that we'll update
+                          const progressToast = toast({
+                            description: (
+                              <div className="flex flex-col gap-2">
+                                <div className="flex items-center justify-between">
+                                  <span>Connecting chains...</span>
+                                  <span className="text-sm text-muted-foreground">
+                                    {completedCount}/{totalChains} chains
+                                  </span>
+                                </div>
+                                <Progress
+                                  value={(completedCount / totalChains) * 100}
+                                  className="h-2"
+                                />
+                              </div>
+                            ),
+                            duration: Infinity,
+                          });
 
                           // Process each selected chain individually
                           for (const chainId of validChainsToConnect) {
                             try {
                               const result = await getAddressForChain(chainId);
-                              handleSuccessfulConnection(result);
+
+                              // Add address to wallet
+                              const account: Account = {
+                                address: result.address,
+                                chainId: result.chainId,
+                                pubKey: result.pubkey,
+                                signer: WalletName.SODOT,
+                              };
+                              addAddresses([account]);
+
                               localSuccessCount++;
+
+                              // Silently handle the success without a toast for each one
+                              console.log(
+                                `Successfully connected ${
+                                  chains?.[chainId]?.name || chainId
+                                }`
+                              );
                             } catch (error) {
-                              handleFailedConnection(chainId, error as Error);
+                              // Still log errors but don't show individual toasts
+                              console.error(
+                                `Error connecting to ${chainId}:`,
+                                error
+                              );
+                              setFailedChains((prev) => [...prev, chainId]);
                               localFailCount++;
                             } finally {
+                              completedCount++;
                               setConnectedCount((prev) => prev + 1);
+
+                              // Update the progress toast
+                              progressToast.update({
+                                id: progressToast.id,
+                                description: (
+                                  <div className="flex flex-col gap-2">
+                                    <div className="flex items-center justify-between">
+                                      <span>Connecting chains...</span>
+                                      <span className="text-sm text-muted-foreground">
+                                        {completedCount}/{totalChains} chains
+                                      </span>
+                                    </div>
+                                    <Progress
+                                      value={
+                                        (completedCount / totalChains) * 100
+                                      }
+                                      className="h-2"
+                                    />
+                                    {localFailCount > 0 && (
+                                      <div className="text-sm text-red-500">
+                                        {localFailCount} connection failure(s)
+                                      </div>
+                                    )}
+                                  </div>
+                                ),
+                              });
                             }
                           }
 
-                          // Show the completion toast using the local count variables
+                          // Dismiss the progress toast
+                          progressToast.dismiss();
+
+                          // Show the completion toast
                           toast({
                             description: `Connected ${localSuccessCount} chain${
                               localSuccessCount !== 1 ? "s" : ""
@@ -609,7 +719,7 @@ export const MultiChainConnect: React.FC<{
                                 ? `, ${localFailCount} failed`
                                 : ""
                             }`,
-                            duration: 2000,
+                            duration: 3000,
                           });
 
                           setLoading(false);
