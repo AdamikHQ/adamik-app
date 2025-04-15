@@ -49,9 +49,7 @@ export class SodotSigner {
   constructor(chainId: string, signerSpec: AdamikSignerSpec) {
     this.chainId = chainId;
     this.signerSpec = signerSpec;
-
-    // Initialize key IDs based on curve type - these will be managed by the server
-    console.log(`[Sodot] Initialized for ${signerSpec.curve} chain ${chainId}`);
+    console.log(`[Sodot] Init ${chainId} (${signerSpec.curve})`);
   }
 
   private adamikCurveToSodotCurve(curve: AdamikCurve): "ecdsa" | "ed25519" {
@@ -67,13 +65,6 @@ export class SodotSigner {
   ): Promise<any> {
     const vertex = this.SODOT_VERTICES[vertexId];
     if (!vertex) throw new Error(`Vertex ${vertexId} not found`);
-
-    console.log(`[Sodot] Making request to vertex ${vertexId}:`, {
-      path,
-      method,
-      body,
-      retryCount,
-    });
 
     try {
       // Add a unique timestamp to prevent caching issues
@@ -95,23 +86,12 @@ export class SodotSigner {
         options.body = JSON.stringify(body);
       }
 
-      console.log(`[Sodot] Fetching ${url} with options:`, options);
       const response = await fetch(url, options);
-
-      console.log(
-        `[Sodot] Response status from vertex ${vertexId}:`,
-        response.status
-      );
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(
-          `[Sodot] Error response from vertex ${vertexId}:`,
-          errorText
-        );
-        throw new Error(
-          `Request failed: ${response.statusText} - ${errorText}`
-        );
+        console.error(`[Sodot] Error from vertex ${vertexId}: ${errorText}`);
+        throw new Error(`Request failed: ${response.status} - ${errorText}`);
       }
 
       const contentType = response.headers.get("content-type") || "";
@@ -119,19 +99,12 @@ export class SodotSigner {
       // Handle response based on content type
       if (contentType.includes("application/json")) {
         try {
-          const data = await response.json();
-          console.log(`[Sodot] Parsed JSON from vertex ${vertexId}:`, data);
-          return data;
+          return await response.json();
         } catch (e) {
-          console.error(
-            `[Sodot] Failed to parse response as JSON from vertex ${vertexId}:`,
-            e
-          );
-
           // Retry on JSON parse error
           if (retryCount < 3) {
             console.log(
-              `[Sodot] Retrying request to vertex ${vertexId} (${
+              `[Sodot] Retrying vertex ${vertexId} request (${
                 retryCount + 1
               }/3)`
             );
@@ -144,22 +117,17 @@ export class SodotSigner {
               retryCount + 1
             );
           }
-
           throw e;
         }
       } else {
         // Handle text response
-        const text = await response.text();
-        console.log(`[Sodot] Text response from vertex ${vertexId}:`, text);
-        return text;
+        return await response.text();
       }
     } catch (error: any) {
-      console.error(`[Sodot] Request error for vertex ${vertexId}:`, error);
-
       // Retry on network errors
       if (retryCount < 3) {
         console.log(
-          `[Sodot] Retrying request to vertex ${vertexId} (${retryCount + 1}/3)`
+          `[Sodot] Retrying vertex ${vertexId} request (${retryCount + 1}/3)`
         );
         await new Promise((resolve) => setTimeout(resolve, 500));
         return this.callVertexEndpoint(
@@ -170,7 +138,6 @@ export class SodotSigner {
           retryCount + 1
         );
       }
-
       throw error;
     }
   }
@@ -193,43 +160,26 @@ export class SodotSigner {
           curve === "ecdsa"
             ? "NEXT_PUBLIC_SODOT_EXISTING_ECDSA_KEY_IDS"
             : "NEXT_PUBLIC_SODOT_EXISTING_ED25519_KEY_IDS";
-
         keyIdsStr = process.env[envVar];
-        console.log(
-          `[Sodot] Attempting to use client-side env var ${envVar}:`,
-          keyIdsStr ? "found" : "not found"
-        );
       }
 
       // If not found, try to fetch the key IDs from the server
       if (!keyIdsStr) {
-        console.log(
-          `[Sodot] Client-side key IDs not found, fetching from server API`
-        );
-        try {
-          const response = await fetch(
-            `/api/sodot-proxy/get-key-ids?curve=${curve}`,
-            {
-              method: "GET",
-              headers: { "Content-Type": "application/json" },
-            }
-          );
-
-          if (response.ok) {
-            const data = await response.json();
-            keyIdsStr = data.keyIds;
-            console.log(
-              `[Sodot] Server provided key IDs:`,
-              keyIdsStr ? "success" : "failed"
-            );
-          } else {
-            console.error(
-              `[Sodot] Failed to get key IDs from server:`,
-              await response.text()
-            );
+        const response = await fetch(
+          `/api/sodot-proxy/get-key-ids?curve=${curve}`,
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
           }
-        } catch (err) {
-          console.error(`[Sodot] Error fetching key IDs from server:`, err);
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          keyIdsStr = data.keyIds;
+        } else {
+          throw new Error(
+            `Failed to get key IDs from server: ${response.status}`
+          );
         }
       }
 
@@ -237,11 +187,6 @@ export class SodotSigner {
       if (keyIdsStr) {
         const keyIds = keyIdsStr.split(",");
         if (keyIds.length > vertexId && keyIds[vertexId]) {
-          console.log(
-            `[Sodot] Using key ID for vertex ${vertexId}: ${keyIds[
-              vertexId
-            ].substring(0, 8)}...`
-          );
           return keyIds[vertexId];
         }
       }
@@ -263,22 +208,15 @@ export class SodotSigner {
   ) {
     // First, get the key ID if we don't have it yet
     if (!this.keyIds[vertexId]) {
-      const keyId = await this.getKeyId(vertexId, curve);
-      this.keyIds[vertexId] = keyId;
-      console.log(
-        `[Sodot] Retrieved key ID for vertex ${vertexId}: ${this.keyIds[vertexId]}`
-      );
+      this.keyIds[vertexId] = await this.getKeyId(vertexId, curve);
     }
-
-    const keyId = this.keyIds[vertexId];
-    console.log(`[Sodot] Using key ID for derivation: ${keyId}`);
 
     const result = await this.callVertexEndpoint(
       vertexId,
       `/${curve}/derive-pubkey`,
       "POST",
       {
-        key_id: keyId,
+        key_id: this.keyIds[vertexId],
         derivation_path: derivationPath,
       }
     );
@@ -308,18 +246,15 @@ export class SodotSigner {
   public async getPubkey(): Promise<string> {
     try {
       const curve = this.adamikCurveToSodotCurve(this.signerSpec.curve);
-
-      console.log(
-        `[Sodot] Getting pubkey for chain ${this.chainId} with curve ${curve}`
-      );
-
       const pubkey = await this.derivePubkeyWithVertex(
         0,
         [44, Number(this.signerSpec.coinType), 0, 0, 0],
         curve
       );
 
-      console.log(`[Sodot] Retrieved pubkey: ${pubkey}`);
+      console.log(
+        `[Sodot] Got ${this.chainId} pubkey: ${pubkey.substring(0, 10)}...`
+      );
       return pubkey;
     } catch (error: any) {
       console.error(`[Sodot] Error getting pubkey:`, error);
@@ -344,9 +279,6 @@ export class SodotSigner {
 
             if (keysResult && keysResult.keyId) {
               this.keyIds[i] = keysResult.keyId;
-              console.log(
-                `[Sodot] Retrieved key ID for vertex ${i}: ${this.keyIds[i]}`
-              );
             } else {
               throw new Error(`Failed to get key ID for vertex ${i}`);
             }
@@ -357,7 +289,7 @@ export class SodotSigner {
       // Create a signing room
       const roomResponse = await this.createRoomWithVertex(0, this.n);
       const roomUuid = roomResponse.room_uuid;
-      console.log(`[Sodot] Created signing room: ${roomUuid}`);
+      console.log(`[Sodot] Signing with room ${roomUuid.substring(0, 8)}...`);
 
       // Ensure the message is properly formatted
       let formattedMsg = encodedMessage;
@@ -366,7 +298,6 @@ export class SodotSigner {
       }
 
       // Sign the transaction with each vertex
-      console.log(`[Sodot] Signing message with room ${roomUuid}`);
       const signatures = await Promise.all(
         this.keyIds.map((keyId, index) =>
           this.callVertexEndpoint(index, `/${curve}/sign`, "POST", {
@@ -380,7 +311,6 @@ export class SodotSigner {
 
       // Handle different signature formats
       const signature = signatures[0]; // Use the first signature
-      console.log(`[Sodot] Received signature:`, signature);
 
       if ("signature" in signature) {
         return signature.signature;

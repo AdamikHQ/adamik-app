@@ -130,6 +130,8 @@ export default function Portfolio() {
   useEffect(() => {
     let loadingToast: ReturnType<typeof toast> | undefined;
 
+    // TEMPORARILY DISABLED FOR WALLET CONNECT TOAST QA TESTING
+    /*
     if (isLoading) {
       loadingToast = toast({
         description: (
@@ -172,6 +174,7 @@ export default function Portfolio() {
         duration: 2000,
       });
     }
+    */
 
     return () => {
       if (loadingToast) {
@@ -233,6 +236,8 @@ export default function Portfolio() {
     const totalQueries = displayAddresses.length;
     let isCancelled = false;
 
+    // TEMPORARILY DISABLED FOR WALLET CONNECT TOAST QA TESTING
+    /*
     // Create initial progress toast
     const progressToast = toast({
       description: (
@@ -251,6 +256,9 @@ export default function Portfolio() {
       ),
       duration: Infinity,
     });
+    */
+    // Dummy progressToast for the disabled code
+    const progressToast = { dismiss: () => {}, update: () => {}, id: "" };
 
     try {
       // First, cancel any existing queries to prevent conflicts
@@ -336,6 +344,8 @@ export default function Portfolio() {
 
         completedQueries += successfulQueries;
 
+        // TEMPORARILY DISABLED FOR WALLET CONNECT TOAST QA TESTING
+        /*
         // Update progress toast
         if (!isCancelled) {
           const newDescription = (
@@ -358,14 +368,18 @@ export default function Portfolio() {
             description: newDescription,
           });
         }
+        */
       }
 
       if (!isCancelled) {
         progressToast.dismiss();
+        // TEMPORARILY DISABLED FOR WALLET CONNECT TOAST QA TESTING
+        /*
         toast({
           description: "Portfolio updated successfully",
           duration: 2000,
         });
+        */
       }
     } catch (error) {
       // Check if it's a cancellation error, which we can safely ignore
@@ -376,11 +390,14 @@ export default function Portfolio() {
 
       if (!isCancelled && !isCancellationError) {
         progressToast.dismiss();
+        // TEMPORARILY DISABLED FOR WALLET CONNECT TOAST QA TESTING
+        /*
         toast({
           description: "Failed to update some portfolio data",
           variant: "destructive",
           duration: 3000,
         });
+        */
         console.error("Error refreshing positions:", error);
       } else {
         // For cancellation errors, just clean up the toast

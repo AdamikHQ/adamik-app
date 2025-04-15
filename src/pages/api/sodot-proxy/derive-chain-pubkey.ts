@@ -33,18 +33,24 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    // Log information for debugging
-    console.log("Starting derive-chain-pubkey request");
-    console.log("Environment check:", {
-      hasEcdsaKeys: !!env.SODOT_EXISTING_ECDSA_KEY_IDS,
-      hasEd25519Keys: !!env.SODOT_EXISTING_ED25519_KEY_IDS,
-      hasVertex0Url: !!env.SODOT_VERTEX_URL_0,
-      hasVertex0Key: !!env.SODOT_VERTEX_API_KEY_0,
-    });
-
     // Extract chain from query
     const { chain } = req.query;
-    console.log("Requested chain:", chain);
+    console.log(`Derive pubkey request for chain: ${chain}`);
+
+    // Quick env check
+    const hasKeys =
+      !!env.SODOT_EXISTING_ECDSA_KEY_IDS &&
+      !!env.SODOT_EXISTING_ED25519_KEY_IDS;
+    const hasVertex = !!env.SODOT_VERTEX_URL_0 && !!env.SODOT_VERTEX_API_KEY_0;
+
+    if (!hasKeys || !hasVertex) {
+      console.error("Missing required environment variables");
+      return res.status(500).json({
+        status: 500,
+        error: "Missing environment configuration",
+        message: "Server is not properly configured",
+      });
+    }
 
     if (!chain || typeof chain !== "string") {
       return res.status(400).json({
@@ -55,7 +61,6 @@ export default async function handler(
     }
 
     // Get chain configurations from Adamik API
-    console.log("Fetching chain configurations");
     const chains = await getChains();
 
     if (!chains) {
@@ -68,7 +73,6 @@ export default async function handler(
 
     // Find the requested chain
     const chainConfig = chains[chain];
-    console.log("Chain config found:", !!chainConfig);
 
     if (!chainConfig) {
       return res.status(400).json({
@@ -83,12 +87,13 @@ export default async function handler(
     // Get curve type from signerSpec
     const curveType =
       chainConfig.signerSpec.curve === "secp256k1" ? "ecdsa" : "ed25519";
-    console.log("Curve type:", curveType);
 
     // Construct derivation path based on BIP-44 standard
     const coinType = parseInt(chainConfig.signerSpec.coinType);
     const derivationPath = [44, coinType, 0, 0, 0];
-    console.log("Derivation path:", derivationPath);
+    console.log(
+      `${chain}: ${curveType}/${coinType} [${derivationPath.join("/")}]`
+    );
 
     // Check cache using curve and coin type as key
     const cacheKey = `${curveType}:${coinType}`;
@@ -100,11 +105,11 @@ export default async function handler(
 
     // If we have a valid, non-expired result in cache, use it
     if (cachedPubkey && now - cachedPubkey.timestamp < CACHE_EXPIRATION) {
-      console.log(`Cache hit for ${cacheKey}, using cached pubkey`);
+      console.log(`✓ Cache hit for ${cacheKey}`);
       pubkey = cachedPubkey.pubkey;
       isCacheHit = true;
     } else {
-      console.log(`Cache miss for ${cacheKey}, deriving from Sodot`);
+      console.log(`⟳ Deriving from Sodot for ${cacheKey}`);
 
       // Get key IDs for this chain's curve from the env object
       const keyIdsStr =
@@ -113,7 +118,6 @@ export default async function handler(
           : env.SODOT_EXISTING_ED25519_KEY_IDS;
 
       const keyIds = keyIdsStr.split(",");
-      console.log(`Found ${keyIds.length} key IDs`);
 
       if (keyIds.length < 1) {
         return res.status(500).json({
@@ -137,16 +141,14 @@ export default async function handler(
       }
 
       // The correct endpoint for deriving a public key
-      // NOTE: Reverting to the original endpoint path format that was working
       const endpointUrl = `${vertexUrl}/${curveType}/derive-pubkey`;
-      console.log("Making request to vertex:", endpointUrl);
 
       // Direct request to the vertex
       const response = await fetch(endpointUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `${vertexApiKey}`, // Using the API key directly without Bearer prefix
+          Authorization: `${vertexApiKey}`,
         },
         body: JSON.stringify({
           key_id: keyIds[0], // Use the first key ID
@@ -163,17 +165,13 @@ export default async function handler(
           errorText = await response.text();
         }
 
-        console.error(
-          `Error response from vertex: ${response.status}`,
-          errorText
-        );
+        console.error(`Error from vertex: ${response.status} - ${errorText}`);
         throw new Error(
           `HTTP error! status: ${response.status} - ${errorText}`
         );
       }
 
       const result = await response.json();
-      console.log("Vertex response:", JSON.stringify(result));
 
       // Format the response based on chain/curve
       if (curveType === "ed25519") {
@@ -202,7 +200,7 @@ export default async function handler(
         pubkey,
         timestamp: now,
       };
-      console.log(`Cached pubkey for ${cacheKey}`);
+      console.log(`✓ Cached pubkey for ${cacheKey}`);
     }
 
     // Return the pubkey to the client along with request details
