@@ -126,13 +126,58 @@ export default function Portfolio() {
     isSupportedChainsLoading ||
     isMobulaMarketDataLoading;
 
-  // Remove loading state management with toast
+  // Restore loading state management with toast
   useEffect(() => {
-    // This useEffect intentionally left empty - loading toasts removed to avoid
-    // conflict with wallet connection toasts
+    let loadingToast: ReturnType<typeof toast> | undefined;
+
+    // Now that wallet connections are batched, we can safely show data loading toast
+    if (isLoading) {
+      loadingToast = toast({
+        description: (
+          <div className="flex flex-col gap-2">
+            <div className="font-medium">Loading portfolio data...</div>
+            <div className="flex flex-col space-y-1 text-sm text-muted-foreground">
+              {isAddressesLoading && (
+                <div className="flex flex-col gap-1">
+                  <div>
+                    • Fetching addresses data{" "}
+                    {addressesLoadingProgress > 0
+                      ? `(${addressesLoadingProgress}%)`
+                      : ""}
+                  </div>
+                  {addressesLoadingProgress > 0 && (
+                    <Progress
+                      value={addressesLoadingProgress}
+                      className="h-1"
+                    />
+                  )}
+                </div>
+              )}
+              {isAssetDetailsLoading && <div>• Loading asset details</div>}
+              {isSupportedChainsLoading && (
+                <div>• Loading chain information</div>
+              )}
+              {isMobulaMarketDataLoading && <div>• Fetching market data</div>}
+            </div>
+          </div>
+        ),
+        duration: Infinity,
+      });
+    } else if (loadingToast) {
+      // Dismiss the loading toast
+      loadingToast.dismiss();
+
+      // Show completion toast
+      toast({
+        description: "Portfolio loaded successfully",
+        duration: 2000,
+      });
+    }
 
     return () => {
-      // No cleanup needed since we're not creating toasts
+      if (loadingToast) {
+        loadingToast.dismiss();
+      }
     };
   }, [
     isLoading,
