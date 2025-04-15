@@ -289,11 +289,24 @@ export const MultiChainConnect: React.FC<{
       duration: Infinity,
     });
 
+    // Create array to collect all successful addresses before updating wallet state
+    const allNewAccounts: Account[] = [];
+
     // Process each chain individually
     for (const chainId of validChains) {
       try {
         const result = await getAddressForChain(chainId);
-        handleSuccessfulConnection(result);
+
+        // Collect the account instead of immediately adding it
+        const account: Account = {
+          address: result.address,
+          chainId: result.chainId,
+          pubKey: result.pubkey,
+          signer: WalletName.SODOT,
+        };
+
+        allNewAccounts.push(account);
+        setSuccessCount((prev) => prev + 1);
       } catch (error) {
         handleFailedConnection(chainId, error as Error);
       } finally {
@@ -329,6 +342,11 @@ export const MultiChainConnect: React.FC<{
     // Dismiss the progress toast
     progressToast.dismiss();
 
+    // Only after all chains are processed, update the wallet state once
+    if (allNewAccounts.length > 0) {
+      addAddresses(allNewAccounts);
+    }
+
     // Show final summary toast
     toast({
       description: `Connected ${successCount} chains successfully${
@@ -341,12 +359,12 @@ export const MultiChainConnect: React.FC<{
   }, [
     chains,
     configuredChains,
-    handleSuccessfulConnection,
     handleFailedConnection,
     successCount,
     failedChains,
     toast,
     getAddressForChain,
+    addAddresses,
   ]);
 
   // Clean up when finished
@@ -626,6 +644,10 @@ export const MultiChainConnect: React.FC<{
                           let completedCount = 0;
                           const totalChains = validChainsToConnect.length;
 
+                          // Ensure we have access to the getAddressForChain and addAddresses functions
+                          const getAddress = getAddressForChain;
+                          const addChainAddresses = addAddresses;
+
                           // Create a single progress toast that we'll update
                           const progressToast = toast({
                             description: (
@@ -645,19 +667,24 @@ export const MultiChainConnect: React.FC<{
                             duration: Infinity,
                           });
 
+                          // Create array to collect all successful addresses before updating wallet state
+                          const allNewAccounts: Account[] = [];
+
                           // Process each selected chain individually
                           for (const chainId of validChainsToConnect) {
                             try {
-                              const result = await getAddressForChain(chainId);
+                              const result = await getAddress(chainId);
 
-                              // Add address to wallet
+                              // Instead of adding to wallet immediately, collect the address
                               const account: Account = {
                                 address: result.address,
                                 chainId: result.chainId,
                                 pubKey: result.pubkey,
                                 signer: WalletName.SODOT,
                               };
-                              addAddresses([account]);
+
+                              // Add to our collection instead of the wallet state
+                              allNewAccounts.push(account);
 
                               localSuccessCount++;
 
@@ -709,6 +736,11 @@ export const MultiChainConnect: React.FC<{
 
                           // Dismiss the progress toast
                           progressToast.dismiss();
+
+                          // Only after all chains are processed, update the wallet state once
+                          if (allNewAccounts.length > 0) {
+                            addChainAddresses(allNewAccounts);
+                          }
 
                           // Show the completion toast
                           toast({

@@ -126,60 +126,13 @@ export default function Portfolio() {
     isSupportedChainsLoading ||
     isMobulaMarketDataLoading;
 
-  // Add loading state management with toast
+  // Remove loading state management with toast
   useEffect(() => {
-    let loadingToast: ReturnType<typeof toast> | undefined;
-
-    // TEMPORARILY DISABLED FOR WALLET CONNECT TOAST QA TESTING
-    /*
-    if (isLoading) {
-      loadingToast = toast({
-        description: (
-          <div className="flex flex-col gap-2">
-            <div className="font-medium">Loading portfolio data...</div>
-            <div className="flex flex-col space-y-1 text-sm text-muted-foreground">
-              {isAddressesLoading && (
-                <div className="flex flex-col gap-1">
-                  <div>
-                    • Fetching addresses data{" "}
-                    {addressesLoadingProgress > 0
-                      ? `(${addressesLoadingProgress}%)`
-                      : ""}
-                  </div>
-                  {addressesLoadingProgress > 0 && (
-                    <Progress
-                      value={addressesLoadingProgress}
-                      className="h-1"
-                    />
-                  )}
-                </div>
-              )}
-              {isAssetDetailsLoading && <div>• Loading asset details</div>}
-              {isSupportedChainsLoading && (
-                <div>• Loading chain information</div>
-              )}
-              {isMobulaMarketDataLoading && <div>• Fetching market data</div>}
-            </div>
-          </div>
-        ),
-        duration: Infinity,
-      });
-    } else if (loadingToast) {
-      // Dismiss the loading toast
-      loadingToast.dismiss();
-
-      // Show completion toast
-      toast({
-        description: "Portfolio loaded successfully",
-        duration: 2000,
-      });
-    }
-    */
+    // This useEffect intentionally left empty - loading toasts removed to avoid
+    // conflict with wallet connection toasts
 
     return () => {
-      if (loadingToast) {
-        loadingToast.dismiss();
-      }
+      // No cleanup needed since we're not creating toasts
     };
   }, [
     isLoading,
@@ -236,8 +189,6 @@ export default function Portfolio() {
     const totalQueries = displayAddresses.length;
     let isCancelled = false;
 
-    // TEMPORARILY DISABLED FOR WALLET CONNECT TOAST QA TESTING
-    /*
     // Create initial progress toast
     const progressToast = toast({
       description: (
@@ -256,9 +207,6 @@ export default function Portfolio() {
       ),
       duration: Infinity,
     });
-    */
-    // Dummy progressToast for the disabled code
-    const progressToast = { dismiss: () => {}, update: () => {}, id: "" };
 
     try {
       // First, cancel any existing queries to prevent conflicts
@@ -344,8 +292,6 @@ export default function Portfolio() {
 
         completedQueries += successfulQueries;
 
-        // TEMPORARILY DISABLED FOR WALLET CONNECT TOAST QA TESTING
-        /*
         // Update progress toast
         if (!isCancelled) {
           const newDescription = (
@@ -368,18 +314,14 @@ export default function Portfolio() {
             description: newDescription,
           });
         }
-        */
       }
 
       if (!isCancelled) {
         progressToast.dismiss();
-        // TEMPORARILY DISABLED FOR WALLET CONNECT TOAST QA TESTING
-        /*
         toast({
           description: "Portfolio updated successfully",
           duration: 2000,
         });
-        */
       }
     } catch (error) {
       // Check if it's a cancellation error, which we can safely ignore
@@ -390,14 +332,11 @@ export default function Portfolio() {
 
       if (!isCancelled && !isCancellationError) {
         progressToast.dismiss();
-        // TEMPORARILY DISABLED FOR WALLET CONNECT TOAST QA TESTING
-        /*
         toast({
           description: "Failed to update some portfolio data",
           variant: "destructive",
           duration: 3000,
         });
-        */
         console.error("Error refreshing positions:", error);
       } else {
         // For cancellation errors, just clean up the toast
