@@ -48,6 +48,12 @@ type ChainPubkeyResult = {
   address: string;
   chainId: string;
   curve: string;
+  requestDetails?: {
+    derivationPath: number[];
+    coinType: number;
+    curve: string;
+    fromCache: boolean;
+  };
 };
 
 type Results = {
@@ -135,6 +141,7 @@ export default function SodotTestPage() {
             address,
             chainId: selectedChain,
             curve: curveType,
+            requestDetails: data.data.requestDetails,
           },
         })
       );
@@ -306,6 +313,36 @@ export default function SodotTestPage() {
                     <div className="break-all text-black dark:text-white">
                       Address: {results.chainPubkey.address}
                     </div>
+
+                    {results.chainPubkey.requestDetails && (
+                      <div className="mt-3 border-t pt-3">
+                        <h3 className="font-medium text-black dark:text-white mb-2">
+                          Request Details (Sent to Sodot):
+                        </h3>
+                        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md border border-blue-100 dark:border-blue-800">
+                          <div className="text-black dark:text-white mb-1">
+                            <span className="font-medium">BIP-44 Path:</span> m/
+                            {results.chainPubkey.requestDetails.derivationPath.join(
+                              "/"
+                            )}
+                          </div>
+                          <div className="text-black dark:text-white mb-1">
+                            <span className="font-medium">Coin Type:</span>{" "}
+                            {results.chainPubkey.requestDetails.coinType}
+                          </div>
+                          <div className="text-black dark:text-white mb-1">
+                            <span className="font-medium">Curve:</span>{" "}
+                            {results.chainPubkey.requestDetails.curve}
+                          </div>
+                          <div className="text-black dark:text-white">
+                            <span className="font-medium">Source:</span>{" "}
+                            {results.chainPubkey.requestDetails.fromCache
+                              ? "Retrieved from cache"
+                              : "Derived from Sodot vertices"}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

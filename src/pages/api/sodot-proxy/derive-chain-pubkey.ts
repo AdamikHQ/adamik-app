@@ -3,6 +3,13 @@ import { getChains } from "~/api/adamik/chains";
 import { Chain } from "~/utils/types";
 import { env } from "~/env";
 
+// Cache object to store pubkeys by curve and coin type
+// Format: { "ecdsa:60": { pubkey: "0x...", timestamp: 123456789 } }
+const pubkeyCache: Record<string, { pubkey: string; timestamp: number }> = {};
+
+// Cache expiration time: 24 hours (in milliseconds)
+const CACHE_EXPIRATION = 24 * 60 * 60 * 1000;
+
 // Helper function to get the base URL (no longer used since we're making direct requests)
 function getBaseUrl(req: NextApiRequest): string {
   // For Vercel deployments, use the VERCEL_URL environment variable
@@ -78,108 +85,139 @@ export default async function handler(
       chainConfig.signerSpec.curve === "secp256k1" ? "ecdsa" : "ed25519";
     console.log("Curve type:", curveType);
 
-    // Get key IDs for this chain's curve from the env object
-    const keyIdsStr =
-      curveType === "ecdsa"
-        ? env.SODOT_EXISTING_ECDSA_KEY_IDS
-        : env.SODOT_EXISTING_ED25519_KEY_IDS;
-
-    const keyIds = keyIdsStr.split(",");
-    console.log(`Found ${keyIds.length} key IDs`);
-
-    if (keyIds.length < 1) {
-      return res.status(500).json({
-        status: 500,
-        error: "Insufficient key IDs",
-        message: `Found only ${keyIds.length} key IDs, need at least 1`,
-      });
-    }
-
     // Construct derivation path based on BIP-44 standard
     const coinType = parseInt(chainConfig.signerSpec.coinType);
     const derivationPath = [44, coinType, 0, 0, 0];
     console.log("Derivation path:", derivationPath);
 
-    // Get vertex information
-    const vertexUrl = env.SODOT_VERTEX_URL_0;
-    const vertexApiKey = env.SODOT_VERTEX_API_KEY_0;
+    // Check cache using curve and coin type as key
+    const cacheKey = `${curveType}:${coinType}`;
+    const cachedPubkey = pubkeyCache[cacheKey];
+    const now = Date.now();
 
-    // Ensure we have the vertex information
-    if (!vertexUrl || !vertexApiKey) {
-      return res.status(500).json({
-        status: 500,
-        error: "Missing vertex configuration",
-        message: "Vertex URL or API key is missing",
-      });
-    }
-
-    // The correct endpoint for deriving a public key
-    // NOTE: Reverting to the original endpoint path format that was working
-    const endpointUrl = `${vertexUrl}/${curveType}/derive-pubkey`;
-    console.log("Making request to vertex:", endpointUrl);
-
-    // Direct request to the vertex
-    const response = await fetch(endpointUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `${vertexApiKey}`, // Using the API key directly without Bearer prefix
-      },
-      body: JSON.stringify({
-        key_id: keyIds[0], // Use the first key ID
-        derivation_path: derivationPath,
-      }),
-    });
-
-    if (!response.ok) {
-      let errorText = "";
-      try {
-        const errorJson = await response.json();
-        errorText = JSON.stringify(errorJson);
-      } catch {
-        errorText = await response.text();
-      }
-
-      console.error(
-        `Error response from vertex: ${response.status}`,
-        errorText
-      );
-      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
-    }
-
-    const result = await response.json();
-    console.log("Vertex response:", JSON.stringify(result));
-
-    // Format the response based on chain/curve
     let pubkey;
-    if (curveType === "ed25519") {
-      // ED25519 response format
-      pubkey = result.pubkey;
-      if (!pubkey) {
-        throw new Error("ED25519 pubkey missing from response");
-      }
+    let isCacheHit = false;
+
+    // If we have a valid, non-expired result in cache, use it
+    if (cachedPubkey && now - cachedPubkey.timestamp < CACHE_EXPIRATION) {
+      console.log(`Cache hit for ${cacheKey}, using cached pubkey`);
+      pubkey = cachedPubkey.pubkey;
+      isCacheHit = true;
     } else {
-      // SECP256K1 response format
-      if (chainConfig.family === "evm") {
-        pubkey = result.uncompressed;
+      console.log(`Cache miss for ${cacheKey}, deriving from Sodot`);
+
+      // Get key IDs for this chain's curve from the env object
+      const keyIdsStr =
+        curveType === "ecdsa"
+          ? env.SODOT_EXISTING_ECDSA_KEY_IDS
+          : env.SODOT_EXISTING_ED25519_KEY_IDS;
+
+      const keyIds = keyIdsStr.split(",");
+      console.log(`Found ${keyIds.length} key IDs`);
+
+      if (keyIds.length < 1) {
+        return res.status(500).json({
+          status: 500,
+          error: "Insufficient key IDs",
+          message: `Found only ${keyIds.length} key IDs, need at least 1`,
+        });
+      }
+
+      // Get vertex information
+      const vertexUrl = env.SODOT_VERTEX_URL_0;
+      const vertexApiKey = env.SODOT_VERTEX_API_KEY_0;
+
+      // Ensure we have the vertex information
+      if (!vertexUrl || !vertexApiKey) {
+        return res.status(500).json({
+          status: 500,
+          error: "Missing vertex configuration",
+          message: "Vertex URL or API key is missing",
+        });
+      }
+
+      // The correct endpoint for deriving a public key
+      // NOTE: Reverting to the original endpoint path format that was working
+      const endpointUrl = `${vertexUrl}/${curveType}/derive-pubkey`;
+      console.log("Making request to vertex:", endpointUrl);
+
+      // Direct request to the vertex
+      const response = await fetch(endpointUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `${vertexApiKey}`, // Using the API key directly without Bearer prefix
+        },
+        body: JSON.stringify({
+          key_id: keyIds[0], // Use the first key ID
+          derivation_path: derivationPath,
+        }),
+      });
+
+      if (!response.ok) {
+        let errorText = "";
+        try {
+          const errorJson = await response.json();
+          errorText = JSON.stringify(errorJson);
+        } catch {
+          errorText = await response.text();
+        }
+
+        console.error(
+          `Error response from vertex: ${response.status}`,
+          errorText
+        );
+        throw new Error(
+          `HTTP error! status: ${response.status} - ${errorText}`
+        );
+      }
+
+      const result = await response.json();
+      console.log("Vertex response:", JSON.stringify(result));
+
+      // Format the response based on chain/curve
+      if (curveType === "ed25519") {
+        // ED25519 response format
+        pubkey = result.pubkey;
         if (!pubkey) {
-          throw new Error("Uncompressed pubkey missing from response");
+          throw new Error("ED25519 pubkey missing from response");
         }
       } else {
-        pubkey = result.compressed;
-        if (!pubkey) {
-          throw new Error("Compressed pubkey missing from response");
+        // SECP256K1 response format
+        if (chainConfig.family === "evm") {
+          pubkey = result.uncompressed;
+          if (!pubkey) {
+            throw new Error("Uncompressed pubkey missing from response");
+          }
+        } else {
+          pubkey = result.compressed;
+          if (!pubkey) {
+            throw new Error("Compressed pubkey missing from response");
+          }
         }
       }
+
+      // Store the result in cache
+      pubkeyCache[cacheKey] = {
+        pubkey,
+        timestamp: now,
+      };
+      console.log(`Cached pubkey for ${cacheKey}`);
     }
 
-    // Return the pubkey to the client
+    // Return the pubkey to the client along with request details
     return res.status(200).json({
       status: 200,
       data: {
         pubkey,
         curve: curveType,
         chain: chain,
+        requestDetails: {
+          derivationPath,
+          coinType,
+          curve: curveType,
+          fromCache: isCacheHit,
+        },
       },
     });
   } catch (error: any) {
