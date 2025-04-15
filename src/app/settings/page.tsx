@@ -42,6 +42,7 @@ export default function SettingsPage() {
     showTestnets: initialShowTestnets,
   } = useFilteredChains();
   const [showTestnets, setShowTestnets] = useState(false);
+  const [hideLowBalances, setHideLowBalances] = useState(false);
   const [isModified, setIsModified] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
 
@@ -50,10 +51,26 @@ export default function SettingsPage() {
     if (typeof initialShowTestnets === "boolean") {
       setShowTestnets(initialShowTestnets);
     }
+
+    // Initialize hideLowBalances from localStorage
+    try {
+      const clientState = localStorage.getItem("AdamikClientState") || "{}";
+      const parsedState = JSON.parse(clientState);
+      if (typeof parsedState.hideLowBalances === "boolean") {
+        setHideLowBalances(parsedState.hideLowBalances);
+      }
+    } catch (error) {
+      console.error("Error reading hideLowBalances setting:", error);
+    }
   }, [initialShowTestnets]);
 
   const handleShowTestnetsToggle = (checked: boolean) => {
     setShowTestnets(checked);
+    setIsModified(true);
+  };
+
+  const handleHideLowBalancesToggle = (checked: boolean) => {
+    setHideLowBalances(checked);
     setIsModified(true);
   };
 
@@ -63,12 +80,13 @@ export default function SettingsPage() {
       const clientState = localStorage.getItem("AdamikClientState") || "{}";
       const parsedState = JSON.parse(clientState);
 
-      // Save the showTestnets setting
+      // Save the settings
       localStorage.setItem(
         "AdamikClientState",
         JSON.stringify({
           ...parsedState,
           showTestnets: showTestnets,
+          hideLowBalances: hideLowBalances,
         })
       );
 
@@ -349,6 +367,25 @@ export default function SettingsPage() {
               <h2 className="text-lg font-semibold mb-4">Chain Settings</h2>
 
               <div className="mb-6">
+                <div className="flex items-center space-x-2 mb-6">
+                  <Switch
+                    id="hide-low-balances"
+                    checked={hideLowBalances}
+                    onCheckedChange={handleHideLowBalancesToggle}
+                  />
+                  <Label htmlFor="hide-low-balances">
+                    Hide chains with low balances (&lt; 1$)
+                  </Label>
+                </div>
+                <p className="text-sm text-muted-foreground mb-6">
+                  This setting controls whether chains with balances below $1
+                  are hidden in the portfolio view.
+                  <span className="block mt-1 text-yellow-500">
+                    Note: Changes to this setting require a page refresh to
+                    fully apply.
+                  </span>
+                </p>
+
                 <div className="flex items-center space-x-2 mb-6">
                   <Switch
                     id="show-testnets"

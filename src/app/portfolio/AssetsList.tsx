@@ -78,7 +78,6 @@ export const AssetsList: React.FC<{
   openTransaction: boolean;
   setOpenTransaction: (value: boolean) => void;
   hideLowBalance: boolean;
-  setHideLowBalance: (value: boolean) => void;
   refreshPositions: () => void;
 }> = ({
   isLoading,
@@ -86,7 +85,6 @@ export const AssetsList: React.FC<{
   openTransaction,
   setOpenTransaction,
   hideLowBalance,
-  setHideLowBalance,
   refreshPositions,
 }) => {
   return (
