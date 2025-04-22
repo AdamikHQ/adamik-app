@@ -1,10 +1,11 @@
-import { useQueries } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { accountState } from "~/api/adamik/accountState";
 import { queryCache, queryClientGlobal } from "~/providers/QueryProvider";
 
 type GetAddressStateParams = {
   chainId: string;
   address: string;
+  pubKey?: string;
 };
 
 export const isInAccountStateBatchCache = (
@@ -20,10 +21,10 @@ export const useAccountStateBatch = (
   addressesParams: GetAddressStateParams[]
 ) => {
   return useQueries({
-    queries: addressesParams.map(({ chainId, address }) => {
+    queries: addressesParams.map(({ chainId, address, pubKey }) => {
       return {
         queryKey: ["accountState", chainId, address],
-        queryFn: async () => accountState(chainId, address),
+        queryFn: async () => accountState(chainId, address, pubKey),
       };
     }),
     combine: (results) => {
@@ -33,6 +34,17 @@ export const useAccountStateBatch = (
         isLoading: results.some((result) => result.isLoading),
       };
     },
+  });
+};
+
+export const useAccountState = (
+  chainId: string,
+  address: string,
+  pubkey?: string
+) => {
+  return useQuery({
+    queryKey: ["accountState", chainId, address],
+    queryFn: async () => accountState(chainId, address, pubkey),
   });
 };
 

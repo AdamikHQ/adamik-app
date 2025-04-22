@@ -94,36 +94,101 @@ const StakingPositionsListRow: React.FC<{
         </TableCellWithTooltip>
 
         <TableCellWithTooltip text={formattedAddresses}>
-          {position.status === "unlocking" && position.completionDate ? (
-            <div>
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <span
-                  role="img"
-                  aria-label="timer-icon"
-                  style={{ marginRight: "5px" }}
-                >
-                  ⏳
-                </span>
-                <span>Unlocking</span>
-              </div>
-              <div
-                style={{ fontSize: "12px", color: "gray", marginTop: "4px" }}
-              >
-                {getSimplifiedTimeRemaining(position.completionDate)}
-              </div>
-            </div>
-          ) : (
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <span
-                role="img"
-                aria-label="lock-icon"
-                style={{ marginRight: "5px" }}
-              >
-                🔒
-              </span>
-              <span>Locked</span>
-            </div>
-          )}
+          {(() => {
+            switch (position.status) {
+              case "pending":
+                return (
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <span
+                      role="img"
+                      aria-label="pending-icon"
+                      style={{ marginRight: "5px" }}
+                    >
+                      ❔
+                    </span>
+                    <span>Pending</span>
+                  </div>
+                );
+              case "locked":
+                return (
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <span
+                        role="img"
+                        aria-label="lock-icon"
+                        style={{ marginRight: "5px" }}
+                      >
+                        🔒
+                      </span>
+                      <span>Locked</span>
+                    </div>
+                    {position.completionDate && (
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          color: "gray",
+                          marginTop: "4px",
+                        }}
+                      >
+                        {getSimplifiedTimeRemaining(position.completionDate)}
+                      </div>
+                    )}
+                  </div>
+                );
+              case "unlocking":
+                return (
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <span
+                        role="img"
+                        aria-label="timer-icon"
+                        style={{ marginRight: "5px" }}
+                      >
+                        ⏳
+                      </span>
+                      <span>Unlocking</span>
+                    </div>
+                    {position.completionDate && (
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          color: "gray",
+                          marginTop: "4px",
+                        }}
+                      >
+                        {getSimplifiedTimeRemaining(position.completionDate)}
+                      </div>
+                    )}
+                  </div>
+                );
+              case "unlocked":
+                return (
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <span
+                        role="img"
+                        aria-label="unlocked-icon"
+                        style={{ marginRight: "5px" }}
+                      >
+                        🔓
+                      </span>
+                      <span>Unlocked</span>
+                    </div>
+                    {position.completionDate && (
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          color: "gray",
+                          marginTop: "4px",
+                        }}
+                      >
+                        {getSimplifiedTimeRemaining(position.completionDate)}
+                      </div>
+                    )}
+                  </div>
+                );
+            }
+          })()}
         </TableCellWithTooltip>
 
         <TableCellWithTooltip text={formattedAddresses}>
@@ -135,7 +200,7 @@ const StakingPositionsListRow: React.FC<{
           )}
 
           {/* Display Token Reward Count and Toggle Button */}
-          {(largeTokenRewards.length > 0 || smallTokenRewards.length > 0) && (
+          {(largeTokenRewards?.length > 0 || smallTokenRewards?.length > 0) && (
             <div
               style={{
                 cursor: "pointer",
@@ -155,7 +220,7 @@ const StakingPositionsListRow: React.FC<{
           {isExpanded && (
             <div className="mt-2">
               {/* Render tokens with significant value */}
-              {largeTokenRewards.map((tokenAmount, index) => (
+              {largeTokenRewards?.map((tokenAmount, index) => (
                 <div key={index}>
                   {`${formatAmount(tokenAmount.amount, 5)} ${
                     tokenAmount.token.ticker
@@ -163,10 +228,10 @@ const StakingPositionsListRow: React.FC<{
                 </div>
               ))}
               {/* Render a single line for small value tokens */}
-              {smallTokenRewards.length > 0 && (
+              {smallTokenRewards?.length > 0 && (
                 <div key="small-values">
-                  {smallTokenRewards.length} token
-                  {smallTokenRewards.length > 1 ? "s" : ""} &lt; 0.00001
+                  {smallTokenRewards?.length} token
+                  {smallTokenRewards?.length > 1 ? "s" : ""} &lt; 0.00001
                 </div>
               )}
             </div>

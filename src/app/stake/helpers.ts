@@ -91,6 +91,7 @@ export type StakingPosition = {
   chainId: string;
   chainName: string;
   chainLogo?: string;
+  stakeId?: string;
   addresses: string[];
   validatorName?: string;
   validatorAddresses: string[];
@@ -175,6 +176,7 @@ export const getAddressStakingPositions = (
               mobulaMarketData,
               chainDetails
             ),
+            stakeId: position.stakeId,
             status: position.status,
             completionDate: position.completionDate, // If exists for 'unlocking' positions
           };
@@ -182,7 +184,7 @@ export const getAddressStakingPositions = (
       });
 
       // Handle native rewards and merge them into the existing staking position
-      (accountData?.balances.staking?.rewards.native || []).forEach(
+      (accountData?.balances.staking?.rewards?.native || []).forEach(
         (reward) => {
           const uniqueKey = `${reward.validatorAddress}_locked`;
 
@@ -203,7 +205,7 @@ export const getAddressStakingPositions = (
       );
 
       // Handle token rewards and merge them into the existing staking position
-      (accountData?.balances.staking?.rewards.tokens || []).forEach(
+      (accountData?.balances.staking?.rewards?.tokens || []).forEach(
         (reward) => {
           if (
             !reward.token?.id ||

@@ -7,9 +7,14 @@ import { AccountState } from "~/utils/types";
 // TODO Better API error management, consistent for all endpoints
 export const accountState = async (
   chainId: string,
-  accountId: string
+  accountId: string,
+  pubKey?: string
 ): Promise<AccountState | null> => {
-  const url = `${ADAMIK_API_URL}/${chainId}/account/${accountId}/state`;
+  let url = `${ADAMIK_API_URL}/${chainId}/account/${accountId}/state`;
+
+  if (pubKey) {
+    url += `?pubkey=${pubKey}`;
+  }
 
   const response = await fetch(url, {
     method: "GET",

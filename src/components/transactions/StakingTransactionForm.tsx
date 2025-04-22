@@ -74,6 +74,8 @@ export function StakingTransactionForm({
         return "Unstake";
       case TransactionMode.CLAIM_REWARDS:
         return "Claim";
+      case TransactionMode.WITHDRAW:
+        return "Withdraw";
       default:
         return "Submit";
     }
@@ -92,6 +94,7 @@ export function StakingTransactionForm({
         senderAddress: formInput.sender,
         senderPubKey: assets.find((asset) => asset.address === formInput.sender)
           ?.pubKey,
+        stakeId: selectedStakingPosition?.stakeId,
         validatorAddress: formInput.validatorAddress ?? "",
         targetValidatorAddress: formInput.validatorAddress ?? "",
         useMaxAmount: formInput.useMaxAmount,
@@ -100,10 +103,11 @@ export function StakingTransactionForm({
 
       if (
         (mode === TransactionMode.UNSTAKE ||
-          mode === TransactionMode.CLAIM_REWARDS) &&
+          mode === TransactionMode.CLAIM_REWARDS ||
+          mode === TransactionMode.WITHDRAW) &&
         selectedStakingPosition
       ) {
-        // Handle auto-setting of sender for unstake or claim rewards based on selected staking position
+        // Handle auto-setting of sender for unstake, claim rewards or withdraw based on selected staking position
         transactionData.senderAddress = selectedStakingPosition.addresses[0]; // Automatically use the first address from staking position
       }
 
@@ -172,7 +176,8 @@ export function StakingTransactionForm({
 
     if (
       mode === TransactionMode.UNSTAKE ||
-      mode === TransactionMode.CLAIM_REWARDS
+      mode === TransactionMode.CLAIM_REWARDS ||
+      mode === TransactionMode.WITHDRAW
     ) {
       form.setValue("sender", stakingPosition.addresses[0]);
     }
@@ -238,7 +243,8 @@ export function StakingTransactionForm({
           )}
 
           {(mode === TransactionMode.UNSTAKE ||
-            mode === TransactionMode.CLAIM_REWARDS) && (
+            mode === TransactionMode.CLAIM_REWARDS ||
+            mode === TransactionMode.WITHDRAW) && (
             <StakingPositionFormField
               mode={mode}
               form={form}
