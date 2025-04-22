@@ -44,6 +44,7 @@ export type WalletConnectorProps = {
 export type UnisatWalletInterface = {
   switchChain(chain: string): Promise<any>;
   requestAccounts(): Promise<string[]>;
+  getAccounts(): Promise<string[]>;
   getPublicKey(): Promise<string>;
   signMessage: (message: string, type: "ecdsa") => Promise<string>;
   signPsbt(psbtHex: string, params?: any): Promise<string>;
