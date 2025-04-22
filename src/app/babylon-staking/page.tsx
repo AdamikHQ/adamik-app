@@ -33,7 +33,6 @@ enum StakingStep {
 const BITCOIN_CHAIN_ID = "bitcoin-signet";
 const BABYLON_CHAIN_ID = "babylon-testnet";
 const BABYLON_NATIVE_ID = "bbn-test-5";
-const BABYLON_RPC_URL = "https://babylon-testnet-rpc.nodes.guru";
 
 export default function BabylonStakingPage() {
   const { toast } = useToast();
@@ -464,10 +463,6 @@ export default function BabylonStakingPage() {
         format: "json",
       };
 
-      // FIXME DEBUG TBR
-      // prettier-ignore
-      console.log("XXX - newBabylonTransactionData:", newBabylonTransactionData);
-
       return new Promise<void>((resolve, reject) => {
         encodeTransaction.mutate(newBabylonTransactionData, {
           onSuccess: (babylonData) => {
@@ -478,10 +473,6 @@ export default function BabylonStakingPage() {
             setSigningStatus("Babylon transaction encoded successfully");
 
             setBabylonTransactionData(babylonData);
-
-            // FIXME DEBUG TBR
-            // prettier-ignore
-            console.log("XXX - babylonData.transaction.encoded:", babylonData.transaction.encoded);
 
             setCurrentStep(StakingStep.SIGN_BABYLON_TX);
             resolve();

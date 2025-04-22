@@ -38,6 +38,7 @@ import {
 } from "./helpers";
 import { StakingPositionsList } from "./StakingPositionsList";
 import { isStakingSupported } from "~/utils/helper";
+import { Account } from "~/components/wallets/types";
 
 export default function Stake() {
   const { addresses, isShowroom, setWalletMenuOpen } = useWallet();
@@ -48,7 +49,9 @@ export default function Stake() {
   const [stepper, setStepper] = useState(0);
   const { toast } = useToast();
 
-  const displayAddresses = isShowroom ? showroomAddresses : addresses;
+  const displayAddresses: Account[] = isShowroom
+    ? showroomAddresses
+    : addresses;
   const addressesChainIds = displayAddresses.reduce<string[]>(
     (acc, { chainId }) => {
       if (acc.includes(chainId)) return acc;
@@ -185,6 +188,16 @@ export default function Stake() {
           }}
         >
           Claim
+        </Button>
+
+        <Button
+          onClick={() => {
+            setChainId(undefined);
+            setTransaction(undefined);
+            setCurrentTransactionFlow(TransactionMode.WITHDRAW);
+          }}
+        >
+          Withdraw
         </Button>
       </div>
 

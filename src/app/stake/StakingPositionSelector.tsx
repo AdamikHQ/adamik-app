@@ -146,10 +146,17 @@ const StakingPositionSelectorList = ({
         .sort(
           (a, b) => parseFloat(b.rewardAmount!) - parseFloat(a.rewardAmount!)
         );
+    } else if (mode === TransactionMode.UNSTAKE) {
+      return stakingPositions.filter(
+        (position) => position.status === "locked"
+      );
+    } else if (mode === TransactionMode.WITHDRAW) {
+      return stakingPositions.filter(
+        (position) => position.status === "unlocked"
+      );
+    } else {
+      return stakingPositions;
     }
-    return stakingPositions.filter(
-      (position) => position.status !== "unlocking"
-    );
   }, [stakingPositions, mode]);
 
   return (
@@ -218,6 +225,7 @@ const StakingPositionView = ({
     formattedRewardAmount >= MIN_REWARD_THRESHOLD
       ? formatAmount(formattedRewardAmount, 3)
       : `>${MIN_REWARD_THRESHOLD}`;
+
   return (
     <div className="flex items-center justify-between w-full">
       {validator ? (
@@ -274,8 +282,7 @@ const StakingPositionView = ({
           </>
         ) : (
           <>
-            {parseFloat(stakingPosition.amount).toFixed(3)}{" "}
-            {stakingPosition.ticker}
+            {parseFloat(stakingPosition.amount)} {stakingPosition.ticker}
           </>
         )}
       </div>

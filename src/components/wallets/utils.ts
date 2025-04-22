@@ -13,6 +13,7 @@ export enum Network {
   SIGNET = "signet",
 }
 
+// From https://github.com/babylonlabs-io/wallet-connector/blob/015652062695c84b6fdff3f294f13114d46b48c7/src/core/wallets/btc/unisat/provider.ts#L107
 export function getSignPsbtDefaultOptions(
   psbtHex: string,
   walletPubkey: string,
