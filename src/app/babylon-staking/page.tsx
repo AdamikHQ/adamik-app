@@ -14,8 +14,6 @@ import { TransactionData, TransactionMode } from "~/utils/types";
 import { amountToSmallestUnit } from "~/utils/helper";
 import { getSignPsbtDefaultOptions, Network } from "~/components/wallets/utils";
 import { useBroadcastTransaction } from "~/hooks/useBroadcastTransaction";
-//import { SigningStargateClient } from "@cosmjs/stargate";
-//import { DirectSignResponse } from "@keplr-wallet/types";
 import { useWalletClient } from "@cosmos-kit/react-lite";
 
 // Define the staking steps
@@ -88,33 +86,6 @@ export default function BabylonStakingPage() {
       "d23c2c25e1fcf8fd1c21b9a402c19e2e309e531e45e92fb1e9805b6056b0cc76",
     amount: "0.0005",
   });
-
-  /*
-  const [stargateClient, setStargateClient] =
-    useState<SigningStargateClient | null>(null);
-
-  // Add function to initialize SigningStargateClient
-  const initializeStargateClient = useCallback(async () => {
-    if (!client) {
-      throw new Error(
-        "Keplr wallet not found. Please install the Keplr wallet extension."
-      );
-    }
-
-    // Enable the chain first to ensure it's available in Keplr
-    await window.keplr.enable(BABYLON_NATIVE_ID);
-
-    // Initialize SigningStargateClient
-    const client = await SigningStargateClient.connectWithSigner(
-      BABYLON_RPC_URL,
-      window.keplr.getOfflineSigner(BABYLON_NATIVE_ID, {
-        preferNoSetFee: true,
-      })
-    );
-
-    setStargateClient(client);
-  }, []);
-  */
 
   // Function to update step status
   const updateStepStatus = useCallback(
@@ -525,27 +496,6 @@ export default function BabylonStakingPage() {
         throw new Error("No encoded transaction found in response");
       }
 
-      /*
-      // Initialize StargateClient if not already initialized
-      if (!stargateClient) {
-        await initializeStargateClient();
-      }
-
-      if (!stargateClient) {
-        throw new Error("Failed to initialize StargateClient");
-      }
-
-      // Use stargateClient to sign the transaction
-      // FIXME The data is completely wrong here
-      const signResponse = await stargateClient.sign(
-        formData.babylonAddress,
-        parsedTx.bodyBytes,
-        parsedTx.authInfoBytes,
-        parsedTx.chainId,
-        parsedTx.accountNumber
-      );
-      */
-
       // Sign the transaction with Keplr client
       const signResponse = await keplrClient.signDirect?.(
         BABYLON_NATIVE_ID,
@@ -558,13 +508,9 @@ export default function BabylonStakingPage() {
         throw new Error("Failed to sign transaction with Keplr");
       }
 
-      // Store the signature for the broadcast step
-      const signature = Buffer.from(signResponse.signature.signature).toString(
-        "hex"
-      );
-      setBabylonTransactionSignature(signature);
-
       console.log("Transaction signature:", signResponse);
+      setBabylonTransactionSignature(signResponse.signature.signature);
+
       setSigningStatus("Babylon transaction successfully signed");
       setCurrentStep(StakingStep.BROADCAST_BABYLON_TX);
     } catch (error) {
@@ -578,8 +524,6 @@ export default function BabylonStakingPage() {
     setBabylonTransactionSignature,
     setSigningStatus,
     setCurrentStep,
-    //stargateClient,
-    //initializeStargateClient,
     keplrClient,
   ]);
 
@@ -683,7 +627,7 @@ export default function BabylonStakingPage() {
     broadcastTransaction,
   ]);
 
-  // Step 7: Broadcast Bitcoin Transaction
+  // Step 7: Broadcast Bitcoin Staking Transaction
   const handleBroadcastBitcoinTransaction = useCallback(async () => {
     try {
       setSigningStatus("Broadcasting Bitcoin transaction...");
