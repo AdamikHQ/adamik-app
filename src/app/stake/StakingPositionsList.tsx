@@ -104,7 +104,7 @@ const StakingPositionsListRow: React.FC<{
                       aria-label="pending-icon"
                       style={{ marginRight: "5px" }}
                     >
-                      ❔
+                      ⏱️
                     </span>
                     <span>Pending</span>
                   </div>

@@ -93,8 +93,9 @@ export const calculateAssets = (
     );
 
     const balanceUSD =
-      // !chainDetails.isTestNet && TMP: Just to usetestnet for test
-      mobulaMarketData && mobulaMarketData[chainDetails.ticker]
+      !chainDetails.isTestnetFor &&
+      mobulaMarketData &&
+      mobulaMarketData[chainDetails.ticker]
         ? mobulaMarketData[chainDetails.ticker]?.price *
           parseFloat(balanceMainUnit as string)
         : undefined;

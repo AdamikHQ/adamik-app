@@ -149,11 +149,7 @@ export const getAddressStakingPositions = (
           );
           const currentAddresses = newAcc[validatorAddress]?.addresses || [];
 
-          // Create a unique key combining validatorAddress and status, adding completionDate if applicable
-          const uniqueKey =
-            position.status === "unlocking" && position.completionDate
-              ? `${validatorAddress}_${position.status}_${position.completionDate}`
-              : `${validatorAddress}_${position.status}`;
+          const uniqueKey = `${validatorAddress}_${position.stakeId}_${position.status}_${position.completionDate}`;
 
           newAcc[uniqueKey] = {
             ...newAcc[uniqueKey], // Keep existing data if already processed
