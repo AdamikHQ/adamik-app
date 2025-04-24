@@ -26,8 +26,9 @@ enum StakingStep {
   SIGN_BABYLON_ADDRESS = 3,
   ENCODE_BABYLON_TX = 4,
   SIGN_BABYLON_TX = 5,
-  BROADCAST_BABYLON_TX = 6, // Commented out as requested
-  COMPLETE = 7, // Keep as 7 to maintain existing references
+  BROADCAST_BABYLON_TX = 6,
+  BROADCAST_BITCOIN_TX = 7,
+  COMPLETE = 8,
 }
 
 const BITCOIN_CHAIN_ID = "bitcoin-signet";
@@ -53,6 +54,7 @@ export default function BabylonStakingPage() {
     [StakingStep.ENCODE_BABYLON_TX]: "pending",
     [StakingStep.SIGN_BABYLON_TX]: "pending",
     [StakingStep.BROADCAST_BABYLON_TX]: "pending",
+    [StakingStep.BROADCAST_BITCOIN_TX]: "pending",
     [StakingStep.COMPLETE]: "pending",
   });
   const [isNextButtonDisabled, setIsNextButtonDisabled] = useState(false);
@@ -641,15 +643,9 @@ export default function BabylonStakingPage() {
                 "Transaction broadcasted successfully, hash:",
                 response.hash
               );
-              setSigningStatus(
-                `Transaction broadcasted successfully. Hash: ${response.hash}`
-              );
-              setCurrentStep(StakingStep.COMPLETE);
-              toast({
-                title: "Success",
-                description: "Staking process completed successfully!",
-                variant: "default",
-              });
+              setSigningStatus(`Babylon transaction broadcasted successfully`);
+              updateStepStatus(StakingStep.BROADCAST_BABYLON_TX, "complete");
+              setCurrentStep(StakingStep.BROADCAST_BITCOIN_TX);
               resolve();
             } else {
               // No error and no hash - this shouldn't happen but let's handle it
@@ -680,6 +676,120 @@ export default function BabylonStakingPage() {
   }, [
     babylonTransactionData,
     babylonTransactionSignature,
+    setSigningStatus,
+    updateStepStatus,
+    setCurrentStep,
+    toast,
+    broadcastTransaction,
+  ]);
+
+  // Step 7: Broadcast Bitcoin Transaction
+  const handleBroadcastBitcoinTransaction = useCallback(async () => {
+    try {
+      setSigningStatus("Broadcasting Bitcoin transaction...");
+
+      // Check if we have the necessary data
+      if (!bitcoinTransactionData || !bitcoinTransactionData.transaction) {
+        throw new Error("No Bitcoin transaction data available");
+      }
+
+      if (!bitcoinSignedPsbts || bitcoinSignedPsbts.length === 0) {
+        throw new Error("No signed Bitcoin PSBTs available for broadcasting");
+      }
+
+      // Create the transaction object for broadcasting
+      const transactionToSend = {
+        data: {
+          ...bitcoinTransactionData.transaction.data,
+          chainId: BITCOIN_CHAIN_ID,
+        },
+        encoded: bitcoinTransactionData.transaction.data.params.stakingPsbt,
+        signature: bitcoinSignedPsbts[0],
+      };
+
+      console.log("Broadcasting Bitcoin transaction:", transactionToSend);
+
+      // Return a promise to integrate with our step flow
+      return new Promise<void>((resolve, reject) => {
+        broadcastTransaction.mutate(transactionToSend, {
+          onSuccess: (response) => {
+            console.log("Bitcoin broadcast response:", response);
+
+            // Check if the response contains an error property (non-200 HTTP status)
+            if (response.error) {
+              // Extract error message from BackendErrorResponse
+              let errorMessage = "Unknown error from API";
+
+              if (
+                response.error.status &&
+                response.error.status.errors &&
+                response.error.status.errors.length > 0
+              ) {
+                errorMessage = response.error.status.errors[0].message;
+              }
+
+              console.error(
+                "Error in Bitcoin broadcast response:",
+                errorMessage
+              );
+              setSigningStatus(
+                `Failed to broadcast Bitcoin transaction: ${errorMessage}`
+              );
+              updateStepStatus(StakingStep.BROADCAST_BITCOIN_TX, "error");
+              reject(new Error(errorMessage));
+              return;
+            }
+
+            // If we have a transaction hash, it was successful
+            if (response.hash) {
+              console.log(
+                "Bitcoin transaction broadcasted successfully, hash:",
+                response.hash
+              );
+              setSigningStatus(`Bitcoin transaction broadcasted successfully`);
+              updateStepStatus(StakingStep.BROADCAST_BITCOIN_TX, "complete");
+              setCurrentStep(StakingStep.COMPLETE);
+              toast({
+                title: "Success",
+                description: "Bitcoin transaction broadcasted successfully!",
+                variant: "default",
+              });
+              resolve();
+            } else {
+              // No error and no hash - this shouldn't happen but let's handle it
+              const message =
+                "Unexpected response from broadcast API: no hash and no error";
+              console.error(message, response);
+              setSigningStatus(message);
+              updateStepStatus(StakingStep.BROADCAST_BITCOIN_TX, "error");
+              reject(new Error(message));
+            }
+          },
+          onError: (error) => {
+            console.error(
+              "Network error broadcasting Bitcoin transaction:",
+              error
+            );
+            setSigningStatus(
+              `Failed to broadcast Bitcoin transaction: ${
+                error instanceof Error ? error.message : "Network error"
+              }`
+            );
+            reject(error);
+          },
+        });
+      });
+    } catch (error) {
+      console.error(
+        "Error preparing Bitcoin transaction for broadcast:",
+        error
+      );
+      setSigningStatus("Failed to prepare Bitcoin transaction for broadcast");
+      throw error;
+    }
+  }, [
+    bitcoinTransactionData,
+    bitcoinSignedPsbts,
     setSigningStatus,
     updateStepStatus,
     setCurrentStep,
@@ -742,9 +852,14 @@ export default function BabylonStakingPage() {
           await handleBroadcastBabylonTransaction();
           break;
 
-        case StakingStep.COMPLETE:
+        case StakingStep.BROADCAST_BITCOIN_TX:
           updateStepStatus(StakingStep.BROADCAST_BABYLON_TX, "complete");
-          await handleBroadcastBabylonTransaction();
+          updateStepStatus(StakingStep.BROADCAST_BITCOIN_TX, "in-progress");
+          await handleBroadcastBitcoinTransaction();
+          break;
+
+        case StakingStep.COMPLETE:
+          updateStepStatus(StakingStep.BROADCAST_BITCOIN_TX, "complete");
           toast({
             title: "Success",
             description: "Staking process completed successfully!",
@@ -779,6 +894,7 @@ export default function BabylonStakingPage() {
     handleEncodeBabylonTransaction,
     handleSignBabylonTransaction,
     handleBroadcastBabylonTransaction,
+    handleBroadcastBitcoinTransaction,
     setIsNextButtonDisabled,
   ]);
 
@@ -885,6 +1001,8 @@ export default function BabylonStakingPage() {
                       stepLabel = "Sign Babylon transaction";
                     else if (step === StakingStep.BROADCAST_BABYLON_TX)
                       stepLabel = "Broadcast Babylon transaction";
+                    else if (step === StakingStep.BROADCAST_BITCOIN_TX)
+                      stepLabel = "Broadcast Bitcoin transaction";
 
                     return (
                       <div key={step} className="flex items-center">
