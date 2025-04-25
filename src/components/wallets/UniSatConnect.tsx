@@ -111,7 +111,7 @@ export const UniSatConnect: React.FC<WalletConnectorProps> = ({
         variant: "destructive",
       });
     }
-  }, [setTransaction, toast, transaction, transactionPayload]);
+  }, [setTransaction, toast, transaction, transactionPayload, chainId]);
 
   return (
     <div className="relative w-24 h-24">
