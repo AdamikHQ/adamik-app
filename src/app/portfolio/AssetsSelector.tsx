@@ -28,6 +28,7 @@ type AssetsSelectorProps = {
   assets: Asset[];
   selectedValue: Asset | undefined;
   onSelect: (asset: Asset, index: number) => void;
+  compact?: boolean;
 };
 
 const AssetView = ({ asset }: { asset: Asset }) => {
@@ -65,6 +66,7 @@ export function AssetsSelector({
   assets,
   selectedValue,
   onSelect,
+  compact = false,
 }: AssetsSelectorProps): React.ReactNode {
   const [open, setOpen] = React.useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -79,7 +81,9 @@ export function AssetsSelector({
           <Button
             variant="outline"
             role="combobox"
-            className="w-full justify-between h-[64px]"
+            className={`w-full justify-between ${
+              compact ? "h-10" : "h-[64px]"
+            }`}
           >
             {selectedChoice ? (
               <AssetView asset={selectedChoice} />
@@ -106,7 +110,7 @@ export function AssetsSelector({
         <Button
           variant="outline"
           role="combobox"
-          className="w-full justify-between h-[64px]"
+          className={`w-full justify-between ${compact ? "h-10" : "h-[64px]"}`}
         >
           {selectedChoice ? (
             <AssetView asset={selectedChoice} />

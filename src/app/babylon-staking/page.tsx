@@ -1,20 +1,23 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Info, Check, ArrowRight } from "lucide-react";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { Info, Check, ArrowRight, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
 import { Tooltip } from "~/components/ui/tooltip";
+import { Badge } from "~/components/ui/badge";
 import { WalletSelection } from "~/components/wallets/WalletSelection";
 import { useToast } from "~/components/ui/use-toast";
 import { useEncodeTransaction } from "~/hooks/useEncodeTransaction";
-import { TransactionData, TransactionMode } from "~/utils/types";
+import { TransactionData, TransactionMode, Validator } from "~/utils/types";
 import { amountToSmallestUnit } from "~/utils/helper";
 import { getSignPsbtDefaultOptions, Network } from "~/components/wallets/utils";
 import { useBroadcastTransaction } from "~/hooks/useBroadcastTransaction";
 import { useWalletClient } from "@cosmos-kit/react-lite";
+import { ValidatorSelector } from "~/app/stake/ValidatorSelector";
+import { useValidators } from "~/hooks/useValidators";
 
 // Define the staking steps
 enum StakingStep {
@@ -29,9 +32,21 @@ enum StakingStep {
   COMPLETE = 8,
 }
 
-const BITCOIN_CHAIN_ID = "bitcoin-signet";
-const BABYLON_CHAIN_ID = "babylon-testnet";
-const BABYLON_NATIVE_ID = "bbn-test-5";
+const getBabylonNativeId = (babylonChainId: string): string => {
+  switch (babylonChainId) {
+    case "babylon":
+      return "bbn-1";
+    case "babylon-testnet":
+      return "bbn-test-5";
+    default:
+      throw new Error(`Unsupported Babylon chain ID: ${babylonChainId}`);
+  }
+};
+
+const MERIA_VALIDATOR_MAINNET_ADDRESS =
+  "a1f39ed29581fb6ad54be8cdf1a8838b3429e87bdfdd2652c47946221c360f10";
+const MERIA_VALIDATOR_TESTNET_ADDRESS =
+  "5cae74c45754c89c3a225163a2176de64c25719fbf358b02ef79bf8b0e23f40f";
 
 export default function BabylonStakingPage() {
   const { toast } = useToast();
@@ -42,6 +57,16 @@ export default function BabylonStakingPage() {
   const [currentStep, setCurrentStep] = useState<StakingStep>(
     StakingStep.FORM_INPUT
   );
+  // Add state for Bitcoin chain ID
+  const [bitcoinChainId, setBitcoinChainId] = useState<string | undefined>(
+    undefined
+  );
+
+  // Add state for Babylon chain ID
+  const [babylonChainId, setBabylonChainId] = useState<string | undefined>(
+    undefined
+  );
+
   const [stepStatus, setStepStatus] = useState<
     Record<StakingStep, "pending" | "in-progress" | "complete" | "error">
   >({
@@ -82,10 +107,45 @@ export default function BabylonStakingPage() {
     bitcoinPubkey: "",
     babylonAddress: "",
     babylonPubkey: "",
-    finalityProvider:
-      "d23c2c25e1fcf8fd1c21b9a402c19e2e309e531e45e92fb1e9805b6056b0cc76",
+    finalityProvider: "",
     amount: "0.0005",
   });
+
+  // Fetch the bitcoin chain's validators (finality providers)
+  const { data: validatorsData, isLoading: isValidatorsLoading } =
+    useValidators({ chainId: bitcoinChainId });
+
+  // Need to convert them to the expected Validator type
+  const validators = useMemo(() => {
+    if (!validatorsData) return [];
+
+    return validatorsData.validators.map((validator) => ({
+      chainId: validatorsData.chainId,
+      address: validator.address,
+      name: validator.name || validator.address.substring(0, 10) + "...",
+      commission: parseFloat(validator.commission),
+      stakedAmount: parseFloat(validator.stakedAmount),
+      chainName:
+        bitcoinChainId === "bitcoin" ? "Bitcoin Mainnet" : "Bitcoin Signet",
+      decimals: 8,
+      ticker: bitcoinChainId === "bitcoin" ? "BTC" : "sBTC",
+      chainLogo:
+        bitcoinChainId === "bitcoin" ? "/assets/btc.svg" : "/assets/sbtc.svg",
+    }));
+  }, [validatorsData, bitcoinChainId]);
+
+  // Set the appropriate validator address based on the chain
+  useEffect(() => {
+    if (bitcoinChainId) {
+      setFormData((prev) => ({
+        ...prev,
+        finalityProvider:
+          bitcoinChainId === "bitcoin"
+            ? MERIA_VALIDATOR_MAINNET_ADDRESS
+            : MERIA_VALIDATOR_TESTNET_ADDRESS,
+      }));
+    }
+  }, [bitcoinChainId]);
 
   // Function to update step status
   const updateStepStatus = useCallback(
@@ -102,6 +162,9 @@ export default function BabylonStakingPage() {
   );
 
   const fillFormInput = useCallback(async () => {
+    let selectedBitcoinChainId: string | undefined = undefined;
+    let selectedBabylonChainId: string | undefined = undefined;
+
     // Variables to store wallet data - will be populated either from form or direct API calls
     let bitcoinAddress = formData.bitcoinAddress;
     let bitcoinPubkey = formData.bitcoinPubkey;
@@ -112,57 +175,84 @@ export default function BabylonStakingPage() {
     if (!bitcoinAddress || !bitcoinPubkey) {
       setSigningStatus("Connecting to Bitcoin wallet...");
 
+      // Check if Unisat wallet is available
+      if (!window.unisat) {
+        throw new Error(
+          "Unisat wallet not found. Please install the Unisat extension."
+        );
+      }
+
+      let chainInfo;
+      // Get the current Bitcoin chain from Unisat
       try {
-        // Check if Unisat wallet is available
-        if (!window.unisat) {
-          throw new Error(
-            "Unisat wallet not found. Please install the Unisat extension."
-          );
-        }
-
-        // Connect to the Bitcoin Signet network
-        await window.unisat.switchChain("BITCOIN_SIGNET");
-
-        // Get Bitcoin accounts from Unisat
-        const accounts = await window.unisat.requestAccounts();
-        if (!accounts || accounts.length === 0) {
-          throw new Error(
-            "No Bitcoin accounts found. Please connect your Unisat wallet."
-          );
-        }
-
-        // Get the public key for the first account
-        const publicKey = await window.unisat.getPublicKey();
-
-        // Store the values locally for immediate use
-        bitcoinAddress = accounts[0];
-        bitcoinPubkey = publicKey;
-
-        console.log("Bitcoin wallet connected:", {
-          address: bitcoinAddress,
-          pubKey: bitcoinPubkey,
-        });
-
-        // Also update form data for future steps (async, won't affect current execution)
-        setFormData((prev) => ({
-          ...prev,
-          bitcoinAddress,
-          bitcoinPubkey,
-        }));
-
-        setSigningStatus("Found bitcoin account");
+        chainInfo = await window.unisat.getChain();
       } catch (error) {
         console.error("Failed to connect to Bitcoin wallet:", error);
         setSigningStatus("Failed to connect to Bitcoin wallet");
+        throw new Error("Failed to connect to Unisat wallet.");
+      }
+
+      // Explicitly handle only BITCOIN_MAINNET and BITCOIN_SIGNET
+      if (chainInfo.enum === "BITCOIN_MAINNET") {
+        selectedBitcoinChainId = "bitcoin";
+        selectedBabylonChainId = "babylon";
+        setBitcoinChainId(selectedBitcoinChainId);
+        setBabylonChainId(selectedBabylonChainId);
+        console.log(`Connected to ${chainInfo.name}`);
+      } else if (chainInfo.enum === "BITCOIN_SIGNET") {
+        selectedBitcoinChainId = "bitcoin-signet";
+        selectedBabylonChainId = "babylon-testnet";
+        setBitcoinChainId(selectedBitcoinChainId);
+        setBabylonChainId(selectedBabylonChainId);
+        console.log(`Connected to ${chainInfo.name}`);
+      } else {
+        // Any other chain type (like testnet) is not supported
+        console.error(`Unsupported Bitcoin chain: ${chainInfo.enum}`);
         throw new Error(
-          "Please connect your Bitcoin wallet and ensure address and public key are available"
+          `Unsupported chain selected in Unisat wallet: ${chainInfo.name}. Please use Bitcoin Mainnet or Signet.`
         );
       }
+
+      // Get Bitcoin accounts from Unisat
+      const accounts = await window.unisat.requestAccounts();
+      if (!accounts || accounts.length === 0) {
+        throw new Error(
+          "No Bitcoin accounts found. Please connect your Unisat wallet."
+        );
+      }
+
+      // Get the public key for the first account
+      const publicKey = await window.unisat.getPublicKey();
+
+      // Store the values locally for immediate use
+      bitcoinAddress = accounts[0];
+      bitcoinPubkey = publicKey;
+
+      console.log("Bitcoin wallet connected:", {
+        address: bitcoinAddress,
+        pubKey: bitcoinPubkey,
+        chain: selectedBitcoinChainId,
+      });
+
+      // Also update form data for future steps (async, won't affect current execution)
+      setFormData((prev) => ({
+        ...prev,
+        bitcoinAddress,
+        bitcoinPubkey,
+      }));
+
+      setSigningStatus("Found bitcoin account");
     }
 
     // Make sure we have the Babylon wallet information
     if (!babylonAddress || !babylonPubkey) {
       setSigningStatus("Connecting to Keplr wallet...");
+
+      if (!selectedBabylonChainId) {
+        throw new Error(
+          "Babylon chain ID is not set. Please reconnect your wallet."
+        );
+      }
 
       try {
         // Check if Keplr client is available
@@ -174,7 +264,7 @@ export default function BabylonStakingPage() {
 
         // Get the offline signer
         const offlineSigner = await keplrClient.getOfflineSigner?.(
-          BABYLON_NATIVE_ID
+          getBabylonNativeId(selectedBabylonChainId)
         );
         if (!offlineSigner) {
           throw new Error("Failed to get offline signer");
@@ -224,9 +314,15 @@ export default function BabylonStakingPage() {
       throw new Error("Bitcoin address and public key are required to proceed");
     }
 
+    if (!bitcoinChainId) {
+      throw new Error(
+        "Bitcoin chain ID is not set. Please reconnect your wallet."
+      );
+    }
+
     // Create transaction data for encoding - use direct values not state
     const bitcoinTransactionData: TransactionData = {
-      chainId: BITCOIN_CHAIN_ID,
+      chainId: bitcoinChainId,
       mode: TransactionMode.STAKE,
       senderAddress: formData.bitcoinAddress,
       senderPubKey: formData.bitcoinPubkey,
@@ -412,14 +508,20 @@ export default function BabylonStakingPage() {
         throw new Error("Could not get Babylon address from Keplr");
       }
 
+      // Check if we have determined the Babylon chain
+      if (!babylonChainId) {
+        throw new Error(
+          "Babylon chain ID is not set. Please reconnect your wallet."
+        );
+      }
+
       // Create transaction data for the Babylon stake registration
       const newBabylonTransactionData: TransactionData = {
-        chainId: BABYLON_CHAIN_ID,
+        chainId: babylonChainId,
         mode: TransactionMode.REGISTER_STAKE,
         senderAddress: formData.babylonAddress,
         senderPubKey: formData.babylonPubkey,
         senderForeignPubKey: formData.bitcoinPubkey,
-        recipientAddress: "", // Not used but needed to satisfy type
         useMaxAmount: false,
         amount: amountToSmallestUnit(parseFloat(formData.amount), 8).toString(), // Convert to string as expected by TransactionData
         proofOfPossession: Buffer.from(
@@ -484,6 +586,13 @@ export default function BabylonStakingPage() {
         );
       }
 
+      // Check if we have determined the Babylon chain
+      if (!babylonChainId) {
+        throw new Error(
+          "Babylon chain ID is not set. Please reconnect your wallet."
+        );
+      }
+
       // Make sure we have a Babylon address
       if (!formData.babylonAddress) {
         throw new Error("No Babylon address found");
@@ -498,7 +607,7 @@ export default function BabylonStakingPage() {
 
       // Sign the transaction with Keplr client
       const signResponse = await keplrClient.signDirect?.(
-        BABYLON_NATIVE_ID,
+        getBabylonNativeId(babylonChainId),
         formData.babylonAddress,
         JSON.parse(encodedTransaction),
         { preferNoSetFee: true, preferNoSetMemo: true } // Tell Keplr not to recompute fees after us
@@ -541,11 +650,17 @@ export default function BabylonStakingPage() {
         throw new Error("No signature available for broadcasting");
       }
 
+      if (!babylonChainId) {
+        throw new Error(
+          "Babylon chain ID is not set. Please reconnect your wallet."
+        );
+      }
+
       // Create the transaction object for broadcasting
       const transactionToSend = {
         data: {
           ...babylonTransactionData.transaction.data,
-          chainId: BABYLON_CHAIN_ID,
+          chainId: babylonChainId,
         },
         encoded: babylonTransactionData.transaction.encoded,
         signature: babylonTransactionSignature,
@@ -641,11 +756,17 @@ export default function BabylonStakingPage() {
         throw new Error("No signed Bitcoin PSBTs available for broadcasting");
       }
 
+      if (!bitcoinChainId) {
+        throw new Error(
+          "Bitcoin chain ID is not set. Please reconnect your wallet."
+        );
+      }
+
       // Create the transaction object for broadcasting
       const transactionToSend = {
         data: {
           ...bitcoinTransactionData.transaction.data,
-          chainId: BITCOIN_CHAIN_ID,
+          chainId: bitcoinChainId,
         },
         encoded: bitcoinTransactionData.transaction.data.params.stakingPsbt,
         signature: bitcoinSignedPsbts[0],
@@ -739,6 +860,73 @@ export default function BabylonStakingPage() {
     setCurrentStep,
     toast,
     broadcastTransaction,
+  ]);
+
+  // Function to handle validator selection
+  const handleValidatorSelect = useCallback(
+    (validator: Validator) => {
+      setFormData((prev) => ({
+        ...prev,
+        finalityProvider: validator.address,
+      }));
+    },
+    [setFormData]
+  );
+
+  // Function to reset the form to initial state
+  const handleReset = useCallback(() => {
+    // Reset step and status tracking
+    setCurrentStep(StakingStep.FORM_INPUT);
+    setStepStatus({
+      [StakingStep.FORM_INPUT]: "in-progress",
+      [StakingStep.ENCODE_BTC_TX]: "pending",
+      [StakingStep.SIGN_BTC_PSBTS]: "pending",
+      [StakingStep.SIGN_BABYLON_ADDRESS]: "pending",
+      [StakingStep.ENCODE_BABYLON_TX]: "pending",
+      [StakingStep.SIGN_BABYLON_TX]: "pending",
+      [StakingStep.BROADCAST_BABYLON_TX]: "pending",
+      [StakingStep.BROADCAST_BITCOIN_TX]: "pending",
+      [StakingStep.COMPLETE]: "pending",
+    });
+
+    // Reset chain IDs
+    setBitcoinChainId(undefined);
+    setBabylonChainId(undefined);
+
+    // Reset transaction data
+    setBitcoinTransactionData(null);
+    setBabylonTransactionData(null);
+    setBitcoinSignedPsbts([]);
+    setBabylonTransactionSignature("");
+    setBabylonAddressSignature("");
+
+    // Reset UI state
+    setSigningStatus("");
+    setIsNextButtonDisabled(false);
+
+    // Reset form data to initial values
+    setFormData({
+      bitcoinAddress: "",
+      bitcoinPubkey: "",
+      babylonAddress: "",
+      babylonPubkey: "",
+      finalityProvider: "",
+      amount: "0.0005",
+    });
+  }, [
+    setCurrentStep,
+    setStepStatus,
+    setBitcoinChainId,
+    setBabylonChainId,
+    setBitcoinTransactionData,
+    setBabylonTransactionData,
+    setBitcoinSignedPsbts,
+    setBabylonTransactionSignature,
+    setBabylonAddressSignature,
+    setSigningStatus,
+    setIsNextButtonDisabled,
+    setFormData,
+    toast,
   ]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -856,14 +1044,35 @@ export default function BabylonStakingPage() {
 
       <Card className="mt-4">
         <CardHeader>
-          <CardTitle>Stake Your Bitcoins</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Stake Your Bitcoins</CardTitle>
+            <Tooltip text="Restart">
+              <Button onClick={handleReset} className="p-2 h-8 w-8">
+                <RefreshCw className="hover:animate-spin w-4 h-4" />
+              </Button>
+            </Tooltip>
+          </div>
         </CardHeader>
         <CardContent>
           {/* Form always displayed at the top but disabled after first step */}
-          <form className="space-y-6 mb-8">
-            <div className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="bitcoinAddress">Bitcoin address</Label>
+          <form className="mb-8">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+              {/* Bitcoin Address Field */}
+              <div className="w-full">
+                <div className="flex items-center gap-2 mb-2">
+                  <Label htmlFor="bitcoinAddress">Bitcoin address</Label>
+                  {bitcoinChainId && (
+                    <Badge
+                      className={`text-xs font-medium ${
+                        bitcoinChainId === "bitcoin"
+                          ? "bg-amber-200 text-amber-800 hover:bg-amber-200"
+                          : "bg-green-200 text-green-800 hover:bg-green-200"
+                      }`}
+                    >
+                      {bitcoinChainId === "bitcoin" ? "Mainnet" : "Signet"}
+                    </Badge>
+                  )}
+                </div>
                 <Input
                   id="bitcoinAddress"
                   name="bitcoinAddress"
@@ -875,8 +1084,22 @@ export default function BabylonStakingPage() {
                 />
               </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="babylonAddress">Babylon address</Label>
+              {/* Babylon Address Field */}
+              <div className="w-full">
+                <div className="flex items-center gap-2 mb-2">
+                  <Label htmlFor="babylonAddress">Babylon address</Label>
+                  {babylonChainId && (
+                    <Badge
+                      className={`text-xs font-medium ${
+                        babylonChainId === "babylon"
+                          ? "bg-amber-200 text-amber-800 hover:bg-amber-200"
+                          : "bg-green-200 text-green-800 hover:bg-green-200"
+                      }`}
+                    >
+                      {babylonChainId === "babylon" ? "Mainnet" : "Testnet"}
+                    </Badge>
+                  )}
+                </div>
                 <Input
                   id="babylonAddress"
                   name="babylonAddress"
@@ -888,33 +1111,45 @@ export default function BabylonStakingPage() {
                 />
               </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="finalityProvider">Finality provider</Label>
-                <Input
-                  id="finalityProvider"
-                  name="finalityProvider"
-                  placeholder="Enter finality provider"
-                  value={formData.finalityProvider}
-                  onChange={handleInputChange}
-                  disabled={currentStep !== StakingStep.FORM_INPUT}
-                  required
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="amount">Amount (sBTC)</Label>
+              {/* Amount Field */}
+              <div className="w-full">
+                <Label htmlFor="amount" className="block mb-2">
+                  Amount (sBTC)
+                </Label>
                 <Input
                   id="amount"
                   name="amount"
                   type="number"
-                  step="0.00000001"
-                  min="0.00000001"
+                  step="0.0001"
+                  min="0.0001"
                   placeholder="Enter amount to stake"
                   value={formData.amount}
                   onChange={handleInputChange}
                   disabled={currentStep !== StakingStep.FORM_INPUT}
                   required
                 />
+              </div>
+
+              {/* Finality Provider Field */}
+              <div className="w-full">
+                <div className="flex items-center gap-2 mb-2">
+                  <Label htmlFor="finalityProvider">Finality provider</Label>
+                  {isValidatorsLoading && (
+                    <span className="text-xs text-gray-500">
+                      Loading validators...
+                    </span>
+                  )}
+                </div>
+                <div className="h-10 flex items-center">
+                  <ValidatorSelector
+                    validators={validators}
+                    selectedValue={validators.find(
+                      (v) => v.address === formData.finalityProvider
+                    )}
+                    onSelect={(validator) => handleValidatorSelect(validator)}
+                    compact={true}
+                  />
+                </div>
               </div>
             </div>
           </form>
