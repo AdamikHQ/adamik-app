@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getAllValidators } from "~/api/adamik/validators";
 
 type GetValidatorParams = {
-  chainId: string;
+  chainId: string | undefined;
 };
 
 export const useValidators = ({ chainId }: GetValidatorParams) => {

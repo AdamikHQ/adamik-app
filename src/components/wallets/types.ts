@@ -49,4 +49,5 @@ export type UnisatWalletInterface = {
   signMessage: (message: string, type: "ecdsa") => Promise<string>;
   signPsbt(psbtHex: string, params?: any): Promise<string>;
   disconnect(): Promise<void>;
+  getChain(): Promise<{ enum: string; name: string; network: string }>;
 };
