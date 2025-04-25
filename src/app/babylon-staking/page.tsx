@@ -368,6 +368,7 @@ export default function BabylonStakingPage() {
     setSigningStatus,
     setCurrentStep,
     encodeTransaction,
+    bitcoinChainId,
   ]);
 
   // Step 2: Sign Bitcoin PSBTs
@@ -572,6 +573,7 @@ export default function BabylonStakingPage() {
     setSigningStatus,
     setCurrentStep,
     encodeTransaction,
+    babylonChainId,
   ]);
 
   // Step 5: Sign Babylon Registration Transaction with Keplr
@@ -634,6 +636,7 @@ export default function BabylonStakingPage() {
     setSigningStatus,
     setCurrentStep,
     keplrClient,
+    babylonChainId,
   ]);
 
   // Step 6: Broadcast Babylon Registration Transaction
@@ -738,8 +741,8 @@ export default function BabylonStakingPage() {
     setSigningStatus,
     updateStepStatus,
     setCurrentStep,
-    toast,
     broadcastTransaction,
+    babylonChainId,
   ]);
 
   // Step 7: Broadcast Bitcoin Staking Transaction
@@ -860,6 +863,7 @@ export default function BabylonStakingPage() {
     setCurrentStep,
     toast,
     broadcastTransaction,
+    bitcoinChainId,
   ]);
 
   // Function to handle validator selection
@@ -926,7 +930,6 @@ export default function BabylonStakingPage() {
     setSigningStatus,
     setIsNextButtonDisabled,
     setFormData,
-    toast,
   ]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
