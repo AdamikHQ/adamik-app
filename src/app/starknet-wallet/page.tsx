@@ -17,8 +17,21 @@ import { useAccount } from "@starknet-react/core";
 import { StarkNetHistory } from "./components/StarkNetHistory";
 import { useAccountHistory } from "~/hooks/useAccountHistory";
 import { useChains } from "~/hooks/useChains";
-import { FinalizedTransaction, Chain, TransactionFees } from "~/utils/types";
+import {
+  FinalizedTransaction,
+  Chain,
+  TransactionFees,
+  AccountState,
+} from "~/utils/types";
 import { formatAssetAmount } from "~/utils/assetFormatters";
+import { useAccountStateBatch } from "~/hooks/useAccountStateBatch";
+import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
+import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
+import {
+  getTickers,
+  getTokenTickers,
+  getTokenContractAddresses,
+} from "~/app/portfolio/helpers";
 
 // Define StarkNet chain ID constant
 const STARKNET_CHAIN_ID = "starknet";
@@ -28,13 +41,15 @@ function StarkNetWalletContent() {
   const { address } = useAccount();
   const { data: supportedChains, isLoading: isChainsLoading } = useChains();
 
-  // Find StarkNet chain details once loaded
-  const starknetChain = useMemo(() => {
-    if (!supportedChains) return null;
-    return Object.values(supportedChains).find(
-      (chain: Chain) => chain.id === STARKNET_CHAIN_ID
-    );
-  }, [supportedChains]);
+  // Fetch Account State
+  const accountStateParams = address
+    ? [{ chainId: STARKNET_CHAIN_ID, address }]
+    : [];
+  const {
+    data: addressesData,
+    isLoading: isAddressesLoading,
+    error: addressesError, // Separate error for account state
+  } = useAccountStateBatch(accountStateParams);
 
   // Fetch History
   const {
@@ -42,6 +57,65 @@ function StarkNetWalletContent() {
     isLoading: isHistoryLoading,
     error: historyError,
   } = useAccountHistory(STARKNET_CHAIN_ID, address);
+
+  // Get StarkNet Chain Details
+  const starknetChain = useMemo(() => {
+    if (!supportedChains) return null;
+    return Object.values(supportedChains).find(
+      (chain: Chain) => chain.id === STARKNET_CHAIN_ID
+    );
+  }, [supportedChains]);
+
+  // --- Start: Market Data Fetching ---
+  const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
+
+  // Extract necessary data for Mobula queries - only when account data is loaded
+  const accountStateData = addressesData?.[0]; // Assuming only one address for StarkNet
+
+  const nativeTicker = starknetChain?.ticker;
+  const tokenTickers = useMemo(
+    () => (accountStateData ? getTokenTickers([accountStateData]) : []),
+    [accountStateData]
+  );
+  const tokenContractAddresses = useMemo(
+    () =>
+      accountStateData ? getTokenContractAddresses([accountStateData]) : [],
+    [accountStateData]
+  );
+
+  const mobulaSymbols = useMemo(
+    () => (nativeTicker ? [nativeTicker, ...tokenTickers] : tokenTickers),
+    [nativeTicker, tokenTickers]
+  );
+
+  // Fetch market data based on symbols and contract addresses
+  const {
+    data: mobulaMarketDataBySymbol,
+    isLoading: isMarketDataSymbolLoading,
+  } = useMobulaMarketMultiData(
+    mobulaSymbols,
+    !!mobulaSymbols.length,
+    "symbols"
+  );
+
+  const {
+    data: mobulaMarketDataByAddress,
+    isLoading: isMarketDataAddressLoading,
+  } = useMobulaMarketMultiData(
+    tokenContractAddresses,
+    !!tokenContractAddresses.length,
+    "assets"
+  );
+
+  // Combine market data
+  const combinedMarketData = useMemo(
+    () => ({
+      ...mobulaMarketDataBySymbol,
+      ...mobulaMarketDataByAddress,
+    }),
+    [mobulaMarketDataBySymbol, mobulaMarketDataByAddress]
+  );
+  // --- End: Market Data Fetching ---
 
   // --- Start: Transaction Formatting Logic (similar to /history) ---
   const [formattedTransactions, setFormattedTransactions] = useState<
@@ -146,11 +220,23 @@ function StarkNetWalletContent() {
   ]);
   // --- End: Transaction Formatting Logic ---
 
+  // Combine all loading states for children
+  const isOverviewLoading =
+    isAddressesLoading ||
+    isChainsLoading ||
+    isMarketDataSymbolLoading ||
+    isMarketDataAddressLoading;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <StarkNetAssets
+        isLoading={isOverviewLoading}
+        accountData={accountStateData}
+        error={addressesError}
         nativeDecimals={starknetChain?.decimals}
         nativeTicker={starknetChain?.ticker}
+        mobulaMarketData={combinedMarketData}
+        mobulaBlockchainDetails={mobulaBlockchainDetails}
       />
       <StarkNetHistory
         address={address}
