@@ -1,10 +1,21 @@
 "use client";
 
 import { useAccount } from "@starknet-react/core";
-import { useAccountStateBatch } from "~/hooks/useAccountStateBatch";
 import { Loader2 } from "lucide-react";
-import { AccountState, TokenAmount } from "~/utils/types";
+import { AccountState, TokenAmount, Token } from "~/utils/types";
 import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { resolveLogo, formatAmountUSD, amountToMainUnit } from "~/utils/helper";
+import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
+import { MobulaBlockchain } from "~/api/mobula/types";
 
 // Use "starknet" as the chain ID for Adamik API
 const STARKNET_CHAIN_ID = "starknet";
@@ -41,31 +52,32 @@ const formatBalance = (value: string | undefined, decimals: number): string => {
   }
 };
 
-// Add nativeDecimals and nativeTicker to props
+// Updated Props Interface
 interface StarkNetAssetsProps {
+  isLoading: boolean; // Combined loading state from parent
+  accountData: AccountState | null | undefined; // Account data passed from parent
+  error: (Error | null)[] | null; // Error object passed from parent
   nativeDecimals: number | undefined;
   nativeTicker: string | undefined;
+  mobulaMarketData: MobulaMarketMultiDataResponse | null | undefined; // Market data
+  mobulaBlockchainDetails: MobulaBlockchain[] | undefined; // Blockchain details for logos
 }
 
 export const StarkNetAssets = ({
+  isLoading,
+  accountData,
+  error: addressesError, // Rename prop for clarity
   nativeDecimals,
   nativeTicker,
+  mobulaMarketData,
+  mobulaBlockchainDetails,
 }: StarkNetAssetsProps) => {
-  const { address, isConnected } = useAccount();
-
-  const accountStateParams =
-    isConnected && address ? [{ chainId: STARKNET_CHAIN_ID, address }] : [];
-
-  const {
-    data: addressesData, // Type is (AccountState | null | undefined)[] based on useQueries
-    isLoading: isAddressesLoading,
-    error: addressesError,
-  } = useAccountStateBatch(accountStateParams);
+  const { address, isConnected } = useAccount(); // Still need this for display/checks
 
   const hasActualError =
-    addressesError && addressesError.some((error) => error !== null);
+    addressesError && addressesError.some((err) => err !== null);
   const actualErrors = hasActualError
-    ? addressesError.filter((error) => error !== null)
+    ? addressesError.filter((err) => err !== null)
     : [];
 
   // 1. Handle Not Connected State
@@ -84,9 +96,9 @@ export const StarkNetAssets = ({
     );
   }
 
-  // 2. Handle Loading State or Missing Decimals/Ticker
+  // 2. Handle Loading State (simplified - uses parent isLoading)
   if (
-    isAddressesLoading ||
+    isLoading ||
     typeof nativeDecimals === "undefined" ||
     typeof nativeTicker === "undefined"
   ) {
@@ -103,7 +115,7 @@ export const StarkNetAssets = ({
     );
   }
 
-  // 3. Handle Error State
+  // 3. Handle Error State (uses parent error)
   if (hasActualError) {
     return (
       <Card className="min-h-[150px]">
@@ -123,68 +135,145 @@ export const StarkNetAssets = ({
   }
 
   // 4. Handle Success State
-  // Safely get the account data, handling potential undefined from useQueries during loading transitions
-  const accountData: AccountState | null =
-    addressesData && addressesData.length > 0 && addressesData[0] !== undefined
-      ? addressesData[0]
-      : null;
+  const nativeBalance = accountData?.balances?.native?.available;
+  const tokenBalances = accountData?.balances?.tokens || [];
+  const hasNativeBalance = typeof nativeBalance === "string";
+  const hasTokens = tokenBalances.length > 0;
+
+  // --- Calculate Native USD Value & Logo ---
+  const nativeBalanceMainUnit = hasNativeBalance
+    ? amountToMainUnit(nativeBalance, nativeDecimals)
+    : null;
+  const nativeMarketInfo =
+    mobulaMarketData && nativeTicker ? mobulaMarketData[nativeTicker] : null;
+  const nativeBalanceUSD =
+    nativeMarketInfo && nativeBalanceMainUnit
+      ? nativeMarketInfo.price * parseFloat(nativeBalanceMainUnit)
+      : undefined;
+  const nativeLogo = resolveLogo({
+    asset: { name: nativeTicker || "StarkNet", ticker: nativeTicker || "" },
+    mobulaMarketData,
+    mobulaBlockChainData: mobulaBlockchainDetails,
+  });
+  // --- End Calculation ---
 
   return (
     <Card className="min-h-[150px]">
       <CardHeader>
         <CardTitle>Overview</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         {accountData ? (
-          <div className="pt-2">
-            <h4 className="text-md font-medium mb-2">Balances:</h4>
-            <div className="space-y-2">
-              {/* Native Balance - Use nativeTicker prop */}
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">
-                  Native ({nativeTicker || "Currency"}):
-                </span>
-                <span className="text-sm font-medium">
-                  {formatBalance(
-                    accountData.balances?.native?.available,
-                    nativeDecimals
-                  )}
-                </span>
-              </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50px]"></TableHead>
+                <TableHead>Asset</TableHead>
+                <TableHead className="text-right">Balance</TableHead>
+                <TableHead className="text-right">Value (USD)</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {/* Native Balance Row */}
+              {hasNativeBalance ? (
+                <TableRow>
+                  <TableCell>
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={nativeLogo} alt={nativeTicker} />
+                      <AvatarFallback>
+                        {nativeTicker?.substring(0, 2) || "N"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {nativeTicker || "Native Currency"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatBalance(nativeBalance!, nativeDecimals)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {nativeBalanceUSD !== undefined
+                      ? formatAmountUSD(nativeBalanceUSD)
+                      : "-"}
+                  </TableCell>
+                </TableRow>
+              ) : null}
+              {/* Token Balance Rows */}
+              {hasTokens
+                ? tokenBalances.map((tokenAmount: TokenAmount) => {
+                    // --- Calculate Token USD Value & Logo ---
+                    const token = tokenAmount.token;
+                    const tokenBalanceMainUnit = amountToMainUnit(
+                      tokenAmount.amount,
+                      token.decimals
+                    );
+                    const tokenIndex = token.contractAddress ?? token.ticker;
+                    const tokenMarketInfo =
+                      mobulaMarketData && tokenIndex
+                        ? mobulaMarketData[tokenIndex]
+                        : null;
+                    const tokenBalanceUSD =
+                      tokenMarketInfo && tokenBalanceMainUnit
+                        ? tokenMarketInfo.price *
+                          parseFloat(tokenBalanceMainUnit)
+                        : undefined;
+                    const tokenLogo = resolveLogo({
+                      asset: { name: token.name || "", ticker: tokenIndex },
+                      mobulaMarketData,
+                      mobulaBlockChainData: mobulaBlockchainDetails,
+                    });
+                    // --- End Calculation ---
 
-              {/* Token Balances */}
-              {accountData.balances?.tokens &&
-              accountData.balances.tokens.length > 0 ? (
-                accountData.balances.tokens.map((tokenAmount: TokenAmount) => (
-                  // Use token contractAddress for key if available, otherwise token name/ticker
-                  <div
-                    key={
-                      tokenAmount.token?.contractAddress ||
-                      tokenAmount.token?.name ||
-                      tokenAmount.token?.ticker
-                    }
-                    className="flex justify-between items-center"
+                    return (
+                      <TableRow
+                        key={
+                          token.contractAddress || token.name || token.ticker
+                        }
+                      >
+                        <TableCell>
+                          <Avatar className="w-8 h-8">
+                            <AvatarImage src={tokenLogo} alt={token.name} />
+                            <AvatarFallback>
+                              {token.ticker?.substring(0, 2) || "T"}
+                            </AvatarFallback>
+                          </Avatar>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {token.name || "Unknown Token"}
+                          <span className="text-muted-foreground ml-1">
+                            ({token.ticker || "?"})
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatBalance(
+                            tokenAmount.amount,
+                            token.decimals || 0
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {tokenBalanceUSD !== undefined
+                            ? formatAmountUSD(tokenBalanceUSD)
+                            : "-"}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                : null}
+              {/* Message if no balances found at all */}
+              {!hasNativeBalance && !hasTokens ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={4}
+                    className="text-center text-muted-foreground italic py-4"
                   >
-                    <span className="text-sm text-muted-foreground">
-                      {tokenAmount.token?.name || "Unknown Token"} (
-                      {tokenAmount.token?.ticker || "?"})
-                    </span>
-                    <span className="text-sm font-medium">
-                      {formatBalance(
-                        tokenAmount.amount,
-                        tokenAmount.token?.decimals || 0
-                      )}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground italic">
-                  No token balances found.
-                </p>
-              )}
-            </div>
-          </div>
+                    No balances found.
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
         ) : (
+          // Message if API returned no data for the account
           <p className="text-muted-foreground italic pt-4">
             No account data available from API.
           </p>
