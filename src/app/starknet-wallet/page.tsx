@@ -32,6 +32,7 @@ import {
   getTokenTickers,
   getTokenContractAddresses,
 } from "~/app/portfolio/helpers";
+import { amountToMainUnit, resolveLogo, formatAmountUSD } from "~/utils/helper";
 
 // Define StarkNet chain ID constant
 const STARKNET_CHAIN_ID = "starknet";
@@ -73,6 +74,7 @@ function StarkNetWalletContent() {
   const accountStateData = addressesData?.[0]; // Assuming only one address for StarkNet
 
   const nativeTicker = starknetChain?.ticker;
+  const nativeDecimals = starknetChain?.decimals;
   const tokenTickers = useMemo(
     () => (accountStateData ? getTokenTickers([accountStateData]) : []),
     [accountStateData]
@@ -220,6 +222,110 @@ function StarkNetWalletContent() {
   ]);
   // --- End: Transaction Formatting Logic ---
 
+  // Calculate Assets array needed for Transfer Form
+  const assets: Asset[] = useMemo(() => {
+    if (
+      !accountStateData ||
+      !starknetChain ||
+      !nativeDecimals ||
+      !nativeTicker
+    ) {
+      return [];
+    }
+
+    const nativeBalance = accountStateData.balances?.native?.available;
+    const tokenBalances = accountStateData.balances?.tokens || [];
+    const assetsArray: Asset[] = [];
+
+    // Add Native Asset
+    if (nativeBalance) {
+      const balanceMainUnit = amountToMainUnit(nativeBalance, nativeDecimals);
+      const marketInfo = combinedMarketData
+        ? combinedMarketData[nativeTicker]
+        : null;
+      const balanceUSD =
+        marketInfo && balanceMainUnit
+          ? marketInfo.price * parseFloat(balanceMainUnit)
+          : undefined;
+      const logo = resolveLogo({
+        asset: { name: nativeTicker, ticker: nativeTicker },
+        mobulaMarketData: combinedMarketData,
+        mobulaBlockChainData: mobulaBlockchainDetails,
+      });
+
+      assetsArray.push({
+        logo,
+        chainId: STARKNET_CHAIN_ID,
+        name: starknetChain.name, // Use chain name
+        balanceMainUnit,
+        balanceUSD,
+        ticker: nativeTicker,
+        address: accountStateData.accountId,
+        decimals: nativeDecimals,
+        isToken: false,
+      });
+    }
+
+    // Add Token Assets
+    tokenBalances.forEach((tokenAmount: TokenAmount) => {
+      const token = tokenAmount.token;
+      const balanceMainUnit = amountToMainUnit(
+        tokenAmount.amount,
+        token.decimals
+      );
+      const tokenIndex = token.contractAddress ?? token.ticker;
+      const marketInfo = combinedMarketData
+        ? combinedMarketData[tokenIndex]
+        : null;
+      const balanceUSD =
+        marketInfo && balanceMainUnit
+          ? marketInfo.price * parseFloat(balanceMainUnit)
+          : undefined;
+      const logo = resolveLogo({
+        asset: { name: token.name || "", ticker: tokenIndex },
+        mobulaMarketData: combinedMarketData,
+        mobulaBlockChainData: mobulaBlockchainDetails,
+      });
+
+      assetsArray.push({
+        logo,
+        mainChainLogo: assetsArray[0]?.logo, // Use native logo as main chain logo
+        mainChainName: starknetChain.name,
+        chainId: STARKNET_CHAIN_ID,
+        assetId: token.id,
+        name: token.name,
+        balanceMainUnit,
+        balanceUSD,
+        ticker: token.ticker,
+        address: accountStateData.accountId,
+        contractAddress: token.contractAddress,
+        decimals: token.decimals,
+        isToken: true,
+      });
+    });
+
+    return assetsArray;
+  }, [
+    accountStateData,
+    starknetChain,
+    nativeDecimals,
+    nativeTicker,
+    combinedMarketData,
+    mobulaBlockchainDetails,
+  ]);
+
+  // Modal State & Handlers
+  const [openTransaction, setOpenTransaction] = useState(false);
+  const [stepper, setStepper] = useState(0);
+
+  const handleOpenTransaction = (isOpen: boolean) => {
+    // Reset stepper when closing
+    if (!isOpen) {
+      setStepper(0);
+    }
+    setOpenTransaction(isOpen);
+  };
+
   // Combine all loading states for children
   const isOverviewLoading =
     isAddressesLoading ||
@@ -228,25 +334,54 @@ function StarkNetWalletContent() {
     isMarketDataAddressLoading;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <StarkNetAssets
-        isLoading={isOverviewLoading}
-        accountData={accountStateData}
-        error={addressesError}
-        nativeDecimals={starknetChain?.decimals}
-        nativeTicker={starknetChain?.ticker}
-        mobulaMarketData={combinedMarketData}
-        mobulaBlockchainDetails={mobulaBlockchainDetails}
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <StarkNetAssets
+          isLoading={isOverviewLoading}
+          accountData={accountStateData}
+          error={addressesError}
+          nativeDecimals={nativeDecimals}
+          nativeTicker={nativeTicker}
+          mobulaMarketData={combinedMarketData}
+          mobulaBlockchainDetails={mobulaBlockchainDetails}
+          handleOpenTransaction={handleOpenTransaction}
+        />
+        <StarkNetHistory
+          address={address}
+          historyData={historyData}
+          isLoading={isHistoryLoading}
+          error={historyError}
+          formattedTransactions={formattedTransactions}
+          isFormattingAmounts={isFormattingAmounts}
+        />
+      </div>
+
+      {/* Transfer Modal */}
+      <Modal
+        open={openTransaction}
+        setOpen={handleOpenTransaction} // Use handler here
+        modalContent={
+          stepper === 0 ? (
+            <TransferTransactionForm
+              assets={assets} // Pass calculated assets
+              onNextStep={() => {
+                setStepper(1);
+              }}
+            />
+          ) : (
+            <WalletSigner
+              onNextStep={() => {
+                handleOpenTransaction(false); // Use handler to close and reset
+                // Optional delay if needed
+                // setTimeout(() => {
+                //   setStepper(0);
+                // }, 200);
+              }}
+            />
+          )
+        }
       />
-      <StarkNetHistory
-        address={address}
-        historyData={historyData}
-        isLoading={isHistoryLoading}
-        error={historyError}
-        formattedTransactions={formattedTransactions}
-        isFormattingAmounts={isFormattingAmounts}
-      />
-    </div>
+    </>
   );
 }
 
