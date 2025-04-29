@@ -6,6 +6,7 @@ import {
   SquareStack,
   Search,
   History,
+  Wallet,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { MobileMenu } from "./MobileMenu";
@@ -33,6 +34,11 @@ const menu = [
     title: "Transaction History",
     icon: History,
     href: "/history",
+  },
+  {
+    title: "StarkNet Web Wallet",
+    icon: Wallet,
+    href: "/starknet-wallet",
   },
   {
     title: "Supported chains",

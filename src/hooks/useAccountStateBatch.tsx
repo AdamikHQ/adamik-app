@@ -23,7 +23,9 @@ export const useAccountStateBatch = (
     queries: addressesParams.map(({ chainId, address }) => {
       return {
         queryKey: ["accountState", chainId, address],
-        queryFn: async () => accountState(chainId, address),
+        queryFn: async () => {
+          return await accountState(chainId, address);
+        },
       };
     }),
     combine: (results) => {

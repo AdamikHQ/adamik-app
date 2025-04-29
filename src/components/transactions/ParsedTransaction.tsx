@@ -68,9 +68,11 @@ export function ParsedTransactionComponent({
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">
-            {formatDistanceToNow(new Date(Number(tx.timestamp)), {
-              addSuffix: true,
-            })}
+            {tx.timestamp
+              ? formatDistanceToNow(new Date(Number(tx.timestamp) * 1000), {
+                  addSuffix: true,
+                })
+              : "N/A"}
           </span>
           <Link
             href={`/data?chainId=${selectedAccountChainId}&transactionId=${tx.id}`}
@@ -118,7 +120,9 @@ export function ParsedTransactionComponent({
             {isFormattingAmounts ? (
               <div className="h-5 w-24 animate-pulse bg-accent/50 rounded" />
             ) : (
-              <span className="font-medium">{formatted.formattedAmount}</span>
+              <span className="font-medium">
+                {formatted.formattedAmount || "N/A"}
+              </span>
             )}
           </div>
         </div>
@@ -142,13 +146,13 @@ export function ParsedTransactionComponent({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground w-16">Amount:</span>
-            <span className="font-medium">
-              {isFormattingAmounts ? (
-                <div className="inline-block h-4 w-16 animate-pulse bg-accent/50 rounded" />
-              ) : (
-                formatted.formattedAmount
-              )}
-            </span>
+            {isFormattingAmounts ? (
+              <div className="inline-block h-4 w-16 animate-pulse bg-accent/50 rounded" />
+            ) : (
+              <span className="font-medium">
+                {formatted.formattedAmount || "N/A"}
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -158,7 +162,7 @@ export function ParsedTransactionComponent({
         {isFormattingAmounts ? (
           <div className="inline-block h-4 w-16 animate-pulse bg-accent/50 rounded" />
         ) : (
-          formatted.formattedFee
+          formatted.formattedFee || "N/A"
         )}
       </div>
     </div>

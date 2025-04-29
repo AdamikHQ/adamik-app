@@ -60,4 +60,9 @@ export const showroomAddresses = [
     address:
       "0x05e1dfe469A9b7a504cA84102359467453aE530cFB5Ec70FF4239f91e964A08e",
   },
+  {
+    chainId: "starknet",
+    address:
+      "0x037a614dabfff9c8c94f9713135931d40555e66a52ef5369233891a62519f659",
+  },
 ];
