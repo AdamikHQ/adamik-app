@@ -69,7 +69,7 @@ export function ParsedTransactionComponent({
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">
             {tx.timestamp
-              ? formatDistanceToNow(new Date(Number(tx.timestamp) * 1000), {
+              ? formatDistanceToNow(new Date(Number(tx.timestamp)), {
                   addSuffix: true,
                 })
               : "N/A"}
