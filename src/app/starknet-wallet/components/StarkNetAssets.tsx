@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { resolveLogo, formatAmountUSD, amountToMainUnit } from "~/utils/helper";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { MobulaBlockchain } from "~/api/mobula/types";
+import { Button } from "~/components/ui/button";
 
 // Use "starknet" as the chain ID for Adamik API
 const STARKNET_CHAIN_ID = "starknet";
@@ -61,6 +62,7 @@ interface StarkNetAssetsProps {
   nativeTicker: string | undefined;
   mobulaMarketData: MobulaMarketMultiDataResponse | null | undefined; // Market data
   mobulaBlockchainDetails: MobulaBlockchain[] | undefined; // Blockchain details for logos
+  handleOpenTransaction: (isOpen: boolean) => void;
 }
 
 export const StarkNetAssets = ({
@@ -71,6 +73,7 @@ export const StarkNetAssets = ({
   nativeTicker,
   mobulaMarketData,
   mobulaBlockchainDetails,
+  handleOpenTransaction,
 }: StarkNetAssetsProps) => {
   const { address, isConnected } = useAccount(); // Still need this for display/checks
 
@@ -157,10 +160,20 @@ export const StarkNetAssets = ({
   });
   // --- End Calculation ---
 
+  // Determine if there are any assets to transfer
+  const canTransfer = hasNativeBalance || hasTokens;
+
   return (
     <Card className="min-h-[150px]">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between pb-4">
         <CardTitle>Overview</CardTitle>
+        <Button
+          onClick={() => handleOpenTransaction(true)}
+          disabled={!canTransfer || !accountData}
+          size="sm"
+        >
+          Transfer
+        </Button>
       </CardHeader>
       <CardContent className="pt-0">
         {accountData ? (
