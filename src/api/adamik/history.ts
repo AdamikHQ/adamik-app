@@ -4,7 +4,7 @@ import fetch from "node-fetch";
 import { env, ADAMIK_API_URL } from "~/env";
 import { FinalizedTransaction } from "~/utils/types";
 
-interface AccountHistoryResponse {
+export interface AccountHistoryResponse {
   chainId: string;
   accountId: string;
   transactions: FinalizedTransaction[];
