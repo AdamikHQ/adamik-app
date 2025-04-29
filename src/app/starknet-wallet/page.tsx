@@ -12,7 +12,7 @@ import { StarkNetAssets } from "./components/StarkNetAssets";
 import { Modal } from "~/components/ui/modal";
 import { TransferTransactionForm } from "~/components/transactions/TransferTransactionForm";
 import { WalletSigner } from "~/components/wallets/WalletSigner";
-import { type Asset } from "~/utils/types";
+import { type Asset, TokenAmount } from "~/utils/types";
 import { useAccount } from "@starknet-react/core";
 import { StarkNetHistory } from "./components/StarkNetHistory";
 import { useAccountHistory } from "~/hooks/useAccountHistory";
@@ -33,6 +33,8 @@ import {
   getTokenContractAddresses,
 } from "~/app/portfolio/helpers";
 import { amountToMainUnit, resolveLogo, formatAmountUSD } from "~/utils/helper";
+import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
+import { MobulaBlockchain } from "~/api/mobula/types";
 
 // Define StarkNet chain ID constant
 const STARKNET_CHAIN_ID = "starknet";
@@ -110,10 +112,10 @@ function StarkNetWalletContent() {
   );
 
   // Combine market data
-  const combinedMarketData = useMemo(
+  const combinedMarketData: MobulaMarketMultiDataResponse | null = useMemo(
     () => ({
-      ...mobulaMarketDataBySymbol,
-      ...mobulaMarketDataByAddress,
+      ...(mobulaMarketDataBySymbol || {}),
+      ...(mobulaMarketDataByAddress || {}),
     }),
     [mobulaMarketDataBySymbol, mobulaMarketDataByAddress]
   );
@@ -228,7 +230,8 @@ function StarkNetWalletContent() {
       !accountStateData ||
       !starknetChain ||
       !nativeDecimals ||
-      !nativeTicker
+      !nativeTicker ||
+      !combinedMarketData
     ) {
       return [];
     }
@@ -240,9 +243,7 @@ function StarkNetWalletContent() {
     // Add Native Asset
     if (nativeBalance) {
       const balanceMainUnit = amountToMainUnit(nativeBalance, nativeDecimals);
-      const marketInfo = combinedMarketData
-        ? combinedMarketData[nativeTicker]
-        : null;
+      const marketInfo = combinedMarketData[nativeTicker];
       const balanceUSD =
         marketInfo && balanceMainUnit
           ? marketInfo.price * parseFloat(balanceMainUnit)
@@ -274,9 +275,7 @@ function StarkNetWalletContent() {
         token.decimals
       );
       const tokenIndex = token.contractAddress ?? token.ticker;
-      const marketInfo = combinedMarketData
-        ? combinedMarketData[tokenIndex]
-        : null;
+      const marketInfo = combinedMarketData[tokenIndex];
       const balanceUSD =
         marketInfo && balanceMainUnit
           ? marketInfo.price * parseFloat(balanceMainUnit)
@@ -318,13 +317,16 @@ function StarkNetWalletContent() {
   const [openTransaction, setOpenTransaction] = useState(false);
   const [stepper, setStepper] = useState(0);
 
-  const handleOpenTransaction = (isOpen: boolean) => {
-    // Reset stepper when closing
-    if (!isOpen) {
-      setStepper(0);
+  // Effect to reset stepper when modal closes
+  useEffect(() => {
+    if (!openTransaction) {
+      // Add a small delay to allow modal close animation before resetting stepper
+      const timer = setTimeout(() => {
+        setStepper(0);
+      }, 150); // Adjust delay as needed
+      return () => clearTimeout(timer);
     }
-    setOpenTransaction(isOpen);
-  };
+  }, [openTransaction]);
 
   // Combine all loading states for children
   const isOverviewLoading =
@@ -344,7 +346,7 @@ function StarkNetWalletContent() {
           nativeTicker={nativeTicker}
           mobulaMarketData={combinedMarketData}
           mobulaBlockchainDetails={mobulaBlockchainDetails}
-          handleOpenTransaction={handleOpenTransaction}
+          handleOpenTransaction={() => setOpenTransaction(true)}
         />
         <StarkNetHistory
           address={address}
@@ -359,11 +361,11 @@ function StarkNetWalletContent() {
       {/* Transfer Modal */}
       <Modal
         open={openTransaction}
-        setOpen={handleOpenTransaction} // Use handler here
+        setOpen={setOpenTransaction}
         modalContent={
           stepper === 0 ? (
             <TransferTransactionForm
-              assets={assets} // Pass calculated assets
+              assets={assets}
               onNextStep={() => {
                 setStepper(1);
               }}
@@ -371,11 +373,7 @@ function StarkNetWalletContent() {
           ) : (
             <WalletSigner
               onNextStep={() => {
-                handleOpenTransaction(false); // Use handler to close and reset
-                // Optional delay if needed
-                // setTimeout(() => {
-                //   setStepper(0);
-                // }, 200);
+                setOpenTransaction(false);
               }}
             />
           )
