@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { Switch } from "~/components/ui/switch"; // Adjust path assuming components are in src/components
 import { Label } from "~/components/ui/label"; // Adjust path
-import { Card, CardContent } from "~/components/ui/card";
-import { Monitor, Wallet, Settings as SettingsIcon } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Info, Monitor, Wallet } from "lucide-react";
+import { Tooltip } from "~/components/ui/tooltip";
 
 // Helper functions to get/set from localStorage (consider moving to a utils file)
 const getLocalStorageItem = (key: string, defaultValue: boolean): boolean => {
@@ -66,35 +67,36 @@ export default function SettingsPage() {
   }, [showLowBalances]);
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-4 lg:gap-8 lg:p-8 max-w-6xl mx-auto">
-      <div className="flex items-center gap-2 pb-2 border-b">
-        <SettingsIcon className="h-6 w-6 text-muted-foreground" />
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+    <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <h1 className="text-lg font-semibold md:text-2xl">Settings</h1>
+          <Tooltip text="Configure application preferences">
+            <Info className="w-4 h-4 ml-2 text-gray-500 cursor-pointer" />
+          </Tooltip>
+        </div>
       </div>
 
-      <div className="grid gap-6">
-        <Card className="overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 p-6">
-            <h2 className="text-xl font-semibold">Display Preferences</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Customize how you view your assets and chains
-            </p>
-          </div>
-          <CardContent className="p-6 pt-6">
-            <div className="grid gap-6">
-              <div className="flex items-center justify-between space-x-4 rounded-lg border p-4 shadow-sm transition-all hover:bg-accent/50">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                    <Monitor className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <Label
-                      htmlFor="show-testnets"
-                      className="text-base font-medium"
-                    >
+      <div className="grid gap-4 md:gap-8 grid-cols-1">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CardTitle>Display Preferences</CardTitle>
+              <Tooltip text="Settings to control what content is displayed">
+                <Info className="w-4 h-4 text-gray-500 cursor-pointer" />
+              </Tooltip>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-4 border-b">
+                <div className="flex items-center gap-3">
+                  <Monitor className="h-5 w-5 text-gray-500" />
+                  <div>
+                    <Label htmlFor="show-testnets" className="text-base">
                       Show Testnet Chains
                     </Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground mt-1">
                       Display chains intended for testing purposes.
                     </p>
                   </div>
@@ -103,23 +105,17 @@ export default function SettingsPage() {
                   id="show-testnets"
                   checked={showTestnets}
                   onCheckedChange={setShowTestnets}
-                  className="data-[state=checked]:bg-primary"
                 />
               </div>
 
-              <div className="flex items-center justify-between space-x-4 rounded-lg border p-4 shadow-sm transition-all hover:bg-accent/50">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                    <Wallet className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <Label
-                      htmlFor="show-low-balances"
-                      className="text-base font-medium"
-                    >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Wallet className="h-5 w-5 text-gray-500" />
+                  <div>
+                    <Label htmlFor="show-low-balances" className="text-base">
                       Show Low Balances
                     </Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground mt-1">
                       Display assets or chains with a value less than $1 in the
                       portfolio.
                     </p>
@@ -129,7 +125,6 @@ export default function SettingsPage() {
                   id="show-low-balances"
                   checked={showLowBalances}
                   onCheckedChange={setShowLowBalances}
-                  className="data-[state=checked]:bg-primary"
                 />
               </div>
             </div>
