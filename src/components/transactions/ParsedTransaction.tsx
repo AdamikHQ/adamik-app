@@ -7,11 +7,28 @@ import {
   HelpCircle,
   Search,
   Send,
+  RotateCw,
 } from "lucide-react";
 import { ParsedTransaction } from "~/utils/types";
 
-const getTransactionTypeIcon = (mode: string) => {
-  switch (mode) {
+// Helper function to determine if a transaction is a self-transfer
+const isSelfTransfer = (tx: ParsedTransaction): boolean => {
+  return (
+    tx.senders?.length > 0 &&
+    tx.recipients?.length > 0 &&
+    tx.senders[0].address === tx.recipients[0].address
+  );
+};
+
+// Get appropriate icon based on transaction type
+const getTransactionTypeIcon = (tx: ParsedTransaction) => {
+  // First check if it's a self-transfer (special case)
+  if (isSelfTransfer(tx)) {
+    return <RotateCw className="w-4 h-4" />;
+  }
+
+  // Then check the mode
+  switch (tx.mode) {
     case "transferToken":
     case "transfer":
       return <Send className="w-4 h-4" />;
@@ -54,8 +71,11 @@ export function ParsedTransactionComponent({
     <div className="p-3 sm:p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-xl">{getTransactionTypeIcon(tx.mode)}</span>
+          <span className="text-xl">{getTransactionTypeIcon(tx)}</span>
           <span className="capitalize font-medium">{tx.mode}</span>
+          {isSelfTransfer(tx) && (
+            <span className="text-xs text-muted-foreground">(self)</span>
+          )}
           <span
             className={`px-2 py-0.5 rounded-full text-xs ${
               tx.state === "confirmed"
