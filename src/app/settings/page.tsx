@@ -16,19 +16,7 @@ import { Button } from "~/components/ui/button";
 import Link from "next/link";
 import { resolveLogo, isStakingSupported } from "~/utils/helper";
 import { SupportedBlockchain } from "~/utils/types";
-
-// Helper functions to get/set from localStorage (consider moving to a utils file)
-const getLocalStorageItem = (key: string, defaultValue: boolean): boolean => {
-  if (typeof window === "undefined") return defaultValue;
-  const storedValue = localStorage.getItem(key);
-  return storedValue !== null ? JSON.parse(storedValue) : defaultValue;
-};
-
-const setLocalStorageItem = (key: string, value: boolean) => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(key, JSON.stringify(value));
-  }
-};
+import { getLocalStorageItem, setLocalStorageItem } from "~/utils/localStorage";
 
 // List of chain IDs that are coming soon
 const comingSoonIds = ["tron", "the-open-network", "solana"];

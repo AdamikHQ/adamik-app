@@ -2,12 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { getChains } from "~/api/adamik/chains";
 import { Chain } from "~/utils/types";
-
-const getLocalStorageItem = (key: string, defaultValue: boolean): boolean => {
-  if (typeof window === "undefined") return defaultValue;
-  const storedValue = localStorage.getItem(key);
-  return storedValue !== null ? JSON.parse(storedValue) : defaultValue;
-};
+import { getLocalStorageItem } from "~/utils/localStorage";
 
 export const useChains = () => {
   const [showTestnets, setShowTestnets] = useState<boolean>(false);
