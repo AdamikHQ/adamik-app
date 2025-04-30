@@ -357,21 +357,6 @@ export default function SettingsPage() {
                       </Link>
                     </Button>
                   </div>
-
-                  <div className="flex flex-row items-center mt-6">
-                    <Checkbox
-                      id="show-testnets-chains"
-                      checked={showTestnets}
-                      onCheckedChange={() => setShowTestnets(!showTestnets)}
-                      className="mr-2"
-                    />
-                    <label
-                      htmlFor="show-testnets-chains"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      Show testnets
-                    </label>
-                  </div>
                 </>
               )}
             </CardContent>

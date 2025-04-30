@@ -20,7 +20,6 @@ const comingSoonIds = ["tron", "the-open-network", "solana"];
 export default function SupportedChains() {
   const { isLoading: supportedChainsLoading, data: supportedChains } =
     useChains();
-  const [showTestnets, setShowTestnets] = useState(false);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]); // Add state for selected features
   const { isLoading: mobulaBlockchainLoading, data: mobulaBlockchains } =
     useMobulaBlockchains();
@@ -44,9 +43,7 @@ export default function SupportedChains() {
 
   const chainsWithInfo = Object.values(supportedChains)
     .reduce<SupportedBlockchain[]>((acc, chain) => {
-      if (!!chain.isTestnetFor) {
-        return acc;
-      }
+      // Note: Testnets are already filtered by useChains hook based on localStorage preference
 
       // Determine labels based on chain features
       const labels: string[] = [];
@@ -81,19 +78,6 @@ export default function SupportedChains() {
         selectedFeatures.every((feature) => chain.labels!.includes(feature))
       )
     : chainsWithInfo;
-
-  const additionalChains = Object.values(supportedChains).reduce<string[]>(
-    (acc, chain) => {
-      return !!chain.isTestnetFor && !acc.includes(chain.name)
-        ? [...acc, chain.id]
-        : acc;
-    },
-    []
-  );
-
-  const handleCheckboxChange = () => {
-    setShowTestnets(!showTestnets);
-  };
 
   const handleFeatureSelect = (feature: string) => {
     setSelectedFeatures((prevSelected) =>
@@ -234,41 +218,15 @@ export default function SupportedChains() {
                 </Link>
               </Button>
             </div>
-            <div className="flex flex-row items-center mt-4">
-              <Checkbox
-                id="show-testnets"
-                checked={showTestnets}
-                onCheckedChange={handleCheckboxChange}
-                className="mr-2"
-              />
-              <label
-                htmlFor="show-testnets"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Show testnets
-              </label>
+            <div className="flex justify-center mt-4 text-sm text-muted-foreground">
+              <p>
+                To display testnet chains, enable the option in{" "}
+                <Link href="/settings" className="text-primary hover:underline">
+                  Settings
+                </Link>
+                .
+              </p>
             </div>
-            {showTestnets && (
-              <div className="mt-4">
-                <h2 className="text-lg font-semibold mb-2">
-                  Additional Chains (Testnets)
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4">
-                  {additionalChains.map((chain) => (
-                    <div
-                      key={chain}
-                      className="flex flex-row gap-4 items-center bg-primary/10 p-2 rounded-md"
-                    >
-                      <div className="flex flex-col">
-                        <h1 className="text-lg font-bold md:text-1xl">
-                          {chain}
-                        </h1>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>
