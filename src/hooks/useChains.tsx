@@ -1,14 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getChains } from "~/api/adamik/chains";
 import { Chain } from "~/utils/types";
 import { getLocalStorageItem } from "~/utils/localStorage";
 
 export const useChains = () => {
-  const [showTestnets, setShowTestnets] = useState<boolean>(false);
+  // Initialize with true as default to show testnets by default
+  const [showTestnets, setShowTestnets] = useState<boolean>(true);
 
   useEffect(() => {
-    setShowTestnets(getLocalStorageItem("showTestnets", false));
+    // Use true as the default value
+    setShowTestnets(getLocalStorageItem("showTestnets", true));
 
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === "showTestnets" && event.newValue !== null) {
@@ -21,24 +23,38 @@ export const useChains = () => {
     };
   }, []);
 
-  return useQuery({
+  // Always fetch all chains
+  const { data: allChains, ...restQueryResult } = useQuery({
     queryFn: async () => {
       const data = await getChains();
       return data || undefined;
     },
-    select: (data: Record<string, Chain> | undefined) => {
-      if (!data) return undefined;
-      if (showTestnets) {
-        return data;
-      }
-      const filteredData: Record<string, Chain> = {};
-      for (const key in data) {
-        if (!data[key].isTestnetFor) {
-          filteredData[key] = data[key];
-        }
-      }
-      return filteredData;
-    },
-    queryKey: ["chains", showTestnets],
+    // No dependencies in the queryKey - we always want all chains
+    queryKey: ["chains-all"],
   });
+
+  // Filtered data derived from allChains based on showTestnets setting
+  const filteredData = useMemo(() => {
+    if (!allChains) return undefined;
+
+    if (showTestnets) {
+      return allChains;
+    }
+
+    const filtered: Record<string, Chain> = {};
+    for (const key in allChains) {
+      if (!allChains[key].isTestnetFor) {
+        filtered[key] = allChains[key];
+      }
+    }
+    return filtered;
+  }, [allChains, showTestnets]);
+
+  return {
+    ...restQueryResult,
+    data: filteredData,
+    allChains,
+    showTestnets,
+    isLoading: restQueryResult.isLoading,
+  };
 };
