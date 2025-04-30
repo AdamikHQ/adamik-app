@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import { MobulaBlockchain } from "~/api/mobula/types";
-import { Chain } from "~/utils/types";
+import { Chain, FinalizedTransaction, ParsedTransaction } from "~/utils/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -15,6 +15,31 @@ const mobulaNameMapper: Record<string, string> = {
 
 export const getMobulaName = (name: string) => {
   return mobulaNameMapper[name] || name;
+};
+
+/**
+ * Checks if a transaction is a self-transfer (sender and recipient are the same address)
+ */
+export const isSelfTransfer = (
+  transaction: FinalizedTransaction | ParsedTransaction | null | undefined
+): boolean => {
+  if (!transaction) return false;
+
+  let parsed: ParsedTransaction | undefined;
+
+  if ("parsed" in transaction) {
+    parsed = transaction.parsed;
+  } else {
+    parsed = transaction as ParsedTransaction;
+  }
+
+  if (!parsed) return false;
+
+  return (
+    parsed.senders?.length > 0 &&
+    parsed.recipients?.length > 0 &&
+    parsed.senders[0].address === parsed.recipients[0].address
+  );
 };
 
 // Helpers to convert from/to user-convenient format in main unit, and smallest unit of the chain
