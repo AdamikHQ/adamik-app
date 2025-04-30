@@ -6,6 +6,7 @@ import {
   SquareStack,
   Search,
   History,
+  Settings,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { MobileMenu } from "./MobileMenu";
@@ -35,9 +36,9 @@ const menu = [
     href: "/history",
   },
   {
-    title: "Supported chains",
-    icon: SquareStack,
-    href: "/supported-chains",
+    title: "Settings",
+    icon: Settings,
+    href: "/settings",
   },
 ];
 
