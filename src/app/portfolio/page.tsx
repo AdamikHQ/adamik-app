@@ -20,6 +20,7 @@ import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { useWallet } from "~/hooks/useWallet";
 import { showroomAddresses } from "../../utils/showroomAddresses";
+import { getLocalStorageItem, setLocalStorageItem } from "~/utils/localStorage";
 import {
   aggregateStakingBalances,
   getAddressStakingPositions,
@@ -35,13 +36,6 @@ import {
   getTokenContractAddresses,
   getTokenTickers,
 } from "./helpers";
-
-// Helper function to get from localStorage (can be moved to a util file)
-const getLocalStorageItem = (key: string, defaultValue: boolean): boolean => {
-  if (typeof window === "undefined") return defaultValue;
-  const storedValue = localStorage.getItem(key);
-  return storedValue !== null ? JSON.parse(storedValue) : defaultValue;
-};
 
 export default function Portfolio() {
   const {
@@ -81,6 +75,12 @@ export default function Portfolio() {
   useEffect(() => {
     setShowLowBalances(getLocalStorageItem("showLowBalances", true));
   }, []);
+
+  // Add handler to save preference to localStorage
+  const handleToggleShowLowBalances = (value: boolean) => {
+    setShowLowBalances(value);
+    setLocalStorageItem("showLowBalances", value);
+  };
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
   const tokenTickers = getTokenTickers(addressesData || []);
