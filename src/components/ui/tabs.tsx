@@ -106,9 +106,12 @@ const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>(
 
     React.useEffect(() => {
       if (internalRef.current) {
-        triggerRefs.current.set(value, internalRef.current);
+        const refMap = triggerRefs.current;
+        const currentValue = value;
+        refMap.set(currentValue, internalRef.current);
+
         return () => {
-          triggerRefs.current.delete(value);
+          refMap.delete(currentValue);
         };
       }
     }, [value, triggerRefs]);
@@ -184,9 +187,12 @@ const TabsContent = React.forwardRef<HTMLDivElement, TabsContentProps>(
 
     React.useEffect(() => {
       if (internalRef.current) {
-        contentRefs.current.set(value, internalRef.current);
+        const refMap = contentRefs.current;
+        const currentValue = value;
+        refMap.set(currentValue, internalRef.current);
+
         return () => {
-          contentRefs.current.delete(value);
+          refMap.delete(currentValue);
         };
       }
     }, [value, contentRefs]);
