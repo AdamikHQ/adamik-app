@@ -19,7 +19,7 @@ import { SupportedBlockchain } from "~/utils/types";
 import { getLocalStorageItem, setLocalStorageItem } from "~/utils/localStorage";
 
 // List of chain IDs that are coming soon
-const comingSoonIds = ["tron", "the-open-network", "solana"];
+const comingSoonIds = ["solana", "aptos"];
 
 export default function SettingsPage() {
   const [showTestnets, setShowTestnets] = useState<boolean>(() =>
