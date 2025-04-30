@@ -10,24 +10,14 @@ import {
   RotateCw,
 } from "lucide-react";
 import { ParsedTransaction } from "~/utils/types";
-
-// Helper function to determine if a transaction is a self-transfer
-const isSelfTransfer = (tx: ParsedTransaction): boolean => {
-  return (
-    tx.senders?.length > 0 &&
-    tx.recipients?.length > 0 &&
-    tx.senders[0].address === tx.recipients[0].address
-  );
-};
+import { isSelfTransfer } from "~/utils/helper";
 
 // Get appropriate icon based on transaction type
 const getTransactionTypeIcon = (tx: ParsedTransaction) => {
-  // First check if it's a self-transfer (special case)
   if (isSelfTransfer(tx)) {
     return <RotateCw className="w-4 h-4" />;
   }
 
-  // Then check the mode
   switch (tx.mode) {
     case "transferToken":
     case "transfer":
