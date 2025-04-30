@@ -36,11 +36,6 @@ const menu = [
     href: "/history",
   },
   {
-    title: "Supported chains",
-    icon: SquareStack,
-    href: "/supported-chains",
-  },
-  {
     title: "Settings",
     icon: Settings,
     href: "/settings",
