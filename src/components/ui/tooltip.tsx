@@ -59,17 +59,23 @@ const TableCellWithTooltip = ({
 
   useEffect(() => {
     const handleCopy = (event: ClipboardEvent) => {
+      const selection = window.getSelection();
       if (
         tooltipRef.current &&
-        tooltipRef.current.contains(event.target as Node)
+        tooltipRef.current.contains(event.target as Node) &&
+        selection
       ) {
         event.preventDefault();
+        selection.removeAllRanges();
+        const range = document.createRange();
+        range.selectNodeContents(tooltipRef.current);
+        selection.addRange(range);
         event.clipboardData?.setData("text/plain", text);
+        selection.removeAllRanges();
       }
     };
 
     document.addEventListener("copy", handleCopy);
-
     return () => {
       document.removeEventListener("copy", handleCopy);
     };
@@ -86,7 +92,7 @@ const TableCellWithTooltip = ({
             sideOffset={4}
             className="whitespace-pre-line z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md"
           >
-            {text}
+            <div ref={tooltipRef}>{text}</div>
           </TooltipContent>
         </TooltipPrimitive.Root>
       </TooltipProvider>
