@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@babylonlabs-io/btc-staking-ts':
-        specifier: ^0.3.0
-        version: 0.3.0
       '@bitcoin-js/tiny-secp256k1-asmjs':
         specifier: ^2.2.3
         version: 2.2.3
@@ -873,10 +870,6 @@ packages:
   '@babel/types@7.26.3':
     resolution: {integrity: sha512-vN5p+1kl59GVKMvTHt55NzzmYVxprfJD+ql7U9NFIfKCBkYE55LYtS+WtPlaYOyzydrKI8Nezd+aZextrd+FMA==}
     engines: {node: '>=6.9.0'}
-
-  '@babylonlabs-io/btc-staking-ts@0.3.0':
-    resolution: {integrity: sha512-T6C/fUPIeEdiQgIz9etF0y649d047HjM5uVEqpP5LZLbSGa99uDnEMXviLm1kYuFP8bIy504wvfctv68mSjX0g==}
-    engines: {node: 22.3.0}
 
   '@bitcoin-js/tiny-secp256k1-asmjs@2.2.3':
     resolution: {integrity: sha512-arFPdEZi9RIiaG76OZswTnAU0KfuiLwGw2VNfD66LKhzlbfOnX1o1WI/GI3qm9UbjG/0QOzZu/KmTNvL79x/DQ==}
@@ -2699,10 +2692,6 @@ packages:
   bip39@3.1.0:
     resolution: {integrity: sha512-c9kiwdk45Do5GL0vJMe7tS95VjCii65mYAH7DfWl3uW8AVzXKQVUm64i3hzVybBDMp9r7j9iNxR85+ul8MdN/A==}
 
-  bitcoinjs-lib@6.1.5:
-    resolution: {integrity: sha512-yuf6xs9QX/E8LWE2aMJPNd0IxGofwfuVOiYdNUESkc+2bHHVKjhJd8qewqapeoolh9fihzHGoDCB5Vkr57RZCQ==}
-    engines: {node: '>=8.0.0'}
-
   bitcoinjs-lib@6.1.7:
     resolution: {integrity: sha512-tlf/r2DGMbF7ky1MgUqXHzypYHakkEnm0SZP23CJKIqNY/5uNAnMbFhMJdhjrL/7anfb/U8+AlpdjPWjPnAalg==}
     engines: {node: '>=8.0.0'}
@@ -3652,6 +3641,7 @@ packages:
 
   get-starknet-core@4.0.0:
     resolution: {integrity: sha512-6pLmidQZkC3wZsrHY99grQHoGpuuXqkbSP65F8ov1/JsEI8DDLkhsAuLCKFzNOK56cJp+f1bWWfTJ57e9r5eqQ==}
+    deprecated: Package no longer supported. Please use @starknet-io/get-starknet-core
 
   get-stream@6.0.1:
     resolution: {integrity: sha512-ts6Wi+2j3jQjqi70w5AlN8DFnkSwC+MqmxEzdEALB2qXZYV3X/b1CTfgPLGJNMeAWxdPfU8FO1ms3NUfaHCPYg==}
@@ -6988,11 +6978,6 @@ snapshots:
       '@babel/helper-validator-identifier': 7.25.9
     optional: true
 
-  '@babylonlabs-io/btc-staking-ts@0.3.0':
-    dependencies:
-      '@bitcoin-js/tiny-secp256k1-asmjs': 2.2.3
-      bitcoinjs-lib: 6.1.5
-
   '@bitcoin-js/tiny-secp256k1-asmjs@2.2.3':
     dependencies:
       uint8array-tools: 0.0.7
@@ -9806,15 +9791,6 @@ snapshots:
   bip39@3.1.0:
     dependencies:
       '@noble/hashes': 1.6.1
-
-  bitcoinjs-lib@6.1.5:
-    dependencies:
-      '@noble/hashes': 1.6.1
-      bech32: 2.0.0
-      bip174: 2.1.1
-      bs58check: 3.0.1
-      typeforce: 1.18.0
-      varuint-bitcoin: 1.1.2
 
   bitcoinjs-lib@6.1.7:
     dependencies:
