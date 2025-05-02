@@ -162,7 +162,7 @@ export default function BabylonStakingPage() {
         amount,
       }));
     }
-  }, [bitcoinChainId, validators]);
+  }, [bitcoinChainId, validators, formData.amount]);
 
   // Function to update step status
   const updateStepStatus = useCallback(
@@ -462,12 +462,14 @@ export default function BabylonStakingPage() {
       throw error;
     }
   }, [
+    bitcoinChainId,
     bitcoinTransactionData,
     setBitcoinSignedPsbts,
     setSigningStatus,
     setCurrentStep,
     formData.bitcoinAddress,
     formData.bitcoinPubkey,
+
     toast,
   ]);
 
