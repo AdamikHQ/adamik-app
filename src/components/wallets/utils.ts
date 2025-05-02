@@ -1,10 +1,10 @@
+import * as ecc from "@bitcoin-js/tiny-secp256k1-asmjs";
 import {
   Psbt,
   address as btcAddress,
   initEccLib,
   networks,
 } from "bitcoinjs-lib";
-import * as ecc from "@bitcoin-js/tiny-secp256k1-asmjs";
 
 export enum Network {
   MAINNET = "mainnet",
@@ -42,8 +42,11 @@ export function getSignPsbtDefaultOptions(
           error instanceof Error &&
           error.message.toLowerCase().includes("has no matching address")
         ) {
+          // initialize the BTC curve if not already initialized
+          // NOTE the original implementation uses initBTCCurve from @babylonlabs-io/btc-staking-ts,
+          // but it doesn"t work with our integration for some reason
+          //initBTCCurve();
           initEccLib(ecc);
-          console.log("XXX - (initBTCCurve called)");
           addressToBeSigned = btcAddress.fromOutputScript(
             input.witnessUtxo.script,
             btcNetwork
