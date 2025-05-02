@@ -108,7 +108,7 @@ export default function BabylonStakingPage() {
     babylonAddress: "",
     babylonPubkey: "",
     finalityProvider: "",
-    amount: "0.0005",
+    amount: "",
   });
 
   // Fetch the bitcoin chain's validators (finality providers)
@@ -134,18 +134,35 @@ export default function BabylonStakingPage() {
     }));
   }, [validatorsData, bitcoinChainId]);
 
-  // Set the appropriate validator address based on the chain
+  // Set the appropriate amount and validator address based on the chain
   useEffect(() => {
-    if (bitcoinChainId) {
+    if (bitcoinChainId && validators.length > 0) {
+      const amount =
+        formData.amount ||
+        // Higher minimum on bitcoin mainnet that on testnet
+        (bitcoinChainId === "bitcoin" ? "0.005" : "0.0005");
+
+      // FIXME Validator is only set by default, user can't actually choose
+      const meriaAddress =
+        bitcoinChainId === "bitcoin"
+          ? MERIA_VALIDATOR_MAINNET_ADDRESS
+          : MERIA_VALIDATOR_TESTNET_ADDRESS;
+
+      // Check if MERIA validator exists in the list
+      const meriaValidator = validators.find((v) => v.address === meriaAddress);
+
+      // Use MERIA validator if found, otherwise use the first validator
+      const selectedValidator = meriaValidator
+        ? meriaValidator.address
+        : validators[0].address;
+
       setFormData((prev) => ({
         ...prev,
-        finalityProvider:
-          bitcoinChainId === "bitcoin"
-            ? MERIA_VALIDATOR_MAINNET_ADDRESS
-            : MERIA_VALIDATOR_TESTNET_ADDRESS,
+        finalityProvider: selectedValidator,
+        amount,
       }));
     }
-  }, [bitcoinChainId]);
+  }, [bitcoinChainId, validators]);
 
   // Function to update step status
   const updateStepStatus = useCallback(
@@ -297,7 +314,7 @@ export default function BabylonStakingPage() {
         console.error("Failed to connect to Babylon wallet:", error);
         setSigningStatus("Failed to connect to Babylon wallet");
         throw new Error(
-          "Please connect your wallet and ensure it supports the Babylon testnet"
+          "Please connect your wallet and ensure it supports the Babylon chain"
         );
       }
     }
@@ -396,7 +413,9 @@ export default function BabylonStakingPage() {
               psbt,
               formData.bitcoinPubkey,
               formData.bitcoinAddress,
-              Network.SIGNET
+              bitcoinChainId === "bitcoin-signet"
+                ? Network.SIGNET
+                : Network.MAINNET
             );
 
             // Sign the PSBT with Unisat
@@ -433,6 +452,7 @@ export default function BabylonStakingPage() {
         bitcoinTransactionData.transaction?.data?.params?.slashingPsbt,
         bitcoinTransactionData.transaction?.data?.params?.unbondingSlashingPsbt,
       ]);
+
       setBitcoinSignedPsbts(signatures);
       setSigningStatus("All PSBTs signed successfully");
       setCurrentStep(StakingStep.SIGN_BABYLON_ADDRESS);
@@ -915,7 +935,7 @@ export default function BabylonStakingPage() {
       babylonAddress: "",
       babylonPubkey: "",
       finalityProvider: "",
-      amount: "0.0005",
+      amount: "",
     });
   }, [
     setCurrentStep,
@@ -1248,7 +1268,11 @@ export default function BabylonStakingPage() {
           {currentStep !== StakingStep.COMPLETE && (
             <Button
               className="w-full mt-6 bg-blue-600 hover:bg-blue-700"
-              disabled={isNextButtonDisabled || encodeTransaction.isPending}
+              disabled={
+                isNextButtonDisabled ||
+                isValidatorsLoading ||
+                encodeTransaction.isPending
+              }
               onClick={handleNextStep}
             >
               {isNextButtonDisabled || encodeTransaction.isPending ? (
