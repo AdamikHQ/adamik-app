@@ -44,21 +44,28 @@ export const getValidators = async (
 };
 
 export const getAllValidators = async (
-  chainId: string
+  chainId: string | undefined
 ): Promise<ValidatorResponse> => {
-  let allValidators: ValidatorResponse["validators"] = [];
+  let validators: ValidatorResponse["validators"] = [];
   let nextPage: string | undefined = undefined;
+
+  if (!chainId) {
+    return {
+      chainId: "",
+      validators,
+    };
+  }
 
   do {
     const response = await getValidators(chainId, { nextPage });
-    allValidators = response
-      ? [...allValidators, ...response.validators]
-      : allValidators;
+    validators = response
+      ? [...validators, ...response.validators]
+      : validators;
     nextPage = (response && response.pagination?.nextPage) || undefined;
   } while (nextPage !== undefined);
 
   return {
     chainId,
-    validators: allValidators,
+    validators,
   };
 };

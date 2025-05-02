@@ -1,4 +1,6 @@
-export const showroomAddresses = [
+import { Account } from "~/components/wallets/types";
+
+export const showroomAddresses: Account[] = [
   // ALGORAND
   {
     chainId: "algorand",

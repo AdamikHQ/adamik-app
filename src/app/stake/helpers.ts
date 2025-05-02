@@ -91,6 +91,7 @@ export type StakingPosition = {
   chainId: string;
   chainName: string;
   chainLogo?: string;
+  stakeId?: string;
   addresses: string[];
   validatorName?: string;
   validatorAddresses: string[];
@@ -148,11 +149,7 @@ export const getAddressStakingPositions = (
           );
           const currentAddresses = newAcc[validatorAddress]?.addresses || [];
 
-          // Create a unique key combining validatorAddress and status, adding completionDate if applicable
-          const uniqueKey =
-            position.status === "unlocking" && position.completionDate
-              ? `${validatorAddress}_${position.status}_${position.completionDate}`
-              : `${validatorAddress}_${position.status}`;
+          const uniqueKey = `${validatorAddress}_${position.stakeId}_${position.status}_${position.completionDate}`;
 
           newAcc[uniqueKey] = {
             ...newAcc[uniqueKey], // Keep existing data if already processed
@@ -175,6 +172,7 @@ export const getAddressStakingPositions = (
               mobulaMarketData,
               chainDetails
             ),
+            stakeId: position.stakeId,
             status: position.status,
             completionDate: position.completionDate, // If exists for 'unlocking' positions
           };
@@ -182,7 +180,7 @@ export const getAddressStakingPositions = (
       });
 
       // Handle native rewards and merge them into the existing staking position
-      (accountData?.balances.staking?.rewards.native || []).forEach(
+      (accountData?.balances.staking?.rewards?.native || []).forEach(
         (reward) => {
           const uniqueKey = `${reward.validatorAddress}_locked`;
 
@@ -203,7 +201,7 @@ export const getAddressStakingPositions = (
       );
 
       // Handle token rewards and merge them into the existing staking position
-      (accountData?.balances.staking?.rewards.tokens || []).forEach(
+      (accountData?.balances.staking?.rewards?.tokens || []).forEach(
         (reward) => {
           if (
             !reward.token?.id ||

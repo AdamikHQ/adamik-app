@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
@@ -26,18 +26,24 @@ type ValidatorSelectorProps = {
   validators: Validator[];
   selectedValue: Validator | undefined;
   onSelect: (validator: Validator, index: number) => void;
+  compact?: boolean;
 };
 
 export function ValidatorSelector({
   validators,
   selectedValue,
   onSelect,
+  compact = false,
 }: ValidatorSelectorProps): ReactNode {
   const [open, setOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [selectedChoice, setSelectedChoice] = useState<Validator | undefined>(
     selectedValue
   );
+
+  useEffect(() => {
+    setSelectedChoice(selectedValue);
+  }, [selectedValue]);
 
   if (isDesktop) {
     return (
@@ -46,7 +52,9 @@ export function ValidatorSelector({
           <Button
             variant="outline"
             role="combobox"
-            className="w-full justify-between h-[64px]"
+            className={`w-full justify-between ${
+              compact ? "h-10" : "h-[64px]"
+            }`}
           >
             {selectedChoice ? (
               <ValidatorView validator={selectedChoice} />
@@ -73,7 +81,7 @@ export function ValidatorSelector({
         <Button
           variant="outline"
           role="combobox"
-          className="w-full justify-between h-[64px]"
+          className={`w-full justify-between ${compact ? "h-10" : "h-[64px]"}`}
         >
           {selectedChoice ? (
             <ValidatorView validator={selectedChoice} />

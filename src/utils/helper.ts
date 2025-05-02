@@ -84,7 +84,7 @@ export function formatAmount(amount: string | number | null, decimals: number) {
 
 const getSelfHostedLogo = (ticker: string) => {
   //Define the list of ticker (uppercase) we use local icons for
-  const supportedTickers = ["PALM", "RBTC"];
+  const supportedTickers = ["PALM", "RBTC", "sBTC"];
 
   if (supportedTickers.includes(ticker)) {
     return `/assets/${ticker.toLowerCase()}.svg`;

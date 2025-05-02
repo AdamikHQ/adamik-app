@@ -3,9 +3,9 @@
 import {
   HandCoins,
   PieChart,
-  SquareStack,
   Search,
   History,
+  Coins,
   Settings,
 } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -24,6 +24,11 @@ const menu = [
     title: "Stake",
     icon: HandCoins,
     href: "/stake",
+  },
+  {
+    title: "Babylon staking",
+    icon: Coins,
+    href: "/babylon-staking",
   },
   {
     title: "Transaction Details",

@@ -47,6 +47,7 @@ import {
   FormatAssetAmountResult,
 } from "~/utils/assetFormatters";
 import { ParsedTransactionComponent } from "~/components/transactions/ParsedTransaction";
+import { Account } from "~/components/wallets/types";
 
 type GroupedAccount = {
   address: string;
@@ -78,7 +79,9 @@ function TransactionHistoryContent() {
   });
   const [isFetchingHistory, setIsFetchingHistory] = useState(false);
 
-  const displayAddresses = isShowroom ? showroomAddresses : walletAddresses;
+  const displayAddresses: Account[] = isShowroom
+    ? showroomAddresses
+    : walletAddresses;
   const { data: addressesData, isLoading: isAddressesLoading } =
     useAccountStateBatch(displayAddresses);
 

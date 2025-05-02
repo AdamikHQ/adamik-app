@@ -50,12 +50,13 @@ export const MetamaskConnect: React.FC<WalletConnectorProps> = ({
             "arbitrum",
             "base",
             "polygon",
-          ])
+          ]) {
             addresses.push({
               address,
               chainId,
               signer: WalletName.METAMASK,
             });
+          }
         }
 
         addAddresses(addresses);

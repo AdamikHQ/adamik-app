@@ -30,9 +30,14 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
 
         // NOTE Possible to loop over all supported chains for full discovery
         .filter((chain) =>
-          ["cosmoshub", "osmosis", "celestia", "dydx", "injective"].includes(
-            chain.id
-          )
+          [
+            "cosmoshub",
+            "osmosis",
+            "celestia",
+            "dydx",
+            "injective",
+            "babylon-testnet",
+          ].includes(chain.id)
         )
         .forEach((chain) =>
           cosmosChainIdsMapping.set(chain.id, chain.nativeId)
@@ -91,11 +96,12 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
         throw new Error(`${chainId} is not supported by Keplr wallet`);
       }
 
+      // const signedTransaction = await client.signAmino?.(
       const signedTransaction = await client.signDirect?.(
         nativeId,
         transactionPayload.data.senderAddress,
         JSON.parse(transactionPayload.encoded),
-        { preferNoSetFee: true } // Tell Keplr not to recompute fees after us
+        { preferNoSetFee: true, preferNoSetMemo: true } // Tell Keplr not to recompute fees after us
       );
 
       transaction &&

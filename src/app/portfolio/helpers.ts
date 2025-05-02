@@ -93,8 +93,9 @@ export const calculateAssets = (
     );
 
     const balanceUSD =
-      // !chainDetails.isTestNet && TMP: Just to usetestnet for test
-      mobulaMarketData && mobulaMarketData[chainDetails.ticker]
+      !chainDetails.isTestnetFor &&
+      mobulaMarketData &&
+      mobulaMarketData[chainDetails.ticker]
         ? mobulaMarketData[chainDetails.ticker]?.price *
           parseFloat(balanceMainUnit as string)
         : undefined;
@@ -199,9 +200,10 @@ export const filterAndSortAssets = (
         return !(hideLowBalance && aggregatedBalances[asset.chainId] <= 1);
       })
       // Hide all asset without logo (mostly spam coins for EVM)
-      .filter((asset) => {
-        return asset?.logo !== "";
-      })
+      // FIXME Need to fix the missing assets logos
+      // .filter((asset) => {
+      //   return asset?.logo !== "";
+      // })
 
       .sort((a, b) => {
         // Highest to lowest USD balance

@@ -36,6 +36,7 @@ import {
   getTokenContractAddresses,
   getTokenTickers,
 } from "./helpers";
+import { Account } from "~/components/wallets/types";
 
 export default function Portfolio() {
   const {
@@ -45,7 +46,9 @@ export default function Portfolio() {
   } = useWallet();
 
   const { toast } = useToast();
-  const displayAddresses = isShowroom ? showroomAddresses : walletAddresses;
+  const displayAddresses: Account[] = isShowroom
+    ? showroomAddresses
+    : walletAddresses;
   const addressesChainIds = displayAddresses.reduce<string[]>(
     (acc, { chainId }) => {
       if (acc.includes(chainId)) return acc;
