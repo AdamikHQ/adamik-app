@@ -23,7 +23,7 @@ const comingSoonIds = ["solana", "aptos"];
 
 export default function SettingsPage() {
   const [showTestnets, setShowTestnets] = useState<boolean>(() =>
-    getLocalStorageItem("showTestnets", false)
+    getLocalStorageItem("showTestnets", true)
   );
   const [showLowBalances, setShowLowBalances] = useState<boolean>(() =>
     getLocalStorageItem("showLowBalances", true)
@@ -53,7 +53,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     // Set initial value from localStorage
-    setShowTestnets(getLocalStorageItem("showTestnets", false));
+    setShowTestnets(getLocalStorageItem("showTestnets", true));
     setShowLowBalances(getLocalStorageItem("showLowBalances", true));
 
     // Add listener for storage events to sync across tabs/windows
@@ -69,7 +69,7 @@ export default function SettingsPage() {
 
     // Persist initial or default values if not already set
     if (localStorage.getItem("showTestnets") === null) {
-      setLocalStorageItem("showTestnets", false);
+      setLocalStorageItem("showTestnets", true);
     }
     if (localStorage.getItem("showLowBalances") === null) {
       setLocalStorageItem("showLowBalances", true);
