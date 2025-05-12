@@ -116,9 +116,9 @@ export const AssetsList: React.FC<{
               <Info className="w-4 h-4 text-gray-500 cursor-pointer" />
             </Tooltip>
             <Tooltip text="Refresh portfolio data">
-              <Button 
-                onClick={handleRefresh} 
-                className="p-2 ml-1" 
+              <Button
+                onClick={handleRefresh}
+                className="p-2 ml-1"
                 disabled={isRefreshing || isLoading}
               >
                 {isRefreshing ? (
