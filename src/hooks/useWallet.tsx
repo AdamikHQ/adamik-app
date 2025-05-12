@@ -12,6 +12,8 @@ type WalletContextType = {
   isWalletMenuOpen: boolean;
   isShowroom: boolean;
   setShowroom: (isShowroom: boolean) => void;
+  recentlyAddedAddresses: Account[];
+  clearRecentlyAddedAddresses: () => void;
 };
 
 export const WalletContext = React.createContext<WalletContextType>({
@@ -25,6 +27,8 @@ export const WalletContext = React.createContext<WalletContextType>({
   setAddresses: () => {},
   setWalletMenuOpen: () => {},
   isWalletMenuOpen: false,
+  recentlyAddedAddresses: [],
+  clearRecentlyAddedAddresses: () => {},
 });
 
 export const useWallet = () => {

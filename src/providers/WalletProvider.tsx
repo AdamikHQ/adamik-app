@@ -16,6 +16,10 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
   const [isWalletMenuOpen, setWalletMenuOpen] = useState(false);
   // Track real wallet addresses separately
   const [realWalletAddresses, setRealWalletAddresses] = useState<Account[]>([]);
+  // Track recently added addresses for optimized portfolio refresh
+  const [recentlyAddedAddresses, setRecentlyAddedAddresses] = useState<
+    Account[]
+  >([]);
 
   useEffect(() => {
     const localDataAddresses = localStorage?.getItem("AdamikClientAddresses");
@@ -48,6 +52,24 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
   };
 
   const addAddresses = (newAddresses: Account[]) => {
+    // First identify which addresses are actually new
+    const actuallyNewAddresses: Account[] = [];
+
+    newAddresses.forEach((newAddr) => {
+      const exists = addresses.some(
+        (addr) =>
+          addr.address === newAddr.address && addr.chainId === newAddr.chainId
+      );
+      if (!exists) {
+        actuallyNewAddresses.push(newAddr);
+      }
+    });
+
+    // Set the recently added addresses for optimized portfolio refresh
+    if (actuallyNewAddresses.length > 0) {
+      setRecentlyAddedAddresses(actuallyNewAddresses);
+    }
+
     setAddresses((oldAddresses) => {
       const mergedAddresses = [...oldAddresses, ...newAddresses];
 
@@ -74,6 +96,9 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
   };
 
   const removeAddresses = (addressesToRemove: Account[]) => {
+    // Clear recently added addresses when removing addresses
+    setRecentlyAddedAddresses([]);
+
     setAddresses((oldAddresses) => {
       const remainingAddresses = oldAddresses.filter(
         (addr) =>
@@ -98,8 +123,16 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
     });
   };
 
+  // Clear the recently added addresses (useful after refresh)
+  const clearRecentlyAddedAddresses = () => {
+    setRecentlyAddedAddresses([]);
+  };
+
   // Improved setShowroom function that properly handles address switching
   const handleSetShowroom = (showroomState: boolean) => {
+    // Clear recently added addresses when toggling showroom
+    setRecentlyAddedAddresses([]);
+
     // Save the current state to client state
     const localData = localStorage?.getItem("AdamikClientState");
     const oldLocalData = JSON.parse(localData || "{}");
@@ -142,6 +175,8 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
         isWalletMenuOpen,
         isShowroom,
         setShowroom: handleSetShowroom,
+        recentlyAddedAddresses,
+        clearRecentlyAddedAddresses,
       }}
     >
       {children}

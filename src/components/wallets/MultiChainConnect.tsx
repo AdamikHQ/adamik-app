@@ -11,8 +11,8 @@ import { useWallet } from "~/hooks/useWallet";
 import { Account, WalletName } from "./types";
 import { Chain, SupportedBlockchain } from "~/utils/types";
 import { Button } from "~/components/ui/button";
-import { Loader2, ChevronRight, Search, Check } from "lucide-react";
-import { useFilteredChains } from "~/hooks/useChains";
+import { Loader2, ChevronRight, Search, Check, Clock } from "lucide-react";
+import { useExtendedChains, ExtendedChain } from "~/hooks/useExtendedChains";
 import { encodePubKeyToAddress } from "~/api/adamik/encode";
 import { getPreferredChains } from "~/config/wallet-chains";
 import { Input } from "~/components/ui/input";
@@ -26,32 +26,46 @@ const ChainItem = forwardRef<
   HTMLDivElement,
   {
     chainId: string;
-    chain: SupportedBlockchain;
+    chain: ExtendedChain;
     isSelected: boolean;
     isConnected?: boolean;
     onToggle: () => void;
   }
->(({ chainId, chain, isSelected, isConnected = false, onToggle }, ref) => (
-  <div
-    ref={ref}
-    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer hover:bg-accent ${
-      isSelected ? "bg-accent" : ""
-    }`}
-    onClick={onToggle}
-  >
-    <div className="flex items-center gap-3">
-      {chain.logo && (
-        <img
-          src={chain.logo}
-          alt={`${chain.name} logo`}
-          className="w-6 h-6 rounded-full"
-        />
+>(({ chainId, chain, isSelected, isConnected = false, onToggle }, ref) => {
+  const isComingSoon = "comingSoon" in chain && chain.comingSoon;
+
+  return (
+    <div
+      ref={ref}
+      className={`flex items-center justify-between p-3 rounded-lg ${
+        isSelected ? "bg-accent" : ""
+      } ${isComingSoon ? "opacity-60" : "cursor-pointer hover:bg-accent"}`}
+      onClick={!isComingSoon ? onToggle : undefined}
+    >
+      <div className="flex items-center gap-3">
+        {chain.logo && (
+          <img
+            src={chain.logo}
+            alt={`${chain.name} logo`}
+            className="w-6 h-6 rounded-full"
+          />
+        )}
+        <div className="flex items-center">
+          <span>{chain.name}</span>
+          {isComingSoon && (
+            <div className="flex items-center text-xs text-muted-foreground space-x-1 ml-2">
+              <Clock className="h-3 w-3" />
+              <span>Soon</span>
+            </div>
+          )}
+        </div>
+      </div>
+      {isSelected && !isComingSoon && (
+        <Check className="w-4 h-4 text-primary" />
       )}
-      <span>{chain.name}</span>
     </div>
-    {isSelected && <Check className="w-4 h-4 text-primary" />}
-  </div>
-));
+  );
+});
 
 ChainItem.displayName = "ChainItem";
 
@@ -89,7 +103,7 @@ export const MultiChainConnect: React.FC<{
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedChains, setSelectedChains] = useState<string[]>([]);
   const [isSelectionOpen, setIsSelectionOpen] = useState(false);
-  const { data: chains, isLoading: chainsLoading } = useFilteredChains();
+  const { data: chains, isLoading: chainsLoading } = useExtendedChains();
 
   // Get unique chain IDs from connected addresses
   const uniqueConnectedChainIds = useMemo(
@@ -157,21 +171,41 @@ export const MultiChainConnect: React.FC<{
         const matchesSearch = chain.name
           .toLowerCase()
           .includes(searchQuery.toLowerCase());
+
+        // Filter out "coming soon" chains from selected list
+        const isComingSoon = "comingSoon" in chain && chain.comingSoon;
         return matchesSearch;
       })
       .sort((a, b) => a[1].name.localeCompare(b[1].name));
 
     return {
-      selectedChainsList: allChains.filter(([chainId]) =>
-        selectedChains.includes(chainId)
-      ),
-      unselectedChainsList: allChains.filter(
-        ([chainId]) => !selectedChains.includes(chainId)
-      ),
+      selectedChainsList: allChains.filter(([chainId, chain]) => {
+        // Exclude "coming soon" chains from selected list
+        const isComingSoon = "comingSoon" in chain && chain.comingSoon;
+        return selectedChains.includes(chainId) && !isComingSoon;
+      }),
+      unselectedChainsList: allChains.filter(([chainId, chain]) => {
+        // Include "coming soon" chains in unselected list, even if they're "selected"
+        const isComingSoon = "comingSoon" in chain && chain.comingSoon;
+        return !selectedChains.includes(chainId) || isComingSoon;
+      }),
     };
   }, [chains, searchQuery, selectedChains]);
 
   const toggleChain = (chainId: string) => {
+    // Don't allow toggling chains marked as coming soon
+    if (
+      chains &&
+      "comingSoon" in chains[chainId] &&
+      chains[chainId].comingSoon
+    ) {
+      toast({
+        description: `${chains[chainId].name} is coming soon and not available yet`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Toggle the chain in the selected list, regardless of connection status
     setSelectedChains((prev) =>
       prev.includes(chainId)
@@ -184,6 +218,13 @@ export const MultiChainConnect: React.FC<{
     async (chainId: string) => {
       if (!chains || !chains[chainId]) {
         throw new Error(`Chain ${chainId} not supported`);
+      }
+
+      // Don't allow connecting to chains marked as coming soon
+      if ("comingSoon" in chains[chainId] && chains[chainId].comingSoon) {
+        throw new Error(
+          `${chains[chainId].name} is coming soon and not available yet`
+        );
       }
 
       const response = await fetch(
