@@ -143,7 +143,85 @@ export default function Portfolio() {
     isSupportedChainsLoading ||
     isMobulaMarketDataLoading;
 
-  // Restore loading state management with toast
+  // Add some console logs to help debug loading state
+  useEffect(() => {
+    console.log("Loading states:", {
+      isAddressesLoading,
+      isAssetDetailsLoading,
+      isSupportedChainsLoading,
+      isMobulaMarketDataLoading,
+      overall: isLoading,
+    });
+  }, [
+    isAddressesLoading,
+    isAssetDetailsLoading,
+    isSupportedChainsLoading,
+    isMobulaMarketDataLoading,
+    isLoading,
+  ]);
+
+  // Add a force refresh function for when the UI gets stuck
+  const forceRefresh = useCallback(() => {
+    console.log("Force refreshing portfolio data...");
+    // Force refresh Mobula data which often gets stuck
+    queryClient.invalidateQueries({ queryKey: ["mobula"] });
+
+    // Force refresh chain data
+    queryClient.invalidateQueries({ queryKey: ["chains"] });
+
+    // Force refresh all account state data
+    displayAddresses.forEach(({ chainId, address }) => {
+      clearAccountStateCache({
+        chainId,
+        address,
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["accountState", chainId, address],
+        refetchType: "active",
+      });
+    });
+
+    // Show a toast to inform the user
+    toast({
+      description: "Forcing data refresh...",
+      duration: 3000,
+    });
+
+    // If all else fails, try a page reload after 15 seconds if still loading
+    const timeoutId = setTimeout(() => {
+      if (isLoading) {
+        toast({
+          description: "Still loading, trying to reload page...",
+          duration: 3000,
+        });
+        // Give one more second before reload
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }
+    }, 15000);
+
+    return () => clearTimeout(timeoutId);
+  }, [displayAddresses, queryClient, toast, isLoading]);
+
+  // Add long timeout to automatically recover from stuck loading states
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    if (isLoading) {
+      // If loading takes more than 30 seconds, trigger force refresh
+      timeoutId = setTimeout(() => {
+        console.log("Loading timeout exceeded, triggering force refresh");
+        forceRefresh();
+      }, 30000);
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [isLoading, forceRefresh]);
+
+  // Fix the loading toast useEffect to have consistent dependencies
   useEffect(() => {
     let loadingToast: ReturnType<typeof toast> | undefined;
 
@@ -219,10 +297,21 @@ export default function Portfolio() {
     stakingBalances.stakedBalance +
     stakingBalances.unstakingBalance;
 
+  // Update the refreshPositions function to be more reliable
   const refreshPositions = useCallback(
     async (specificAddresses?: Account[]) => {
       // If specificAddresses is provided, use them; otherwise use all displayAddresses
       const addressesToRefresh = specificAddresses || displayAddresses;
+
+      // Add check for empty addresses
+      if (!addressesToRefresh || addressesToRefresh.length === 0) {
+        console.log("No addresses to refresh");
+        toast({
+          description: "No wallet addresses to refresh",
+          duration: 2000,
+        });
+        return;
+      }
 
       console.log("🔄 Starting refresh for addresses:", addressesToRefresh);
 
@@ -254,43 +343,36 @@ export default function Portfolio() {
       }
 
       try {
-        // First, cancel any existing queries to prevent conflicts
-        // We'll use a different approach to prevent CancelledError from propagating
+        // First invalidate chain data to ensure we have the latest chain info
         try {
-          // Instead of awaiting each cancellation individually, collect all queries to cancel
-          const queryKeysToCancel: Array<Array<string>> = [];
+          queryClient.invalidateQueries({ queryKey: ["chains"] });
+        } catch (error) {
+          console.log("Error invalidating chains:", error);
+        }
 
-          // Add all address queries
+        // First, let's update the cancel queries logic in refreshPositions to be more robust
+        // Find the cancelQueries block and replace it with this:
+        try {
+          // Instead of cancelling queries with complex predicates, we'll use a safer approach
+          // Just invalidate the queries without cancelling them
           for (const { chainId, address } of addressesToRefresh) {
-            queryKeysToCancel.push(["accountState", chainId, address]);
-          }
-
-          // Add mobula queries if doing full refresh
-          if (!specificAddresses) {
-            queryKeysToCancel.push(["mobula"]);
-          }
-
-          // Cancel all in one batch (without awaiting)
-          if (queryKeysToCancel.length > 0) {
-            console.log(`Cancelling ${queryKeysToCancel.length} queries`);
-            queryClient.cancelQueries({
-              predicate: (query) => {
-                // Check if the query key matches any in our list
-                return queryKeysToCancel.some((keyToCancel) => {
-                  // For exact match, compare array length and all elements
-                  if (query.queryKey.length !== keyToCancel.length)
-                    return false;
-                  return keyToCancel.every(
-                    (key: string, index: number) =>
-                      key === query.queryKey[index]
-                  );
-                });
-              },
+            // Simply mark queries as stale - no need to cancel them
+            queryClient.invalidateQueries({
+              queryKey: ["accountState", chainId, address],
+              refetchType: "none",
             });
           }
-        } catch (cancelError) {
-          console.log("Query cancellation error:", cancelError);
-          // Continue execution - cancellation errors are expected
+
+          // For mobula data, also just invalidate without cancelling
+          if (!specificAddresses) {
+            queryClient.invalidateQueries({
+              queryKey: ["mobula"],
+              refetchType: "none",
+            });
+          }
+        } catch (error) {
+          console.log("Query invalidation error:", error);
+          // Continue execution regardless of errors
         }
 
         // Clear cache for targeted addresses
@@ -460,10 +542,29 @@ export default function Portfolio() {
 
   // Add a useEffect to automatically refresh newly added addresses
   useEffect(() => {
-    if (recentlyAddedAddresses.length > 0) {
-      // Refresh only the newly added addresses
-      refreshPositions(recentlyAddedAddresses);
+    // Avoid refreshing if there are no new addresses
+    if (!recentlyAddedAddresses || recentlyAddedAddresses.length === 0) {
+      return;
     }
+
+    console.log("New addresses detected, refreshing:", recentlyAddedAddresses);
+
+    // Debounce refresh for multiple chains added in quick succession
+    const timeoutId = setTimeout(() => {
+      try {
+        // Wrap in try/catch to prevent errors from bubbling up to React
+        refreshPositions(recentlyAddedAddresses).catch((error) => {
+          // Safely handle any errors without crashing
+          console.log("Caught error refreshing new addresses:", error);
+        });
+      } catch (error) {
+        console.log("Error setting up refresh for new addresses:", error);
+      }
+    }, 100); // Small delay to group multiple chain additions
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [recentlyAddedAddresses, refreshPositions]);
 
   return (
