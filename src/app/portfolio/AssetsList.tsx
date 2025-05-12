@@ -1,4 +1,5 @@
 import { Loader2, Info, RefreshCw } from "lucide-react";
+import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
@@ -87,6 +88,24 @@ export const AssetsList: React.FC<{
   hideLowBalance,
   refreshPositions,
 }) => {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      console.log("Refresh button clicked, calling refreshPositions()");
+      // Call the refreshPositions function with no arguments to refresh all positions
+      await refreshPositions();
+    } catch (error) {
+      console.error("Error refreshing portfolio:", error);
+    } finally {
+      // Add a slight delay to make the spinner visible to users
+      setTimeout(() => {
+        setIsRefreshing(false);
+      }, 500);
+    }
+  };
+
   return (
     <>
       <Card className="lg:col-span-2">
@@ -96,9 +115,17 @@ export const AssetsList: React.FC<{
             <Tooltip text="List of your available assets and their balances">
               <Info className="w-4 h-4 text-gray-500 cursor-pointer" />
             </Tooltip>
-            <Tooltip text="Refresh">
-              <Button onClick={refreshPositions} className="p-2 ml-1">
-                <RefreshCw className="hover:animate-spin w-4" />
+            <Tooltip text="Refresh portfolio data">
+              <Button 
+                onClick={handleRefresh} 
+                className="p-2 ml-1" 
+                disabled={isRefreshing || isLoading}
+              >
+                {isRefreshing ? (
+                  <Loader2 className="animate-spin w-4" />
+                ) : (
+                  <RefreshCw className="w-4 hover:animate-spin" />
+                )}
               </Button>
             </Tooltip>
           </div>
