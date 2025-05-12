@@ -9,19 +9,19 @@ import {
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { useToast } from "~/components/ui/use-toast";
 import { useWallet } from "~/hooks/useWallet";
-import { useChains } from "~/hooks/useChains";
+import { useExtendedChains } from "~/hooks/useExtendedChains";
 import { Chain } from "~/utils/types";
 import { getPreferredChains } from "~/config/wallet-chains";
 import { encodePubKeyToAddress } from "~/api/adamik/encode";
 import { Account, WalletName } from "./types";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Clock } from "lucide-react";
 
 export function ChainSelector() {
   const { toast } = useToast();
   const { addresses, addAddresses, removeAddresses } = useWallet();
   const [loading, setLoading] = useState(false);
   const [selectedChains, setSelectedChains] = useState<string[]>([]);
-  const { data: chains, isLoading: chainsLoading } = useChains();
+  const { data: chains, isLoading: chainsLoading } = useExtendedChains();
 
   useEffect(() => {
     if (chains) {
@@ -37,6 +37,15 @@ export function ChainSelector() {
 
   const connectChain = async (chainId: string) => {
     if (!chains?.[chainId]) return;
+
+    // Don't allow connecting to chains marked as coming soon
+    if ("comingSoon" in chains[chainId] && chains[chainId].comingSoon) {
+      toast({
+        description: `${chains[chainId].name} is coming soon and not available yet`,
+        variant: "destructive",
+      });
+      return;
+    }
 
     setLoading(true);
     try {
@@ -122,21 +131,35 @@ export function ChainSelector() {
           <div className="space-y-2">
             {Object.entries(chains)
               .sort(([, a], [, b]) => a.name.localeCompare(b.name))
-              .map(([chainId, chain]) => (
-                <label
-                  key={chainId}
-                  className="flex items-center space-x-2 rounded-sm px-2 py-1.5 hover:bg-accent cursor-pointer"
-                >
-                  <Checkbox
-                    checked={selectedChains.includes(chainId)}
-                    onCheckedChange={(checked) =>
-                      handleChainToggle(chainId, checked as boolean)
-                    }
-                    disabled={loading}
-                  />
-                  <span className="text-sm">{chain.name}</span>
-                </label>
-              ))}
+              .map(([chainId, chain]) => {
+                const isComingSoon = "comingSoon" in chain && chain.comingSoon;
+
+                return (
+                  <label
+                    key={chainId}
+                    className={`flex items-center space-x-2 rounded-sm px-2 py-1.5 hover:bg-accent ${
+                      isComingSoon ? "opacity-60" : "cursor-pointer"
+                    }`}
+                  >
+                    <Checkbox
+                      checked={selectedChains.includes(chainId)}
+                      onCheckedChange={(checked) =>
+                        handleChainToggle(chainId, checked as boolean)
+                      }
+                      disabled={loading || isComingSoon}
+                    />
+                    <div className="flex items-center space-x-1">
+                      <span className="text-sm">{chain.name}</span>
+                      {isComingSoon && (
+                        <div className="flex items-center text-xs text-muted-foreground space-x-1 ml-1">
+                          <Clock className="h-3 w-3" />
+                          <span>Soon</span>
+                        </div>
+                      )}
+                    </div>
+                  </label>
+                );
+              })}
           </div>
         </ScrollArea>
       </DropdownMenuContent>
