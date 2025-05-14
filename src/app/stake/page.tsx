@@ -417,40 +417,17 @@ export default function Stake() {
           open={!!currentTransactionFlow}
           setOpen={(value) => !value && setCurrentTransactionFlow(undefined)}
           modalContent={
-            stepper === 0 ? (
-              <StakingTransactionForm
-                mode={currentTransactionFlow}
-                assets={assets}
-                stakingPositions={stakingPositions}
-                validators={validators}
-                onNextStep={() => {
-                  setStepper(1);
-                }}
-              />
-            ) : (
-              <>
-                {addresses && addresses.length > 0 ? (
-                  <WalletSigner
-                    onNextStep={() => {
-                      setCurrentTransactionFlow(undefined);
-                      setTimeout(() => {
-                        setStepper(0);
-                      }, 200);
-                    }}
-                  />
-                ) : (
-                  <ConnectWallet
-                    onNextStep={() => {
-                      setCurrentTransactionFlow(undefined);
-                      setWalletMenuOpen(true);
-                      setTimeout(() => {
-                        setStepper(0);
-                      }, 200);
-                    }}
-                  />
-                )}
-              </>
-            )
+            <StakingTransactionForm
+              mode={currentTransactionFlow}
+              assets={assets}
+              stakingPositions={stakingPositions}
+              validators={validators}
+              onNextStep={() => {
+                // Close the modal and reset the transaction flow when complete
+                setCurrentTransactionFlow(undefined);
+                setStepper(0);
+              }}
+            />
           }
         />
       )}
