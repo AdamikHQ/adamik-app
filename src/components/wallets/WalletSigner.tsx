@@ -6,14 +6,13 @@ import { Tooltip } from "~/components/ui/tooltip";
 import { toast } from "~/components/ui/use-toast";
 import { useTransaction } from "~/hooks/useTransaction";
 import { useWallet } from "~/hooks/useWallet";
-import { BroadcastModal } from "./BroadcastModal";
 import { WalletName } from "./types";
 import { Modal } from "~/components/ui/modal";
 import { SodotConnect } from "./SodotConnect";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ConnectWallet } from "../../app/portfolio/ConnectWallet";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
   const {
@@ -26,16 +25,6 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
   } = useTransaction();
   const { addresses: accounts, isShowroom, setWalletMenuOpen } = useWallet();
   const router = useRouter();
-
-  // Use local state to safely track signature status
-  const [hasSignature, setHasSignature] = useState(false);
-
-  // Use effect to update signature state from transaction
-  useEffect(() => {
-    if (transaction?.signature) {
-      setHasSignature(true);
-    }
-  }, [transaction]);
 
   const signer = accounts.find(
     (account) =>
@@ -82,7 +71,6 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
     setChainId(undefined);
     setTransaction(undefined);
     setTransactionHash(undefined);
-    setHasSignature(false);
   };
 
   if (transactionHash) {
@@ -136,11 +124,6 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
     );
   }
 
-  // Use the local state to determine if we show the broadcast modal
-  if (hasSignature) {
-    return <BroadcastModal onNextStep={onNextStep} />;
-  }
-
   if (isShowroom) {
     return (
       <ConnectWallet
@@ -153,16 +136,6 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
   }
 
   return (
-    <div>
-      <h1 className="font-extrabold text-2xl text-center mb-4">
-        Sign with Sodot Wallet
-      </h1>
-      <div className="mb-8 text-center">
-        Please verify your transaction before approving
-      </div>
-      <div className="flex flex-row gap-4 justify-center">
-        {getSignerComponent()}
-      </div>
-    </div>
+    <div className="p-4 flex flex-col items-center">{getSignerComponent()}</div>
   );
 };
