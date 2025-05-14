@@ -184,8 +184,10 @@ export default async function handler(
         }
       } else {
         // For Ed25519, just provide the message directly
-        console.log(`Using raw Ed25519 message`);
+        // Do NOT include hash_algo for Ed25519
+        console.log(`Using raw Ed25519 message (no hash_algo parameter)`);
         requestBody.msg = messageToSign;
+        // Intentionally not setting hash_algo for Ed25519
       }
 
       console.log(
@@ -217,13 +219,22 @@ export default async function handler(
     // Format the signature based on chain/curve
     let formattedSignature;
     if ("signature" in signature) {
+      // For Ed25519 signatures
       formattedSignature = signature.signature;
     } else if ("r" in signature && "s" in signature) {
       // For ECDSA signatures
       if (chainConfig.signerSpec.signatureFormat === "der") {
         formattedSignature = signature.der;
-      } else {
+      } else if (chainConfig.signerSpec.signatureFormat === "rsv") {
         // RSV format for Ethereum
+        formattedSignature = `${signature.r}${
+          signature.s
+        }${signature.v.toString(16)}`;
+      } else if (chainConfig.signerSpec.signatureFormat === "rs") {
+        // RS format (no recovery value)
+        formattedSignature = `${signature.r}${signature.s}`;
+      } else {
+        // Default format
         formattedSignature = `${signature.r}${
           signature.s
         }${signature.v.toString(16)}`;
