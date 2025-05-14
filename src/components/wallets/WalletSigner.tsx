@@ -13,6 +13,7 @@ import { SodotConnect } from "./SodotConnect";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ConnectWallet } from "../../app/portfolio/ConnectWallet";
+import { useEffect, useState } from "react";
 
 export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
   const {
@@ -25,6 +26,16 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
   } = useTransaction();
   const { addresses: accounts, isShowroom, setWalletMenuOpen } = useWallet();
   const router = useRouter();
+
+  // Use local state to safely track signature status
+  const [hasSignature, setHasSignature] = useState(false);
+
+  // Use effect to update signature state from transaction
+  useEffect(() => {
+    if (transaction?.signature) {
+      setHasSignature(true);
+    }
+  }, [transaction]);
 
   const signer = accounts.find(
     (account) =>
@@ -71,6 +82,7 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
     setChainId(undefined);
     setTransaction(undefined);
     setTransactionHash(undefined);
+    setHasSignature(false);
   };
 
   if (transactionHash) {
@@ -124,7 +136,8 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
     );
   }
 
-  if (transaction?.signature) {
+  // Use the local state to determine if we show the broadcast modal
+  if (hasSignature) {
     return <BroadcastModal onNextStep={onNextStep} />;
   }
 
