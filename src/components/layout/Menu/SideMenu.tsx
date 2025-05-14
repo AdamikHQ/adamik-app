@@ -16,17 +16,25 @@ type SideMenuProps = {
 
 export const SideMenu: React.FC<SideMenuProps> = ({ menu, currentTheme }) => {
   const path = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  // Use useEffect to handle client-side rendering
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const logoColor = mounted
+    ? currentTheme === "light"
+      ? "#000"
+      : "#fff"
+    : "#000";
 
   return (
     <aside className="hidden border-r bg-muted/40 md:block">
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center justify-between border-b px-4 lg:h-[60px] lg:px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold">
-            <AdamikLogo
-              width="152"
-              height="32"
-              color={currentTheme === "light" ? "#000" : "#fff"}
-            />
+            <AdamikLogo width="152" height="32" color={logoColor} />
             <span className="font-bold"></span>
           </Link>
           <ThemeSelector />
