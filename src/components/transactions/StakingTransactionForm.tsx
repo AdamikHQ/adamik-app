@@ -1,8 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronDown } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { ChevronDown, Loader2 } from "lucide-react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "~/components/ui/button";
 import {
@@ -29,6 +29,11 @@ import { ValidatorFormField } from "./fields/ValidatorFormField";
 import { AmountFormField } from "./fields/AmountFormField";
 import { StakingPositionFormField } from "./fields/StakingPositionFormField";
 import { StakingPosition } from "~/app/stake/helpers";
+import { SodotConnect } from "~/components/wallets/SodotConnect";
+import { useWallet } from "~/hooks/useWallet";
+import { useToast } from "~/components/ui/use-toast";
+import { useBroadcastTransaction } from "~/hooks/useBroadcastTransaction";
+import { TransactionSuccessModal } from "./TransactionSuccessModal";
 
 type StakingTransactionProps = {
   mode: TransactionMode;
@@ -48,6 +53,9 @@ export function StakingTransactionForm({
   onNextStep,
 }: StakingTransactionProps) {
   const { mutate, isPending, isSuccess } = useEncodeTransaction();
+  const { addresses: accounts } = useWallet();
+  const { toast } = useToast();
+  const { mutate: broadcastTransaction } = useBroadcastTransaction();
   const form = useForm<TransactionFormInput>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
@@ -60,12 +68,19 @@ export function StakingTransactionForm({
     },
   });
   const [decimals, setDecimals] = useState<number>(0);
-  const { transaction, setChainId, setTransaction, setTransactionHash } =
-    useTransaction();
+  const {
+    chainId,
+    transaction,
+    setChainId,
+    setTransaction,
+    setTransactionHash,
+  } = useTransaction();
   const [errors, setErrors] = useState("");
   const [selectedStakingPosition, setSelectedStakingPosition] = useState<
     StakingPosition | undefined
   >();
+  const [signing, setSigning] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const label = useMemo(() => {
     switch (mode) {
       case TransactionMode.STAKE:
@@ -78,6 +93,14 @@ export function StakingTransactionForm({
         return "Submit";
     }
   }, [mode]);
+
+  // Add debugging effect to monitor transaction and chainId
+  useEffect(() => {
+    console.log("Staking: Transaction or chainId changed:", {
+      transaction: transaction ? { ...transaction } : null,
+      chainId,
+    });
+  }, [transaction, chainId]);
 
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
@@ -178,6 +201,194 @@ export function StakingTransactionForm({
     }
   };
 
+  // Function to handle signing and broadcasting
+  const signAndBroadcast = async () => {
+    if (!transaction) {
+      console.error("No transaction to sign");
+      setErrors("No transaction to sign");
+      return;
+    }
+
+    // Use chainId from context instead of from transaction object
+    if (!chainId) {
+      console.error("Chain ID is undefined in context", {
+        transaction,
+        contextChainId: chainId,
+      });
+      setErrors("Chain ID is undefined. Please try again.");
+      return;
+    }
+
+    console.log("Sign & Broadcast clicked:", {
+      transaction: { ...transaction },
+      transactionChainId: transaction.data?.chainId,
+      contextChainId: chainId,
+    });
+
+    setSigning(true);
+    setErrors("");
+
+    try {
+      // Extract transaction data for signing
+      const transactionEncoded = transaction.encoded;
+
+      let transactionHash: string | undefined;
+      let transactionRaw: string | undefined;
+
+      if (Array.isArray(transactionEncoded) && transactionEncoded.length > 0) {
+        const firstEncoded = transactionEncoded[0];
+        if (firstEncoded && typeof firstEncoded === "object") {
+          if (
+            firstEncoded.hash &&
+            typeof firstEncoded.hash === "object" &&
+            "value" in firstEncoded.hash
+          ) {
+            transactionHash = String(firstEncoded.hash.value);
+          }
+          if (
+            firstEncoded.raw &&
+            typeof firstEncoded.raw === "object" &&
+            "value" in firstEncoded.raw
+          ) {
+            transactionRaw = String(firstEncoded.raw.value);
+          }
+        }
+      } else if (typeof transactionEncoded === "string") {
+        transactionRaw = transactionEncoded;
+      }
+
+      if (!transactionHash && !transactionRaw) {
+        console.warn(
+          "Could not extract hash or raw transaction, using entire payload"
+        );
+        transactionRaw = JSON.stringify(transactionEncoded);
+      }
+
+      console.log("Signing with:", {
+        chainId,
+        hash: transactionHash,
+        rawLength: transactionRaw?.length,
+      });
+
+      // Step 1: Sign the transaction
+      const response = await fetch(`/api/sodot-proxy/${chainId}/sign`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          transaction: transactionRaw,
+          hash: transactionHash,
+          usePrecomputedHash: !!transactionHash,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+      const signature = data.signature;
+
+      console.log("Transaction signed successfully:", !!signature);
+
+      if (!signature) {
+        throw new Error("No signature returned from signing");
+      }
+
+      // Step 2: Create signed transaction object
+      const signedTransaction = {
+        ...transaction,
+        signature: signature,
+      };
+
+      // Update transaction in context
+      setTransaction(signedTransaction);
+
+      // Step 3: Broadcast the transaction
+      console.log("Broadcasting transaction with signature");
+
+      // Ensure chainId is included in the data properly
+      const transactionWithChainId = {
+        ...signedTransaction,
+        data: {
+          ...signedTransaction.data,
+          chainId,
+        },
+      };
+
+      broadcastTransaction(transactionWithChainId, {
+        onSuccess: (response) => {
+          console.log("Broadcast response:", response);
+          if (response.error) {
+            const errorMessage =
+              response.error.status?.errors?.[0]?.message ||
+              "An unknown error occurred";
+            console.error("Broadcast error:", errorMessage);
+            setErrors(errorMessage);
+            toast({
+              variant: "destructive",
+              title: "Broadcast Failed",
+              description: errorMessage,
+            });
+          } else if (response.hash) {
+            console.log("Transaction hash:", response.hash);
+            setTransactionHash(response.hash);
+
+            // Show a toast notification
+            toast({
+              variant: "default",
+              title: "Transaction Successful!",
+              description:
+                "Your transaction has been successfully signed and broadcasted.",
+              duration: 3000,
+            });
+
+            // Show the success modal instead of closing
+            setShowSuccessModal(true);
+          } else {
+            console.error("Unexpected broadcast response:", response);
+            setErrors("Unexpected response from server");
+            toast({
+              variant: "destructive",
+              title: "Broadcast Failed",
+              description: "Unexpected response from server",
+            });
+          }
+          setSigning(false);
+        },
+        onError: (error) => {
+          console.error("Broadcast error:", error);
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "An unknown error occurred";
+          setErrors(errorMessage);
+          toast({
+            variant: "destructive",
+            title: "Broadcast Failed",
+            description: errorMessage,
+          });
+          setSigning(false);
+        },
+      });
+    } catch (err) {
+      console.error("Signing/broadcasting failed:", err);
+      setSigning(false);
+      const errorMessage =
+        err instanceof Error ? err.message : "Transaction failed";
+      setErrors(errorMessage);
+      toast({
+        variant: "destructive",
+        title: "Transaction Failed",
+        description: errorMessage,
+      });
+    }
+  };
+
   if (isPending) {
     return <TransactionLoading />;
   }
@@ -190,25 +401,48 @@ export function StakingTransactionForm({
         </h1>
         <p className="text-center text-sm text-gray-400">
           Adamik has converted your intent into a blockchain transaction. <br />
-          Review your transaction details before signing
+          Review your transaction details before signing. After signing, the
+          transaction will be automatically broadcasted.
         </p>
-        <Button onClick={() => onNextStep()} className="w-full mt-8">
-          Sign your Transaction
-        </Button>
+        <div className="w-full mt-8">
+          <Button
+            className="w-full"
+            disabled={signing}
+            onClick={signAndBroadcast}
+          >
+            {signing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing & Broadcasting...
+              </>
+            ) : (
+              "Sign & Broadcast"
+            )}
+          </Button>
+        </div>
+        {errors && (
+          <div className="text-red-500 w-full break-all mt-4 text-center">
+            {errors}
+          </div>
+        )}
         <Collapsible>
-          <CollapsibleTrigger className="text-sm text-gray-500 text-center mx-auto flex items-center justify-center">
-            <ChevronDown className="mr-2" size={16} />
+          <CollapsibleTrigger className="text-xs text-gray-400 text-center mx-auto flex items-center justify-center mt-4 hover:text-gray-500 transition-colors">
+            <ChevronDown className="mr-1" size={12} />
             Show unsigned transaction
-            <ChevronDown className="ml-2" size={16} />
           </CollapsibleTrigger>
           <CollapsibleContent>
             <Textarea
               readOnly
               value={JSON.stringify(transaction)}
-              className="h-32 text-xs text-gray-500 mt-4"
+              className="h-32 text-xs text-gray-500 mt-2"
             />
           </CollapsibleContent>
         </Collapsible>
+        <TransactionSuccessModal
+          open={showSuccessModal}
+          setOpen={setShowSuccessModal}
+          onClose={onNextStep}
+        />
       </>
     );
   }

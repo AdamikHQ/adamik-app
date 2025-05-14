@@ -10,16 +10,23 @@ import { encodePubKeyToAddress } from "~/api/adamik/encode";
 import { Card } from "~/components/ui/card";
 import { defaultChain, getPreferredChains } from "~/config/wallet-chains";
 import { useTransaction } from "~/hooks/useTransaction";
+import { useBroadcastTransaction } from "~/hooks/useBroadcastTransaction";
 
 // Removed DEFAULT_CHAINS constant as it's now in the config file
 
-export const SodotConnect: React.FC<WalletConnectorProps> = ({
+// Update the component props to include an optional onClick handler
+type SodotConnectProps = WalletConnectorProps & {
+  buttonClassName?: string;
+};
+
+export const SodotConnect: React.FC<SodotConnectProps> = ({
   chainId: providedChainId,
   transactionPayload,
+  buttonClassName,
 }) => {
   const { toast } = useToast();
   const { addAddresses } = useWallet();
-  const { setTransaction } = useTransaction();
+  const { setTransaction, setTransactionHash } = useTransaction();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedChainId, setSelectedChainId] = useState<string>(
@@ -27,6 +34,7 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
   );
   const [autoConnectInProgress, setAutoConnectInProgress] = useState(false);
   const { data: chains, isLoading: chainsLoading } = useChains();
+  const { mutate: broadcastTransaction } = useBroadcastTransaction();
 
   // Set initial chain when data is loaded
   useEffect(() => {
@@ -148,6 +156,60 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
     getAddresses,
   ]);
 
+  const autoBroadcastTransaction = useCallback(
+    (signedTransaction: any, chainId: string) => {
+      // FIXME Hack to merge chainId into transaction, but it doesn't belong
+      // chainId should be removed from the TransactionData type, to match the API
+      const transactionWithChainId = {
+        ...signedTransaction,
+        data: {
+          ...signedTransaction.data,
+          chainId,
+        },
+      };
+
+      broadcastTransaction(transactionWithChainId, {
+        onSuccess: (response) => {
+          if (response.error) {
+            const errorMessage =
+              response.error.status.errors[0]?.message ||
+              "An unknown error occurred";
+            toast({
+              variant: "destructive",
+              title: "Broadcast Failed",
+              description: errorMessage,
+            });
+          } else if (response.hash) {
+            setTransactionHash(response.hash);
+            toast({
+              description:
+                "Transaction has been successfully signed and broadcasted. Your balance will be updated in a few moments",
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Broadcast Failed",
+              description: "Unexpected response from server",
+            });
+          }
+        },
+        onError: (error) => {
+          console.error("Broadcast error:", error);
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "An unknown error occurred";
+          toast({
+            variant: "destructive",
+            title: "Broadcast Failed",
+            description: errorMessage,
+          });
+        },
+      });
+    },
+    [broadcastTransaction, setTransactionHash, toast]
+  );
+
   const sign = useCallback(async () => {
     if (!transactionPayload || !chains || !providedChainId) return;
 
@@ -236,6 +298,9 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
           // Update the transaction in the global context
           setTransaction(signedTransaction);
           console.log("Updated transaction with signature:", signedTransaction);
+
+          // Automatically broadcast the transaction
+          autoBroadcastTransaction(signedTransaction, providedChainId);
         }, 0);
       }
 
@@ -251,7 +316,14 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [providedChainId, transactionPayload, toast, chains, setTransaction]);
+  }, [
+    providedChainId,
+    transactionPayload,
+    toast,
+    chains,
+    setTransaction,
+    autoBroadcastTransaction,
+  ]);
 
   if (error) {
     return (
@@ -274,7 +346,7 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
   if (providedChainId || transactionPayload) {
     return (
       <Button
-        className="w-full"
+        className={buttonClassName || "w-full"}
         onClick={transactionPayload ? () => sign() : () => getAddresses()}
         disabled={loading}
       >
@@ -284,7 +356,7 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
             {transactionPayload ? "Signing..." : "Connecting..."}
           </>
         ) : transactionPayload ? (
-          "Sign Transaction"
+          "Sign & Broadcast"
         ) : (
           "Connect Sodot Wallet"
         )}

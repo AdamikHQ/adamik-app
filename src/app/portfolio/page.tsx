@@ -8,7 +8,6 @@ import { Modal } from "~/components/ui/modal";
 import { Tooltip } from "~/components/ui/tooltip";
 import { useToast } from "~/components/ui/use-toast";
 import { WalletSelection } from "~/components/wallets/WalletSelection";
-import { WalletSigner } from "~/components/wallets/WalletSigner";
 import {
   clearAccountStateCache,
   isInAccountStateBatchCache,
@@ -78,7 +77,6 @@ export default function Portfolio() {
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
   const [openTransaction, setOpenTransaction] = useState(false);
   const [hideLowBalance, setHideLowBalance] = useState(false);
-  const [stepper, setStepper] = useState(0);
 
   // Use the hideLowBalances setting from localStorage
   useEffect(() => {
@@ -626,39 +624,14 @@ export default function Portfolio() {
         open={openTransaction}
         setOpen={setOpenTransaction}
         modalContent={
-          // Probably need to rework
-          stepper === 0 ? (
-            <TransferTransactionForm
-              // FIXME non-filtered assets should be used here
-              assets={assets}
-              onNextStep={() => {
-                setStepper(1);
-              }}
-            />
-          ) : (
-            <>
-              {walletAddresses && walletAddresses.length > 0 ? (
-                <WalletSigner
-                  onNextStep={() => {
-                    setOpenTransaction(false);
-                    setTimeout(() => {
-                      setStepper(0);
-                    }, 200);
-                  }}
-                />
-              ) : (
-                <ConnectWallet
-                  onNextStep={() => {
-                    setOpenTransaction(false);
-                    setWalletMenuOpen(true);
-                    setTimeout(() => {
-                      setStepper(0);
-                    }, 200);
-                  }}
-                />
-              )}
-            </>
-          )
+          <TransferTransactionForm
+            // FIXME non-filtered assets should be used here
+            assets={assets}
+            onNextStep={() => {
+              // After transaction is signed and broadcasted, just close the modal
+              setOpenTransaction(false);
+            }}
+          />
         }
       />
     </main>
