@@ -17,7 +17,7 @@ export default async function handler(
 
     // Extract chain from URL and transaction from body
     const { chain } = req.query;
-    const { transaction } = req.body;
+    const { transaction, hash, usePrecomputedHash } = req.body;
 
     if (!chain || typeof chain !== "string") {
       return res.status(400).json({
@@ -27,11 +27,11 @@ export default async function handler(
       });
     }
 
-    if (!transaction) {
+    if (!transaction && !hash) {
       return res.status(400).json({
         status: 400,
-        error: "Missing transaction",
-        message: "Transaction is required in the request body",
+        error: "Missing transaction data",
+        message: "Either transaction or hash is required in the request body",
       });
     }
 
@@ -62,6 +62,24 @@ export default async function handler(
     // Get curve type from signerSpec
     const curveType =
       chainConfig.signerSpec.curve === "secp256k1" ? "ecdsa" : "ed25519";
+
+    // Determine what to sign based on curve type and available data
+    let messageToSign;
+
+    if (curveType === "ecdsa" && usePrecomputedHash && hash) {
+      // For ECDSA, use the pre-computed hash if available
+      console.log("Using pre-computed hash for ECDSA signing");
+      messageToSign = hash;
+    } else {
+      // Otherwise, use the raw transaction
+      console.log(`Using raw transaction for ${curveType} signing`);
+      messageToSign = transaction;
+    }
+
+    // Format as needed (removing 0x prefix if present)
+    if (typeof messageToSign === "string" && messageToSign.startsWith("0x")) {
+      messageToSign = messageToSign.substring(2);
+    }
 
     // Get key IDs for this chain's curve
     let keyIdsStr: string | undefined;
@@ -119,12 +137,6 @@ export default async function handler(
     const roomData = await createRoomResponse.json();
     const roomUuid = roomData.room_uuid;
 
-    // Ensure the transaction is properly formatted
-    let formattedTransaction = transaction;
-    if (formattedTransaction.startsWith("0x")) {
-      formattedTransaction = formattedTransaction.substring(2);
-    }
-
     // Step 2: Sign the transaction with each vertex
     const signPromises = keyIds.map(async (keyId: string, index: number) => {
       // Get the vertex URL and API key
@@ -146,18 +158,48 @@ export default async function handler(
         throw new Error(`Missing configuration for vertex ${index}`);
       }
 
+      // Customize the request body based on the curve type and if we're using a pre-computed hash
+      const requestBody: any = {
+        room_uuid: roomUuid,
+        key_id: keyId,
+        derivation_path: derivationPath,
+      };
+
+      // Different approach based on curve type
+      if (curveType === "ecdsa") {
+        if (usePrecomputedHash && hash) {
+          // For ECDSA with pre-computed hash:
+          // - Use "none" for hash_algo to indicate no additional hashing
+          // - Provide the hash in the msg parameter
+          console.log(
+            `Using pre-computed hash with hash_algo=none: ${messageToSign}`
+          );
+          requestBody.msg = messageToSign;
+          requestBody.hash_algo = "none"; // Tell the API not to hash again
+        } else {
+          // If no pre-computed hash, let Sodot hash the message with keccak256
+          console.log(`Using raw ECDSA message with hash_algo=keccak256`);
+          requestBody.msg = messageToSign;
+          requestBody.hash_algo = "keccak256"; // For Ethereum transactions
+        }
+      } else {
+        // For Ed25519, just provide the message directly
+        console.log(`Using raw Ed25519 message`);
+        requestBody.msg = messageToSign;
+      }
+
+      console.log(
+        `Sending request to ${vertexUrl}/${curveType}/sign:`,
+        JSON.stringify(requestBody)
+      );
+
       const response = await fetch(`${vertexUrl}/${curveType}/sign`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: apiKey,
         },
-        body: JSON.stringify({
-          room_uuid: roomUuid,
-          key_id: keyId,
-          msg: formattedTransaction,
-          derivation_path: derivationPath,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -196,6 +238,8 @@ export default async function handler(
       signature: formattedSignature,
       chainId: chain,
       curve: curveType,
+      usedPrecomputedHash:
+        curveType === "ecdsa" && usePrecomputedHash && !!hash,
     });
   } catch (error: any) {
     console.error(`Error signing transaction:`, error);

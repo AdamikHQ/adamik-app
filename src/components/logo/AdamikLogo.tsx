@@ -37,7 +37,7 @@ const AdamikLogo = ({
     </g>
     <defs>
       <clipPath id="a">
-        <path fill={color} d="M0 0h479.87v99.11H0z" />
+        <path fill="#000" d="M0 0h479.87v99.11H0z" />
       </clipPath>
     </defs>
   </svg>

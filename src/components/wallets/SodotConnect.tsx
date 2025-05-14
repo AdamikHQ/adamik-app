@@ -9,6 +9,7 @@ import { useChains } from "~/hooks/useChains";
 import { encodePubKeyToAddress } from "~/api/adamik/encode";
 import { Card } from "~/components/ui/card";
 import { defaultChain, getPreferredChains } from "~/config/wallet-chains";
+import { useTransaction } from "~/hooks/useTransaction";
 
 // Removed DEFAULT_CHAINS constant as it's now in the config file
 
@@ -18,6 +19,7 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
 }) => {
   const { toast } = useToast();
   const { addAddresses } = useWallet();
+  const { setTransaction } = useTransaction();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedChainId, setSelectedChainId] = useState<string>(
@@ -152,6 +154,50 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
     setLoading(true);
 
     try {
+      // Extract transaction data and hash for ECDSA if available
+      const transactionEncoded = transactionPayload.encoded;
+
+      // Get the first encoded format's hash and raw value
+      // Using a safer approach with type checking
+      let transactionHash: string | undefined;
+      let transactionRaw: string | undefined;
+
+      if (Array.isArray(transactionEncoded) && transactionEncoded.length > 0) {
+        // Type guard for the expected structure
+        const firstEncoded = transactionEncoded[0];
+        if (firstEncoded && typeof firstEncoded === "object") {
+          if (
+            firstEncoded.hash &&
+            typeof firstEncoded.hash === "object" &&
+            "value" in firstEncoded.hash
+          ) {
+            transactionHash = String(firstEncoded.hash.value);
+          }
+          if (
+            firstEncoded.raw &&
+            typeof firstEncoded.raw === "object" &&
+            "value" in firstEncoded.raw
+          ) {
+            transactionRaw = String(firstEncoded.raw.value);
+          }
+        }
+      } else if (typeof transactionEncoded === "string") {
+        // If it's a string, use it as the raw transaction
+        transactionRaw = transactionEncoded;
+      }
+
+      if (!transactionHash && !transactionRaw) {
+        // As a fallback, just use the entire encoded payload
+        console.warn(
+          "Could not extract hash or raw transaction, using entire payload"
+        );
+        transactionRaw = JSON.stringify(transactionEncoded);
+      }
+
+      // Determine if we should use the pre-computed hash
+      // We'll let the server decide based on curve type
+      const usePrecomputedHash = !!transactionHash;
+
       // Call the API to sign the transaction
       const response = await fetch(`/api/sodot-proxy/${providedChainId}/sign`, {
         method: "POST",
@@ -159,7 +205,9 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          transaction: transactionPayload.encoded,
+          transaction: transactionRaw,
+          hash: transactionHash,
+          usePrecomputedHash,
         }),
       });
 
@@ -175,6 +223,20 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
 
       console.log("Transaction signed:", signature);
 
+      // Update the transaction with the signature
+      if (transactionPayload && signature) {
+        // Create a new transaction object with the signature added
+        const signedTransaction = {
+          ...transactionPayload,
+          signature: signature,
+        };
+
+        // Update the transaction in the global context
+        setTransaction(signedTransaction);
+
+        console.log("Updated transaction with signature:", signedTransaction);
+      }
+
       toast({
         description: "Transaction signed successfully",
       });
@@ -187,7 +249,7 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [providedChainId, transactionPayload, toast, chains]);
+  }, [providedChainId, transactionPayload, toast, chains, setTransaction]);
 
   if (error) {
     return (
