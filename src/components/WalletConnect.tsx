@@ -20,7 +20,7 @@ export function WalletConnect() {
   const hasConnectedWallets = addresses.length > 0;
 
   return (
-    <div className="flex items-center gap-2 p-2 rounded-lg bg-black/90 shadow-lg border border-gray-800">
+    <div className="flex items-center gap-2 p-2 rounded-lg bg-card shadow-lg border border-border">
       {/* Chain Selection */}
       <MultiChainConnect
         size="sm"
@@ -29,7 +29,7 @@ export function WalletConnect() {
       />
 
       {/* Demo Mode Toggle */}
-      <div className="flex items-center px-3 h-9 rounded-md border border-gray-700 bg-black/80 text-white text-sm">
+      <div className="flex items-center px-3 h-9 rounded-md border border-border bg-card text-card-foreground text-sm">
         <Label htmlFor="demo-mode" className="text-xs font-medium mr-2">
           Wallet
         </Label>

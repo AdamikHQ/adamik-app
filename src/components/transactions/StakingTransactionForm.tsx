@@ -196,7 +196,7 @@ export function StakingTransactionForm({
           Sign your Transaction
         </Button>
         <Collapsible>
-          <CollapsibleTrigger className="text-sm text-gray-500 text-center mx-auto block flex items-center justify-center">
+          <CollapsibleTrigger className="text-sm text-gray-500 text-center mx-auto flex items-center justify-center">
             <ChevronDown className="mr-2" size={16} />
             Show unsigned transaction
             <ChevronDown className="ml-2" size={16} />

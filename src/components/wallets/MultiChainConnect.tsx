@@ -487,7 +487,7 @@ export const MultiChainConnect: React.FC<{
 
       {isSelectionOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="w-full max-w-md p-6 bg-background rounded-lg shadow-lg">
+          <div className="w-full max-w-md p-6 bg-card rounded-lg shadow-lg border border-border">
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold">Select Chains</h2>

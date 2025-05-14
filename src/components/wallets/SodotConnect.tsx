@@ -231,10 +231,12 @@ export const SodotConnect: React.FC<WalletConnectorProps> = ({
           signature: signature,
         };
 
-        // Update the transaction in the global context
-        setTransaction(signedTransaction);
-
-        console.log("Updated transaction with signature:", signedTransaction);
+        // Use setTimeout to break the render cycle and prevent infinite updates
+        setTimeout(() => {
+          // Update the transaction in the global context
+          setTransaction(signedTransaction);
+          console.log("Updated transaction with signature:", signedTransaction);
+        }, 0);
       }
 
       toast({
