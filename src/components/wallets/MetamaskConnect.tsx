@@ -105,9 +105,17 @@ export const MetamaskConnect: React.FC<WalletConnectorProps> = ({
         throw switchError;
       }
 
+      const toSign = transactionPayload.encoded.find(
+        (encoded) => encoded.raw?.format === "WALLET_CONNECT"
+      );
+
+      if (!toSign || !toSign.raw?.value) {
+        throw new Error("No transaction to sign found");
+      }
+
       const txHash = await provider.request({
         method: "eth_sendTransaction",
-        params: [JSON.parse(transactionPayload.encoded)],
+        params: [JSON.parse(toSign.raw?.value)],
       });
 
       if (typeof txHash === "string") {
