@@ -2,17 +2,17 @@
 
 import {
   HandCoins,
-  PieChart,
-  SquareStack,
-  Search,
   History,
+  PieChart,
+  Search,
+  Settings,
   Wallet,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+import { WelcomeModal } from "../WelcomeModal";
 import { MobileMenu } from "./MobileMenu";
 import { SideMenu } from "./SideMenu";
-import { WelcomeModal } from "../WelcomeModal";
-import { useEffect, useState } from "react";
 
 const menu = [
   {
@@ -41,9 +41,9 @@ const menu = [
     href: "/starknet-wallet",
   },
   {
-    title: "Supported chains",
-    icon: SquareStack,
-    href: "/supported-chains",
+    title: "Settings",
+    icon: Settings,
+    href: "/settings",
   },
 ];
 

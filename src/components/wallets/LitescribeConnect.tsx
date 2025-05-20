@@ -54,9 +54,14 @@ export const LitescribeConnect: React.FC<WalletConnectorProps> = ({
     }
 
     try {
-      const signature = await window.litescribe.signPsbt(
-        transactionPayload.encoded
+      const toSign = transactionPayload.encoded.find(
+        (encoded) => encoded.raw?.format === "PSBT"
       );
+
+      if (!toSign || !toSign.raw?.value) {
+        throw new Error("No transaction to sign found");
+      }
+      const signature = await window.litescribe.signPsbt(toSign.raw?.value);
 
       transaction && setTransaction({ ...transaction, signature });
     } catch (err) {
