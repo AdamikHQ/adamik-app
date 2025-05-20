@@ -50,9 +50,14 @@ export const UniSatConnect: React.FC<WalletConnectorProps> = ({
 
     try {
       // TODO: support multiple chains (LTC, DOGE...etc)
-      const signature = await window.unisat.signPsbt(
-        transactionPayload.encoded
+      const toSign = transactionPayload.encoded.find(
+        (encoded) => encoded.raw?.format === "PSBT"
       );
+
+      if (!toSign || !toSign.raw?.value) {
+        throw new Error("No transaction to sign found");
+      }
+      const signature = await window.unisat.signPsbt(toSign.raw?.value);
 
       transaction && setTransaction({ ...transaction, signature });
     } catch (err) {

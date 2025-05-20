@@ -45,6 +45,7 @@ import {
 } from "~/utils/types";
 import { useToast } from "~/components/ui/use-toast";
 import { getTokenInfo } from "~/api/adamik/token";
+import { isSelfTransfer } from "~/utils/helper";
 
 hljs.registerLanguage("json", json);
 
@@ -242,12 +243,23 @@ function DataContent() {
       return "N/A";
     };
 
+    // Check if this is a self-transfer
+    const selfTransfer = isSelfTransfer(transaction);
+
     return (
       <div className="flex flex-col gap-6">
         {" "}
         {/* Add gap-6 for more vertical spacing */}
         <DataItem label="ID" value={id} />
-        <DataItem label="Type" value={mode} />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-1">
+          <dt className="text-muted-foreground text-sm">Type</dt>
+          <dd className="font-medium text-sm sm:text-base break-all">
+            {mode}
+            {selfTransfer && (
+              <span className="text-xs text-muted-foreground ml-2">(self)</span>
+            )}
+          </dd>
+        </div>
         <DataItem label="State" value={state} />
         <DataItem label="Block height" value={blockHeight} />
         <DataItem

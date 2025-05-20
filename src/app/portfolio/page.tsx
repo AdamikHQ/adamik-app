@@ -1,7 +1,7 @@
 "use client";
 
 import { Info } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { LoadingModal } from "~/components/layout/LoadingModal";
 import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { TransferTransactionForm } from "~/components/transactions/TransferTransactionForm";
@@ -20,6 +20,7 @@ import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { useWallet } from "~/hooks/useWallet";
 import { showroomAddresses } from "../../utils/showroomAddresses";
+import { getLocalStorageItem, setLocalStorageItem } from "~/utils/localStorage";
 import {
   aggregateStakingBalances,
   getAddressStakingPositions,
@@ -65,8 +66,21 @@ export default function Portfolio() {
     useAccountStateBatch(displayAddresses);
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
   const [openTransaction, setOpenTransaction] = useState(false);
-  const [hideLowBalance, setHideLowBalance] = useState(true);
   const [stepper, setStepper] = useState(0);
+
+  // State to hold the setting value
+  const [showLowBalances, setShowLowBalances] = useState<boolean>(true); // Default to true
+
+  // Effect to read from localStorage on mount
+  useEffect(() => {
+    setShowLowBalances(getLocalStorageItem("showLowBalances", true));
+  }, []);
+
+  // Add handler to save preference to localStorage
+  const handleToggleShowLowBalances = (value: boolean) => {
+    setShowLowBalances(value);
+    setLocalStorageItem("showLowBalances", value);
+  };
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
   const tokenTickers = getTokenTickers(addressesData || []);
@@ -130,7 +144,7 @@ export default function Portfolio() {
         },
         mobulaBlockchainDetails
       ),
-      hideLowBalance
+      !showLowBalances // Use the setting value here (negated, as original state was hideLowBalance)
     );
   }, [
     mobulaBlockchainDetails,
@@ -139,7 +153,7 @@ export default function Portfolio() {
     displayAddresses,
     mobulaMarketData,
     mobulaMarketDataContractAddresses,
-    hideLowBalance,
+    showLowBalances, // Add dependency
   ]);
 
   const availableBalance = useMemo(
@@ -202,8 +216,7 @@ export default function Portfolio() {
           assets={assets}
           openTransaction={openTransaction}
           setOpenTransaction={setOpenTransaction}
-          hideLowBalance={hideLowBalance}
-          setHideLowBalance={setHideLowBalance}
+          hideLowBalance={!showLowBalances} // Pass the setting value (negated)
           refreshPositions={refreshPositions}
         />
 
@@ -211,8 +224,7 @@ export default function Portfolio() {
           isLoading={isLoading}
           assets={assets}
           totalBalance={totalBalance}
-          hideLowBalance={hideLowBalance}
-          setHideLowBalance={setHideLowBalance}
+          hideLowBalance={!showLowBalances} // Pass the setting value (negated)
           stakingPositions={stakingPositions}
         />
       </div>

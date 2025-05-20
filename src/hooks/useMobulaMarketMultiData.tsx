@@ -22,7 +22,6 @@ const SPECIAL_CASES: Record<
   { queryParam: string; type: "assets" | "symbols" }
 > = {
   LIKE: { queryParam: "likecoin", type: "assets" },
-  DYDX: { queryParam: "dydx", type: "assets" },
   LUM: { queryParam: "Lum Network", type: "assets" },
 };
 

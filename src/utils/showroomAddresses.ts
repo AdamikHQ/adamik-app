@@ -21,6 +21,10 @@ export const showroomAddresses = [
     chainId: "arbitrum",
     address: "0xc674f77b81d8B37C72Bbe33e681412cd500D860A",
   },
+  {
+    chainId: "optimism",
+    address: "0x6450685AE9C904b7D258A897adc1fa0736dBf5Ab",
+  },
   // COSMOS
   // TODO Add pubKey for each address
   {

@@ -75,14 +75,12 @@ export const AssetsBreakdown: React.FC<{
   stakingPositions?: StakingPosition[];
   totalBalance: number;
   hideLowBalance: boolean;
-  setHideLowBalance: (value: boolean) => void;
 }> = ({
   isLoading,
   assets,
   totalBalance,
   hideLowBalance,
   stakingPositions = [],
-  setHideLowBalance,
 }) => {
   const filteredAggregatedAssets = useMemo(() => {
     // FIXME Replace with Object.groupBy() when Node.js 21 becomes supported by Vercel
@@ -153,23 +151,6 @@ export const AssetsBreakdown: React.FC<{
                     />
                   );
                 })}
-              <div className="items-top flex space-x-2">
-                <Checkbox
-                  id="hideBalanceAssetsBreakdown"
-                  checked={hideLowBalance}
-                  onClick={() => {
-                    setHideLowBalance(!hideLowBalance);
-                  }}
-                />
-                <div className="grid gap-1.5 leading-none">
-                  <label
-                    htmlFor="hideBalanceAssetsBreakdown"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {`Hide chains with low balances (< 1$)`}
-                  </label>
-                </div>
-              </div>
             </>
           ) : (
             <Loader2 className="animate-spin" />
