@@ -1,14 +1,13 @@
 "use client";
 
-import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
-import { ConnectStarknetkitModal } from "./ConnectStarknetkitModal";
+import { useLedgerContext } from "~/providers/LedgerProvider";
+import { LedgerConnect } from "./LedgerConnect";
 
 export const ConnectStarknet = () => {
-  const { isConnected } = useAccount();
-  const { connectors } = useConnect();
-  const { disconnect } = useDisconnect();
+  const { isConnected: isLedgerConnected, disconnect: disconnectLedger } =
+    useLedgerContext();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -21,16 +20,18 @@ export const ConnectStarknet = () => {
 
   return (
     <div className="flex flex-col gap-3">
-      {isConnected ? (
+      {isLedgerConnected ? (
         <Button
           className="w-full"
           variant="outline"
-          onClick={() => disconnect()}
+          onClick={() => disconnectLedger()}
         >
           Disconnect
         </Button>
       ) : (
-        <ConnectStarknetkitModal />
+        <>
+          <LedgerConnect />
+        </>
       )}
     </div>
   );

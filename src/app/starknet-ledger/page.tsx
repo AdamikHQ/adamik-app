@@ -1,37 +1,42 @@
 "use client";
 
-import { useAccount } from "@starknet-react/core";
 import { useEffect, useMemo, useState } from "react";
 import { MobulaMarketMultiDataResponse } from "~/api/mobula/marketMultiData";
 import {
   getTokenContractAddresses,
   getTokenTickers,
 } from "~/app/portfolio/helpers";
+import { DeployAccountTransactionForm } from "~/components/transactions/DeployAccountTransactionForm";
 import { TransferTransactionForm } from "~/components/transactions/TransferTransactionForm";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Modal } from "~/components/ui/modal";
-import { WalletSigner } from "~/components/wallets/WalletSigner";
 import { useAccountHistory } from "~/hooks/useAccountHistory";
 import { useAccountStateBatch } from "~/hooks/useAccountStateBatch";
 import { useChains } from "~/hooks/useChains";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
-import { useWallet } from "~/hooks/useWallet";
+import { LedgerProvider, useLedgerContext } from "~/providers/LedgerProvider";
 import { formatAssetAmount } from "~/utils/assetFormatters";
 import { amountToMainUnit, resolveLogo } from "~/utils/helper";
-import { type Asset, Chain, TokenAmount, TransactionFees } from "~/utils/types";
+import {
+  type Asset,
+  Chain,
+  TokenAmount,
+  TransactionFees,
+  TransactionMode,
+} from "~/utils/types";
 import { AccountInfo } from "./components/AccountInfo";
 import { ConnectStarknet } from "./components/ConnectStarknet";
+import { LedgerWalletSigner } from "./components/LedgerWalletSigner";
 import { StarkNetAssets } from "./components/StarkNetAssets";
 import { StarkNetHistory } from "./components/StarkNetHistory";
-import { StarknetProvider } from "./components/StarknetProvider";
 
 // Define StarkNet chain ID constant
 const STARKNET_CHAIN_ID = "starknet";
 
-// Inner component that uses the StarkNet context and fetches data
+// Inner component that uses the Ledger context and fetches data
 function StarkNetWalletContent() {
-  const { address } = useAccount();
+  const { address, isConnected, publicKey } = useLedgerContext();
   const { data: supportedChains, isLoading: isChainsLoading } = useChains();
 
   // Fetch Account State
@@ -41,7 +46,7 @@ function StarkNetWalletContent() {
   const {
     data: addressesData,
     isLoading: isAddressesLoading,
-    error: addressesError, // Separate error for account state
+    error: addressesError,
   } = useAccountStateBatch(accountStateParams);
 
   // Fetch History
@@ -49,7 +54,7 @@ function StarkNetWalletContent() {
     data: historyData,
     isLoading: isHistoryLoading,
     error: historyError,
-  } = useAccountHistory(STARKNET_CHAIN_ID, address);
+  } = useAccountHistory(STARKNET_CHAIN_ID, address || undefined);
 
   // Get StarkNet Chain Details
   const starknetChain = useMemo(() => {
@@ -63,7 +68,7 @@ function StarkNetWalletContent() {
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
 
   // Extract necessary data for Mobula queries - only when account data is loaded
-  const accountStateData = addressesData?.[0]; // Assuming only one address for StarkNet
+  const accountStateData = addressesData?.[0];
 
   const nativeTicker = starknetChain?.ticker;
   const nativeDecimals = starknetChain?.decimals;
@@ -109,34 +114,30 @@ function StarkNetWalletContent() {
     }),
     [mobulaMarketDataBySymbol, mobulaMarketDataByAddress]
   );
-  // --- End: Market Data Fetching ---
 
-  // --- Start: Transaction Formatting Logic (similar to /history) ---
+  // --- Start: Transaction Formatting Logic ---
   const [formattedTransactions, setFormattedTransactions] = useState<
     Record<string, { formattedAmount: string; formattedFee: string }>
   >({});
-  const [isFormattingAmounts, setIsFormattingAmounts] = useState(true); // Start as true
+  const [isFormattingAmounts, setIsFormattingAmounts] = useState(true);
 
   useEffect(() => {
-    // Wait for necessary data
     if (
       !starknetChain ||
       !historyData?.transactions ||
       isHistoryLoading ||
       isChainsLoading
     ) {
-      // If still loading dependencies, keep formatting state true or reset if needed
       if (isHistoryLoading || isChainsLoading) setIsFormattingAmounts(true);
       return;
     }
-    // Only run formatting if there are transactions
     if (historyData.transactions.length === 0) {
       setIsFormattingAmounts(false);
       setFormattedTransactions({});
       return;
     }
 
-    setIsFormattingAmounts(true); // Set loading true before starting async formatting
+    setIsFormattingAmounts(true);
     const formatTransactions = async () => {
       const formatted: Record<
         string,
@@ -150,15 +151,13 @@ function StarkNetWalletContent() {
         const { parsed } = tx;
         if (!parsed) continue;
 
-        // Format fee (assuming native)
         const feeResult = await formatAssetAmount({
           asset: { chainId: STARKNET_CHAIN_ID, isToken: false },
-          amount: (parsed.fees as TransactionFees).amount, // Assuming fees is object
+          amount: (parsed.fees as TransactionFees).amount,
           chainData: supportedChains,
           maximumFractionDigits: 6,
         });
 
-        // Format amount based on transaction type
         let amountResult: { formatted: string; ticker: string } | null = null;
         if (
           (parsed.mode === "stake" ||
@@ -200,11 +199,10 @@ function StarkNetWalletContent() {
         };
       }
       setFormattedTransactions(formatted);
-      setIsFormattingAmounts(false); // Set loading false after formatting
+      setIsFormattingAmounts(false);
     };
 
     formatTransactions();
-    // Depend on transactions array content (JSON stringify for deep comparison) and chain data
   }, [
     JSON.stringify(historyData?.transactions),
     starknetChain,
@@ -212,7 +210,6 @@ function StarkNetWalletContent() {
     isHistoryLoading,
     isChainsLoading,
   ]);
-  // --- End: Transaction Formatting Logic ---
 
   // Calculate Assets array needed for Transfer Form
   const assets: Asset[] = useMemo(() => {
@@ -247,7 +244,7 @@ function StarkNetWalletContent() {
       assetsArray.push({
         logo,
         chainId: STARKNET_CHAIN_ID,
-        name: starknetChain.name, // Use chain name
+        name: starknetChain.name,
         balanceMainUnit,
         balanceUSD,
         ticker: nativeTicker,
@@ -278,7 +275,7 @@ function StarkNetWalletContent() {
 
       assetsArray.push({
         logo,
-        mainChainLogo: assetsArray[0]?.logo, // Use native logo as main chain logo
+        mainChainLogo: assetsArray[0]?.logo,
         mainChainName: starknetChain.name,
         chainId: STARKNET_CHAIN_ID,
         assetId: token.id,
@@ -305,15 +302,16 @@ function StarkNetWalletContent() {
 
   // Modal State & Handlers
   const [openTransaction, setOpenTransaction] = useState(false);
+  const [openDeployAccount, setOpenDeployAccount] = useState(false);
   const [stepper, setStepper] = useState(0);
+  const [stepperDeployAccount, setStepperDeployAccount] = useState(0);
 
   // Effect to reset stepper when modal closes
   useEffect(() => {
     if (!openTransaction) {
-      // Add a small delay to allow modal close animation before resetting stepper
       const timer = setTimeout(() => {
         setStepper(0);
-      }, 150); // Adjust delay as needed
+      }, 150);
       return () => clearTimeout(timer);
     }
   }, [openTransaction]);
@@ -337,9 +335,10 @@ function StarkNetWalletContent() {
           mobulaMarketData={combinedMarketData}
           mobulaBlockchainDetails={mobulaBlockchainDetails}
           handleOpenTransaction={() => setOpenTransaction(true)}
+          handleOpenDeployAccount={() => setOpenDeployAccount(true)}
         />
         <StarkNetHistory
-          address={address}
+          address={address || undefined}
           historyData={historyData}
           isLoading={isHistoryLoading}
           error={historyError}
@@ -348,12 +347,15 @@ function StarkNetWalletContent() {
         />
       </div>
 
-      {/* Transfer Modal */}
+      {/* Deploy Account Modal */}
       <Modal
         open={openTransaction}
         setOpen={setOpenTransaction}
         modalContent={
-          stepper === 0 ? (
+          stepper === 0 &&
+          !historyData?.transactions.some(
+            (tx) => tx.parsed?.mode === TransactionMode.DEPLOY_ACCOUNT
+          ) ? (
             <TransferTransactionForm
               assets={assets}
               onNextStep={() => {
@@ -361,9 +363,35 @@ function StarkNetWalletContent() {
               }}
             />
           ) : (
-            <WalletSigner
+            <LedgerWalletSigner
               onNextStep={() => {
                 setOpenTransaction(false);
+              }}
+            />
+          )
+        }
+      />
+
+      {/* Deploy Account Modal */}
+      <Modal
+        open={openDeployAccount}
+        setOpen={setOpenDeployAccount}
+        modalContent={
+          stepper === 0 &&
+          !historyData?.transactions.some(
+            (tx) => tx.parsed?.mode === TransactionMode.DEPLOY_ACCOUNT
+          ) ? (
+            <DeployAccountTransactionForm
+              pubKey={publicKey || ""}
+              chainId={STARKNET_CHAIN_ID}
+              onNextStep={() => {
+                setStepperDeployAccount(1);
+              }}
+            />
+          ) : (
+            <LedgerWalletSigner
+              onNextStep={() => {
+                setOpenDeployAccount(false);
               }}
             />
           )
@@ -375,24 +403,22 @@ function StarkNetWalletContent() {
 
 // Main Page Component
 export default function StarkNetWallet() {
-  const { isShowroom } = useWallet();
-
   return (
     <main className="container mx-auto p-4 flex flex-col gap-6">
-      <h1 className="text-3xl font-bold">StarkNet Wallet Integration</h1>
+      <h1 className="text-3xl font-bold">StarkNet Ledger Integration</h1>
 
-      <StarknetProvider>
+      <LedgerProvider>
         {/* Top Section: Connection and Account Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="flex flex-col">
             <CardHeader>
-              <CardTitle>Connect Wallet</CardTitle>
+              <CardTitle>Connect Ledger</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow">
               <p className="mb-4 text-muted-foreground">
-                The integration uses Argent-Web for connection and signing, the
-                Adamik API will be used for all data retrieval and transaction
-                lifecycle.
+                Connect your Ledger device to manage your StarkNet assets
+                securely. Make sure you have the StarkNet app installed on your
+                Ledger device.
               </p>
               <div className="mt-auto">
                 <ConnectStarknet />
@@ -406,7 +432,7 @@ export default function StarkNetWallet() {
 
         {/* Render the inner component that uses the context */}
         <StarkNetWalletContent />
-      </StarknetProvider>
+      </LedgerProvider>
     </main>
   );
 }

@@ -2,23 +2,25 @@
 
 import { Copy, ExternalLink, Rocket } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useCallback } from "react";
+import { encode } from "starknet";
 import { Button } from "~/components/ui/button";
 import { Modal } from "~/components/ui/modal";
 import { Tooltip } from "~/components/ui/tooltip";
 import { toast } from "~/components/ui/use-toast";
+import { BroadcastModal } from "~/components/wallets/BroadcastModal";
+import { PATH } from "~/hooks/useLedger";
 import { useTransaction } from "~/hooks/useTransaction";
-import { useWallet } from "~/hooks/useWallet";
-import { ConnectWallet } from "../../app/portfolio/ConnectWallet";
-import { BroadcastModal } from "./BroadcastModal";
-import { KeplrConnect } from "./KeplrConnect";
-import { LitescribeConnect } from "./LitescribeConnect";
-import { MetamaskConnect } from "./MetamaskConnect";
-import { PeraConnect } from "./PeraConnect";
-import { WalletName } from "./types";
-import { UniSatConnect } from "./UniSatConnect";
+import { useLedgerContext } from "~/providers/LedgerProvider";
+import { Transaction, TransactionMode } from "~/utils/types";
 
-export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
+export const LedgerWalletSigner = ({
+  onNextStep,
+  mode,
+}: {
+  onNextStep: () => void;
+  mode: TransactionMode;
+}) => {
   const {
     chainId,
     transaction,
@@ -27,44 +29,51 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
     setTransaction,
     setTransactionHash,
   } = useTransaction();
-  const { addresses: accounts, isShowroom, setWalletMenuOpen } = useWallet();
-  const router = useRouter();
+  const { starknetClient } = useLedgerContext();
 
-  const signer = accounts.find(
-    (account) =>
-      account.chainId === chainId &&
-      account.address === transaction?.data.senderAddress
+  const sign = useCallback(
+    async (transactionPayload: Transaction) => {
+      console.log("sign", transactionPayload);
+      console.log("state.starknetClient", starknetClient);
+      if (!starknetClient || !transactionPayload) return;
+
+      let signature;
+      const payload = JSON.parse(
+        transactionPayload.encoded[0].raw?.value || "{}"
+      );
+      if (transactionPayload.data.mode === TransactionMode.DEPLOY_ACCOUNT) {
+        signature = await starknetClient.signDeployAccount(PATH, payload);
+      }
+
+      if (transactionPayload.data.mode === TransactionMode.TRANSFER) {
+        const transferPayload = JSON.parse(
+          transactionPayload.encoded[0].raw?.value || "{}"
+        );
+
+        console.log("transferPayload", transferPayload);
+        signature = await starknetClient.signTx(
+          PATH,
+          transferPayload.calls,
+          transferPayload.details
+        );
+      }
+
+      console.log("signature", signature);
+      const r = Buffer.from(signature.r).toString("hex");
+      const s = Buffer.from(signature.s).toString("hex");
+
+      signature = [signature.r, signature.s].map((bytes) =>
+        encode.addHexPrefix(encode.buf2hex(bytes))
+      );
+
+      setTransaction({
+        ...transactionPayload,
+        signature: signature.join(""),
+      });
+      return signature;
+    },
+    [starknetClient]
   );
-
-  const getSignerComponent = () => {
-    switch (signer?.signer) {
-      case WalletName.KEPLR:
-        return (
-          <KeplrConnect chainId={chainId} transactionPayload={transaction} />
-        );
-      case WalletName.METAMASK:
-        return (
-          <MetamaskConnect chainId={chainId} transactionPayload={transaction} />
-        );
-      case WalletName.PERA:
-        return (
-          <PeraConnect chainId={chainId} transactionPayload={transaction} />
-        );
-      case WalletName.UNISAT:
-        return (
-          <UniSatConnect chainId={chainId} transactionPayload={transaction} />
-        );
-      case WalletName.LITESCRIBE:
-        return (
-          <LitescribeConnect
-            chainId={chainId}
-            transactionPayload={transaction}
-          />
-        );
-      default:
-        return null;
-    }
-  };
 
   const handleCopyToClipboard = () => {
     if (transactionHash) {
@@ -86,22 +95,6 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
           });
         }
       );
-    }
-  };
-
-  const shortenHash = (hash: string) => {
-    return `${hash.slice(0, 6)}...${hash.slice(-6)}`;
-  };
-
-  const handleViewTx = () => {
-    if (transactionHash && chainId) {
-      const url = `/data?chainId=${chainId}&transactionId=${transactionHash}`;
-      router.push(url);
-    } else {
-      console.error("Missing transactionHash or chainId", {
-        transactionHash,
-        chainId,
-      });
     }
   };
 
@@ -167,26 +160,21 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
     return <BroadcastModal onNextStep={onNextStep} />;
   }
 
-  if (isShowroom) {
-    return (
-      <ConnectWallet
-        onNextStep={() => {
-          onNextStep();
-          setWalletMenuOpen(true);
-        }}
-      />
-    );
+  if (!transaction) {
+    return null;
   }
 
   return (
     <div>
-      <h1 className="font-extrabold text-2xl text-center mb-4">
-        Sign with your wallet
-      </h1>
+      <h1 className="font-extrabold text-2xl text-center mb-4">Sign</h1>
       <div className="mb-8 text-center">
         Please verify your transaction before approving
       </div>
-      <div className="flex flex-row gap-4">{getSignerComponent()}</div>
+      <div className="flex flex-row gap-4">
+        <Button variant="outline" onClick={() => sign(transaction)}>
+          Sign with your Nano
+        </Button>
+      </div>
     </div>
   );
 };

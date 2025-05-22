@@ -74,19 +74,20 @@ export enum TransactionMode {
   STAKE = "stake",
   UNSTAKE = "unstake",
   CLAIM_REWARDS = "claimRewards",
+  DEPLOY_ACCOUNT = "deployAccount",
 }
 
 // Plain transaction object without additional metadata.
 export type TransactionData = {
   mode: TransactionMode;
-  senderAddress: string;
+  senderAddress?: string;
   senderPubKey?: string;
   recipientAddress?: string;
   validatorAddress?: string;
   sourceValidatorAddress?: string;
   targetValidatorAddress?: string;
   tokenId?: string;
-  useMaxAmount: boolean;
+  useMaxAmount?: boolean;
   chainId: string;
   amount?: string;
   fees?: string;
@@ -94,6 +95,7 @@ export type TransactionData = {
   nonce?: string;
   format?: string;
   memo?: string;
+  type?: string;
 };
 
 type EncodedTransaction = {
