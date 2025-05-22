@@ -1,23 +1,23 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
-import { Info, Check, ArrowRight, RefreshCw } from "lucide-react";
+import { useWalletClient } from "@cosmos-kit/react-lite";
+import { ArrowRight, Check, Info, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ValidatorSelector } from "~/app/stake/ValidatorSelector";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { Button } from "~/components/ui/button";
 import { Tooltip } from "~/components/ui/tooltip";
-import { Badge } from "~/components/ui/badge";
-import { WalletSelection } from "~/components/wallets/WalletSelection";
 import { useToast } from "~/components/ui/use-toast";
-import { useEncodeTransaction } from "~/hooks/useEncodeTransaction";
-import { TransactionData, TransactionMode, Validator } from "~/utils/types";
-import { amountToSmallestUnit } from "~/utils/helper";
 import { getSignPsbtDefaultOptions, Network } from "~/components/wallets/utils";
+import { WalletSelection } from "~/components/wallets/WalletSelection";
 import { useBroadcastTransaction } from "~/hooks/useBroadcastTransaction";
-import { useWalletClient } from "@cosmos-kit/react-lite";
-import { ValidatorSelector } from "~/app/stake/ValidatorSelector";
+import { useEncodeTransaction } from "~/hooks/useEncodeTransaction";
 import { useValidators } from "~/hooks/useValidators";
+import { amountToSmallestUnit } from "~/utils/helper";
+import { TransactionData, TransactionMode, Validator } from "~/utils/types";
 
 // Define the staking steps
 enum StakingStep {
@@ -623,10 +623,13 @@ export default function BabylonStakingPage() {
       }
 
       // Extract the encoded transaction
-      const encodedTransaction = babylonTransactionData.transaction?.encoded;
+      const encodedTransaction =
+        babylonTransactionData.transaction?.encoded.find(
+          (encoded: any) => encoded.raw?.format === "SIGNDOC_DIRECT_JSON"
+        );
 
-      if (!encodedTransaction) {
-        throw new Error("No encoded transaction found in response");
+      if (!encodedTransaction || !encodedTransaction.raw?.value) {
+        throw new Error("No transaction to sign found");
       }
 
       // Sign the transaction with Keplr client
