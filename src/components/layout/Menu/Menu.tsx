@@ -41,6 +41,11 @@ const menu = [
     href: "/starknet-wallet",
   },
   {
+    title: "StarkNet Ledger",
+    icon: Wallet,
+    href: "/starknet-ledger",
+  },
+  {
     title: "Settings",
     icon: Settings,
     href: "/settings",
