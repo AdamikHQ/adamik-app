@@ -796,7 +796,7 @@ export default function BabylonStakingPage() {
           ...bitcoinTransactionData.transaction.data,
           chainId: bitcoinChainId,
         },
-        encoded: bitcoinTransactionData.transaction.data.params.stakingPsbt,
+        encoded: bitcoinTransactionData.transaction.encoded,
         signature: bitcoinSignedPsbts[0],
       };
 
