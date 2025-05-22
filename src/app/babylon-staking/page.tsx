@@ -636,7 +636,7 @@ export default function BabylonStakingPage() {
       const signResponse = await keplrClient.signDirect?.(
         getBabylonNativeId(babylonChainId),
         formData.babylonAddress,
-        JSON.parse(encodedTransaction),
+        JSON.parse(encodedTransaction?.raw?.value),
         { preferNoSetFee: true, preferNoSetMemo: true } // Tell Keplr not to recompute fees after us
       );
 
