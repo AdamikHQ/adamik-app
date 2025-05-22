@@ -110,10 +110,15 @@ export type TransactionData = {
   signedUnbondingSlashingTransaction?: string;
 };
 
+type EncodedTransaction = {
+  raw?: { format: string; value: string };
+  hash?: { format: string; value: string };
+};
+
 // Full transaction object
 export type Transaction = {
   data: TransactionData;
-  encoded: string;
+  encoded: EncodedTransaction[];
   signature: string;
 };
 

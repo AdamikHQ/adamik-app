@@ -1,11 +1,11 @@
-import algosdk from "algosdk";
 import { PeraWalletConnect } from "@perawallet/connect";
-import { Account, WalletConnectorProps, WalletName } from "./types";
+import algosdk from "algosdk";
 import { useCallback } from "react";
-import { useTransaction } from "~/hooks/useTransaction";
-import { useToast } from "~/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { useToast } from "~/components/ui/use-toast";
+import { useTransaction } from "~/hooks/useTransaction";
 import { useWallet } from "~/hooks/useWallet";
+import { Account, WalletConnectorProps, WalletName } from "./types";
 
 /**
  * Pera:
@@ -73,12 +73,20 @@ export const PeraConnect: React.FC<WalletConnectorProps> = ({
       throw e;
     }
 
+    const toSign = transactionPayload.encoded.find(
+      (encoded) => encoded.raw?.format === "MSGPACK"
+    );
+
+    if (!toSign || !toSign.raw?.value) {
+      throw new Error("No transaction to sign found");
+    }
+
     const signatureBytes = await peraWallet.signTransaction([
       [
         {
           // FIXME: The app shouldn't have to use a chain SDK, we could provide an Adamik SDK instead
           txn: algosdk.decodeUnsignedTransaction(
-            new Uint8Array(Buffer.from(transactionPayload.encoded, "hex"))
+            new Uint8Array(Buffer.from(toSign.raw?.value, "hex"))
           ),
         },
       ],
