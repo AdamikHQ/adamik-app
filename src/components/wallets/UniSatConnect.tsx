@@ -91,15 +91,23 @@ export const UniSatConnect: React.FC<WalletConnectorProps> = ({
       // Switch to the appropriate chain before signing
       await window.unisat.switchChain(unisatChainId);
 
+      const toSign = transactionPayload.encoded.find(
+        (encoded) => encoded.raw?.format === "PSBT"
+      );
+
+      if (!toSign) {
+        throw new Error("No PSBT found in the transaction");
+      }
+
       const unisatParams = getSignPsbtDefaultOptions(
-        transactionPayload.encoded,
+        toSign!.raw!.value,
         transactionPayload.data.senderPubKey!,
         transactionPayload.data.senderAddress,
         chainId === "bitcoin-signet" ? Network.SIGNET : Network.MAINNET
       );
 
       const signature = await window.unisat.signPsbt(
-        transactionPayload.encoded,
+        toSign!.raw!.value,
         unisatParams
       );
 

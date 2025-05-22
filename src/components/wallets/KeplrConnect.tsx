@@ -96,11 +96,19 @@ export const KeplrConnect: React.FC<WalletConnectorProps> = ({
         throw new Error(`${chainId} is not supported by Keplr wallet`);
       }
 
+      const toSign = transactionPayload.encoded.find(
+        (encoded) => encoded.raw?.format === "SIGNDOC_DIRECT_JSON"
+      );
+
+      if (!toSign || !toSign.raw?.value) {
+        throw new Error("No transaction to sign found");
+      }
+
       // const signedTransaction = await client.signAmino?.(
       const signedTransaction = await client.signDirect?.(
         nativeId,
         transactionPayload.data.senderAddress,
-        JSON.parse(transactionPayload.encoded),
+        JSON.parse(toSign.raw?.value),
         { preferNoSetFee: true, preferNoSetMemo: true } // Tell Keplr not to recompute fees after us
       );
 
