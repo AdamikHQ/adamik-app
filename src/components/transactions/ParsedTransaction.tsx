@@ -83,7 +83,7 @@ export function ParsedTransactionComponent({
         </div>
       </div>
 
-      {tx.senders && tx.recipients && (
+      {tx.senders && tx.recipients && tx.senders[0] && tx.recipients[0] && (
         <div className="space-y-2 text-sm">
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
             <span className="text-muted-foreground w-16">From:</span>
@@ -124,7 +124,7 @@ export function ParsedTransactionComponent({
         </div>
       )}
 
-      {tx.validators?.target && (
+      {tx.validators?.target?.address && (
         <div className="space-y-2 text-sm">
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
             <span className="text-muted-foreground w-16">Validator:</span>
