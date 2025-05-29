@@ -201,14 +201,16 @@ export function TransferTransactionForm({
           if (response.error) {
             const errorMessage =
               response.error.status?.errors?.[0]?.message ||
-              "An unknown error occurred";
+              "Transaction broadcast failed";
             console.error("Broadcast error:", errorMessage);
+            // Handle error within onSuccess instead of throwing
             setErrors(errorMessage);
             toast({
               variant: "destructive",
               title: "Broadcast Failed",
               description: errorMessage,
             });
+            setSigning(false);
           } else if (response.hash) {
             console.log("Transaction hash:", response.hash);
             setTransactionHash(response.hash);
@@ -224,6 +226,7 @@ export function TransferTransactionForm({
 
             // Show the success modal instead of closing
             setShowSuccessModal(true);
+            setSigning(false);
           } else {
             console.error("Unexpected broadcast response:", response);
             setErrors("Unexpected response from server");
@@ -232,8 +235,8 @@ export function TransferTransactionForm({
               title: "Broadcast Failed",
               description: "Unexpected response from server",
             });
+            setSigning(false);
           }
-          setSigning(false);
         },
         onError: (error) => {
           console.error("Broadcast error:", error);
