@@ -18,7 +18,12 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { formatAmount, formatAmountUSD } from "~/utils/helper";
+import {
+  formatAmount,
+  formatAmountUSD,
+  getAssetColor,
+  getAssetInitial,
+} from "~/utils/helper";
 
 const AssetsListRow: React.FC<{ asset: Asset }> = ({ asset }) => {
   return (
@@ -26,33 +31,55 @@ const AssetsListRow: React.FC<{ asset: Asset }> = ({ asset }) => {
       <TableRow>
         <TableCell>
           <div>
-            {asset?.logo && (
-              <div className="relative">
-                <Tooltip text={asset.name}>
+            <div className="relative">
+              <Tooltip text={asset.name}>
+                <TooltipTrigger>
+                  <Avatar className="w-[38px] h-[38px]">
+                    {asset?.logo ? (
+                      <>
+                        <AvatarImage src={asset?.logo} alt={asset.name} />
+                        <AvatarFallback
+                          style={{
+                            backgroundColor: getAssetColor(
+                              asset.name || asset.ticker
+                            ),
+                          }}
+                          className="text-white font-semibold"
+                        >
+                          {getAssetInitial(asset.name || asset.ticker)}
+                        </AvatarFallback>
+                      </>
+                    ) : (
+                      <div
+                        className="w-full h-full flex items-center justify-center text-white font-semibold text-lg"
+                        style={{
+                          backgroundColor: getAssetColor(
+                            asset.name || asset.ticker
+                          ),
+                        }}
+                      >
+                        {getAssetInitial(asset.name || asset.ticker)}
+                      </div>
+                    )}
+                  </Avatar>
+                </TooltipTrigger>
+              </Tooltip>
+              {asset.mainChainLogo && (
+                <Tooltip text={asset.mainChainName || asset.chainId}>
                   <TooltipTrigger>
-                    <Avatar className="w-[38px] h-[38px]">
-                      <AvatarImage src={asset?.logo} alt={asset.name} />
-                      <AvatarFallback>{asset.name}</AvatarFallback>
-                    </Avatar>
+                    <div className="absolute w-5 h-5 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-2 end-2">
+                      <Avatar className="h-4 w-4">
+                        <AvatarImage
+                          src={asset.mainChainLogo}
+                          alt={asset.chainId}
+                        />
+                        <AvatarFallback>{asset.chainId}</AvatarFallback>
+                      </Avatar>
+                    </div>
                   </TooltipTrigger>
                 </Tooltip>
-                {asset.mainChainLogo && (
-                  <Tooltip text={asset.mainChainName || asset.chainId}>
-                    <TooltipTrigger>
-                      <div className="absolute w-5 h-5 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-2 end-2">
-                        <Avatar className="h-4 w-4">
-                          <AvatarImage
-                            src={asset.mainChainLogo}
-                            alt={asset.chainId}
-                          />
-                          <AvatarFallback>{asset.chainId}</AvatarFallback>
-                        </Avatar>
-                      </div>
-                    </TooltipTrigger>
-                  </Tooltip>
-                )}
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </TableCell>
 

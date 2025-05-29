@@ -43,6 +43,7 @@ export default function SettingsPage() {
   } = useFilteredChains();
   const [showTestnets, setShowTestnets] = useState(false);
   const [hideLowBalances, setHideLowBalances] = useState(false);
+  const [showAssetsWithoutIcons, setShowAssetsWithoutIcons] = useState(false);
   const [isModified, setIsModified] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
 
@@ -59,8 +60,11 @@ export default function SettingsPage() {
       if (typeof parsedState.hideLowBalances === "boolean") {
         setHideLowBalances(parsedState.hideLowBalances);
       }
+      if (typeof parsedState.showAssetsWithoutIcons === "boolean") {
+        setShowAssetsWithoutIcons(parsedState.showAssetsWithoutIcons);
+      }
     } catch (error) {
-      console.error("Error reading hideLowBalances setting:", error);
+      console.error("Error reading settings:", error);
     }
   }, [initialShowTestnets]);
 
@@ -71,6 +75,11 @@ export default function SettingsPage() {
 
   const handleHideLowBalancesToggle = (checked: boolean) => {
     setHideLowBalances(checked);
+    setIsModified(true);
+  };
+
+  const handleShowAssetsWithoutIconsToggle = (checked: boolean) => {
+    setShowAssetsWithoutIcons(checked);
     setIsModified(true);
   };
 
@@ -87,6 +96,7 @@ export default function SettingsPage() {
           ...parsedState,
           showTestnets: showTestnets,
           hideLowBalances: hideLowBalances,
+          showAssetsWithoutIcons: showAssetsWithoutIcons,
         })
       );
 
@@ -395,9 +405,30 @@ export default function SettingsPage() {
                   <Label htmlFor="show-testnets">Show testnets</Label>
                 </div>
 
-                <p className="text-sm text-muted-foreground mb-2">
+                <p className="text-sm text-muted-foreground mb-6">
                   This setting controls whether testnet chains are shown
                   throughout the application.
+                  <span className="block mt-1 text-yellow-500">
+                    Note: Changes to this setting require a page refresh to
+                    fully apply.
+                  </span>
+                </p>
+
+                <div className="flex items-center space-x-2 mb-6">
+                  <Switch
+                    id="show-assets-without-icons"
+                    checked={showAssetsWithoutIcons}
+                    onCheckedChange={handleShowAssetsWithoutIconsToggle}
+                  />
+                  <Label htmlFor="show-assets-without-icons">
+                    Show assets without icons
+                  </Label>
+                </div>
+
+                <p className="text-sm text-muted-foreground mb-6">
+                  This setting allows you to view assets even when no icon is
+                  available from Mobula. Assets without icons will display the
+                  first letter of their name as a fallback.
                   <span className="block mt-1 text-yellow-500">
                     Note: Changes to this setting require a page refresh to
                     fully apply.

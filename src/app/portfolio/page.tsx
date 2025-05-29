@@ -77,6 +77,7 @@ export default function Portfolio() {
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
   const [openTransaction, setOpenTransaction] = useState(false);
   const [hideLowBalance, setHideLowBalance] = useState(false);
+  const [showAssetsWithoutIcons, setShowAssetsWithoutIcons] = useState(false);
 
   // Use the hideLowBalances setting from localStorage
   useEffect(() => {
@@ -86,8 +87,11 @@ export default function Portfolio() {
       if (typeof parsedState.hideLowBalances === "boolean") {
         setHideLowBalance(parsedState.hideLowBalances);
       }
+      if (typeof parsedState.showAssetsWithoutIcons === "boolean") {
+        setShowAssetsWithoutIcons(parsedState.showAssetsWithoutIcons);
+      }
     } catch (error) {
-      console.error("Error reading hideLowBalances setting:", error);
+      console.error("Error reading settings:", error);
     }
   }, []);
 
@@ -269,7 +273,8 @@ export default function Portfolio() {
         },
         mobulaBlockchainDetails
       ),
-      hideLowBalance
+      hideLowBalance,
+      showAssetsWithoutIcons
     );
   }, [
     mobulaBlockchainDetails,
@@ -279,6 +284,7 @@ export default function Portfolio() {
     mobulaMarketData,
     mobulaMarketDataContractAddresses,
     hideLowBalance,
+    showAssetsWithoutIcons,
   ]);
 
   const availableBalance = useMemo(
