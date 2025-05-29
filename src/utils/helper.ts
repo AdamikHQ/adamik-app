@@ -115,3 +115,20 @@ export const isStakingSupported = (chain: Chain): boolean => {
     chain.supportedFeatures.write.transaction.type.stake
   );
 };
+
+// Utility functions for asset avatar fallbacks
+export const getAssetColor = (name: string): string => {
+  // Simple hash function to generate consistent colors
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  // Generate hue based on hash
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 70%, 50%)`;
+};
+
+export const getAssetInitial = (name: string): string => {
+  return name ? name.charAt(0).toUpperCase() : "?";
+};

@@ -178,7 +178,8 @@ export const calculateAssets = (
 
 export const filterAndSortAssets = (
   assets: Asset[],
-  hideLowBalance: boolean
+  hideLowBalance: boolean,
+  showAssetsWithoutIcons: boolean = false
 ) => {
   // Aggregate the balance for each chainId
   const aggregatedBalances: Record<string, number> = {};
@@ -198,8 +199,11 @@ export const filterAndSortAssets = (
       .filter((asset) => {
         return !(hideLowBalance && aggregatedBalances[asset.chainId] <= 1);
       })
-      // Hide all asset without logo (mostly spam coins for EVM)
+      // Hide all asset without logo (mostly spam coins for EVM) - only if showAssetsWithoutIcons is false
       .filter((asset) => {
+        if (showAssetsWithoutIcons) {
+          return true; // Show all assets regardless of logo availability
+        }
         return asset?.logo !== "";
       })
 

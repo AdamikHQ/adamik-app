@@ -21,7 +21,7 @@ import {
 } from "~/components/ui/popover";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Tooltip } from "~/components/ui/tooltip";
-import { formatAmount } from "~/utils/helper";
+import { formatAmount, getAssetColor, getAssetInitial } from "~/utils/helper";
 import { Asset } from "~/utils/types";
 
 type AssetsSelectorProps = {
@@ -33,26 +33,44 @@ type AssetsSelectorProps = {
 const AssetView = ({ asset }: { asset: Asset }) => {
   return (
     <div className="flex items-center justify-between w-full">
-      {asset?.logo && (
-        <div className="relative">
-          <Tooltip text={asset.name}>
-            <Avatar className="w-[32px] h-[32px]">
-              <AvatarImage src={asset?.logo} alt={asset.name} />
-              <AvatarFallback>{asset.name}</AvatarFallback>
-            </Avatar>
-          </Tooltip>
-          {asset.mainChainLogo && (
-            <Tooltip text={asset.chainId}>
-              <div className="absolute w-4 h-4 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-[6px] -end-1">
-                <Avatar className="h-3 w-3">
-                  <AvatarImage src={asset.mainChainLogo} alt={asset.chainId} />
-                  <AvatarFallback>{asset.chainId}</AvatarFallback>
-                </Avatar>
+      <div className="relative">
+        <Tooltip text={asset.name}>
+          <Avatar className="w-[32px] h-[32px]">
+            {asset?.logo ? (
+              <>
+                <AvatarImage src={asset?.logo} alt={asset.name} />
+                <AvatarFallback
+                  style={{
+                    backgroundColor: getAssetColor(asset.name || asset.ticker),
+                  }}
+                  className="text-white font-semibold text-sm"
+                >
+                  {getAssetInitial(asset.name || asset.ticker)}
+                </AvatarFallback>
+              </>
+            ) : (
+              <div
+                className="w-full h-full flex items-center justify-center text-white font-semibold text-sm"
+                style={{
+                  backgroundColor: getAssetColor(asset.name || asset.ticker),
+                }}
+              >
+                {getAssetInitial(asset.name || asset.ticker)}
               </div>
-            </Tooltip>
-          )}
-        </div>
-      )}
+            )}
+          </Avatar>
+        </Tooltip>
+        {asset.mainChainLogo && (
+          <Tooltip text={asset.chainId}>
+            <div className="absolute w-4 h-4 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-[6px] -end-1">
+              <Avatar className="h-3 w-3">
+                <AvatarImage src={asset.mainChainLogo} alt={asset.chainId} />
+                <AvatarFallback>{asset.chainId}</AvatarFallback>
+              </Avatar>
+            </div>
+          </Tooltip>
+        )}
+      </div>
       <div className="flex-1 text-right">
         {asset?.balanceMainUnit ? formatAmount(asset.balanceMainUnit, 5) : ""}
       </div>
