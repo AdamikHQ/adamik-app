@@ -49,7 +49,7 @@ export function formatAmount(amount: string | number | null, decimals: number) {
   }
 
   if (parsedAmount > 0 && parsedAmount < 0.00001) {
-    return "0.00001>";
+    return "<0.00001";
   }
 
   return new Intl.NumberFormat("en-US", {
