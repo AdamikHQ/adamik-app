@@ -137,11 +137,12 @@ function DataContent() {
             asset: {
               chainId: selectedChain?.id || "",
               isToken: true,
-              assetId: (transaction.raw as any).to,
+              assetId: transaction?.parsed?.tokenId,
             },
             amount: recipients[0].amount,
             chainData: supportedChains,
           });
+
           setFormattedAmount(`${result.formatted} ${result.ticker}`);
           return;
         }
@@ -351,7 +352,7 @@ function DataContent() {
   useEffect(() => {
     const fetchTokenInfo = async () => {
       if (transaction?.parsed?.mode === "transferToken" && selectedChain) {
-        const tokenAddress = (transaction.raw as any).to;
+        const tokenAddress = transaction?.parsed?.tokenId;
         if (typeof tokenAddress === "string") {
           const info = await getTokenInfo(selectedChain.id, tokenAddress);
           setTokenInfo(info);
