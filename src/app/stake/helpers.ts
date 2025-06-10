@@ -94,6 +94,7 @@ export type StakingPosition = {
   addresses: string[];
   validatorName?: string;
   validatorAddresses: string[];
+  stakeId?: string;
   amount: string;
   amountUSD?: number;
   status: string;
@@ -158,6 +159,7 @@ export const getAddressStakingPositions = (
             ...newAcc[uniqueKey], // Keep existing data if already processed
             ...position,
             addresses: [accountData.accountId].concat(currentAddresses),
+            stakeId: position.stakeId,
             validatorName: validatorInfo?.name,
             commission: Number(validatorInfo?.commission),
             chainId: accountData.chainId,
