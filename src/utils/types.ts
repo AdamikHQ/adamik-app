@@ -20,6 +20,7 @@ export interface TokenAmount {
 // - confusion with StakingPosition in helpers.ts
 interface ValidatorPosition {
   validatorAddresses: string[];
+  stakeId?: string;
   amount: string;
   status: string;
   completionDate?: number;
@@ -85,6 +86,7 @@ export type TransactionData = {
   validatorAddress?: string;
   sourceValidatorAddress?: string;
   targetValidatorAddress?: string;
+  stakeId?: string;
   tokenId?: string;
   useMaxAmount: boolean;
   chainId: string;

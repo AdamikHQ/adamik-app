@@ -54,6 +54,7 @@ export function StakingPositionFormField({
                     "validatorAddress",
                     stakingPosition.validatorAddresses[0]
                   );
+                  form.setValue("stakeId", stakingPosition.stakeId);
 
                   // Trigger the prop passed to the component
                   onStakingPositionChange(stakingPosition);
