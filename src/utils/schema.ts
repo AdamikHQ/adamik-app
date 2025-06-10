@@ -7,6 +7,7 @@ export const transactionFormSchema = z
     chainId: z.string().min(1),
     sender: z.string().min(1),
     recipient: z.string().min(1).optional(),
+    stakeId: z.string().optional(),
     validatorAddress: z.string().optional(),
     amount: z.coerce.number().optional(),
     useMaxAmount: z.boolean(),

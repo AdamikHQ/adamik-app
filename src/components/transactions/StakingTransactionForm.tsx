@@ -92,6 +92,7 @@ export function StakingTransactionForm({
         senderAddress: formInput.sender,
         senderPubKey: assets.find((asset) => asset.address === formInput.sender)
           ?.pubKey,
+        stakeId: formInput.stakeId ?? "",
         validatorAddress: formInput.validatorAddress ?? "",
         targetValidatorAddress: formInput.validatorAddress ?? "",
         useMaxAmount: formInput.useMaxAmount,
