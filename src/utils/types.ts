@@ -15,6 +15,15 @@ export interface TokenAmount {
   token: Token;
 }
 
+export enum StakingStatus {
+  FREE = "free", // Can be used as part of the available balance
+  PENDING = "pending", // Submitted to the chain, waiting for confirmation
+  LOCKED = "locked",
+  UNLOCKING = "unlocking",
+  UNLOCKED = "unlocked", // Can't be used as part of the available balance, needs a transaction first
+  SLASHED = "slashed",
+}
+
 // FIXME Confusing name!
 // - not linked to 1 single validator
 // - confusion with StakingPosition in helpers.ts
@@ -22,7 +31,7 @@ interface ValidatorPosition {
   validatorAddresses: string[];
   stakeId?: string;
   amount: string;
-  status: string;
+  status: StakingStatus;
   completionDate?: number;
 }
 
@@ -75,6 +84,7 @@ export enum TransactionMode {
   STAKE = "stake",
   UNSTAKE = "unstake",
   CLAIM_REWARDS = "claimRewards",
+  WITHDRAW = "withdraw",
 }
 
 // Plain transaction object without additional metadata.
@@ -157,6 +167,7 @@ export type ParsedTransaction = {
   validators?: {
     source?: {
       address: string;
+      amount: string;
     };
     target?: {
       address: string;

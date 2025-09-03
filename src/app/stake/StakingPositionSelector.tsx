@@ -21,7 +21,7 @@ import {
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Tooltip } from "~/components/ui/tooltip";
 import { StakingPosition } from "./helpers";
-import { TransactionMode, Validator } from "~/utils/types";
+import { StakingStatus, TransactionMode, Validator } from "~/utils/types";
 import { formatAmount } from "~/utils/helper";
 
 type StakingPositionSelectorProps = {
@@ -135,21 +135,18 @@ const StakingPositionSelectorList = ({
   mode: TransactionMode;
 }) => {
   const filteredPositions = useMemo(() => {
-    if (mode === TransactionMode.CLAIM_REWARDS) {
-      return stakingPositions
-        .filter((position) => {
-          const rewardAmount = position.rewardAmount
-            ? parseFloat(position.rewardAmount)
-            : 0;
-          return position.rewardAmount && rewardAmount > 0;
-        })
-        .sort(
-          (a, b) => parseFloat(b.rewardAmount!) - parseFloat(a.rewardAmount!)
-        );
-    }
-    return stakingPositions.filter(
-      (position) => position.status !== "unlocking"
-    );
+    return stakingPositions.filter((position) => {
+      switch (mode) {
+        case TransactionMode.UNSTAKE:
+          return position.status === StakingStatus.LOCKED;
+        case TransactionMode.WITHDRAW:
+          return position.status === StakingStatus.UNLOCKED;
+        case TransactionMode.CLAIM_REWARDS:
+          return position.rewardAmount && position.rewardAmount !== "0";
+        default:
+          return false;
+      }
+    });
   }, [stakingPositions, mode]);
 
   return (
@@ -274,7 +271,7 @@ const StakingPositionView = ({
           </>
         ) : (
           <>
-            {parseFloat(stakingPosition.amount).toFixed(3)}{" "}
+            {parseFloat(stakingPosition.amount).toFixed(4)}{" "}
             {stakingPosition.ticker}
           </>
         )}

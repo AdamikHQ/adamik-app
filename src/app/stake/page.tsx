@@ -186,6 +186,16 @@ export default function Stake() {
         >
           Claim
         </Button>
+
+        <Button
+          onClick={() => {
+            setChainId(undefined);
+            setTransaction(undefined);
+            setCurrentTransactionFlow(TransactionMode.WITHDRAW);
+          }}
+        >
+          Withdraw
+        </Button>
       </div>
 
       <StakingPositionsList

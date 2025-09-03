@@ -134,6 +134,37 @@ export function ParsedTransactionComponent({
         </div>
       )}
 
+      {tx.validators?.source && (
+        <div className="space-y-2 text-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+            <span className="text-muted-foreground w-16">
+              Validator (source):
+            </span>
+            <span className="font-mono break-all">
+              <span className="sm:hidden">
+                {`${tx.validators.source.address.slice(
+                  0,
+                  6
+                )}...${tx.validators.source.address.slice(-4)}`}
+              </span>
+              <span className="hidden sm:inline">
+                {tx.validators.source.address}
+              </span>
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground w-16">Amount:</span>
+            <span className="font-medium">
+              {isFormattingAmounts ? (
+                <div className="inline-block h-4 w-16 animate-pulse bg-accent/50 rounded" />
+              ) : (
+                formatted.formattedAmount
+              )}
+            </span>
+          </div>
+        </div>
+      )}
+
       {tx.validators?.target && (
         <div className="space-y-2 text-sm">
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">

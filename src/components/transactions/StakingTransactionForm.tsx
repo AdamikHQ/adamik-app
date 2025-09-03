@@ -74,6 +74,8 @@ export function StakingTransactionForm({
         return "Unstake";
       case TransactionMode.CLAIM_REWARDS:
         return "Claim";
+      case TransactionMode.WITHDRAW:
+        return "Withdraw";
       default:
         return "Submit";
     }
@@ -101,6 +103,7 @@ export function StakingTransactionForm({
 
       if (
         (mode === TransactionMode.UNSTAKE ||
+          mode === TransactionMode.WITHDRAW ||
           mode === TransactionMode.CLAIM_REWARDS) &&
         selectedStakingPosition
       ) {
@@ -173,6 +176,7 @@ export function StakingTransactionForm({
 
     if (
       mode === TransactionMode.UNSTAKE ||
+      mode === TransactionMode.WITHDRAW ||
       mode === TransactionMode.CLAIM_REWARDS
     ) {
       form.setValue("sender", stakingPosition.addresses[0]);
@@ -239,6 +243,7 @@ export function StakingTransactionForm({
           )}
 
           {(mode === TransactionMode.UNSTAKE ||
+            mode === TransactionMode.WITHDRAW ||
             mode === TransactionMode.CLAIM_REWARDS) && (
             <StakingPositionFormField
               mode={mode}

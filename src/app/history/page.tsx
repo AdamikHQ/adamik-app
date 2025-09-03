@@ -261,14 +261,17 @@ function TransactionHistoryContent() {
           (parsed.mode === "stake" ||
             parsed.mode === "unstake" ||
             parsed.mode === "claimRewards") &&
-          parsed.validators?.target
+          (parsed.validators?.target || parsed.validators?.source)
         ) {
           amountResult = await formatAssetAmount({
             asset: {
               chainId: selectedAccount.chainId,
               isToken: false,
             },
-            amount: parsed.validators.target.amount,
+            amount:
+              parsed.validators.target?.amount ||
+              parsed.validators.source?.amount ||
+              "0",
             chainData: supportedChains,
             maximumFractionDigits: 6,
           });

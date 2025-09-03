@@ -159,6 +159,19 @@ function DataContent() {
         return;
       }
 
+      if (validators?.source?.amount) {
+        const result = await formatAssetAmount({
+          asset: {
+            chainId: selectedChain?.id || "",
+            isToken: false,
+          },
+          amount: validators.source.amount,
+          chainData: supportedChains,
+        });
+        setFormattedAmount(`${result.formatted} ${result.ticker}`);
+        return;
+      }
+
       if (validators?.target?.amount) {
         const result = await formatAssetAmount({
           asset: {
@@ -232,20 +245,41 @@ function DataContent() {
       validators,
     } = transaction.parsed;
 
-    const formatRecipient = () => {
-      if (!transaction?.parsed) return "N/A";
+    const formatRecipient = (): { label: string; value: string } => {
+      if (!transaction?.parsed)
+        return {
+          label: "Recipient",
+          value: "N/A",
+        };
+
       const { recipients, validators } = transaction.parsed;
 
       if (recipients && recipients[0]?.address) {
-        return recipients[0].address;
+        return {
+          label: "Recipient",
+          value: recipients[0].address,
+        };
       } else if (validators?.target?.address) {
-        return validators.target.address;
+        return {
+          label: "Validator",
+          value: validators.target.address,
+        };
+      } else if (validators?.source?.address) {
+        return {
+          label: "Validator (source)",
+          value: validators.source.address,
+        };
       }
-      return "N/A";
+      return {
+        label: "Recipient",
+        value: "N/A",
+      };
     };
 
     // Check if this is a self-transfer
     const selfTransfer = isSelfTransfer(transaction);
+
+    const { label: recipientLabel, value: recipientValue } = formatRecipient();
 
     return (
       <div className="flex flex-col gap-6">
@@ -280,7 +314,7 @@ function DataContent() {
           label="Sender"
           value={(senders && senders[0]?.address) || "N/A"}
         />
-        <DataItem label="Recipient" value={formatRecipient()} />
+        <DataItem label={recipientLabel} value={recipientValue} />
         <DataItem label="Nonce" value={nonce || "N/A"} />
         <DataItem label="Memo" value={memo || "N/A"} />
       </div>
