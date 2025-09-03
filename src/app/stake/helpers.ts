@@ -7,6 +7,7 @@ import {
   Chain,
   Validator,
   TokenAmount,
+  StakingStatus,
 } from "~/utils/types";
 
 const getAmountToUSD = (
@@ -97,7 +98,7 @@ export type StakingPosition = {
   stakeId?: string;
   amount: string;
   amountUSD?: number;
-  status: string;
+  status: StakingStatus;
   completionDate?: number;
   rewardAmount?: string;
   rewardAmountUSD?: number;
@@ -184,7 +185,7 @@ export const getAddressStakingPositions = (
       });
 
       // Handle native rewards and merge them into the existing staking position
-      (accountData?.balances.staking?.rewards.native || []).forEach(
+      (accountData?.balances.staking?.rewards?.native || []).forEach(
         (reward) => {
           const uniqueKey = `${reward.validatorAddress}_locked`;
 
@@ -205,7 +206,7 @@ export const getAddressStakingPositions = (
       );
 
       // Handle token rewards and merge them into the existing staking position
-      (accountData?.balances.staking?.rewards.tokens || []).forEach(
+      (accountData?.balances.staking?.rewards?.tokens || []).forEach(
         (reward) => {
           if (
             !reward.token?.id ||

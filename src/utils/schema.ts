@@ -20,7 +20,11 @@ export const transactionFormSchema = z
     if ([TransactionMode.STAKE].includes(mode)) {
       return z.object({ targetValidatorAddress: z.string().min(1) });
     } else if (
-      [TransactionMode.UNSTAKE, TransactionMode.CLAIM_REWARDS].includes(mode)
+      [
+        TransactionMode.UNSTAKE,
+        TransactionMode.WITHDRAW,
+        TransactionMode.CLAIM_REWARDS,
+      ].includes(mode)
     ) {
       return z.object({ validatorAddress: z.string().min(1) });
     }
