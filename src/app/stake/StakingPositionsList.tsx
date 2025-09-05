@@ -19,8 +19,11 @@ import { formatAmountUSD, formatAmount } from "~/utils/helper";
 import { StakingPosition } from "./helpers";
 import { RefreshCw } from "lucide-react";
 import { Button } from "~/components/ui/button";
+import { StakingStatus } from "~/utils/types";
 
-const getSimplifiedTimeRemaining = (completionDate: number): string => {
+const getSimplifiedTimeRemaining = (completionDate?: number): string => {
+  if (!completionDate) return "Unknown";
+
   const currentTime = Date.now();
   const timeRemaining = completionDate - currentTime;
   if (timeRemaining <= 0) return "Completed";
@@ -94,7 +97,29 @@ const StakingPositionsListRow: React.FC<{
         </TableCellWithTooltip>
 
         <TableCellWithTooltip text={formattedAddresses}>
-          {position.status === "unlocking" && position.completionDate ? (
+          {position.status === StakingStatus.FREE ? (
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <span
+                role="img"
+                aria-label="check-icon"
+                style={{ marginRight: "5px" }}
+              >
+                ✅
+              </span>
+              <span>Free</span>
+            </div>
+          ) : position.status === StakingStatus.LOCKED ? (
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <span
+                role="img"
+                aria-label="lock-icon"
+                style={{ marginRight: "5px" }}
+              >
+                🔒
+              </span>
+              <span>Locked</span>
+            </div>
+          ) : position.status === StakingStatus.UNLOCKING ? (
             <div>
               <div style={{ display: "flex", alignItems: "center" }}>
                 <span
@@ -112,16 +137,27 @@ const StakingPositionsListRow: React.FC<{
                 {getSimplifiedTimeRemaining(position.completionDate)}
               </div>
             </div>
+          ) : position.status === StakingStatus.UNLOCKED ? (
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <span
+                role="img"
+                aria-label="unlock-icon"
+                style={{ marginRight: "5px" }}
+              >
+                🔓
+              </span>
+              <span>Unlocked</span>
+            </div>
           ) : (
             <div style={{ display: "flex", alignItems: "center" }}>
               <span
                 role="img"
-                aria-label="lock-icon"
+                aria-label="unknown-icon"
                 style={{ marginRight: "5px" }}
               >
-                🔒
+                ❓
               </span>
-              <span>Locked</span>
+              <span>Unknown</span>
             </div>
           )}
         </TableCellWithTooltip>

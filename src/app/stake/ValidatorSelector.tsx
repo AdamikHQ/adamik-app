@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
@@ -136,16 +136,18 @@ const ValidatorSelectorList = ({
 };
 
 const ValidatorView = ({ validator }: { validator: Validator }) => {
+  const validatorName = useMemo(
+    () => validator.name || validator.address,
+    [validator]
+  );
+
   return (
     <div className="flex items-center justify-between w-full">
-      {validator?.name && (
+      {
         <div className="relative">
           <Tooltip text={validator.address}>
             <Avatar className="w-[32px] h-[32px]">
-              <AvatarFallback>
-                {validator?.name[0].toUpperCase() ||
-                  validator.address[0].toUpperCase()}
-              </AvatarFallback>
+              <AvatarFallback>{validatorName[0].toUpperCase()}</AvatarFallback>
             </Avatar>
           </Tooltip>
           {validator.chainLogo && (
@@ -162,10 +164,14 @@ const ValidatorView = ({ validator }: { validator: Validator }) => {
             </Tooltip>
           )}
         </div>
-      )}
-      <div className="flex-1 text-right">{validator.name}</div>
+      }
+      <div className="flex-1 text-left ml-2">{validatorName}</div>
       <div className="font-bold flex-1 text-right">
-        Commission: {validator.commission}
+        Commission:{" "}
+        {new Intl.NumberFormat("en-US", {
+          maximumFractionDigits: 2,
+        }).format(validator.commission)}
+        %
       </div>
     </div>
   );

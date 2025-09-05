@@ -47,6 +47,7 @@ import {
   FormatAssetAmountResult,
 } from "~/utils/assetFormatters";
 import { ParsedTransactionComponent } from "~/components/transactions/ParsedTransaction";
+import { ellipsis } from "~/utils/helper";
 
 type GroupedAccount = {
   address: string;
@@ -490,10 +491,7 @@ function TransactionHistoryContent() {
                     <div className="text-sm">
                       <p className="font-medium">Selected Account</p>
                       <p className="text-muted-foreground">
-                        {`${selectedAccount.address.slice(
-                          0,
-                          6
-                        )}...${selectedAccount.address.slice(-4)}`}
+                        {ellipsis(selectedAccount.address, 6, 4)}
                       </p>
                     </div>
                   </div>

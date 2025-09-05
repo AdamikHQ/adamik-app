@@ -10,7 +10,7 @@ import {
   RotateCw,
 } from "lucide-react";
 import { ParsedTransaction } from "~/utils/types";
-import { isSelfTransfer } from "~/utils/helper";
+import { ellipsis, isSelfTransfer } from "~/utils/helper";
 
 // Get appropriate icon based on transaction type
 const getTransactionTypeIcon = (tx: ParsedTransaction) => {
@@ -99,10 +99,7 @@ export function ParsedTransactionComponent({
             <span className="text-muted-foreground w-16">From:</span>
             <span className="font-mono break-all">
               <span className="sm:hidden">
-                {`${tx.senders[0].address.slice(
-                  0,
-                  6
-                )}...${tx.senders[0].address.slice(-4)}`}
+                {ellipsis(tx.senders[0].address, 6, 4)}
               </span>
               <span className="hidden sm:inline">{tx.senders[0].address}</span>
             </span>
@@ -111,10 +108,7 @@ export function ParsedTransactionComponent({
             <span className="text-muted-foreground w-16">To:</span>
             <span className="font-mono break-all">
               <span className="sm:hidden">
-                {`${tx.recipients[0].address.slice(
-                  0,
-                  6
-                )}...${tx.recipients[0].address.slice(-4)}`}
+                {ellipsis(tx.recipients[0].address, 6, 4)}
               </span>
               <span className="hidden sm:inline">
                 {tx.recipients[0].address}
@@ -142,10 +136,7 @@ export function ParsedTransactionComponent({
             </span>
             <span className="font-mono break-all">
               <span className="sm:hidden">
-                {`${tx.validators.source.address.slice(
-                  0,
-                  6
-                )}...${tx.validators.source.address.slice(-4)}`}
+                {ellipsis(tx.validators.source.address, 6, 4)}
               </span>
               <span className="hidden sm:inline">
                 {tx.validators.source.address}
@@ -171,10 +162,7 @@ export function ParsedTransactionComponent({
             <span className="text-muted-foreground w-16">Validator:</span>
             <span className="font-mono break-all">
               <span className="sm:hidden">
-                {`${tx.validators.target.address.slice(
-                  0,
-                  6
-                )}...${tx.validators.target.address.slice(-4)}`}
+                {ellipsis(tx.validators.target.address, 6, 4)}
               </span>
               <span className="hidden sm:inline">
                 {tx.validators.target.address}

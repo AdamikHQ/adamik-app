@@ -22,7 +22,7 @@ import { ScrollArea } from "~/components/ui/scroll-area";
 import { Tooltip } from "~/components/ui/tooltip";
 import { StakingPosition } from "./helpers";
 import { StakingStatus, TransactionMode, Validator } from "~/utils/types";
-import { formatAmount } from "~/utils/helper";
+import { ellipsis, formatAmount } from "~/utils/helper";
 
 type StakingPositionSelectorProps = {
   stakingPositions: StakingPosition[];
@@ -233,10 +233,7 @@ const StakingPositionView = ({
           )}
           <div className="flex-1 text-right truncate max-w-[200px]">
             {stakingPosition.validatorName ||
-              `${stakingPosition.validatorAddresses[0].slice(
-                0,
-                12
-              )}...${stakingPosition.validatorAddresses[0].slice(-6)}`}
+              ellipsis(stakingPosition.validatorAddresses[0], 12, 6)}
           </div>
         </>
       ) : (
@@ -250,10 +247,7 @@ const StakingPositionView = ({
             </Avatar>
           </div>
           <div className="flex-1 text-right truncate max-w-[200px]">
-            {`${stakingPosition.validatorAddresses[0].slice(
-              0,
-              6
-            )}...${stakingPosition.validatorAddresses[0].slice(-6)}`}
+            {ellipsis(stakingPosition.validatorAddresses[0], 6, 6)}
           </div>
         </>
       )}
