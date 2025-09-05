@@ -140,3 +140,7 @@ export const isStakingSupported = (chain: Chain): boolean => {
     chain.supportedFeatures.write.transaction.type.stake
   );
 };
+
+export const ellipsis = (address: string, start: number, end: number) => {
+  return `${address.slice(0, start)}...${address.slice(-end)}`;
+};

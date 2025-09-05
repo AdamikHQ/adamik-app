@@ -90,22 +90,6 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
     }
   };
 
-  const shortenHash = (hash: string) => {
-    return `${hash.slice(0, 6)}...${hash.slice(-6)}`;
-  };
-
-  const handleViewTx = () => {
-    if (transactionHash && chainId) {
-      const url = `/data?chainId=${chainId}&transactionId=${transactionHash}`;
-      router.push(url);
-    } else {
-      console.error("Missing transactionHash or chainId", {
-        transactionHash,
-        chainId,
-      });
-    }
-  };
-
   const handleClose = () => {
     onNextStep();
     setChainId(undefined);
