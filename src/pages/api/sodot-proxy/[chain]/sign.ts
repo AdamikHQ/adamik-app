@@ -66,14 +66,21 @@ export default async function handler(
     // Determine what to sign based on curve type and available data
     let messageToSign;
 
-    if (curveType === "ecdsa" && usePrecomputedHash && hash) {
-      // For ECDSA, use the pre-computed hash if available
-      console.log("Using pre-computed hash for ECDSA signing");
+    if (usePrecomputedHash && hash) {
+      // When using pre-computed hash, use it for both ECDSA and Ed25519
+      console.log(`Using pre-computed hash for ${curveType} signing`);
       messageToSign = hash;
-    } else {
-      // Otherwise, use the raw transaction
+    } else if (transaction) {
+      // Otherwise, use the raw transaction if available
       console.log(`Using raw transaction for ${curveType} signing`);
       messageToSign = transaction;
+    } else {
+      // No valid message to sign
+      return res.status(400).json({
+        status: 400,
+        error: "Invalid request",
+        message: "Either transaction or hash must be provided",
+      });
     }
 
     // Format as needed (removing 0x prefix if present)
@@ -183,11 +190,11 @@ export default async function handler(
           requestBody.hash_algo = "keccak256"; // For Ethereum transactions
         }
       } else {
-        // For Ed25519, just provide the message directly
-        // Do NOT include hash_algo for Ed25519
-        console.log(`Using raw Ed25519 message (no hash_algo parameter)`);
+        // For Ed25519, just provide the message directly (no hash_algo)
+        if (!messageToSign) {
+          throw new Error("No message to sign for Ed25519");
+        }
         requestBody.msg = messageToSign;
-        // Intentionally not setting hash_algo for Ed25519
       }
 
       console.log(

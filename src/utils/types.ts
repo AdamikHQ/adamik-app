@@ -75,6 +75,7 @@ export enum TransactionMode {
   STAKE = "stake",
   UNSTAKE = "unstake",
   CLAIM_REWARDS = "claimRewards",
+  ENABLE_TOKEN = "enableToken",
 }
 
 // Plain transaction object without additional metadata.
@@ -195,11 +196,13 @@ export type ChainSupportedFeatures = {
         deployAccount: boolean;
         transfer: boolean;
         transferToken: boolean;
+        enableToken: boolean;
         stake: boolean;
         unstake: boolean;
         claimRewards: boolean;
         withdraw: boolean;
         registerStake: boolean;
+        convertAsset?: boolean;
       };
       field: {
         memo: boolean;
