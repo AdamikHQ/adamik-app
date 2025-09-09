@@ -350,9 +350,9 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
       name: "Testnet Reference Token",
     },
     {
-      code: "EURT",
-      issuer: "GAP5LETOV6YIE62YAM56STDANPRDO7ZFDBGSNHJQIYGGKSMOZAHOOS2S",
-      name: "Euro Test Token",
+      code: "EURC",
+      issuer: "GB3Q6QDZYTHWT7E5PVS3W7FUT5GVAFC5KSZFFLPU25GO7VTC3NM2ZTVO",
+      name: "Euro Coin",
     },
   ];
 
