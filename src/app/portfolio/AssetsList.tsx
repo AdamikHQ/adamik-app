@@ -1,4 +1,4 @@
-import { Loader2, Info, RefreshCw } from "lucide-react";
+import { Loader2, Info, RefreshCw, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { Asset } from "~/utils/types";
+import { Asset, Chain } from "~/utils/types";
 import {
   TableCellWithTooltip,
   Tooltip,
@@ -24,8 +24,22 @@ import {
   getAssetColor,
   getAssetInitial,
 } from "~/utils/helper";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 
-const AssetsListRow: React.FC<{ asset: Asset }> = ({ asset }) => {
+const AssetsListRow: React.FC<{ 
+  asset: Asset;
+  chain?: Chain;
+  onEnableToken?: () => void;
+}> = ({ asset, chain, onEnableToken }) => {
+  // Check if this is a native asset on a chain that supports enableToken
+  const supportsEnableToken = 
+    !asset.isToken && 
+    chain?.supportedFeatures?.write?.transaction?.type?.enableToken === true;
   return (
     <TooltipProvider delayDuration={100}>
       <TableRow>
@@ -95,6 +109,24 @@ const AssetsListRow: React.FC<{ asset: Asset }> = ({ asset }) => {
         <TableCellWithTooltip text={asset.address}>
           {asset?.balanceUSD ? formatAmountUSD(asset.balanceUSD) : "-"}
         </TableCellWithTooltip>
+
+        {/* Actions column with three dots menu */}
+        <TableCell className="w-[50px]">
+          {supportsEnableToken && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onEnableToken}>
+                  Enable Token
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </TableCell>
       </TableRow>
     </TooltipProvider>
   );
@@ -107,6 +139,8 @@ export const AssetsList: React.FC<{
   setOpenTransaction: (value: boolean) => void;
   hideLowBalance: boolean;
   refreshPositions: () => void;
+  chains?: Record<string, Chain> | null;
+  onEnableToken?: (asset: Asset) => void;
 }> = ({
   isLoading,
   assets,
@@ -114,6 +148,8 @@ export const AssetsList: React.FC<{
   setOpenTransaction,
   hideLowBalance,
   refreshPositions,
+  chains,
+  onEnableToken,
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -175,16 +211,20 @@ export const AssetsList: React.FC<{
                       Balance
                     </TableHead>
                     <TableHead>Amount (USD)</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="overflow-y-auto max-h-[360px]">
                   {assets.length > 0 ? (
                     assets.map((asset, i) => {
                       if (!asset) return null;
+                      const chain = chains?.[asset.chainId];
                       return (
                         <AssetsListRow
                           key={`${i}_${asset.name}`}
                           asset={asset}
+                          chain={chain}
+                          onEnableToken={() => onEnableToken?.(asset)}
                         />
                       );
                     })

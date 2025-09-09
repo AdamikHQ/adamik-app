@@ -4,6 +4,7 @@ import { Info } from "lucide-react";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { ShowroomBanner } from "~/components/layout/ShowroomBanner";
 import { TransferTransactionForm } from "~/components/transactions/TransferTransactionForm";
+import { EnableTokenForm } from "~/components/transactions/EnableTokenForm";
 import { Modal } from "~/components/ui/modal";
 import { Tooltip } from "~/components/ui/tooltip";
 import { useToast } from "~/components/ui/use-toast";
@@ -39,6 +40,7 @@ import { accountState } from "~/api/adamik/accountState";
 import { CustomProgress } from "~/components/ui/custom-progress";
 import { PortfolioLoadingPlaceholder } from "./PortfolioLoadingPlaceholder";
 import { Account } from "~/components/wallets/types";
+import { Asset } from "~/utils/types";
 
 export default function Portfolio() {
   const {
@@ -76,6 +78,8 @@ export default function Portfolio() {
 
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
   const [openTransaction, setOpenTransaction] = useState(false);
+  const [openEnableToken, setOpenEnableToken] = useState(false);
+  const [selectedAssetForToken, setSelectedAssetForToken] = useState<Asset | null>(null);
   const [hideLowBalance, setHideLowBalance] = useState(false);
   const [showAssetsWithoutIcons, setShowAssetsWithoutIcons] = useState(false);
 
@@ -613,6 +617,11 @@ export default function Portfolio() {
               setOpenTransaction={setOpenTransaction}
               hideLowBalance={hideLowBalance}
               refreshPositions={refreshPositions}
+              chains={supportedChains}
+              onEnableToken={(asset) => {
+                setSelectedAssetForToken(asset);
+                setOpenEnableToken(true);
+              }}
             />
 
             <AssetsBreakdown
@@ -638,6 +647,24 @@ export default function Portfolio() {
               setOpenTransaction(false);
             }}
           />
+        }
+      />
+
+      <Modal
+        open={openEnableToken}
+        setOpen={setOpenEnableToken}
+        modalContent={
+          selectedAssetForToken ? (
+            <EnableTokenForm
+              asset={selectedAssetForToken}
+              onNextStep={() => {
+                setOpenEnableToken(false);
+                setSelectedAssetForToken(null);
+                // Refresh positions after enabling token
+                setTimeout(() => refreshPositions(), 2000);
+              }}
+            />
+          ) : null
         }
       />
     </main>

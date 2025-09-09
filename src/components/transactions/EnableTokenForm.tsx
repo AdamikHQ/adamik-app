@@ -1,63 +1,55 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { Loader2, ChevronDown } from "lucide-react";
 import { useCallback, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { TransactionLoading } from "~/app/portfolio/TransactionLoading";
 import { Button } from "~/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
+import { Input } from "~/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { Badge } from "~/components/ui/badge";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
-import { Form } from "~/components/ui/form";
 import { Textarea } from "~/components/ui/textarea";
 import { useEncodeTransaction } from "~/hooks/useEncodeTransaction";
 import { useTransaction } from "~/hooks/useTransaction";
 import { useBroadcastTransaction } from "~/hooks/useBroadcastTransaction";
-import { amountToSmallestUnit } from "~/utils/helper";
-import { TransactionFormInput, transactionFormSchema } from "~/utils/schema";
-import {
-  Asset,
-  TransactionData,
-  TransactionMode,
-  Transaction,
-} from "~/utils/types";
-import { AmountFormField } from "./fields/AmountFormField";
-import { AssetFormField } from "./fields/AssetFormField";
-import { RecipientFormField } from "./fields/RecipientFormField";
-import { SenderFormField } from "./fields/SenderFormField";
 import { useToast } from "~/components/ui/use-toast";
+import { z } from "zod";
+import { Asset, TransactionData, TransactionMode } from "~/utils/types";
 import { TransactionSuccessModal } from "./TransactionSuccessModal";
 
-type TransactionProps = {
+const enableTokenFormSchema = z.object({
+  tokenCode: z.string().min(1, "Token code is required"),
+  issuerAddress: z.string().optional(),
+  tokenType: z.enum(["token", "nft"]).default("token"),
+});
+
+type EnableTokenFormInput = z.infer<typeof enableTokenFormSchema>;
+
+type EnableTokenFormProps = {
   onNextStep: () => void;
-  assets: Asset[];
+  asset: Asset; // The native asset (XLM or ALGO)
 };
 
-// FIXME Some duplicate logic to put in common with ./StakingTransactionForm.tsx
-
-export function TransferTransactionForm({
-  onNextStep,
-  assets,
-}: TransactionProps) {
+export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
   const { mutate, isPending, isSuccess } = useEncodeTransaction();
   const { mutate: broadcastTransaction } = useBroadcastTransaction();
   const { toast } = useToast();
-  const form = useForm<TransactionFormInput>({
-    resolver: zodResolver(transactionFormSchema),
+  const form = useForm<EnableTokenFormInput>({
+    resolver: zodResolver(enableTokenFormSchema),
     defaultValues: {
-      mode: TransactionMode.TRANSFER,
-      chainId: "",
-      tokenId: "",
-      sender: "",
-      recipient: "",
-      amount: undefined,
-      useMaxAmount: false,
+      tokenCode: "",
+      issuerAddress: "",
+      tokenType: "token",
     },
   });
-  const [decimals, setDecimals] = useState<number>(0);
+  
   const {
     chainId,
     transaction,
@@ -65,17 +57,10 @@ export function TransferTransactionForm({
     setTransaction,
     setTransactionHash,
   } = useTransaction();
+  
   const [errors, setErrors] = useState("");
   const [signing, setSigning] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-
-  // Add debugging effect to monitor transaction and chainId
-  useEffect(() => {
-    console.log("Transaction or chainId changed:", {
-      transaction: transaction ? { ...transaction } : null,
-      chainId,
-    });
-  }, [transaction, chainId]);
 
   const signAndBroadcast = async () => {
     if (!transaction) {
@@ -84,21 +69,11 @@ export function TransferTransactionForm({
       return;
     }
 
-    // Use chainId from context instead of from transaction object
     if (!chainId) {
-      console.error("Chain ID is undefined in context", {
-        transaction,
-        contextChainId: chainId,
-      });
+      console.error("Chain ID is undefined");
       setErrors("Chain ID is undefined. Please try again.");
       return;
     }
-
-    console.log("Sign & Broadcast clicked:", {
-      transaction: { ...transaction },
-      transactionChainId: transaction.data?.chainId,
-      contextChainId: chainId,
-    });
 
     setSigning(true);
     setErrors("");
@@ -106,25 +81,16 @@ export function TransferTransactionForm({
     try {
       // Extract transaction data for signing
       const transactionEncoded = transaction.encoded;
-
       let transactionHash: string | undefined;
       let transactionRaw: string | undefined;
 
       if (Array.isArray(transactionEncoded) && transactionEncoded.length > 0) {
         const firstEncoded = transactionEncoded[0];
         if (firstEncoded && typeof firstEncoded === "object") {
-          if (
-            firstEncoded.hash &&
-            typeof firstEncoded.hash === "object" &&
-            "value" in firstEncoded.hash
-          ) {
+          if (firstEncoded.hash?.value) {
             transactionHash = String(firstEncoded.hash.value);
           }
-          if (
-            firstEncoded.raw &&
-            typeof firstEncoded.raw === "object" &&
-            "value" in firstEncoded.raw
-          ) {
+          if (firstEncoded.raw?.value) {
             transactionRaw = String(firstEncoded.raw.value);
           }
         }
@@ -133,17 +99,14 @@ export function TransferTransactionForm({
       }
 
       if (!transactionHash && !transactionRaw) {
-        console.warn(
-          "Could not extract hash or raw transaction, using entire payload"
-        );
         transactionRaw = JSON.stringify(transactionEncoded);
       }
 
-      // For Stellar, we should prioritize using the hash for signing
+      // For Stellar, we should use the hash for signing
       const isStellar = chainId.includes("stellar");
       const shouldUseHash = isStellar && transactionHash;
 
-      // Step 1: Sign the transaction
+      // Sign the transaction
       const response = await fetch(`/api/sodot-proxy/${chainId}/sign`, {
         method: "POST",
         headers: {
@@ -159,33 +122,25 @@ export function TransferTransactionForm({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
-        );
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
       const signature = data.signature;
 
-      console.log("Transaction signed successfully:", !!signature);
-
       if (!signature) {
         throw new Error("No signature returned from signing");
       }
 
-      // Step 2: Create signed transaction object
+      // Create signed transaction
       const signedTransaction = {
         ...transaction,
         signature: signature,
       };
 
-      // Update transaction in context
       setTransaction(signedTransaction);
 
-      // Step 3: Broadcast the transaction
-      console.log("Broadcasting transaction with signature");
-
-      // Ensure chainId is included in the data properly
+      // Broadcast the transaction
       const transactionWithChainId = {
         ...signedTransaction,
         data: {
@@ -196,13 +151,8 @@ export function TransferTransactionForm({
 
       broadcastTransaction(transactionWithChainId, {
         onSuccess: (response) => {
-          console.log("Broadcast response:", response);
           if (response.error) {
-            const errorMessage =
-              response.error.status?.errors?.[0]?.message ||
-              "Transaction broadcast failed";
-            console.error("Broadcast error:", errorMessage);
-            // Handle error within onSuccess instead of throwing
+            const errorMessage = response.error.status?.errors?.[0]?.message || "Transaction broadcast failed";
             setErrors(errorMessage);
             toast({
               variant: "destructive",
@@ -211,38 +161,19 @@ export function TransferTransactionForm({
             });
             setSigning(false);
           } else if (response.hash) {
-            console.log("Transaction hash:", response.hash);
             setTransactionHash(response.hash);
-
-            // Show a toast notification
             toast({
               variant: "default",
-              title: "Transaction Successful!",
-              description:
-                "Your transaction has been successfully signed and broadcasted.",
+              title: "Token Enabled Successfully!",
+              description: "The token has been enabled for your account.",
               duration: 3000,
             });
-
-            // Show the success modal instead of closing
             setShowSuccessModal(true);
-            setSigning(false);
-          } else {
-            console.error("Unexpected broadcast response:", response);
-            setErrors("Unexpected response from server");
-            toast({
-              variant: "destructive",
-              title: "Broadcast Failed",
-              description: "Unexpected response from server",
-            });
             setSigning(false);
           }
         },
         onError: (error) => {
-          console.error("Broadcast error:", error);
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "An unknown error occurred";
+          const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
           setErrors(errorMessage);
           toast({
             variant: "destructive",
@@ -255,8 +186,7 @@ export function TransferTransactionForm({
     } catch (err) {
       console.error("Signing/broadcasting failed:", err);
       setSigning(false);
-      const errorMessage =
-        err instanceof Error ? err.message : "Transaction failed";
+      const errorMessage = err instanceof Error ? err.message : "Transaction failed";
       setErrors(errorMessage);
       toast({
         variant: "destructive",
@@ -267,38 +197,38 @@ export function TransferTransactionForm({
   };
 
   const onSubmit = useCallback(
-    (formInput: TransactionFormInput) => {
-      console.log("Form submitted with values:", formInput);
+    (formInput: EnableTokenFormInput) => {
+      console.log("Enabling token:", formInput);
 
-      const transactionData: TransactionData = {
-        mode: formInput.mode,
-        chainId: formInput.chainId,
-        tokenId: formInput.tokenId,
-        senderAddress: formInput.sender,
-        recipientAddress: formInput.recipient ? formInput.recipient : "",
-        useMaxAmount: formInput.useMaxAmount,
-        format: "json", // FIXME Not always the default, should come from chains config
-      };
-
-      console.log(
-        "Preparing transaction data with chainId:",
-        formInput.chainId
-      );
-
-      if (formInput.amount !== undefined && !formInput.useMaxAmount) {
-        transactionData.amount = amountToSmallestUnit(
-          formInput.amount,
-          decimals
-        );
+      // Format tokenId based on chain type
+      let tokenId: string;
+      const isStellar = asset.chainId.includes("stellar");
+      
+      if (isStellar) {
+        // Stellar format: ASSET_CODE:ISSUER_ADDRESS
+        if (!formInput.issuerAddress) {
+          setErrors("Issuer address is required for Stellar tokens");
+          return;
+        }
+        tokenId = `${formInput.tokenCode}:${formInput.issuerAddress}`;
+      } else {
+        // Algorand uses ASA ID directly
+        tokenId = formInput.tokenCode;
       }
 
-      // FIXME Hack to be able to provide the pubKey, probably better to refacto
-      const pubKey = assets.find(
-        (asset) => asset.address === formInput.sender
-      )?.pubKey;
+      const transactionData: TransactionData = {
+        mode: TransactionMode.ENABLE_TOKEN,
+        chainId: asset.chainId,
+        tokenId,
+        senderAddress: asset.address,
+        format: "json",
+        useMaxAmount: false,
+        // Note: enableToken doesn't require an amount field
+      };
 
-      if (pubKey) {
-        transactionData.senderPubKey = pubKey;
+      // Add public key if available
+      if (asset.pubKey) {
+        transactionData.senderPubKey = asset.pubKey;
       }
 
       mutate(transactionData, {
@@ -307,11 +237,9 @@ export function TransferTransactionForm({
           setTransaction(undefined);
           setTransactionHash(undefined);
           if (response) {
-            console.log("Transaction encoded successfully:", response);
             if (response?.status?.errors?.length) {
               setErrors(response.status.errors[0].message);
             } else {
-              console.log("Setting chainId:", response.chainId);
               setChainId(response.chainId);
               setTransaction(response.transaction);
             }
@@ -320,7 +248,6 @@ export function TransferTransactionForm({
           }
         },
         onError: (error) => {
-          console.error("Transaction encoding error:", error);
           setChainId(undefined);
           setTransaction(undefined);
           setTransactionHash(undefined);
@@ -328,7 +255,7 @@ export function TransferTransactionForm({
         },
       });
     },
-    [assets, decimals, mutate, setChainId, setTransaction, setTransactionHash]
+    [asset, mutate, setChainId, setTransaction, setTransactionHash]
   );
 
   if (isPending) {
@@ -338,13 +265,9 @@ export function TransferTransactionForm({
   if (isSuccess && transaction) {
     return (
       <>
-        <h1 className="font-bold text-xl text-center">
-          Your transaction is ready
-        </h1>
-        <p className="text-center text-sm text-gray-400">
-          Adamik has converted your intent into a blockchain transaction. <br />
-          Review your transaction details before signing. After signing, the
-          transaction will be automatically broadcasted.
+        <h1 className="font-bold text-xl text-center">Enable Token</h1>
+        <p className="text-center text-sm text-gray-400 mb-4">
+          Review and sign the transaction to enable this token on your account.
         </p>
         <div className="w-full mt-8">
           <Button
@@ -389,30 +312,100 @@ export function TransferTransactionForm({
     );
   }
 
+  const isStellar = asset.chainId.includes("stellar");
+  const chainName = isStellar ? "Stellar" : "Algorand";
+
+  // Common Stellar testnet tokens for quick selection
+  // Note: These are commonly used test tokens on Stellar testnet
+  const stellarTestnetTokens = [
+    { code: "USDC", issuer: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5", name: "USD Coin Test" },
+    { code: "SRT", issuer: "GCDNJUBQSX7AJWLJACMJ7I4BC3Z47BQUTMHEICZLE6MU4KQBRYG5JY6B", name: "Testnet Reference Token" },
+    { code: "EURT", issuer: "GAP5LETOV6YIE62YAM56STDANPRDO7ZFDBGSNHJQIYGGKSMOZAHOOS2S", name: "Euro Test Token" },
+  ];
+
+  const handleQuickSelect = (token: typeof stellarTestnetTokens[0]) => {
+    form.setValue("tokenCode", token.code);
+    form.setValue("issuerAddress", token.issuer);
+  };
+
   return (
     <>
-      <h1 className="font-bold text-xl text-center">Transfer</h1>
+      <h1 className="font-bold text-xl text-center">Enable Token on {chainName}</h1>
+      <p className="text-center text-sm text-gray-400 mb-6">
+        {chainName} requires you to opt-in to tokens before you can receive them.
+        Enter the token details you want to enable.
+      </p>
+      
+      {isStellar && asset.chainId === "stellar-testnet" && (
+        <div className="mb-6 px-4">
+          <p className="text-xs text-muted-foreground mb-2">Quick select common testnet tokens:</p>
+          <div className="flex flex-wrap gap-2">
+            {stellarTestnetTokens.map((token) => (
+              <Badge
+                key={token.code}
+                variant="outline"
+                className="cursor-pointer hover:bg-accent"
+                onClick={() => handleQuickSelect(token)}
+              >
+                {token.name}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+      
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 px-4">
-          <AssetFormField
-            form={form}
-            assets={assets}
-            setDecimals={setDecimals}
-            initialMode={TransactionMode.TRANSFER}
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 px-4">
+          <FormField
+            control={form.control}
+            name="tokenCode"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{isStellar ? "Asset Code" : "ASA ID"}</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder={isStellar ? "e.g., USDC" : "Enter Algorand ASA ID"}
+                    {...field} 
+                  />
+                </FormControl>
+                {isStellar && (
+                  <p className="text-xs text-muted-foreground">
+                    The asset code (e.g., USDC, yUSDC, AQUA)
+                  </p>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
           />
 
-          <SenderFormField form={form} />
-
-          <RecipientFormField form={form} />
-
-          <AmountFormField form={form} />
+          {isStellar && (
+            <FormField
+              control={form.control}
+              name="issuerAddress"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Issuer Address</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="e.g., GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    The Stellar address that issued this asset
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           {errors && (
             <div className="text-red-500 w-full break-all">{errors}</div>
           )}
 
           <Button type="submit" className="w-full">
-            Submit
+            Enable Token
           </Button>
         </form>
       </Form>
