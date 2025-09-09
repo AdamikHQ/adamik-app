@@ -237,6 +237,7 @@ function DataContent() {
     const {
       id,
       mode,
+      tokenId,
       state,
       blockHeight,
       timestamp,
@@ -267,6 +268,9 @@ function DataContent() {
         {/* Add gap-6 for more vertical spacing */}
         <DataItem label="ID" value={id} />
         <DataItem label="Type" value={mode} />
+        {mode === "enableToken" && tokenId && (
+          <DataItem label="Token ID" value={tokenId} />
+        )}
         <DataItem label="State" value={state} />
         <DataItem label="Block height" value={blockHeight} />
         <DataItem

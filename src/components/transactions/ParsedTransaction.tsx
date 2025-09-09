@@ -21,6 +21,8 @@ const getTransactionTypeIcon = (mode: string) => {
       return <LogOut className="w-4 h-4" />;
     case "claimRewards":
       return <HandCoins className="w-4 h-4" />;
+    case "enableToken":
+      return <HandshakeIcon className="w-4 h-4" />;
     default:
       return <HelpCircle className="w-4 h-4" />;
   }
@@ -148,6 +150,22 @@ export function ParsedTransactionComponent({
               ) : (
                 formatted.formattedAmount
               )}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {tx.mode === "enableToken" && tx.tokenId && (
+        <div className="space-y-2 text-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+            <span className="text-muted-foreground w-16">Token:</span>
+            <span className="font-mono break-all">
+              <span className="sm:hidden">
+                {tx.tokenId.length > 20
+                  ? `${tx.tokenId.slice(0, 10)}...${tx.tokenId.slice(-8)}`
+                  : tx.tokenId}
+              </span>
+              <span className="hidden sm:inline">{tx.tokenId}</span>
             </span>
           </div>
         </div>
