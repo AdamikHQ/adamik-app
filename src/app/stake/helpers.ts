@@ -55,7 +55,7 @@ export const aggregateStakingBalances = (
       );
 
       const availableBalance = getAmountToUSD(
-        accountData?.balances?.native.available || "0",
+        accountData?.balances?.native?.available || "0",
         chainDetails!.decimals,
         mobulaMarketData,
         chainDetails
@@ -63,7 +63,7 @@ export const aggregateStakingBalances = (
 
       const claimableRewards = getAmountToUSD(
         accountData?.balances?.staking?.rewards?.native
-          .reduce((acc, reward) => acc + Number(reward.amount), 0)
+          ?.reduce((acc, reward) => acc + Number(reward.amount), 0)
           .toString() || "0", // TODO: Remove this after fixing the API
         chainDetails!.decimals,
         mobulaMarketData,
@@ -184,7 +184,7 @@ export const getAddressStakingPositions = (
       });
 
       // Handle native rewards and merge them into the existing staking position
-      (accountData?.balances.staking?.rewards.native || []).forEach(
+      (accountData?.balances?.staking?.rewards?.native || []).forEach(
         (reward) => {
           const uniqueKey = `${reward.validatorAddress}_locked`;
 
@@ -205,7 +205,7 @@ export const getAddressStakingPositions = (
       );
 
       // Handle token rewards and merge them into the existing staking position
-      (accountData?.balances.staking?.rewards.tokens || []).forEach(
+      (accountData?.balances?.staking?.rewards?.tokens || []).forEach(
         (reward) => {
           if (
             !reward.token?.id ||
