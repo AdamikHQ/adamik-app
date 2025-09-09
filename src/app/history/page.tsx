@@ -452,7 +452,7 @@ function TransactionHistoryContent() {
               <CardHeader>
                 <CardTitle>Available Accounts</CardTitle>
               </CardHeader>
-              <CardContent className="history-content">
+              <CardContent className="history-content" style={{ minHeight: "400px" }}>
                 {supportedAddresses.length > 0 ? (
                   <Table>
                     <TableHeader>
@@ -589,12 +589,12 @@ function TransactionHistoryContent() {
                     <div
                       className="space-y-4 px-1 h-full"
                       style={{
-                        minHeight: "200px",
+                        minHeight: "400px",
                         height: isMobileView
                           ? "400px"
                           : listHeight
-                          ? `${Math.min(listHeight, 600)}px`
-                          : "600px",
+                          ? `${Math.max(400, Math.min(listHeight, 600))}px`
+                          : "400px",
                         overflowY: "auto",
                       }}
                     >
