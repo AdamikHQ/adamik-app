@@ -6,9 +6,22 @@ import { useCallback, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { TransactionLoading } from "~/app/portfolio/TransactionLoading";
 import { Button } from "~/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 import { Badge } from "~/components/ui/badge";
 import {
   Collapsible,
@@ -49,7 +62,7 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
       tokenType: "token",
     },
   });
-  
+
   const {
     chainId,
     transaction,
@@ -57,7 +70,7 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
     setTransaction,
     setTransactionHash,
   } = useTransaction();
-  
+
   const [errors, setErrors] = useState("");
   const [signing, setSigning] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -122,7 +135,9 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
       }
 
       const data = await response.json();
@@ -152,7 +167,9 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
       broadcastTransaction(transactionWithChainId, {
         onSuccess: (response) => {
           if (response.error) {
-            const errorMessage = response.error.status?.errors?.[0]?.message || "Transaction broadcast failed";
+            const errorMessage =
+              response.error.status?.errors?.[0]?.message ||
+              "Transaction broadcast failed";
             setErrors(errorMessage);
             toast({
               variant: "destructive",
@@ -173,7 +190,10 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
           }
         },
         onError: (error) => {
-          const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "An unknown error occurred";
           setErrors(errorMessage);
           toast({
             variant: "destructive",
@@ -186,7 +206,8 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
     } catch (err) {
       console.error("Signing/broadcasting failed:", err);
       setSigning(false);
-      const errorMessage = err instanceof Error ? err.message : "Transaction failed";
+      const errorMessage =
+        err instanceof Error ? err.message : "Transaction failed";
       setErrors(errorMessage);
       toast({
         variant: "destructive",
@@ -203,7 +224,7 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
       // Format tokenId based on chain type
       let tokenId: string;
       const isStellar = asset.chainId.includes("stellar");
-      
+
       if (isStellar) {
         // Stellar format: ASSET_CODE:ISSUER_ADDRESS
         if (!formInput.issuerAddress) {
@@ -318,27 +339,42 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
   // Common Stellar testnet tokens for quick selection
   // Note: These are commonly used test tokens on Stellar testnet
   const stellarTestnetTokens = [
-    { code: "USDC", issuer: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5", name: "USD Coin Test" },
-    { code: "SRT", issuer: "GCDNJUBQSX7AJWLJACMJ7I4BC3Z47BQUTMHEICZLE6MU4KQBRYG5JY6B", name: "Testnet Reference Token" },
-    { code: "EURT", issuer: "GAP5LETOV6YIE62YAM56STDANPRDO7ZFDBGSNHJQIYGGKSMOZAHOOS2S", name: "Euro Test Token" },
+    {
+      code: "USDC",
+      issuer: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+      name: "USD Coin Test",
+    },
+    {
+      code: "SRT",
+      issuer: "GCDNJUBQSX7AJWLJACMJ7I4BC3Z47BQUTMHEICZLE6MU4KQBRYG5JY6B",
+      name: "Testnet Reference Token",
+    },
+    {
+      code: "EURT",
+      issuer: "GAP5LETOV6YIE62YAM56STDANPRDO7ZFDBGSNHJQIYGGKSMOZAHOOS2S",
+      name: "Euro Test Token",
+    },
   ];
 
-  const handleQuickSelect = (token: typeof stellarTestnetTokens[0]) => {
+  const handleQuickSelect = (token: (typeof stellarTestnetTokens)[0]) => {
     form.setValue("tokenCode", token.code);
     form.setValue("issuerAddress", token.issuer);
   };
 
   return (
     <>
-      <h1 className="font-bold text-xl text-center">Enable Token on {chainName}</h1>
+      <h1 className="font-bold text-xl text-center">
+        Enable Token on {chainName}
+      </h1>
       <p className="text-center text-sm text-gray-400 mb-6">
-        {chainName} requires you to opt-in to tokens before you can receive them.
-        Enter the token details you want to enable.
+        Enter the token details you want to enable for your {chainName} account.
       </p>
-      
+
       {isStellar && asset.chainId === "stellar-testnet" && (
         <div className="mb-6 px-4">
-          <p className="text-xs text-muted-foreground mb-2">Quick select common testnet tokens:</p>
+          <p className="text-xs text-muted-foreground mb-2">
+            Quick select common testnet tokens:
+          </p>
           <div className="flex flex-wrap gap-2">
             {stellarTestnetTokens.map((token) => (
               <Badge
@@ -353,7 +389,7 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
           </div>
         </div>
       )}
-      
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 px-4">
           <FormField
@@ -363,9 +399,11 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
               <FormItem>
                 <FormLabel>{isStellar ? "Asset Code" : "ASA ID"}</FormLabel>
                 <FormControl>
-                  <Input 
-                    placeholder={isStellar ? "e.g., USDC" : "Enter Algorand ASA ID"}
-                    {...field} 
+                  <Input
+                    placeholder={
+                      isStellar ? "e.g., USDC" : "Enter Algorand ASA ID"
+                    }
+                    {...field}
                   />
                 </FormControl>
                 {isStellar && (
@@ -386,9 +424,9 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
                 <FormItem>
                   <FormLabel>Issuer Address</FormLabel>
                   <FormControl>
-                    <Input 
+                    <Input
                       placeholder="e.g., GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5"
-                      {...field} 
+                      {...field}
                     />
                   </FormControl>
                   <p className="text-xs text-muted-foreground">
