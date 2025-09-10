@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Account, IWallet } from "~/components/wallets/types";
+import React, { useEffect, useState, useMemo } from "react";
+import { Account, IWallet, WalletName } from "~/components/wallets/types";
 import { WalletContext } from "~/hooks/useWallet";
 import { showroomAddresses } from "~/utils/showroomAddresses";
+import { SignerFactory } from "~/signers/SignerFactory";
+import { SignerType } from "~/signers/types";
 
 const localStorage = typeof window !== "undefined" ? window.localStorage : null;
 
@@ -11,7 +13,7 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
   children,
 }) => {
   const [wallets, setWallets] = useState<IWallet[]>([]);
-  const [addresses, setAddresses] = useState<Account[]>([]);
+  const [allAddresses, setAllAddresses] = useState<Account[]>([]);
   const [isShowroom, setShowroom] = useState<boolean>(false);
   const [isWalletMenuOpen, setWalletMenuOpen] = useState(false);
   // Track real wallet addresses separately
@@ -20,6 +22,23 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
   const [recentlyAddedAddresses, setRecentlyAddedAddresses] = useState<
     Account[]
   >([]);
+  // Track current signer to filter addresses
+  const [currentSigner, setCurrentSigner] = useState<SignerType>(SignerType.SODOT);
+
+  // Filter addresses based on current signer
+  const addresses = useMemo(() => {
+    if (isShowroom) {
+      return showroomAddresses;
+    }
+    
+    // Get the wallet name that corresponds to the current signer
+    const walletName = currentSigner === SignerType.IOFINNET 
+      ? WalletName.IOFINNET 
+      : WalletName.SODOT;
+    
+    // Filter addresses to only show those from the current signer
+    return allAddresses.filter(addr => addr.signer === walletName);
+  }, [allAddresses, currentSigner, isShowroom]);
 
   useEffect(() => {
     const localDataAddresses = localStorage?.getItem("AdamikClientAddresses");
@@ -31,17 +50,36 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
     const localDataClientStateParsed = JSON.parse(localDataClientState || "{}");
     const showroomState = localDataClientStateParsed?.isShowroom || false;
 
+    // Get the current signer type
+    const savedSigner = SignerFactory.getSelectedSignerType();
+    setCurrentSigner(savedSigner);
+
     // Store the real wallet addresses separately
     setRealWalletAddresses(parsedAddresses);
 
     // Set addresses based on showroom state
     if (showroomState) {
-      setAddresses(showroomAddresses);
+      setAllAddresses(showroomAddresses);
     } else {
-      setAddresses(parsedAddresses);
+      setAllAddresses(parsedAddresses);
     }
 
     setShowroom(showroomState);
+  }, []);
+
+  // Listen for signer changes
+  useEffect(() => {
+    const handleSignerChange = () => {
+      const newSigner = SignerFactory.getSelectedSignerType();
+      setCurrentSigner(newSigner);
+    };
+
+    // Listen for settings changes which might include signer changes
+    window.addEventListener("adamik-settings-changed", handleSignerChange);
+
+    return () => {
+      window.removeEventListener("adamik-settings-changed", handleSignerChange);
+    };
   }, []);
 
   const addWallet = (wallet: IWallet) => {
@@ -56,7 +94,7 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
     const actuallyNewAddresses: Account[] = [];
 
     newAddresses.forEach((newAddr) => {
-      const exists = addresses.some(
+      const exists = allAddresses.some(
         (addr) =>
           addr.address === newAddr.address && addr.chainId === newAddr.chainId
       );
@@ -70,7 +108,7 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
       setRecentlyAddedAddresses(actuallyNewAddresses);
     }
 
-    setAddresses((oldAddresses) => {
+    setAllAddresses((oldAddresses) => {
       const mergedAddresses = [...oldAddresses, ...newAddresses];
 
       const uniqueAddresses = mergedAddresses.filter(
@@ -99,7 +137,7 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
     // Clear recently added addresses when removing addresses
     setRecentlyAddedAddresses([]);
 
-    setAddresses((oldAddresses) => {
+    setAllAddresses((oldAddresses) => {
       const remainingAddresses = oldAddresses.filter(
         (addr) =>
           !addressesToRemove.some(
@@ -147,18 +185,18 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
     // Switch addresses based on showroom state
     if (showroomState) {
       // Save real addresses before switching to demo
-      if (!isShowroom && addresses.length > 0) {
-        setRealWalletAddresses(addresses);
+      if (!isShowroom && allAddresses.length > 0) {
+        setRealWalletAddresses(allAddresses);
         localStorage?.setItem(
           "AdamikClientAddresses",
-          JSON.stringify(addresses)
+          JSON.stringify(allAddresses)
         );
       }
       // Switch to demo addresses
-      setAddresses(showroomAddresses);
+      setAllAddresses(showroomAddresses);
     } else {
       // Switch back to real addresses
-      setAddresses(realWalletAddresses);
+      setAllAddresses(realWalletAddresses);
     }
   };
 
@@ -168,7 +206,7 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
         wallets,
         addWallet,
         addresses,
-        setAddresses,
+        setAddresses: setAllAddresses,
         addAddresses,
         removeAddresses,
         setWalletMenuOpen,

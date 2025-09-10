@@ -32,7 +32,6 @@ const {
 } = require("~/components/ui/tabs");
 
 // Import tab components
-import { SodotTestContent as RealSodotTestContent } from "./tabs/SodotTest";
 import { SignerConfigurationContent } from "./tabs/SignerConfiguration";
 
 export default function SettingsPage() {
@@ -101,9 +100,11 @@ export default function SettingsPage() {
         })
       );
 
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new Event("adamik-settings-changed"));
+
       toast({
-        description:
-          "Settings saved successfully. Changes will take effect after page refresh.",
+        description: "Settings saved successfully.",
         duration: 3000,
       });
 
@@ -370,7 +371,6 @@ export default function SettingsPage() {
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="chains">Supported Chains</TabsTrigger>
           <TabsTrigger value="signer">Signer Config</TabsTrigger>
-          <TabsTrigger value="sodot">Sodot Test</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="mt-0">
@@ -456,19 +456,7 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="signer" className="mt-0">
-          <Card className="bg-card rounded-lg border shadow-sm">
-            <CardContent className="pt-6">
-              <SignerConfigurationContent />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="sodot" className="mt-0">
-          <Card className="bg-card rounded-lg border shadow-sm">
-            <CardContent className="pt-6">
-              <RealSodotTestContent />
-            </CardContent>
-          </Card>
+          <SignerConfigurationContent />
         </TabsContent>
       </Tabs>
     </main>

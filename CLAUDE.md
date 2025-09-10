@@ -340,24 +340,41 @@ pnpm dev
 14. **Fixed non-EVM chain support** for IoFinnet signer
 15. **Created SignerFactory** for SIGNER-AGNOSTIC signer instantiation
 16. **Updated Portfolio components** to use selected signer from settings
-17. **Added "Powered by" indicator** in Select Chains modal
+17. **Added "Powered by" indicator** in Select Chains modal and ChainSelector
+18. **Fixed Starknet filtering** for IoFinnet (unsupported curve)
+19. **Implemented reactive settings** - changes apply immediately without page reload
+20. **Fixed testnet visibility** in portfolio page
+21. **Implemented address filtering by signer** - only shows addresses from current signer
+22. **Added warning dialog** when switching signers would hide addresses
+23. **Consolidated Settings tabs** - merged Signer Config and Sodot Test
+24. **Fixed chain-specific issues** - proper key compression for Bitcoin family chains
+25. **Implemented per-signer chain selection** in MultiChainConnect modal
 
 ### 🎯 Key Achievements
 - **Complete SIGNER-AGNOSTIC Architecture**: The app no longer cares which signer is used
 - **Public Key Management**: IoFinnet fetches both ECDSA_SECP256K1 and EDDSA_ED25519 keys once and caches them
 - **Curve Detection**: Uses signerSpec.curve from Adamik chain endpoint to determine which key to use
-- **Bitcoin Support**: Properly compresses public keys for Bitcoin (33 bytes) without 0x prefix
+- **Bitcoin Support**: Properly compresses public keys for Bitcoin family chains (33 bytes) without 0x prefix
 - **Cosmos Support**: Handles compressed keys for all Cosmos ecosystem chains
 - **Address Types**: Now fetches p2wpkh (SegWit) addresses for Bitcoin
 - **UI Integration**: Portfolio section fully respects signer selection from settings
+- **Signer Isolation**: Each signer maintains separate address lists and chain selections
+- **Smart Filtering**: Addresses are automatically filtered based on active signer
+- **User-Friendly Switching**: Warning dialog prevents accidental address hiding
 
 ### 📝 Technical Implementation
 - Created `/api/iofinnet-proxy/get-all-pubkeys` endpoint to fetch both public keys
-- Added `processPublicKeyForChain()` utility to handle compression based on chain requirements
+- Added `compressPublicKey()` utility to handle compression based on chain requirements
 - IoFinnet signer determines curve type from signerSpec.curve field (ed25519 vs secp256k1)
 - SignerFactory provides centralized signer creation and chain pubkey retrieval
 - Updated ConnectWallet, ChainSelector, and MultiChainConnect components to use SignerFactory
-- Added visual "Powered by [Signer]" indicator in chain selection modal
+- Added visual "Powered by [Signer]" indicator in chain selection modals
+- Implemented `useFilteredChains` hook to respect testnet visibility settings
+- WalletProvider now filters addresses based on current signer
+- Added AlertDialog component for signer switching warnings
+- Consolidated settings tabs - test connection is now under "Advanced" in Signer Config
+- MultiChainConnect stores selections per-signer (e.g., `defaultChains_SODOT` vs `defaultChains_IOFINNET`)
+- Chain family detection for proper key formatting (Bitcoin family vs Cosmos family)
 
 ### 🚀 Remaining Tasks
 1. **Refactor Sodot** to implement BaseSigner interface
@@ -376,11 +393,18 @@ pnpm dev
 
 ### Verification Tests
 - ✅ Bitcoin address derivation works with compressed keys
-- ✅ Cosmos Hub address derivation works with compressed keys
+- ✅ Cosmos Hub address derivation works with compressed keys  
 - ✅ Algorand address derivation works with ED25519 keys
 - ✅ All EVM chains work with uncompressed keys
 - ✅ Address types: p2wpkh for Bitcoin, standard for others
+- ✅ Signer switching shows/hides appropriate addresses
+- ✅ Warning dialog appears when switching would hide addresses
+- ✅ Testnets show/hide based on settings
+- ✅ Chain selections persist per-signer
+- ✅ Settings changes apply immediately without reload
+- ✅ Bitcoin family chains (dogecoin, litecoin) work correctly
+- ✅ Starknet chains filtered for IoFinnet (unsupported curve)
 
 *Last Updated: 2025-01-10*
 *Author: Claude Assistant*
-*Status: IoFinnet Integration Complete - Ready for SignerFactory Implementation*
+*Status: Multi-Signer Support Fully Implemented - UI Integration Complete*

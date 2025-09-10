@@ -14,7 +14,7 @@ import {
   isInAccountStateBatchCache,
   useAccountStateBatch,
 } from "~/hooks/useAccountStateBatch";
-import { useChains } from "~/hooks/useChains";
+import { useFilteredChains } from "~/hooks/useChains";
 import { useMobulaBlockchains } from "~/hooks/useMobulaBlockchains";
 import { useMobulaMarketMultiData } from "~/hooks/useMobulaMarketMultiData";
 import { useWallet } from "~/hooks/useWallet";
@@ -63,7 +63,7 @@ export default function Portfolio() {
   );
 
   const { isLoading: isSupportedChainsLoading, data: supportedChains } =
-    useChains();
+    useFilteredChains();
   const chainsDetails =
     supportedChains &&
     Object.values(supportedChains).filter((chain) =>

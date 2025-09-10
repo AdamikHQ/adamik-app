@@ -27,8 +27,8 @@ export const useFilteredChains = () => {
   const { data: allChains, ...rest } = useChains();
   const [showTestnets, setShowTestnets] = useState(false); // Default to false - hide testnets
 
-  useEffect(() => {
-    // Get the showTestnets setting from localStorage
+  // Function to read settings from localStorage
+  const readSettings = () => {
     if (typeof window !== "undefined") {
       try {
         const clientState = localStorage.getItem("AdamikClientState");
@@ -42,6 +42,31 @@ export const useFilteredChains = () => {
         console.error("Error reading showTestnets setting:", error);
       }
     }
+  };
+
+  useEffect(() => {
+    // Initial read
+    readSettings();
+
+    // Listen for storage events (changes from other tabs/windows)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "AdamikClientState") {
+        readSettings();
+      }
+    };
+
+    // Listen for custom events (changes from same tab)
+    const handleSettingsChange = () => {
+      readSettings();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("adamik-settings-changed", handleSettingsChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("adamik-settings-changed", handleSettingsChange);
+    };
   }, []);
 
   // Filter chains based on the showTestnets setting
