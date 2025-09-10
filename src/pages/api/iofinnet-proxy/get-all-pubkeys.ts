@@ -1,9 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { processPublicKeyForChain } from "~/utils/publicKeyUtils";
 
 /**
- * SIGNER-AGNOSTIC API proxy for IoFinnet public key retrieval
- * This endpoint is only called by the IoFinnet signer class
+ * Fetch all public keys from IoFinnet vault
+ * IoFinnet only has two keys: ECDSA_SECP256K1 and EDDSA_ED25519
  */
 export default async function handler(
   req: NextApiRequest,
@@ -11,15 +10,6 @@ export default async function handler(
 ) {
   if (req.method !== "GET") {
     return res.status(405).json({ message: "Method not allowed" });
-  }
-
-  const { chain } = req.query;
-
-  if (!chain || typeof chain !== "string") {
-    return res.status(400).json({ 
-      message: "Chain parameter is required",
-      error: "MISSING_CHAIN" 
-    });
   }
 
   try {
@@ -55,7 +45,7 @@ export default async function handler(
     const authData = await authResponse.json();
     const accessToken = authData.accessToken;
 
-    // Get vault details to extract public keys (following adamik-link implementation)
+    // Get vault details to extract public keys
     const vaultResponse = await fetch(
       `${baseUrl}/v1/vaults/${vaultId}`,
       {
@@ -73,11 +63,10 @@ export default async function handler(
 
     const vaultDetails = await vaultResponse.json();
     
-    // Extract public keys from vault's curves array (from adamik-link logic)
-    const publicKeys: Map<string, string> = new Map();
+    // Extract both public keys from vault
+    const publicKeys: Record<string, string> = {};
     
     if (vaultDetails.curves && Array.isArray(vaultDetails.curves)) {
-      // IoFinnet returns curves array with algorithm, curve, and publicKey
       for (const curveData of vaultDetails.curves) {
         if (curveData.publicKey) {
           // Map IoFinnet curve names to our internal format
@@ -90,62 +79,24 @@ export default async function handler(
             curveKey = `${curveData.algorithm}_${curveData.curve}`;
           }
           
-          // Store the public key with proper formatting
+          // Store the public key with 0x prefix for consistency
           const pubKey = curveData.publicKey.startsWith("0x") 
             ? curveData.publicKey 
             : `0x${curveData.publicKey}`;
           
-          publicKeys.set(curveKey, pubKey);
+          publicKeys[curveKey] = pubKey;
         }
       }
     }
 
-    // Determine which curve type we need for this chain
-    const getCurveTypeForChain = (chainId: string): string => {
-      // Most chains use ECDSA_SECP256K1
-      // Add specific mappings here if needed
-      const ed25519Chains = ["algorand", "solana", "stellar"];
-      
-      if (ed25519Chains.includes(chainId)) {
-        return "EDDSA_ED25519";
-      }
-      
-      return "ECDSA_SECP256K1"; // Default for Bitcoin, Ethereum, and most chains
-    };
-
-    const curveType = getCurveTypeForChain(chain);
-    const pubkey = publicKeys.get(curveType);
-
-    if (!pubkey) {
-      return res.status(404).json({
-        message: `No public key found for curve type: ${curveType} on chain: ${chain}`,
-        error: "PUBKEY_NOT_FOUND",
-        availableCurves: Array.from(publicKeys.keys()),
-      });
-    }
-
-    // Process the public key for the specific chain (compress if needed)
-    const processedPubkey = processPublicKeyForChain(pubkey, chain);
-
-    // For compressed keys (Bitcoin/Cosmos), don't add 0x prefix
-    // Adamik expects compressed keys without prefix
-    const isCompressed = processedPubkey.length === 66 && 
-      (processedPubkey.startsWith('02') || processedPubkey.startsWith('03'));
-    
-    const finalPubkey = isCompressed 
-      ? processedPubkey 
-      : (processedPubkey.startsWith('0x') ? processedPubkey : `0x${processedPubkey}`);
-    
     return res.status(200).json({
       success: true,
-      pubkey: finalPubkey,
-      chain: chain,
-      curveType: curveType,
+      publicKeys: publicKeys,
     });
   } catch (error: any) {
-    console.error("IoFinnet get-pubkey error:", error);
+    console.error("IoFinnet get-all-pubkeys error:", error);
     return res.status(500).json({
-      message: "Failed to get public key",
+      message: "Failed to get public keys",
       error: error.message,
     });
   }

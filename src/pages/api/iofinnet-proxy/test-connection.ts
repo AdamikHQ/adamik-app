@@ -74,9 +74,9 @@ export default async function handler(
     const authData = await authResponse.json();
     const accessToken = authData.accessToken; // IoFinnet returns 'accessToken' not 'access_token'
 
-    // Try to get vault details and addresses
+    // Get vault details to extract public keys (following adamik-link implementation)
     let vaultDetails = null;
-    let vaultAddresses = [];
+    let publicKeys: Map<string, string> = new Map();
     
     if (vaultId) {
       // Get vault details
@@ -90,53 +90,48 @@ export default async function handler(
 
       if (vaultResponse.ok) {
         vaultDetails = await vaultResponse.json();
-      }
-
-      // Get vault addresses to find public keys
-      const addressesResponse = await fetch(`${baseUrl}/v1/vaults/${vaultId}/addresses`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (addressesResponse.ok) {
-        const addressData = await addressesResponse.json();
-        vaultAddresses = addressData.data || [];
+        
+        // Extract public keys from curves array
+        if (vaultDetails.curves && Array.isArray(vaultDetails.curves)) {
+          for (const curveData of vaultDetails.curves) {
+            if (curveData.publicKey) {
+              let curveKey: string;
+              if (curveData.algorithm === "ECDSA" && curveData.curve === "Secp256k1") {
+                curveKey = "ECDSA_SECP256K1";
+              } else if (curveData.algorithm === "EDDSA" && curveData.curve === "Edwards") {
+                curveKey = "EDDSA_ED25519";
+              } else {
+                curveKey = `${curveData.algorithm}_${curveData.curve}`;
+              }
+              
+              const pubKey = curveData.publicKey.startsWith("0x") 
+                ? curveData.publicKey 
+                : `0x${curveData.publicKey}`;
+              
+              publicKeys.set(curveKey, pubKey);
+            }
+          }
+        }
       }
     }
 
-    // Map chain IDs to IoFinnet asset types
-    const chainToAsset: Record<string, string> = {
-      "ethereum": "ETH",
-      "bitcoin": "BTC",
-      "bsc": "BNB",
-      "polygon": "MATIC",
-      "tron": "TRX",
+    // Determine which curve type we need for this chain
+    const getCurveTypeForChain = (chainId: string): string => {
+      const ed25519Chains = ["algorand", "solana", "stellar"];
+      if (ed25519Chains.includes(chainId)) {
+        return "EDDSA_ED25519";
+      }
+      return "ECDSA_SECP256K1";
     };
 
-    // Find an address for the requested chain
-    const assetType = chainToAsset[chain] || "ETH";
-    const chainAddress = vaultAddresses.find((addr: any) => 
-      addr.assetType === assetType || 
-      addr.blockchain === chain.toUpperCase()
-    );
+    const curveType = getCurveTypeForChain(chain);
+    const pubkey = publicKeys.get(curveType);
 
-    // Extract public key and address from vault data
-    let pubkey = null;
-    let address = null;
-
-    if (chainAddress) {
-      pubkey = chainAddress.publicKey || chainAddress.pubKey;
-      address = chainAddress.address;
-    }
-
-    // If no address found, return configuration success but indicate no keys
+    // If no pubkey found, return configuration success but indicate no keys
     if (!pubkey && vaultId) {
       return res.status(200).json({
         success: true,
-        message: `IoFinnet connected but no ${chain} address found in vault`,
+        message: `IoFinnet connected but no public key found for ${curveType}`,
         data: {
           configured: true,
           chain,
@@ -144,9 +139,9 @@ export default async function handler(
             id: vaultDetails.id,
             name: vaultDetails.name,
             status: vaultDetails.status,
-            addressCount: vaultAddresses.length,
+            curvesCount: publicKeys.size,
           } : null,
-          availableAssets: vaultAddresses.map((a: any) => a.assetType).filter(Boolean),
+          availableCurves: Array.from(publicKeys.keys()),
         },
       });
     }
@@ -157,18 +152,19 @@ export default async function handler(
       data: {
         configured: true,
         chain,
-        pubkey: pubkey || `0x${"0".repeat(64)}`, // Fallback for testing
-        address: address || `0x${"0".repeat(40)}`, // Fallback for testing
+        pubkey: pubkey || null,
+        address: null, // Address will be derived from pubkey by Adamik API
         vault: vaultDetails ? {
           id: vaultDetails.id,
           name: vaultDetails.name,
           status: vaultDetails.status,
-          addressCount: vaultAddresses.length,
+          curvesCount: publicKeys.size,
+          availableCurves: Array.from(publicKeys.keys()),
         } : null,
         requestDetails: {
-          assetType,
-          curve: "secp256k1",
-          fromVault: !!chainAddress,
+          curveType: curveType,
+          curve: curveType === "ECDSA_SECP256K1" ? "secp256k1" : "ed25519",
+          fromVault: !!pubkey,
         },
       },
     });

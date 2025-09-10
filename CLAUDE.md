@@ -323,7 +323,7 @@ pnpm dev
 
 ## Progress Update
 
-### ✅ Completed (Step 1 - DONE!)
+### ✅ Completed
 1. Created new branch: `multi-signer-support`
 2. Imported `BaseSigner` interface from adamik-link
 3. Created `src/signers/types.ts` with SIGNER-AGNOSTIC types
@@ -332,22 +332,49 @@ pnpm dev
 6. UI allows switching between Sodot and IoFinnet signers
 7. Test connection functionality working with REAL IoFinnet credentials
 8. Successfully tested connection to IoFinnet vault
+9. **Ported IoFinnet signer** from adamik-link with full implementation
+10. **Implemented public key compression** for Bitcoin and Cosmos chains
+11. **Created public key utilities** for handling different key formats
+12. **Optimized IoFinnet implementation** to fetch both public keys once and cache them
+13. **Updated address derivation** to use p2wpkh (SegWit) addresses for Bitcoin
+14. **Fixed non-EVM chain support** for IoFinnet signer
+
+### 🎯 Key Improvements
+- **Public Key Management**: IoFinnet now fetches both ECDSA_SECP256K1 and EDDSA_ED25519 keys once and caches them
+- **Curve Detection**: Uses signerSpec.curve from Adamik chain endpoint to determine which key to use
+- **Bitcoin Support**: Properly compresses public keys for Bitcoin (33 bytes) without 0x prefix
+- **Cosmos Support**: Handles compressed keys for all Cosmos ecosystem chains
+- **Address Types**: Now fetches p2wpkh (SegWit) addresses for Bitcoin instead of legacy p2pkh
+
+### 📝 Technical Details
+- Created `/api/iofinnet-proxy/get-all-pubkeys` endpoint to fetch both public keys
+- Added `processPublicKeyForChain()` utility to handle compression based on chain requirements
+- IoFinnet signer determines curve type from signerSpec.curve field (ed25519 vs secp256k1)
+- Removed all console.log statements for production readiness
 
 ### 🚀 Next Steps
 1. **Refactor Sodot** to implement BaseSigner interface
-2. **Port IoFinnet signer** from adamik-link (full implementation)
-3. **Create SignerFactory** for SIGNER-AGNOSTIC instantiation
-4. **Update WalletSigner** component to use selected signer
-5. **Test end-to-end** transaction signing with both signers
+2. **Create SignerFactory** for SIGNER-AGNOSTIC instantiation
+3. **Update WalletSigner** component to use selected signer
+4. **Test end-to-end** transaction signing with both signers
+5. **Add comprehensive error handling** for signer switching
 
 ### Testing Instructions
 1. Run `pnpm dev`
 2. Navigate to Settings page (http://localhost:3000/settings)
 3. Click on "Signer Config" tab
 4. Select different signers from dropdown
-5. Test connection with various chains
+5. Test connection with various chains (including Bitcoin and Cosmos)
 6. Verify signer preference is saved in localStorage
+7. Test address derivation for both EVM and non-EVM chains
+
+### Verification Tests
+- ✅ Bitcoin address derivation works with compressed keys
+- ✅ Cosmos Hub address derivation works with compressed keys
+- ✅ Algorand address derivation works with ED25519 keys
+- ✅ All EVM chains work with uncompressed keys
+- ✅ Address types: p2wpkh for Bitcoin, standard for others
 
 *Last Updated: 2025-01-10*
 *Author: Claude Assistant*
-*Status: Implementation in Progress - Settings Page Complete*
+*Status: IoFinnet Integration Complete - Ready for SignerFactory Implementation*
