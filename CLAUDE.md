@@ -338,26 +338,32 @@ pnpm dev
 12. **Optimized IoFinnet implementation** to fetch both public keys once and cache them
 13. **Updated address derivation** to use p2wpkh (SegWit) addresses for Bitcoin
 14. **Fixed non-EVM chain support** for IoFinnet signer
+15. **Created SignerFactory** for SIGNER-AGNOSTIC signer instantiation
+16. **Updated Portfolio components** to use selected signer from settings
+17. **Added "Powered by" indicator** in Select Chains modal
 
-### 🎯 Key Improvements
-- **Public Key Management**: IoFinnet now fetches both ECDSA_SECP256K1 and EDDSA_ED25519 keys once and caches them
+### 🎯 Key Achievements
+- **Complete SIGNER-AGNOSTIC Architecture**: The app no longer cares which signer is used
+- **Public Key Management**: IoFinnet fetches both ECDSA_SECP256K1 and EDDSA_ED25519 keys once and caches them
 - **Curve Detection**: Uses signerSpec.curve from Adamik chain endpoint to determine which key to use
 - **Bitcoin Support**: Properly compresses public keys for Bitcoin (33 bytes) without 0x prefix
 - **Cosmos Support**: Handles compressed keys for all Cosmos ecosystem chains
-- **Address Types**: Now fetches p2wpkh (SegWit) addresses for Bitcoin instead of legacy p2pkh
+- **Address Types**: Now fetches p2wpkh (SegWit) addresses for Bitcoin
+- **UI Integration**: Portfolio section fully respects signer selection from settings
 
-### 📝 Technical Details
+### 📝 Technical Implementation
 - Created `/api/iofinnet-proxy/get-all-pubkeys` endpoint to fetch both public keys
 - Added `processPublicKeyForChain()` utility to handle compression based on chain requirements
 - IoFinnet signer determines curve type from signerSpec.curve field (ed25519 vs secp256k1)
-- Removed all console.log statements for production readiness
+- SignerFactory provides centralized signer creation and chain pubkey retrieval
+- Updated ConnectWallet, ChainSelector, and MultiChainConnect components to use SignerFactory
+- Added visual "Powered by [Signer]" indicator in chain selection modal
 
-### 🚀 Next Steps
+### 🚀 Remaining Tasks
 1. **Refactor Sodot** to implement BaseSigner interface
-2. **Create SignerFactory** for SIGNER-AGNOSTIC instantiation
-3. **Update WalletSigner** component to use selected signer
-4. **Test end-to-end** transaction signing with both signers
-5. **Add comprehensive error handling** for signer switching
+2. **Update WalletSigner** component for transaction signing
+3. **Test end-to-end** transaction signing with both signers
+4. **Add comprehensive error handling** for signer switching
 
 ### Testing Instructions
 1. Run `pnpm dev`

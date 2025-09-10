@@ -11,13 +11,15 @@ import { useWallet } from "~/hooks/useWallet";
 import { Account, WalletName } from "./types";
 import { Chain, SupportedBlockchain } from "~/utils/types";
 import { Button } from "~/components/ui/button";
-import { Loader2, ChevronRight, Search, Check, Clock } from "lucide-react";
+import { Loader2, ChevronRight, Search, Check, Clock, Shield } from "lucide-react";
 import { useExtendedChains, ExtendedChain } from "~/hooks/useExtendedChains";
 import { encodePubKeyToAddress } from "~/api/adamik/encode";
 import { getPreferredChains } from "~/config/wallet-chains";
 import { Input } from "~/components/ui/input";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { CustomProgress } from "~/components/ui/custom-progress";
+import { SignerFactory } from "~/signers/SignerFactory";
+import { SIGNER_CONFIGS } from "~/signers/types";
 
 /**
  * ChainItem component for rendering individual chain items
@@ -227,23 +229,8 @@ export const MultiChainConnect: React.FC<{
         );
       }
 
-      const response = await fetch(
-        `/api/sodot-proxy/derive-chain-pubkey?chain=${chainId}`,
-        {
-          method: "GET",
-          cache: "no-store",
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      const data = await response.json();
-      const pubkey = data.data.pubkey;
+      // Get chain public key using the selected signer
+      const pubkey = await SignerFactory.getChainPubkey(chainId);
 
       const { address } = await encodePubKeyToAddress(pubkey, chainId);
       return { pubkey, address, chainId };
@@ -810,6 +797,14 @@ export const MultiChainConnect: React.FC<{
                     ? "Disconnect All Chains"
                     : "Confirm Selection"}
                 </Button>
+              </div>
+              
+              {/* Powered by indicator */}
+              <div className="flex items-center justify-center gap-2 pt-3 mt-3 border-t">
+                <Shield className="h-3 w-3 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">
+                  Powered by {SIGNER_CONFIGS[SignerFactory.getSelectedSignerType()].displayName}
+                </span>
               </div>
             </div>
           </div>

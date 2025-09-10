@@ -91,4 +91,55 @@ export class SignerFactory {
     const signerType = this.getSelectedSignerType();
     return this.createSigner(signerType, chainId, signerSpec);
   }
+
+  /**
+   * Get the public key for a chain using the selected signer
+   * SIGNER-AGNOSTIC method that routes to the appropriate proxy
+   * 
+   * @param chainId - The chain to get the public key for
+   * @param signerType - Optional signer type override
+   * @returns The public key
+   */
+  static async getChainPubkey(
+    chainId: string,
+    signerType?: SignerType
+  ): Promise<string> {
+    const selectedSigner = signerType || this.getSelectedSignerType();
+    
+    if (selectedSigner === SignerType.SODOT) {
+      // Sodot uses derive-chain-pubkey endpoint
+      const response = await fetch(
+        `/api/sodot-proxy/derive-chain-pubkey?chain=${chainId}`,
+        {
+          method: "GET",
+          cache: "no-store",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to get pubkey for ${chainId}`);
+      }
+
+      const data = await response.json();
+      return data.data?.pubkey || data.pubkey;
+    } else if (selectedSigner === SignerType.IOFINNET) {
+      // IoFinnet uses get-pubkey endpoint
+      const response = await fetch(
+        `/api/iofinnet-proxy/get-pubkey?chain=${chainId}`,
+        {
+          method: "GET",
+          cache: "no-store",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to get pubkey for ${chainId}`);
+      }
+
+      const data = await response.json();
+      return data.pubkey;
+    } else {
+      throw new Error(`Unsupported signer type: ${selectedSigner}`);
+    }
+  }
 }
