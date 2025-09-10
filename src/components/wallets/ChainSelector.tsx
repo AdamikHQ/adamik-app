@@ -127,9 +127,10 @@ export function ChainSelector() {
           <div className="space-y-2">
             {Object.entries(chains)
               .filter(([chainId]) => {
-                // Filter out Starknet when using IoFinnet (unsupported curve)
+                // Filter out Starknet chains when using IoFinnet (unsupported curve)
                 const selectedSigner = SignerFactory.getSelectedSignerType();
-                if (selectedSigner === SignerType.IOFINNET && chainId === 'starknet') {
+                if (selectedSigner === SignerType.IOFINNET && 
+                    (chainId === 'starknet' || chainId === 'starknet-sepolia')) {
                   return false;
                 }
                 return true;

@@ -178,8 +178,8 @@ export const MultiChainConnect: React.FC<{
           .toLowerCase()
           .includes(searchQuery.toLowerCase());
 
-        // Filter out Starknet when using IoFinnet (unsupported curve)
-        if (isIoFinnet && chainId === 'starknet') {
+        // Filter out Starknet chains when using IoFinnet (unsupported curve)
+        if (isIoFinnet && (chainId === 'starknet' || chainId === 'starknet-sepolia')) {
           return false;
         }
 
