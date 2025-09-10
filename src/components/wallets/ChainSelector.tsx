@@ -126,6 +126,14 @@ export function ChainSelector() {
         <ScrollArea className="h-[300px] p-2">
           <div className="space-y-2">
             {Object.entries(chains)
+              .filter(([chainId]) => {
+                // Filter out Starknet when using IoFinnet (unsupported curve)
+                const selectedSigner = SignerFactory.getSelectedSignerType();
+                if (selectedSigner === SignerType.IOFINNET && chainId === 'starknet') {
+                  return false;
+                }
+                return true;
+              })
               .sort(([, a], [, b]) => a.name.localeCompare(b.name))
               .map(([chainId, chain]) => {
                 const isComingSoon = "comingSoon" in chain && chain.comingSoon;

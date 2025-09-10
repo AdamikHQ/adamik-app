@@ -19,7 +19,7 @@ import { Input } from "~/components/ui/input";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { CustomProgress } from "~/components/ui/custom-progress";
 import { SignerFactory } from "~/signers/SignerFactory";
-import { SIGNER_CONFIGS } from "~/signers/types";
+import { SIGNER_CONFIGS, SignerType } from "~/signers/types";
 
 /**
  * ChainItem component for rendering individual chain items
@@ -168,11 +168,20 @@ export const MultiChainConnect: React.FC<{
   const { selectedChainsList, unselectedChainsList } = React.useMemo(() => {
     if (!chains) return { selectedChainsList: [], unselectedChainsList: [] };
 
+    // Check if IoFinnet is selected and filter out unsupported chains
+    const selectedSigner = SignerFactory.getSelectedSignerType();
+    const isIoFinnet = selectedSigner === SignerType.IOFINNET;
+
     const allChains = Object.entries(chains)
       .filter(([chainId, chain]) => {
         const matchesSearch = chain.name
           .toLowerCase()
           .includes(searchQuery.toLowerCase());
+
+        // Filter out Starknet when using IoFinnet (unsupported curve)
+        if (isIoFinnet && chainId === 'starknet') {
+          return false;
+        }
 
         // Filter out "coming soon" chains from selected list
         const isComingSoon = "comingSoon" in chain && chain.comingSoon;
