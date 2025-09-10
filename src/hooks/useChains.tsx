@@ -8,7 +8,14 @@ export const CHAINS_QUERY_KEY = ["chains"] as const;
 export const useChains = () => {
   return useQuery<Record<string, Chain> | null>({
     queryKey: CHAINS_QUERY_KEY,
-    queryFn: async () => getChains(),
+    queryFn: async () => {
+      const chains = await getChains();
+      // If chains is null, throw an error to trigger React Query's retry logic
+      if (chains === null) {
+        throw new Error("Failed to fetch chains data");
+      }
+      return chains;
+    },
     staleTime: 24 * 60 * 60 * 1000,
     gcTime: 24 * 60 * 60 * 1000,
     retry: 3,
