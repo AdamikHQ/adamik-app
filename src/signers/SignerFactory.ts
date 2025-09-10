@@ -195,10 +195,9 @@ export class SignerFactory {
       console.log(`IoFinnet: Chain ${chainId} uses curve ${curve}, pubkey length: ${pubkey.length}`);
 
       // Handle key compression for chains that need it
-      // All Cosmos family chains and Bitcoin need compressed keys
+      // All Cosmos family and Bitcoin family chains need compressed keys
       const needsCompression = chain.family === 'cosmos' || 
-                              chainId.includes('bitcoin') || 
-                              chainId.includes('litecoin');
+                              chain.family === 'bitcoin';
       
       if (needsCompression && pubkey.startsWith('0x04')) {
         // Uncompressed ECDSA key, compress it
@@ -208,15 +207,13 @@ export class SignerFactory {
       }
 
       // Handle 0x prefix based on chain requirements
-      // Cosmos family chains don't want 0x prefix for compressed keys
-      if (chain.family === 'cosmos' && pubkey.startsWith('0x')) {
-        // Cosmos chains don't like 0x prefix
+      // Cosmos and Bitcoin family chains don't want 0x prefix for compressed keys
+      if ((chain.family === 'cosmos' || chain.family === 'bitcoin') && pubkey.startsWith('0x')) {
+        // Cosmos and Bitcoin chains don't like 0x prefix
         pubkey = pubkey.slice(2);
-        console.log(`IoFinnet: Removed 0x prefix for ${chainId} (cosmos family)`);
-      } else if (chain.family !== 'cosmos' && 
-                 !['bitcoin', 'bitcoin-testnet', 'litecoin', 'litecoin-testnet'].includes(chainId) && 
-                 !pubkey.startsWith('0x')) {
-        // Add 0x prefix for non-cosmos chains that expect it (except Bitcoin family)
+        console.log(`IoFinnet: Removed 0x prefix for ${chainId} (${chain.family} family)`);
+      } else if (chain.family !== 'cosmos' && chain.family !== 'bitcoin' && !pubkey.startsWith('0x')) {
+        // Add 0x prefix for chains that expect it (e.g., EVM chains)
         pubkey = `0x${pubkey}`;
         console.log(`IoFinnet: Added 0x prefix for ${chainId}`);
       }

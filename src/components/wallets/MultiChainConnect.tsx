@@ -123,6 +123,16 @@ export const MultiChainConnect: React.FC<{
   // When opening the selection modal, pre-select already connected chains
   useEffect(() => {
     if (isSelectionOpen && !isShowroom) {
+      // Get the current signer to filter chains
+      const currentSigner = SignerFactory.getSelectedSignerType();
+      const walletName = currentSigner === SignerType.IOFINNET 
+        ? WalletName.IOFINNET 
+        : WalletName.SODOT;
+      
+      // Filter addresses to only those from the current signer
+      const currentSignerAddresses = addresses.filter(addr => addr.signer === walletName);
+      const currentSignerChainIds = [...new Set(currentSignerAddresses.map(addr => addr.chainId))];
+      
       // First try to load any previously selected chains from localStorage
       try {
         const clientState = localStorage.getItem("AdamikClientState");
@@ -136,12 +146,14 @@ export const MultiChainConnect: React.FC<{
             return;
           }
 
+          // Store signer-specific selections
+          const signerKey = `defaultChains_${currentSigner}`;
           if (
-            parsedState.defaultChains &&
-            Array.isArray(parsedState.defaultChains)
+            parsedState[signerKey] &&
+            Array.isArray(parsedState[signerKey])
           ) {
-            // Load user's custom selection
-            setSelectedChains(parsedState.defaultChains);
+            // Load user's custom selection for this specific signer
+            setSelectedChains(parsedState[signerKey]);
             return;
           }
         }
@@ -149,20 +161,16 @@ export const MultiChainConnect: React.FC<{
         console.error("Error loading previously selected chains:", error);
       }
 
-      // If no custom selection exists, use currently connected chains
-      if (uniqueConnectedChainIds.length > 0) {
-        setSelectedChains(uniqueConnectedChainIds);
+      // If no custom selection exists, use currently connected chains for this signer
+      if (currentSignerChainIds.length > 0) {
+        setSelectedChains(currentSignerChainIds);
         return;
       }
 
-      // Only fall back to default chains if this is the user's first time (no explicit preferences)
-      // and there are no connected chains
-      if (chains) {
-        const preferredChains = getPreferredChains(chains);
-        setSelectedChains(preferredChains);
-      }
+      // For new signers with no connections, start with empty selection
+      setSelectedChains([]);
     }
-  }, [isSelectionOpen, isShowroom, uniqueConnectedChainIds, chains]);
+  }, [isSelectionOpen, isShowroom, addresses]);
 
   // Filter and sort chains based on search query and selection status
   const { selectedChainsList, unselectedChainsList } = React.useMemo(() => {
@@ -249,11 +257,16 @@ export const MultiChainConnect: React.FC<{
 
   const handleSuccessfulConnection = useCallback(
     (result: { pubkey: string; address: string; chainId: string }) => {
+      const currentSigner = SignerFactory.getSelectedSignerType();
+      const walletName = currentSigner === SignerType.IOFINNET 
+        ? WalletName.IOFINNET 
+        : WalletName.SODOT;
+        
       const account: Account = {
         address: result.address,
         chainId: result.chainId,
         pubKey: result.pubkey,
-        signer: WalletName.SODOT,
+        signer: walletName,
       };
 
       addAddresses([account]);
@@ -332,11 +345,16 @@ export const MultiChainConnect: React.FC<{
         const result = await getAddressForChain(chainId);
 
         // Collect the account instead of immediately adding it
+        const currentSigner = SignerFactory.getSelectedSignerType();
+        const walletName = currentSigner === SignerType.IOFINNET 
+          ? WalletName.IOFINNET 
+          : WalletName.SODOT;
+          
         const account: Account = {
           address: result.address,
           chainId: result.chainId,
           pubKey: result.pubkey,
-          signer: WalletName.SODOT,
+          signer: walletName,
         };
 
         allNewAccounts.push(account);
@@ -557,8 +575,10 @@ export const MultiChainConnect: React.FC<{
                 </Button>
                 <Button
                   onClick={() => {
-                    // Save the selected chains to localStorage for future use
+                    // Save the selected chains to localStorage for future use (per signer)
                     try {
+                      const currentSigner = SignerFactory.getSelectedSignerType();
+                      const signerKey = `defaultChains_${currentSigner}`;
                       const clientState =
                         localStorage.getItem("AdamikClientState") || "{}";
                       const parsedState = JSON.parse(clientState);
@@ -566,7 +586,7 @@ export const MultiChainConnect: React.FC<{
                         "AdamikClientState",
                         JSON.stringify({
                           ...parsedState,
-                          defaultChains: selectedChains,
+                          [signerKey]: selectedChains,
                           // If user has selected at least one chain, they are no longer in "disconnected all" mode
                           hasManuallyDisconnected: selectedChains.length === 0,
                         })
@@ -706,11 +726,16 @@ export const MultiChainConnect: React.FC<{
                               const result = await getAddress(chainId);
 
                               // Instead of adding to wallet immediately, collect the address
+                              const currentSigner = SignerFactory.getSelectedSignerType();
+                              const walletName = currentSigner === SignerType.IOFINNET 
+                                ? WalletName.IOFINNET 
+                                : WalletName.SODOT;
+                                
                               const account: Account = {
                                 address: result.address,
                                 chainId: result.chainId,
                                 pubKey: result.pubkey,
-                                signer: WalletName.SODOT,
+                                signer: walletName,
                               };
 
                               // Add to our collection instead of the wallet state

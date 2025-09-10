@@ -5,7 +5,7 @@ import {
   AdamikCurve,
   AdamikHashFunction,
 } from "~/utils/types";
-import { useChains } from "./useChains";
+import { useFilteredChains } from "./useChains";
 
 // Create a basic structure for the Stellar chain
 const stellarChain: Chain = {
@@ -75,7 +75,7 @@ export interface ExtendedChain extends Chain {
 }
 
 export const useExtendedChains = () => {
-  const chainsQuery = useChains();
+  const chainsQuery = useFilteredChains();
 
   const extendedData = useMemo(() => {
     if (!chainsQuery.data) return null;
