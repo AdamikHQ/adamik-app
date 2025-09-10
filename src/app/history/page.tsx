@@ -48,6 +48,7 @@ import {
 import { ParsedTransactionComponent } from "~/components/transactions/ParsedTransaction";
 import { WalletConnect } from "~/components";
 import { TransactionHistoryPlaceholder } from "./TransactionHistoryPlaceholder";
+import { resolveLogo } from "~/utils/helper";
 
 // Function to generate a consistent background color based on chain ID
 const getChainColor = (chainId: string): string => {
@@ -147,39 +148,29 @@ function TransactionHistoryContent() {
   // Fetch blockchain details for icons
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
 
-  // Map chain logos for display
+  // Map chain logos for display using the resolveLogo utility
   const chainLogos = useMemo(() => {
     const logos: { [key: string]: string } = {};
 
     // Skip if we don't have the necessary data
     if (!supportedChains) return logos;
 
-    // Try to find logos for each chain
+    // Use resolveLogo for each chain to get consistent logos
     for (const chainId of filteredChainIds) {
       const chain = supportedChains[chainId];
       if (!chain) continue;
 
-      // Try to get logo from market data
-      if (chain.ticker && chainIconData) {
-        // Safe access with optional chaining
-        const logo = (chainIconData as any)?.[chain.ticker]?.logo;
-        if (logo) {
-          logos[chainId] = logo;
-          continue;
-        }
-      }
+      const logo = resolveLogo({
+        asset: {
+          name: chain.name,
+          ticker: chain.ticker || chainId,
+        },
+        mobulaMarketData: chainIconData,
+        mobulaBlockChainData: mobulaBlockchainDetails,
+      });
 
-      // Try to find in blockchain details
-      if (mobulaBlockchainDetails && Array.isArray(mobulaBlockchainDetails)) {
-        // Using any type for blockchain detail to avoid property errors
-        const blockchainDetail = mobulaBlockchainDetails.find(
-          (bc: any) =>
-            bc.name?.toLowerCase() === chain.name?.toLowerCase() ||
-            bc.symbol?.toLowerCase() === chain.ticker?.toLowerCase()
-        );
-        if (blockchainDetail?.logo) {
-          logos[chainId] = blockchainDetail.logo;
-        }
+      if (logo) {
+        logos[chainId] = logo;
       }
     }
 

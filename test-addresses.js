@@ -23,6 +23,10 @@ const TEST_CHAINS = [
   { id: 'avalanche', name: 'Avalanche', expectedFormat: /^0x[0-9a-fA-F]{40}$/ },
   { id: 'cosmoshub', name: 'Cosmos Hub', expectedFormat: /^cosmos[0-9a-z]{39}$/ },
   { id: 'algorand', name: 'Algorand', expectedFormat: /^[A-Z2-7]{58}$/ },
+  { id: 'aptos', name: 'Aptos', expectedFormat: /^0x[0-9a-fA-F]{64}$/ },
+  { id: 'solana', name: 'Solana', expectedFormat: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/ },
+  { id: 'akash', name: 'Akash', expectedFormat: /^akash[0-9a-z]{39}$/ },
+  { id: 'band', name: 'Band', expectedFormat: /^band[0-9a-z]{39}$/ },
 ];
 
 // Colors for output
@@ -99,11 +103,6 @@ async function testAddressDerivation() {
       const chainPubkey = await getPubkeyForSigner(signerType, chain.id);
       
       if (!chainPubkey) {
-        // Skip ED25519 chains for IoFinnet if not available
-        if (['algorand', 'solana', 'stellar'].includes(chain.id) && signerType === 'iofinnet') {
-          log(`    ⏭️  ${chain.name}: Skipped (ED25519 not configured)`, 'yellow');
-          continue;
-        }
         log(`    ❌ ${chain.name}: Could not get public key`, 'red');
         results[signerType].failed++;
         continue;

@@ -1,7 +1,9 @@
 import { BaseSigner, SignerType } from "./types";
-import { AdamikSignerSpec } from "~/utils/types";
+import { AdamikSignerSpec, AdamikCurve } from "~/utils/types";
 import { SodotSigner } from "./Sodot";
 import { IoFinnetSigner } from "./IoFinnet";
+import { getChains } from "~/api/adamik/chains";
+import { compressPublicKey, doesChainNeedCompressedKey } from "~/utils/publicKeyUtils";
 
 /**
  * SIGNER-AGNOSTIC Factory Pattern
@@ -11,6 +13,11 @@ import { IoFinnetSigner } from "./IoFinnet";
  * This ensures complete signer abstraction throughout the application.
  */
 export class SignerFactory {
+  // Cache for IoFinnet pubkeys
+  private static iofinnetPubkeys: {
+    ecdsa?: string;
+    eddsa?: string;
+  } = {};
   /**
    * Create a signer instance based on the selected type
    * 
@@ -93,6 +100,42 @@ export class SignerFactory {
   }
 
   /**
+   * Fetch and cache IoFinnet pubkeys (both ECDSA and EDDSA)
+   */
+  private static async fetchIofinnetPubkeys(): Promise<void> {
+    if (this.iofinnetPubkeys.ecdsa && this.iofinnetPubkeys.eddsa) {
+      return; // Already cached
+    }
+
+    try {
+      // Fetch both pubkeys from IoFinnet
+      const response = await fetch('/api/iofinnet-proxy/get-all-pubkeys', {
+        method: 'GET',
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch IoFinnet pubkeys');
+      }
+
+      const data = await response.json();
+      
+      // Extract pubkeys from the response
+      if (data.publicKeys) {
+        this.iofinnetPubkeys = {
+          ecdsa: data.publicKeys.ECDSA_SECP256K1,
+          eddsa: data.publicKeys.EDDSA_ED25519,
+        };
+      } else {
+        throw new Error('Invalid response format from IoFinnet');
+      }
+    } catch (error) {
+      console.error('Error fetching IoFinnet pubkeys:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get the public key for a chain using the selected signer
    * SIGNER-AGNOSTIC method that routes to the appropriate proxy
    * 
@@ -123,21 +166,49 @@ export class SignerFactory {
       const data = await response.json();
       return data.data?.pubkey || data.pubkey;
     } else if (selectedSigner === SignerType.IOFINNET) {
-      // IoFinnet uses get-pubkey endpoint
-      const response = await fetch(
-        `/api/iofinnet-proxy/get-pubkey?chain=${chainId}`,
-        {
-          method: "GET",
-          cache: "no-store",
-        }
-      );
+      // Ensure pubkeys are cached
+      await this.fetchIofinnetPubkeys();
 
-      if (!response.ok) {
-        throw new Error(`Failed to get pubkey for ${chainId}`);
+      // Get chain data to determine which curve to use
+      const chains = await getChains();
+      if (!chains || !chains[chainId]) {
+        throw new Error(`Chain ${chainId} not found`);
       }
 
-      const data = await response.json();
-      return data.pubkey;
+      const chain = chains[chainId];
+      const curve = chain.signerSpec?.curve;
+
+      // Select the appropriate pubkey based on the chain's curve
+      let pubkey: string | undefined;
+      if (curve === AdamikCurve.ED25519) {
+        pubkey = this.iofinnetPubkeys.eddsa;
+      } else {
+        // Default to ECDSA for secp256k1 and other curves
+        pubkey = this.iofinnetPubkeys.ecdsa;
+      }
+
+      if (!pubkey) {
+        throw new Error(`No ${curve} pubkey available for ${chainId}`);
+      }
+
+      // Handle key compression for chains that need it
+      if (doesChainNeedCompressedKey(chainId) && pubkey.startsWith('0x04')) {
+        // Uncompressed ECDSA key, compress it
+        pubkey = compressPublicKey(pubkey);
+      }
+
+      // Handle 0x prefix based on chain requirements
+      if (chainId === 'band' && pubkey.startsWith('0x')) {
+        // Band doesn't like 0x prefix
+        pubkey = pubkey.slice(2);
+      } else if (!['bitcoin', 'bitcoin-testnet', 'litecoin', 'litecoin-testnet'].includes(chainId) && 
+                 !pubkey.startsWith('0x') && 
+                 pubkey.length === 64) {
+        // Add 0x prefix for chains that expect it (except Bitcoin family)
+        pubkey = `0x${pubkey}`;
+      }
+
+      return pubkey;
     } else {
       throw new Error(`Unsupported signer type: ${selectedSigner}`);
     }
