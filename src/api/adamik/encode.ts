@@ -64,7 +64,9 @@ export const encodePubKeyToAddress = async (
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`Adamik API error for ${chainId}:`, errorText);
-      throw new Error(`API request failed with status ${response.status}`);
+      console.error(`Failed pubkey: ${pubKey}`);
+      console.error(`Pubkey length: ${pubKey.length}, starts with: ${pubKey.substring(0, 10)}`);
+      throw new Error(`API request failed with status ${response.status} for chain ${chainId}`);
     }
 
     const result = (await response.json()) as {

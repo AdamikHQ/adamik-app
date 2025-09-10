@@ -191,23 +191,37 @@ export class SignerFactory {
         throw new Error(`No ${curve} pubkey available for ${chainId}`);
       }
 
+      // Log the chain and pubkey info for debugging
+      console.log(`IoFinnet: Chain ${chainId} uses curve ${curve}, pubkey length: ${pubkey.length}`);
+
       // Handle key compression for chains that need it
-      if (doesChainNeedCompressedKey(chainId) && pubkey.startsWith('0x04')) {
+      // All Cosmos family chains and Bitcoin need compressed keys
+      const needsCompression = chain.family === 'cosmos' || 
+                              chainId.includes('bitcoin') || 
+                              chainId.includes('litecoin');
+      
+      if (needsCompression && pubkey.startsWith('0x04')) {
         // Uncompressed ECDSA key, compress it
+        const originalLength = pubkey.length;
         pubkey = compressPublicKey(pubkey);
+        console.log(`IoFinnet: Compressed pubkey for ${chainId} (family: ${chain.family}) from ${originalLength} to ${pubkey.length}`);
       }
 
       // Handle 0x prefix based on chain requirements
-      if (chainId === 'band' && pubkey.startsWith('0x')) {
-        // Band doesn't like 0x prefix
+      // Cosmos family chains don't want 0x prefix for compressed keys
+      if (chain.family === 'cosmos' && pubkey.startsWith('0x')) {
+        // Cosmos chains don't like 0x prefix
         pubkey = pubkey.slice(2);
-      } else if (!['bitcoin', 'bitcoin-testnet', 'litecoin', 'litecoin-testnet'].includes(chainId) && 
-                 !pubkey.startsWith('0x') && 
-                 pubkey.length === 64) {
-        // Add 0x prefix for chains that expect it (except Bitcoin family)
+        console.log(`IoFinnet: Removed 0x prefix for ${chainId} (cosmos family)`);
+      } else if (chain.family !== 'cosmos' && 
+                 !['bitcoin', 'bitcoin-testnet', 'litecoin', 'litecoin-testnet'].includes(chainId) && 
+                 !pubkey.startsWith('0x')) {
+        // Add 0x prefix for non-cosmos chains that expect it (except Bitcoin family)
         pubkey = `0x${pubkey}`;
+        console.log(`IoFinnet: Added 0x prefix for ${chainId}`);
       }
 
+      console.log(`IoFinnet: Final pubkey for ${chainId}: ${pubkey.substring(0, 20)}... (length: ${pubkey.length})`);
       return pubkey;
     } else {
       throw new Error(`Unsupported signer type: ${selectedSigner}`);
