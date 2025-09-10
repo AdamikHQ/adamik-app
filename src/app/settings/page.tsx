@@ -31,8 +31,9 @@ const {
   TabsTrigger,
 } = require("~/components/ui/tabs");
 
-// Import Sodot component directly
+// Import tab components
 import { SodotTestContent as RealSodotTestContent } from "./tabs/SodotTest";
+import { SignerConfigurationContent } from "./tabs/SignerConfiguration";
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -368,6 +369,7 @@ export default function SettingsPage() {
         <TabsList className="mb-4">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="chains">Supported Chains</TabsTrigger>
+          <TabsTrigger value="signer">Signer Config</TabsTrigger>
           <TabsTrigger value="sodot">Sodot Test</TabsTrigger>
         </TabsList>
 
@@ -449,6 +451,14 @@ export default function SettingsPage() {
           <Card className="bg-card rounded-lg border shadow-sm">
             <CardContent className="pt-6">
               <SupportedChainsContent />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="signer" className="mt-0">
+          <Card className="bg-card rounded-lg border shadow-sm">
+            <CardContent className="pt-6">
+              <SignerConfigurationContent />
             </CardContent>
           </Card>
         </TabsContent>
