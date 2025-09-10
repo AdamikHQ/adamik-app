@@ -14,7 +14,9 @@ import { Chain } from "~/utils/types";
 import { getPreferredChains } from "~/config/wallet-chains";
 import { encodePubKeyToAddress } from "~/api/adamik/encode";
 import { Account, WalletName } from "./types";
-import { ChevronDown, Clock } from "lucide-react";
+import { ChevronDown, Clock, Shield } from "lucide-react";
+import { SignerFactory } from "~/signers/SignerFactory";
+import { SignerType, SIGNER_CONFIGS } from "~/signers/types";
 
 export function ChainSelector() {
   const { toast } = useToast();
@@ -49,27 +51,21 @@ export function ChainSelector() {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `/api/sodot-proxy/derive-chain-pubkey?chain=${chainId}`,
-        {
-          method: "GET",
-          cache: "no-store",
-        }
-      );
+      // Get the selected signer type from settings
+      const selectedSigner = SignerFactory.getSelectedSignerType();
+      const walletName = selectedSigner === SignerType.IOFINNET 
+        ? WalletName.IOFINNET 
+        : WalletName.SODOT;
 
-      if (!response.ok) {
-        throw new Error("Failed to get chain public key");
-      }
-
-      const data = await response.json();
-      const pubkey = data.data.pubkey;
+      // Get chain public key using the selected signer
+      const pubkey = await SignerFactory.getChainPubkey(chainId);
       const { address } = await encodePubKeyToAddress(pubkey, chainId);
 
       const account: Account = {
         address,
         chainId,
         pubKey: pubkey,
-        signer: WalletName.SODOT,
+        signer: walletName,
       };
 
       addAddresses([account]);
@@ -162,6 +158,14 @@ export function ChainSelector() {
               })}
           </div>
         </ScrollArea>
+        
+        {/* Powered by indicator */}
+        <div className="flex items-center justify-center gap-2 px-4 py-3 border-t bg-muted/50">
+          <Shield className="h-3 w-3 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">
+            Powered by {SIGNER_CONFIGS[SignerFactory.getSelectedSignerType()].displayName}
+          </span>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );

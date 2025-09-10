@@ -7,6 +7,8 @@ import { Account, WalletName } from "~/components/wallets/types";
 import { useToast } from "~/components/ui/use-toast";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { SignerFactory } from "~/signers/SignerFactory";
+import { SignerType } from "~/signers/types";
 
 /**
  * ConnectWallet
@@ -42,24 +44,17 @@ export const ConnectWallet = ({ onNextStep }: { onNextStep: () => void }) => {
         throw new Error("No chains configured for connection");
       }
 
+      // Get the selected signer type from settings
+      const selectedSigner = SignerFactory.getSelectedSignerType();
+      const walletName = selectedSigner === SignerType.IOFINNET 
+        ? WalletName.IOFINNET 
+        : WalletName.SODOT;
+
       // Connect to all chains in parallel
       const connectionPromises = preferredChains.map(async (chainId) => {
         try {
-          // Get chain public key
-          const pubkeyResponse = await fetch(
-            `/api/sodot-proxy/derive-chain-pubkey?chain=${chainId}`,
-            {
-              method: "GET",
-              cache: "no-store",
-            }
-          );
-
-          if (!pubkeyResponse.ok) {
-            throw new Error(`Failed to get pubkey for ${chainId}`);
-          }
-
-          const pubkeyData = await pubkeyResponse.json();
-          const pubkey = pubkeyData.data.pubkey;
+          // Get chain public key using the selected signer
+          const pubkey = await SignerFactory.getChainPubkey(chainId);
 
           // Derive address from pubkey
           const { address } = await encodePubKeyToAddress(pubkey, chainId);
@@ -71,7 +66,7 @@ export const ConnectWallet = ({ onNextStep }: { onNextStep: () => void }) => {
               address,
               chainId,
               pubKey: pubkey,
-              signer: WalletName.SODOT,
+              signer: walletName,
             },
           };
         } catch (err) {
