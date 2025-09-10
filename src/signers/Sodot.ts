@@ -4,6 +4,7 @@ import {
   AdamikSignerSpec,
 } from "~/utils/types";
 import { encodePubKeyToAddress } from "~/api/adamik/encode";
+import { BaseSigner } from "./types";
 
 // Helper function to determine if we're running in a production environment
 const isProduction = (): boolean => {
@@ -23,9 +24,10 @@ const ensureUrlFormat = (url: string): string => {
   return url;
 };
 
-export class SodotSigner {
-  private chainId: string;
-  private signerSpec: AdamikSignerSpec;
+export class SodotSigner implements BaseSigner {
+  public chainId: string;
+  public signerSpec: AdamikSignerSpec;
+  public signerName = "Sodot";
   private n = 3;
   private t = 2;
   private keyIds: string[] = [];
