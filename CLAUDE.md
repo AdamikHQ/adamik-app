@@ -324,7 +324,6 @@ pnpm dev
 ## Progress Update
 
 ### ✅ Completed  
-26. **Centralized proxy utilities** - Created shared utilities for signature formatting, chain config, and error handling
 1. Created new branch: `multi-signer-support`
 2. Imported `BaseSigner` interface from adamik-link
 3. Created `src/signers/types.ts` with SIGNER-AGNOSTIC types
@@ -350,6 +349,9 @@ pnpm dev
 23. **Consolidated Settings tabs** - merged Signer Config and Sodot Test
 24. **Fixed chain-specific issues** - proper key compression for Bitcoin family chains
 25. **Implemented per-signer chain selection** in MultiChainConnect modal
+26. **Centralized proxy utilities** - Created shared utilities for signature formatting, chain config, and error handling
+27. **Created SignerConnect component** - Signer-agnostic component for transaction signing
+28. **Updated WalletSigner** - Now uses SignerFactory and supports both Sodot and IoFinnet
 
 ### 🎯 Key Achievements
 - **Complete SIGNER-AGNOSTIC Architecture**: The app no longer cares which signer is used
@@ -381,10 +383,9 @@ pnpm dev
 - Chain family detection for proper key formatting (Bitcoin family vs Cosmos family)
 
 ### 🚀 Remaining Tasks
-1. **Update WalletSigner** component for transaction signing (Sodot already implements BaseSigner ✅)
+1. ✅ **Update WalletSigner** component for transaction signing - COMPLETED
 2. **Test end-to-end** transaction signing with both signers
 3. **Add comprehensive error handling** for signer switching
-4. ✅ **Centralized proxy utilities** - COMPLETED
 
 ### 🔧 API Proxy Centralization Plan
 
