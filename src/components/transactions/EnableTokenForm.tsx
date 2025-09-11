@@ -36,6 +36,10 @@ import { useToast } from "~/components/ui/use-toast";
 import { z } from "zod";
 import { Asset, TransactionData, TransactionMode } from "~/utils/types";
 import { TransactionSuccessModal } from "./TransactionSuccessModal";
+import { SignerFactory } from "~/signers/SignerFactory";
+import { SignerType } from "~/signers/types";
+import { getChains } from "~/api/adamik/chains";
+import { IoFinnetApprovalModal } from "~/components/modals/IoFinnetApprovalModal";
 
 const enableTokenFormSchema = z.object({
   tokenCode: z.string().min(1, "Token code is required"),
@@ -74,6 +78,7 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
   const [errors, setErrors] = useState("");
   const [signing, setSigning] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showIoFinnetApproval, setShowIoFinnetApproval] = useState(false);
 
   const signAndBroadcast = async () => {
     if (!transaction) {
@@ -119,18 +124,49 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
       const isStellar = chainId.includes("stellar");
       const shouldUseHash = isStellar && transactionHash;
 
-      // Sign the transaction
-      const response = await fetch(`/api/sodot-proxy/${chainId}/sign`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      // Get the selected signer type from settings
+      const signerType = SignerFactory.getSelectedSignerType();
+      
+      // Determine the correct API endpoint based on signer type
+      let signEndpoint: string;
+      let signPayload: any;
+
+      if (signerType === SignerType.SODOT) {
+        // Sodot signing endpoint
+        signEndpoint = `/api/sodot-proxy/${chainId}/sign`;
+        signPayload = {
           // For Stellar, prioritize hash over raw
           transaction: shouldUseHash ? undefined : transactionRaw,
           hash: transactionHash,
           usePrecomputedHash: shouldUseHash,
-        }),
+        };
+      } else {
+        // IoFinnet signing endpoint
+        // Get chain config for signerSpec
+        const chains = await getChains();
+        const chainConfig = chains?.[chainId];
+        if (!chainConfig) {
+          throw new Error(`Chain ${chainId} not found`);
+        }
+        
+        signEndpoint = `/api/iofinnet-proxy/sign-transaction`;
+        signPayload = {
+          chain: chainId,
+          message: transactionRaw,
+          signerSpec: chainConfig.signerSpec,
+        };
+
+        // Show IoFinnet approval modal
+        setShowIoFinnetApproval(true);
+      }
+
+      // Sign the transaction
+      const response = await fetch(signEndpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(signPayload),
       });
 
       if (!response.ok) {
@@ -142,6 +178,11 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
 
       const data = await response.json();
       const signature = data.signature;
+
+      // Hide IoFinnet approval modal if it was shown
+      if (signerType === SignerType.IOFINNET) {
+        setShowIoFinnetApproval(false);
+      }
 
       if (!signature) {
         throw new Error("No signature returned from signing");
@@ -328,6 +369,10 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
           open={showSuccessModal}
           setOpen={setShowSuccessModal}
           onClose={onNextStep}
+        />
+        <IoFinnetApprovalModal
+          open={showIoFinnetApproval}
+          chainId={chainId}
         />
       </>
     );
