@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -22,8 +22,14 @@ export function SignerSelector({
   className,
   showLabel = true,
 }: SignerSelectorProps) {
-  const currentSigner = SignerFactory.getSelectedSignerType();
+  // Use state to handle client-side value to avoid hydration mismatch
+  const [currentSigner, setCurrentSigner] = useState<SignerType>(SignerType.SODOT);
   const { isShowroom } = useWallet();
+
+  useEffect(() => {
+    // Only read from localStorage after component mounts on client
+    setCurrentSigner(SignerFactory.getSelectedSignerType());
+  }, []);
 
   const handleSignerChange = (value: string) => {
     SignerFactory.setSelectedSignerType(value as SignerType);
