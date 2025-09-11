@@ -11,6 +11,7 @@ import { ScrollArea } from "~/components/ui/scroll-area";
 import { Input } from "~/components/ui/input";
 import { Search, Check, Info } from "lucide-react";
 import { walletChains } from "~/config/wallet-chains";
+import { useWallet } from "~/hooks/useWallet";
 // Try to import the tabs components
 // Commented out due to TS error, using inline destructuring with require instead
 // import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -41,6 +42,7 @@ export default function SettingsPage() {
     isLoading: chainsLoading,
     showTestnets: initialShowTestnets,
   } = useFilteredChains();
+  const { isShowroom, setShowroom } = useWallet();
   const [showTestnets, setShowTestnets] = useState(false);
   const [hideLowBalances, setHideLowBalances] = useState(false);
   const [showAssetsWithoutIcons, setShowAssetsWithoutIcons] = useState(false);
@@ -375,6 +377,27 @@ export default function SettingsPage() {
 
         <TabsContent value="general" className="mt-0">
           <div className="grid gap-4 md:gap-8 grid-cols-1">
+            {/* Demo Mode Section */}
+            <div className="p-6 bg-card rounded-lg border shadow-sm">
+              <h2 className="text-lg font-semibold mb-4">Demo Mode</h2>
+              
+              <div className="mb-6">
+                <div className="flex items-center space-x-2 mb-4">
+                  <Switch
+                    id="demo-mode"
+                    checked={isShowroom}
+                    onCheckedChange={setShowroom}
+                  />
+                  <Label htmlFor="demo-mode">Enable Demo Mode</Label>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Demo mode allows you to explore the application with sample data without connecting a real wallet.
+                  When enabled, you'll see example transactions and portfolio data.
+                </p>
+              </div>
+            </div>
+
+            {/* Chain Settings Section */}
             <div className="p-6 bg-card rounded-lg border shadow-sm">
               <h2 className="text-lg font-semibold mb-4">Chain Settings</h2>
 

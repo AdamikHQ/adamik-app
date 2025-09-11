@@ -59,11 +59,9 @@ export default async function handler(
 
     if (usePrecomputedHash && hash) {
       // When using pre-computed hash, use it for both ECDSA and Ed25519
-      console.log(`Using pre-computed hash for ${curveType} signing`);
       messageToSign = hash;
     } else if (transaction) {
       // Otherwise, use the raw transaction if available
-      console.log(`Using raw transaction for ${curveType} signing`);
       messageToSign = transaction;
     } else {
       // No valid message to sign
@@ -143,16 +141,14 @@ export default async function handler(
           // For ECDSA with pre-computed hash:
           // - Use "none" for hash_algo to indicate no additional hashing
           // - Provide the hash in the msg parameter
-          console.log(
-            `Using pre-computed hash with hash_algo=none: ${messageToSign}`
-          );
           requestBody.msg = messageToSign;
           requestBody.hash_algo = "none"; // Tell the API not to hash again
         } else {
-          // If no pre-computed hash, let Sodot hash the message with keccak256
-          console.log(`Using raw ECDSA message with hash_algo=keccak256`);
+          // If no pre-computed hash, let Sodot hash the message with the appropriate algorithm
+          // Determine the hash algorithm from the chain configuration
+          const hashAlgo = chainConfig.signerSpec?.hashFunction === "sha256" ? "sha256" : "keccak256";
           requestBody.msg = messageToSign;
-          requestBody.hash_algo = "keccak256"; // For Ethereum transactions
+          requestBody.hash_algo = hashAlgo; // Use chain-specific hash algorithm
         }
       } else {
         // For Ed25519, just provide the message directly (no hash_algo)
@@ -161,11 +157,6 @@ export default async function handler(
         }
         requestBody.msg = messageToSign;
       }
-
-      console.log(
-        `Sending request to ${vertexUrl}/${curveType}/sign:`,
-        JSON.stringify(requestBody)
-      );
 
       const response = await fetch(`${vertexUrl}/${curveType}/sign`, {
         method: "POST",
