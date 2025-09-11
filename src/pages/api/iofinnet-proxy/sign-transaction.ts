@@ -1,5 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { AdamikSignerSpec } from "~/utils/types";
+import {
+  handleApiError,
+  formatSignature,
+  getCoseAlgorithm,
+  successResponse,
+} from "~/utils/api/signerProxyUtils";
+import { getIoFinnetConfig } from "~/utils/api/signerConfig";
 
 /**
  * SIGNER-AGNOSTIC API proxy for IoFinnet transaction signing
@@ -28,17 +35,18 @@ export default async function handler(
   }
 
   try {
-    const baseUrl = process.env.IOFINNET_BASE_URL;
-    const clientId = process.env.IOFINNET_CLIENT_ID;
-    const clientSecret = process.env.IOFINNET_CLIENT_SECRET;
-    const vaultId = process.env.IOFINNET_VAULT_ID;
-
-    if (!baseUrl || !clientId || !clientSecret || !vaultId) {
-      return res.status(503).json({
-        message: "IoFinnet is not configured",
-        error: "NOT_CONFIGURED",
-      });
+    // Get IoFinnet configuration using shared utility
+    const iofinnetConfig = getIoFinnetConfig();
+    if (!iofinnetConfig) {
+      return handleApiError(
+        res,
+        new Error("IoFinnet is not configured"),
+        "Configuration error",
+        503
+      );
     }
+    
+    const { baseUrl, clientId, clientSecret, vaultId } = iofinnetConfig;
 
     // Authenticate
     const authResponse = await fetch(`${baseUrl}/v1/auth/accessToken`, {
@@ -60,21 +68,8 @@ export default async function handler(
     const authData = await authResponse.json();
     const accessToken = authData.accessToken;
 
-    // Determine COSE algorithm based on chain (from adamik-link)
-    const getCoseAlgorithm = (spec: AdamikSignerSpec): string => {
-      // For Ethereum and EVM chains
-      if (["ethereum", "base", "optimism", "arbitrum", "polygon", "bsc"].includes(chain)) {
-        return "ESKEC256"; // ECDSA with Keccak-256
-      }
-      // For Bitcoin
-      if (chain.includes("bitcoin")) {
-        return "ES256K"; // ECDSA with SHA-256
-      }
-      // Default
-      return "ES256K";
-    };
-
-    const coseAlgorithm = getCoseAlgorithm(signerSpec);
+    // Get COSE algorithm using shared utility
+    const coseAlgorithm = getCoseAlgorithm(chain);
 
     // Create signature request
     const signatureRequest = {
@@ -144,25 +139,19 @@ export default async function handler(
       throw new Error("Signature timeout - no response after 10 minutes");
     }
 
-    // Format signature based on chain requirements
-    // IoFinnet returns base64, we might need hex
-    let formattedSignature = signature;
-    if (signerSpec.signatureFormat === "hex" && !signature.startsWith("0x")) {
-      // Convert base64 to hex if needed
-      const buffer = Buffer.from(signature, "base64");
-      formattedSignature = "0x" + buffer.toString("hex");
-    }
+    // Format signature using shared utility
+    const formattedSignature = formatSignature(
+      signature,
+      signerSpec.signatureFormat,
+      chain
+    );
 
-    return res.status(200).json({
-      success: true,
+    // Return success response using shared utility
+    return successResponse(res, {
       signature: formattedSignature,
       signatureId: signatureId,
     });
   } catch (error: any) {
-    console.error("IoFinnet sign-transaction error:", error);
-    return res.status(500).json({
-      message: "Failed to sign transaction",
-      error: error.message,
-    });
+    return handleApiError(res, error, "IoFinnet sign-transaction", 500);
   }
 }
