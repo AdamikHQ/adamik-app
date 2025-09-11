@@ -1,23 +1,27 @@
 // A simple Node.js script to test the Sodot vertex directly
-// require('dotenv').config();
+require("dotenv").config({ path: ".env.local" });
 
-// Use environment variables directly
+// Use environment variables from .env.local
 const vertexUrl =
-  process.env.SODOT_VERTEX_0_URL ||
-  process.env.SODOT_VERTEX_URL_0 ||
-  "https://vertex-demo-0.sodot.dev";
+  process.env.SODOT_VERTEX_0_URL || process.env.SODOT_VERTEX_URL_0;
 const apiKey =
-  process.env.SODOT_VERTEX_0_API_KEY ||
-  process.env.SODOT_VERTEX_API_KEY_0 ||
-  "3e162c0e-83d9-4cd0-aabf-69354e20af53";
+  process.env.SODOT_VERTEX_0_API_KEY || process.env.SODOT_VERTEX_API_KEY_0;
 
-console.log("Sodot Vertex URL:", vertexUrl);
+console.log("Sodot Vertex URL:", vertexUrl || "Not set");
 console.log(
   "API Key:",
   apiKey
     ? "Set (first few chars: " + apiKey.substring(0, 8) + "...)"
     : "Not set"
 );
+
+if (!vertexUrl || !apiKey) {
+  console.error("❌ Missing required environment variables!");
+  console.error("Please ensure your .env.local file contains:");
+  console.error("  SODOT_VERTEX_URL_0=<your-vertex-url>");
+  console.error("  SODOT_VERTEX_API_KEY_0=<your-api-key>");
+  process.exit(1);
+}
 
 async function testECDSADerivePubkey() {
   const curve = "ecdsa";
