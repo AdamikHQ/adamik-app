@@ -276,10 +276,6 @@ export function StakingTransactionForm({
         rawLength: transactionRaw?.length,
       });
 
-      // Determine if we should use the hash for signing (e.g., Stellar)
-      const isStellar = chainId.includes("stellar");
-      const shouldUseHash = isStellar && transactionHash;
-
       // Get the selected signer type from settings
       const signerType = SignerFactory.getSelectedSignerType();
       
@@ -291,10 +287,9 @@ export function StakingTransactionForm({
         // Sodot signing endpoint
         signEndpoint = `/api/sodot-proxy/${chainId}/sign`;
         signPayload = {
-          // For Stellar, prioritize hash over raw
-          transaction: shouldUseHash ? undefined : transactionRaw,
+          transaction: transactionRaw,
           hash: transactionHash,
-          usePrecomputedHash: shouldUseHash,
+          usePrecomputedHash: !!transactionHash,
         };
       } else {
         // IoFinnet signing endpoint
