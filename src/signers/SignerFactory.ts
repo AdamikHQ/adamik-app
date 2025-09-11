@@ -193,6 +193,9 @@ export class SignerFactory {
 
       // Log the chain and pubkey info for debugging
       console.log(`IoFinnet: Chain ${chainId} uses curve ${curve}, pubkey length: ${pubkey.length}`);
+      if (chainId.includes('stellar')) {
+        console.log(`IoFinnet: Stellar Ed25519 pubkey (hex): ${pubkey}`);
+      }
 
       // Handle key compression for chains that need it
       // All Cosmos family and Bitcoin family chains need compressed keys
@@ -207,15 +210,17 @@ export class SignerFactory {
       }
 
       // Handle 0x prefix based on chain requirements
-      // Cosmos and Bitcoin family chains don't want 0x prefix for compressed keys
-      if ((chain.family === 'cosmos' || chain.family === 'bitcoin') && pubkey.startsWith('0x')) {
-        // Cosmos and Bitcoin chains don't like 0x prefix
+      // ONLY EVM chains need the 0x prefix, all others don't
+      const isEVMChain = chain.family === 'evm';
+      
+      if (!isEVMChain && pubkey.startsWith('0x')) {
+        // Remove 0x prefix for all non-EVM chains
         pubkey = pubkey.slice(2);
-        console.log(`IoFinnet: Removed 0x prefix for ${chainId} (${chain.family} family)`);
-      } else if (chain.family !== 'cosmos' && chain.family !== 'bitcoin' && !pubkey.startsWith('0x')) {
-        // Add 0x prefix for chains that expect it (e.g., EVM chains)
+        console.log(`IoFinnet: Removed 0x prefix for ${chainId} (${chain.family} chain)`);
+      } else if (isEVMChain && !pubkey.startsWith('0x')) {
+        // Add 0x prefix only for EVM chains
         pubkey = `0x${pubkey}`;
-        console.log(`IoFinnet: Added 0x prefix for ${chainId}`);
+        console.log(`IoFinnet: Added 0x prefix for ${chainId} (EVM chain)`);
       }
 
       console.log(`IoFinnet: Final pubkey for ${chainId}: ${pubkey.substring(0, 20)}... (length: ${pubkey.length})`);

@@ -81,11 +81,19 @@ export default async function handler(
     const authData = await authResponse.json();
     const accessToken = authData.accessToken;
 
-    // Get COSE algorithm using shared utility
-    const coseAlgorithm = getCoseAlgorithm(chain);
+    // Get COSE algorithm from signerSpec (curve and hash function)
+    const coseAlgorithm = getCoseAlgorithm(signerSpec);
 
     // Remove 0x prefix if present for IoFinnet
-    const cleanData = message.startsWith("0x") ? message.slice(2) : message;
+    let cleanData = message.startsWith("0x") ? message.slice(2) : message;
+    
+    // CRITICAL: Stellar Transaction Signing
+    // For Stellar (Ed25519/EDDSA), we receive and sign the pre-computed hash from Adamik
+    // Why: EDDSA algorithm does NOT pre-hash the input data before signing
+    // What Stellar expects: Signature over SHA256(NetworkID + EnvelopeType + XDR)
+    // What we receive: The 32-byte hash from Adamik's encode response (hash.value)
+    // What IoFinnet does: Signs this hash directly with Ed25519 (no additional hashing)
+    // This matches Sodot's behavior exactly
 
     // Create signature request following adamik-link pattern
     const signatureRequest = {
@@ -140,7 +148,7 @@ export default async function handler(
       );
 
       if (!statusResponse.ok) {
-        console.error("Failed to get signature status");
+        // Continue polling if status check fails
         continue;
       }
 
@@ -161,13 +169,13 @@ export default async function handler(
     }
 
 
+    
     // Format signature using shared utility
     const formattedSignature = formatSignature(
       signature,
       signerSpec.signatureFormat,
       chain
     );
-
 
     // Return success response using shared utility
     return successResponse(res, {
