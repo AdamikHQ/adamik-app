@@ -7,6 +7,12 @@ const vertexUrl =
 const apiKey =
   process.env.SODOT_VERTEX_0_API_KEY || process.env.SODOT_VERTEX_API_KEY_0;
 
+// Get key IDs from environment variables
+const ecdsaKeyIds = (process.env.SODOT_EXISTING_ECDSA_KEY_IDS || "").split(",");
+const ed25519KeyIds = (process.env.SODOT_EXISTING_ED25519_KEY_IDS || "").split(
+  ","
+);
+
 console.log("Sodot Vertex URL:", vertexUrl || "Not set");
 console.log(
   "API Key:",
@@ -15,17 +21,40 @@ console.log(
     : "Not set"
 );
 
+console.log(
+  "ECDSA Key IDs:",
+  ecdsaKeyIds.length > 0 ? `${ecdsaKeyIds.length} keys loaded` : "Not set"
+);
+console.log(
+  "ED25519 Key IDs:",
+  ed25519KeyIds.length > 0 ? `${ed25519KeyIds.length} keys loaded` : "Not set"
+);
+
 if (!vertexUrl || !apiKey) {
   console.error("❌ Missing required environment variables!");
   console.error("Please ensure your .env.local file contains:");
   console.error("  SODOT_VERTEX_URL_0=<your-vertex-url>");
   console.error("  SODOT_VERTEX_API_KEY_0=<your-api-key>");
+  console.error("  SODOT_EXISTING_ECDSA_KEY_IDS=<comma-separated-key-ids>");
+  console.error("  SODOT_EXISTING_ED25519_KEY_IDS=<comma-separated-key-ids>");
+  process.exit(1);
+}
+
+if (ecdsaKeyIds.length === 0 || ecdsaKeyIds[0] === "") {
+  console.error("❌ No ECDSA key IDs found in SODOT_EXISTING_ECDSA_KEY_IDS");
+  process.exit(1);
+}
+
+if (ed25519KeyIds.length === 0 || ed25519KeyIds[0] === "") {
+  console.error(
+    "❌ No ED25519 key IDs found in SODOT_EXISTING_ED25519_KEY_IDS"
+  );
   process.exit(1);
 }
 
 async function testECDSADerivePubkey() {
   const curve = "ecdsa";
-  const keyId = "8306e478-e39f-4e68-9c87-fdf9bfa6d1ad"; // Example key ID from .env
+  const keyId = ecdsaKeyIds[0]; // Use first ECDSA key ID from env
   const derivationPath = [44, 60, 0, 0, 0]; // Ethereum derivation path
 
   console.log("\n=== TESTING ECDSA CURVE ===");
@@ -79,7 +108,7 @@ async function testECDSADerivePubkey() {
 
 async function testED25519DerivePubkey() {
   const curve = "ed25519";
-  const keyId = "868a7bea-a410-40d3-a03a-ea06200f9fe6"; // Example ED25519 key ID from .env
+  const keyId = ed25519KeyIds[0]; // Use first ED25519 key ID from env
   const derivationPath = [44, 118, 0, 0, 0]; // Cosmos derivation path
 
   console.log("\n=== TESTING ED25519 CURVE ===");
