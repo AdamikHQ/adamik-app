@@ -42,6 +42,8 @@ export async function getChainConfig(chainId?: string) {
 
 /**
  * Format signature based on chain requirements and format type
+ * Handles different signature formats (rs, rsv, der) and lengths
+ * Special handling for Ed25519 signatures which may have extra bytes
  */
 export function formatSignature(
   signature: any,
@@ -58,26 +60,34 @@ export function formatSignature(
     
     const sigLengthBytes = cleanSig.length / 2;
     
-    const r = cleanSig.slice(0, 64);
-    const s = cleanSig.slice(64, 128);
-    
+    // For Ed25519 signatures (used by Stellar, Algorand, Solana), 
+    // IoFinnet may return 65 or 66 bytes with extra metadata at the end.
+    // We need to take only the first 64 bytes for the actual signature.
     if (signatureFormat === "rs") {
-      return r + s;
+      // RS format expects exactly 64 bytes (128 hex chars)
+      if (sigLengthBytes === 64) {
+        return cleanSig;
+      } else if (sigLengthBytes === 65 || sigLengthBytes === 66) {
+        // IoFinnet returns 65-66 bytes for Ed25519, take only the first 64
+        return cleanSig.slice(0, 128);
+      } else if (sigLengthBytes >= 32) {
+        // For other cases, try to extract r and s (32 bytes each)
+        const r = cleanSig.slice(0, 64);
+        const s = cleanSig.slice(64, 128);
+        return r + s;
+      }
     } else if (signatureFormat === "rsv") {
       if (sigLengthBytes === 65) {
         return cleanSig;
       } else if (sigLengthBytes === 66) {
         const v = cleanSig.slice(128, 130);
+        const r = cleanSig.slice(0, 64);
+        const s = cleanSig.slice(64, 128);
         return r + s + v;
       }
     }
     
-    if (sigLengthBytes === 64 && signatureFormat === "rs") {
-      return cleanSig;
-    }
-    if (sigLengthBytes === 65 && signatureFormat === "rsv") {
-      return cleanSig;
-    }
+    // Default: return cleaned signature as-is
     
     return cleanSig;
   }
@@ -181,27 +191,30 @@ export function getCurveTypeForChain(chainConfig: Chain): "ecdsa" | "ed25519" {
 }
 
 /**
- * Determine COSE algorithm for IoFinnet based on chain
+ * Get COSE algorithm for IoFinnet based on curve and hash from signerSpec
+ * EDDSA: Ed25519 signatures (no pre-hashing)
+ * ES256K: ECDSA with SHA-256 (Bitcoin-style)
+ * ESKEC256: ECDSA with Keccak-256 (Ethereum-style)
  */
-export function getCoseAlgorithm(chainId: string): string {
-  // EVM chains use ECDSA with Keccak-256
-  const evmChains = ["ethereum", "base", "optimism", "arbitrum", "polygon", "bsc", "avalanche"];
-  if (evmChains.includes(chainId)) {
-    return "ESKEC256";
+export function getCoseAlgorithm(signerSpec: { curve: string; hashFunction: string }): string {
+  // Ed25519 curve uses EDDSA (IoFinnet expects all caps)
+  if (signerSpec.curve === "ed25519") {
+    return "EDDSA";
   }
   
-  // Bitcoin family uses ECDSA with SHA-256
-  if (chainId.includes("bitcoin") || chainId === "dogecoin" || chainId === "litecoin") {
-    return "ES256K";
+  // For secp256k1 (ECDSA), the hash function matters
+  if (signerSpec.curve === "secp256k1") {
+    if (signerSpec.hashFunction === "keccak256") {
+      // Ethereum-style: ECDSA with Keccak-256
+      return "ESKEC256";
+    } else if (signerSpec.hashFunction === "sha256") {
+      // Bitcoin-style: ECDSA with SHA-256
+      return "ES256K";
+    }
   }
   
-  // Ed25519 chains
-  const ed25519Chains = ["algorand", "solana", "stellar"];
-  if (ed25519Chains.includes(chainId)) {
-    return "EdDSA";
-  }
-  
-  // Default
+  // Default fallback
+  console.warn(`Unknown curve/hash combination: ${signerSpec.curve}/${signerSpec.hashFunction}`);
   return "ES256K";
 }
 

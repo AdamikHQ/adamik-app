@@ -108,17 +108,9 @@ export class IoFinnetSigner implements BaseSigner {
       const { processPublicKeyForChain } = await import("~/utils/publicKeyUtils");
       const processedPubkey = processPublicKeyForChain(pubkey, this.chainId);
       
-      // For compressed keys (Bitcoin/Cosmos), don't add 0x prefix
-      // Adamik expects compressed keys without prefix
-      const isCompressed = processedPubkey.length === 66 && 
-        (processedPubkey.startsWith('02') || processedPubkey.startsWith('03'));
-      
-      const finalPubkey = isCompressed 
-        ? processedPubkey 
-        : (processedPubkey.startsWith('0x') ? processedPubkey : `0x${processedPubkey}`);
-      
-      
-      return finalPubkey;
+      // Return the pubkey without any prefix manipulation
+      // The SignerFactory will handle adding/removing 0x prefix based on chain family
+      return processedPubkey;
     } catch (error: any) {
       console.error("[IoFinnet] Error getting pubkey:", error);
       throw new Error(`Failed to get pubkey: ${error.message}`);

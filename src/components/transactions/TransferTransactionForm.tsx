@@ -160,10 +160,13 @@ export function TransferTransactionForm({
           throw new Error(`Chain ${chainId} not found`);
         }
         
+        // Use hash for Stellar, raw transaction for others
+        const messageToSign = (isStellar && transactionHash) ? transactionHash : transactionRaw;
+        
         signEndpoint = `/api/iofinnet-proxy/sign-transaction`;
         signPayload = {
           chain: chainId,
-          message: transactionRaw,
+          message: messageToSign,
           signerSpec: chainConfig.signerSpec,
         };
       }
