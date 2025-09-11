@@ -1,4 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+
+// Extend API route timeout to 11 minutes for IoFinnet signatures
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '1mb',
+    },
+    responseLimit: false,
+    // Set timeout to 11 minutes (660 seconds) to accommodate IoFinnet's approval process
+    externalResolver: true,
+  },
+  maxDuration: 660, // Vercel serverless function timeout (if deployed on Vercel)
+};
 import { AdamikSignerSpec } from "~/utils/types";
 import {
   handleApiError,
@@ -71,48 +84,57 @@ export default async function handler(
     // Get COSE algorithm using shared utility
     const coseAlgorithm = getCoseAlgorithm(chain);
 
-    // Create signature request
+    // Remove 0x prefix if present for IoFinnet
+    const cleanData = message.startsWith("0x") ? message.slice(2) : message;
+
+    // Create signature request following adamik-link pattern
     const signatureRequest = {
-      vaultId: vaultId,
-      data: message,
+      data: cleanData,
       coseAlgorithm: coseAlgorithm,
+      contentType: "application/octet-stream+hex",
       memo: `Sign ${chain} transaction`,
     };
 
-    const signResponse = await fetch(`${baseUrl}/v1/signatures`, {
+
+    // Use the correct endpoint with vault ID in path (as per adamik-link)
+    const signResponse = await fetch(`${baseUrl}/v1/vaults/${vaultId}/signatures/sign`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
+        Accept: "application/json",
       },
       body: JSON.stringify(signatureRequest),
     });
 
     if (!signResponse.ok) {
       const errorText = await signResponse.text();
-      console.error("IoFinnet signature request failed:", errorText);
-      throw new Error("Failed to create signature request");
+      throw new Error(`Failed to create signature request: ${errorText}`);
     }
 
     const signData = await signResponse.json();
-    const signatureId = signData.id;
+    const signatureId = signData.signatureId || signData.id; // Handle both field names
+    
 
     // Poll for signature completion (from adamik-link pattern)
     let attempts = 0;
     let signature = null;
+    
 
     while (attempts < SIGNATURE_POLL_MAX_ATTEMPTS && !signature) {
       // Wait before polling
       await new Promise(resolve => setTimeout(resolve, SIGNATURE_POLL_INTERVAL_MS));
       attempts++;
 
+      // Use correct endpoint with vault ID in path
       const statusResponse = await fetch(
-        `${baseUrl}/v1/signatures/${signatureId}`,
+        `${baseUrl}/v1/vaults/${vaultId}/signatures/${signatureId}`,
         {
           method: "GET",
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
+            Accept: "application/json",
           },
         }
       );
@@ -127,17 +149,17 @@ export default async function handler(
       if (statusData.status === "COMPLETED" && statusData.signingData?.signature) {
         signature = statusData.signingData.signature;
         break;
-      } else if (statusData.status === "REJECTED" || statusData.status === "EXPIRED") {
-        throw new Error(`Signature ${statusData.status}: ${statusData.errorMessage || "Unknown error"}`);
+      } else if (statusData.status === "REJECTED" || statusData.status === "EXPIRED" || statusData.status === "FAILED" || statusData.status === "CANCELLED") {
+        const errorMsg = `Signature ${statusData.status}: ${statusData.errorMessage || statusData.errorCode || "Unknown error"}`;
+        throw new Error(errorMsg);
       }
 
-      // Log progress
-      console.log(`[IoFinnet] Signature ${signatureId} status: ${statusData.status} (attempt ${attempts}/${SIGNATURE_POLL_MAX_ATTEMPTS})`);
     }
 
     if (!signature) {
       throw new Error("Signature timeout - no response after 10 minutes");
     }
+
 
     // Format signature using shared utility
     const formattedSignature = formatSignature(
@@ -145,6 +167,7 @@ export default async function handler(
       signerSpec.signatureFormat,
       chain
     );
+
 
     // Return success response using shared utility
     return successResponse(res, {

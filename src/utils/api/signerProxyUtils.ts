@@ -48,54 +48,72 @@ export function formatSignature(
   signatureFormat?: string,
   chainId?: string
 ): string {
-  // Handle Ed25519 signatures
   if (typeof signature === "string") {
-    return signature;
-  }
-  
-  if ("signature" in signature) {
-    return signature.signature;
-  }
-  
-  // Handle ECDSA signatures with r, s, v components
-  if ("r" in signature && "s" in signature) {
-    // Remove 0x prefix if present
-    const r = signature.r.replace(/^0x/, "");
-    const s = signature.s.replace(/^0x/, "");
+    let cleanSig = signature.replace(/^0x/i, "");
     
-    switch (signatureFormat) {
-      case "der":
-        return signature.der || `${r}${s}`;
-        
-      case "rsv":
-        // Ethereum-style signature with recovery byte
-        const v = signature.v ? signature.v.toString(16).padStart(2, "0") : "";
-        return `0x${r}${s}${v}`;
-        
-      case "rs":
-        // Just r and s components
-        return `0x${r}${s}`;
-        
-      default:
-        // Default format based on chain
-        if (chainId && ["ethereum", "base", "arbitrum", "polygon"].includes(chainId)) {
+    if (/[+/=]/.test(cleanSig) || /[g-z]/i.test(cleanSig)) {
+      const buffer = Buffer.from(cleanSig, "base64");
+      cleanSig = buffer.toString("hex");
+    }
+    
+    const sigLengthBytes = cleanSig.length / 2;
+    
+    const r = cleanSig.slice(0, 64);
+    const s = cleanSig.slice(64, 128);
+    
+    if (signatureFormat === "rs") {
+      return r + s;
+    } else if (signatureFormat === "rsv") {
+      if (sigLengthBytes === 65) {
+        return cleanSig;
+      } else if (sigLengthBytes === 66) {
+        const v = cleanSig.slice(128, 130);
+        return r + s + v;
+      }
+    }
+    
+    if (sigLengthBytes === 64 && signatureFormat === "rs") {
+      return cleanSig;
+    }
+    if (sigLengthBytes === 65 && signatureFormat === "rsv") {
+      return cleanSig;
+    }
+    
+    return cleanSig;
+  }
+  
+  if (signature && typeof signature === "object") {
+    if ("signature" in signature) {
+      return signature.signature;
+    }
+    
+    if ("r" in signature && "s" in signature) {
+      const r = signature.r.replace(/^0x/, "");
+      const s = signature.s.replace(/^0x/, "");
+      
+      switch (signatureFormat) {
+        case "der":
+          return signature.der || `${r}${s}`;
+          
+        case "rsv":
           const v = signature.v ? signature.v.toString(16).padStart(2, "0") : "";
           return `0x${r}${s}${v}`;
-        }
-        return `0x${r}${s}`;
+          
+        case "rs":
+          // RS format (used by Cosmos) should NOT have 0x prefix
+          return `${r}${s}`;
+          
+        default:
+          if (chainId && ["ethereum", "base", "arbitrum", "polygon", "optimism"].includes(chainId)) {
+            const v = signature.v ? signature.v.toString(16).padStart(2, "0") : "";
+            return `0x${r}${s}${v}`;
+          }
+          // Default for unknown formats - no 0x prefix for RS-like signatures
+          return `${r}${s}`;
+      }
     }
   }
   
-  // Handle base64 signatures (IoFinnet format)
-  if (signatureFormat === "hex" && typeof signature === "string") {
-    // Check if it's base64
-    if (!signature.startsWith("0x") && /^[A-Za-z0-9+/=]+$/.test(signature)) {
-      const buffer = Buffer.from(signature, "base64");
-      return "0x" + buffer.toString("hex");
-    }
-  }
-  
-  // Fallback: return as-is or stringify
   if (typeof signature === "object") {
     return JSON.stringify(signature);
   }

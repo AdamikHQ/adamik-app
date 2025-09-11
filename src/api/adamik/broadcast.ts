@@ -13,6 +13,7 @@ export type BroadcastResponse = {
 export const broadcast = async (
   transaction: Transaction
 ): Promise<BroadcastResponse> => {
+
   const response = await fetch(
     `${ADAMIK_API_URL}/${transaction.data.chainId}/transaction/broadcast`,
     {
@@ -27,7 +28,6 @@ export const broadcast = async (
 
   const result = await response.json();
   if (response.status !== 200) {
-    console.error("broadcast - backend error:", JSON.stringify(result));
     return { error: result as BackendErrorResponse };
   }
 

@@ -28,8 +28,12 @@ import { AmountFormField } from "./fields/AmountFormField";
 import { AssetFormField } from "./fields/AssetFormField";
 import { RecipientFormField } from "./fields/RecipientFormField";
 import { SenderFormField } from "./fields/SenderFormField";
+import { SignerFactory } from "~/signers/SignerFactory";
+import { SignerType } from "~/signers/types";
+import { getChains } from "~/api/adamik/chains";
 import { useToast } from "~/components/ui/use-toast";
 import { TransactionSuccessModal } from "./TransactionSuccessModal";
+import { IoFinnetApprovalModal } from "~/components/modals/IoFinnetApprovalModal";
 
 type TransactionProps = {
   onNextStep: () => void;
@@ -68,13 +72,10 @@ export function TransferTransactionForm({
   const [errors, setErrors] = useState("");
   const [signing, setSigning] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showIoFinnetApprovalModal, setShowIoFinnetApprovalModal] = useState(false);
 
   // Add debugging effect to monitor transaction and chainId
   useEffect(() => {
-    console.log("Transaction or chainId changed:", {
-      transaction: transaction ? { ...transaction } : null,
-      chainId,
-    });
   }, [transaction, chainId]);
 
   const signAndBroadcast = async () => {
@@ -93,12 +94,6 @@ export function TransferTransactionForm({
       setErrors("Chain ID is undefined. Please try again.");
       return;
     }
-
-    console.log("Sign & Broadcast clicked:", {
-      transaction: { ...transaction },
-      transactionChainId: transaction.data?.chainId,
-      contextChainId: chainId,
-    });
 
     setSigning(true);
     setErrors("");
@@ -133,9 +128,6 @@ export function TransferTransactionForm({
       }
 
       if (!transactionHash && !transactionRaw) {
-        console.warn(
-          "Could not extract hash or raw transaction, using entire payload"
-        );
         transactionRaw = JSON.stringify(transactionEncoded);
       }
 
@@ -143,19 +135,56 @@ export function TransferTransactionForm({
       const isStellar = chainId.includes("stellar");
       const shouldUseHash = isStellar && transactionHash;
 
-      // Step 1: Sign the transaction
-      const response = await fetch(`/api/sodot-proxy/${chainId}/sign`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      // Get the selected signer type from settings
+      const signerType = SignerFactory.getSelectedSignerType();
+      
+      // Determine the correct API endpoint based on signer type
+      let signEndpoint: string;
+      let signPayload: any;
+
+      if (signerType === SignerType.SODOT) {
+        // Sodot signing endpoint
+        signEndpoint = `/api/sodot-proxy/${chainId}/sign`;
+        signPayload = {
           // For Stellar, prioritize hash over raw
           transaction: shouldUseHash ? undefined : transactionRaw,
           hash: transactionHash,
           usePrecomputedHash: shouldUseHash,
-        }),
+        };
+      } else {
+        // IoFinnet signing endpoint
+        // Get chain config for signerSpec
+        const chains = await getChains();
+        const chainConfig = chains?.[chainId];
+        if (!chainConfig) {
+          throw new Error(`Chain ${chainId} not found`);
+        }
+        
+        signEndpoint = `/api/iofinnet-proxy/sign-transaction`;
+        signPayload = {
+          chain: chainId,
+          message: transactionRaw,
+          signerSpec: chainConfig.signerSpec,
+        };
+      }
+
+
+      // Show IoFinnet approval modal
+      if (signerType === SignerType.IOFINNET) {
+        setShowIoFinnetApprovalModal(true);
+      }
+
+      // Step 1: Sign the transaction
+      const response = await fetch(signEndpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(signPayload),
       });
+      
+      // Hide IoFinnet approval modal
+      setShowIoFinnetApprovalModal(false);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -167,7 +196,6 @@ export function TransferTransactionForm({
       const data = await response.json();
       const signature = data.signature;
 
-      console.log("Transaction signed successfully:", !!signature);
 
       if (!signature) {
         throw new Error("No signature returned from signing");
@@ -183,7 +211,6 @@ export function TransferTransactionForm({
       setTransaction(signedTransaction);
 
       // Step 3: Broadcast the transaction
-      console.log("Broadcasting transaction with signature");
 
       // Ensure chainId is included in the data properly
       const transactionWithChainId = {
@@ -196,12 +223,13 @@ export function TransferTransactionForm({
 
       broadcastTransaction(transactionWithChainId, {
         onSuccess: (response) => {
-          console.log("Broadcast response:", response);
           if (response.error) {
             const errorMessage =
               response.error.status?.errors?.[0]?.message ||
+              (response.error as any)?.message ||
+              response.error ||
               "Transaction broadcast failed";
-            console.error("Broadcast error:", errorMessage);
+            console.error("Broadcast error:", JSON.stringify(errorMessage));
             // Handle error within onSuccess instead of throwing
             setErrors(errorMessage);
             toast({
@@ -211,7 +239,6 @@ export function TransferTransactionForm({
             });
             setSigning(false);
           } else if (response.hash) {
-            console.log("Transaction hash:", response.hash);
             setTransactionHash(response.hash);
 
             // Show a toast notification
@@ -255,6 +282,7 @@ export function TransferTransactionForm({
     } catch (err) {
       console.error("Signing/broadcasting failed:", err);
       setSigning(false);
+      setShowIoFinnetApprovalModal(false); // Close IoFinnet modal on error
       const errorMessage =
         err instanceof Error ? err.message : "Transaction failed";
       setErrors(errorMessage);
@@ -268,7 +296,6 @@ export function TransferTransactionForm({
 
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
-      console.log("Form submitted with values:", formInput);
 
       const transactionData: TransactionData = {
         mode: formInput.mode,
@@ -279,11 +306,6 @@ export function TransferTransactionForm({
         useMaxAmount: formInput.useMaxAmount,
         format: "json", // FIXME Not always the default, should come from chains config
       };
-
-      console.log(
-        "Preparing transaction data with chainId:",
-        formInput.chainId
-      );
 
       if (formInput.amount !== undefined && !formInput.useMaxAmount) {
         transactionData.amount = amountToSmallestUnit(
@@ -307,11 +329,9 @@ export function TransferTransactionForm({
           setTransaction(undefined);
           setTransactionHash(undefined);
           if (response) {
-            console.log("Transaction encoded successfully:", response);
             if (response?.status?.errors?.length) {
               setErrors(response.status.errors[0].message);
             } else {
-              console.log("Setting chainId:", response.chainId);
               setChainId(response.chainId);
               setTransaction(response.transaction);
             }
@@ -385,6 +405,10 @@ export function TransferTransactionForm({
           setOpen={setShowSuccessModal}
           onClose={onNextStep}
         />
+        <IoFinnetApprovalModal
+          open={showIoFinnetApprovalModal}
+          chainId={chainId}
+        />
       </>
     );
   }
@@ -416,6 +440,12 @@ export function TransferTransactionForm({
           </Button>
         </form>
       </Form>
+      
+      {/* IoFinnet Approval Modal */}
+      <IoFinnetApprovalModal
+        open={showIoFinnetApprovalModal}
+        chainId={chainId}
+      />
     </>
   );
 }

@@ -48,6 +48,6 @@ export const SIGNER_CONFIGS: Record<SignerType, SignerConfig> = {
     description: "Enterprise MPC signing with approval workflows",
     requiresSetup: true,
     setupInstructions: "Requires IoFinnet vault configuration",
-    supportedCurves: ["secp256k1"],
+    supportedCurves: ["secp256k1", "ed25519"],
   },
 };
