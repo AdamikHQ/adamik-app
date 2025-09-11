@@ -1,6 +1,14 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { getChains } from "~/api/adamik/chains";
 import { env } from "~/env";
+import {
+  getChainConfig,
+  formatSignature,
+  handleApiError,
+  getCurveTypeForChain,
+  buildDerivationPath,
+  successResponse,
+} from "~/utils/api/signerProxyUtils";
+import { getSodotVertexConfig, getSodotKeyIds } from "~/utils/api/signerConfig";
 
 export default async function handler(
   req: NextApiRequest,
@@ -35,33 +43,16 @@ export default async function handler(
       });
     }
 
-    // Get chain configurations from Adamik API
-    const chains = await getChains();
-
-    if (!chains) {
-      return res.status(500).json({
-        status: 500,
-        error: "Failed to fetch chain information",
-        message: "Unable to retrieve chain configurations from Adamik API",
-      });
+    // Get chain configuration using shared utility
+    let chainConfig;
+    try {
+      chainConfig = await getChainConfig(chain);
+    } catch (error: any) {
+      return handleApiError(res, error, "Invalid chain", 400);
     }
 
-    // Find the requested chain
-    const chainConfig = chains[chain];
-
-    if (!chainConfig) {
-      return res.status(400).json({
-        status: 400,
-        error: "Unsupported chain",
-        message: `Chain '${chain}' is not supported. Use one of: ${Object.keys(
-          chains
-        ).join(", ")}`,
-      });
-    }
-
-    // Get curve type from signerSpec
-    const curveType =
-      chainConfig.signerSpec.curve === "secp256k1" ? "ecdsa" : "ed25519";
+    // Get curve type using shared utility
+    const curveType = getCurveTypeForChain(chainConfig);
 
     // Determine what to sign based on curve type and available data
     let messageToSign;
@@ -88,34 +79,19 @@ export default async function handler(
       messageToSign = messageToSign.substring(2);
     }
 
-    // Get key IDs for this chain's curve
-    let keyIdsStr: string | undefined;
-    if (curveType === "ecdsa") {
-      keyIdsStr = process.env.SODOT_EXISTING_ECDSA_KEY_IDS;
-    } else {
-      keyIdsStr = process.env.SODOT_EXISTING_ED25519_KEY_IDS;
-    }
-
-    if (!keyIdsStr) {
-      return res.status(500).json({
-        status: 500,
-        error: "Missing key IDs",
-        message: `No key IDs found for ${curveType} curve in environment variables`,
-      });
-    }
-
-    const keyIds = keyIdsStr.split(",");
+    // Get key IDs using shared utility
+    const keyIds = getSodotKeyIds(curveType);
     if (keyIds.length < 3) {
-      return res.status(500).json({
-        status: 500,
-        error: "Insufficient key IDs",
-        message: `Found only ${keyIds.length} key IDs, need at least 3`,
-      });
+      return handleApiError(
+        res,
+        new Error(`Insufficient key IDs: found ${keyIds.length}, need 3`),
+        "Configuration error",
+        500
+      );
     }
 
-    // Construct derivation path based on BIP-44 standard
-    const coinType = parseInt(chainConfig.signerSpec.coinType);
-    const derivationPath = [44, coinType, 0, 0, 0];
+    // Build derivation path using shared utility
+    const derivationPath = buildDerivationPath(chainConfig.signerSpec.coinType);
 
     // Step 1: Create a signing room
     const createRoomResponse = await fetch(
@@ -146,24 +122,13 @@ export default async function handler(
 
     // Step 2: Sign the transaction with each vertex
     const signPromises = keyIds.map(async (keyId: string, index: number) => {
-      // Get the vertex URL and API key
-      let vertexUrl: string | undefined;
-      let apiKey: string | undefined;
-
-      if (index === 0) {
-        vertexUrl = env.SODOT_VERTEX_URL_0;
-        apiKey = env.SODOT_VERTEX_API_KEY_0;
-      } else if (index === 1) {
-        vertexUrl = env.SODOT_VERTEX_URL_1;
-        apiKey = env.SODOT_VERTEX_API_KEY_1;
-      } else if (index === 2) {
-        vertexUrl = env.SODOT_VERTEX_URL_2;
-        apiKey = env.SODOT_VERTEX_API_KEY_2;
-      }
-
-      if (!vertexUrl || !apiKey) {
+      // Get vertex configuration using shared utility
+      const vertexConfig = getSodotVertexConfig(index);
+      if (!vertexConfig) {
         throw new Error(`Missing configuration for vertex ${index}`);
       }
+      
+      const { url: vertexUrl, apiKey } = vertexConfig;
 
       // Customize the request body based on the curve type and if we're using a pre-computed hash
       const requestBody: any = {
@@ -223,48 +188,21 @@ export default async function handler(
     const signResults = await Promise.all(signPromises);
     const signature = signResults[0]; // Use the first signature
 
-    // Format the signature based on chain/curve
-    let formattedSignature;
-    if ("signature" in signature) {
-      // For Ed25519 signatures
-      formattedSignature = signature.signature;
-    } else if ("r" in signature && "s" in signature) {
-      // For ECDSA signatures
-      if (chainConfig.signerSpec.signatureFormat === "der") {
-        formattedSignature = signature.der;
-      } else if (chainConfig.signerSpec.signatureFormat === "rsv") {
-        // RSV format for Ethereum
-        formattedSignature = `${signature.r}${
-          signature.s
-        }${signature.v.toString(16)}`;
-      } else if (chainConfig.signerSpec.signatureFormat === "rs") {
-        // RS format (no recovery value)
-        formattedSignature = `${signature.r}${signature.s}`;
-      } else {
-        // Default format
-        formattedSignature = `${signature.r}${
-          signature.s
-        }${signature.v.toString(16)}`;
-      }
-    } else {
-      formattedSignature = JSON.stringify(signature);
-    }
+    // Format signature using shared utility
+    const formattedSignature = formatSignature(
+      signature,
+      chainConfig.signerSpec.signatureFormat,
+      chain
+    );
 
-    // Return the signature
-    return res.status(200).json({
-      status: 200,
+    // Return success response using shared utility
+    return successResponse(res, {
       signature: formattedSignature,
       chainId: chain,
       curve: curveType,
-      usedPrecomputedHash:
-        curveType === "ecdsa" && usePrecomputedHash && !!hash,
+      usedPrecomputedHash: curveType === "ecdsa" && usePrecomputedHash && !!hash,
     });
   } catch (error: any) {
-    console.error(`Error signing transaction:`, error);
-    return res.status(500).json({
-      status: 500,
-      error: "Failed to sign transaction",
-      message: error.message,
-    });
+    return handleApiError(res, error, "Failed to sign transaction", 500);
   }
 }

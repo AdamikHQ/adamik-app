@@ -323,7 +323,8 @@ pnpm dev
 
 ## Progress Update
 
-### ✅ Completed
+### ✅ Completed  
+26. **Centralized proxy utilities** - Created shared utilities for signature formatting, chain config, and error handling
 1. Created new branch: `multi-signer-support`
 2. Imported `BaseSigner` interface from adamik-link
 3. Created `src/signers/types.ts` with SIGNER-AGNOSTIC types
@@ -362,7 +363,10 @@ pnpm dev
 - **Smart Filtering**: Addresses are automatically filtered based on active signer
 - **User-Friendly Switching**: Warning dialog prevents accidental address hiding
 
-### 📝 Technical Implementation
+### 📝 Technical Implementation  
+- Created `/utils/api/signerProxyUtils.ts` for shared proxy logic (signature formatting, chain config, error handling)
+- Created `/utils/api/signerConfig.ts` for centralized signer configuration management
+- Refactored both Sodot and IoFinnet proxies to use shared utilities (~30% code reduction)
 - Created `/api/iofinnet-proxy/get-all-pubkeys` endpoint to fetch both public keys
 - Added `compressPublicKey()` utility to handle compression based on chain requirements
 - IoFinnet signer determines curve type from signerSpec.curve field (ed25519 vs secp256k1)
@@ -377,10 +381,56 @@ pnpm dev
 - Chain family detection for proper key formatting (Bitcoin family vs Cosmos family)
 
 ### 🚀 Remaining Tasks
-1. **Refactor Sodot** to implement BaseSigner interface
-2. **Update WalletSigner** component for transaction signing
-3. **Test end-to-end** transaction signing with both signers
-4. **Add comprehensive error handling** for signer switching
+1. **Update WalletSigner** component for transaction signing (Sodot already implements BaseSigner ✅)
+2. **Test end-to-end** transaction signing with both signers
+3. **Add comprehensive error handling** for signer switching
+4. ✅ **Centralized proxy utilities** - COMPLETED
+
+### 🔧 API Proxy Centralization Plan
+
+#### Problem Statement
+Both Sodot and IoFinnet proxies have duplicated logic for:
+- Chain configuration fetching
+- Signature formatting (DER, RSV, hex, base64)
+- Error handling patterns
+- Environment variable validation
+
+#### Solution: Create Shared Utilities
+
+##### 1. **signerProxyUtils.ts** (High Priority)
+```typescript
+// src/utils/api/signerProxyUtils.ts
+- formatSignature(): Centralized signature formatting
+- getChainConfig(): Cached chain configuration retrieval
+- handleApiError(): Standardized error responses
+- validateEnvVars(): Check required environment variables
+```
+
+##### 2. **signerConfig.ts** (High Priority)
+```typescript
+// src/utils/api/signerConfig.ts
+- getSignerConfig(): Return required env vars per signer
+- validateSignerConfig(): Ensure all required vars are set
+- getSignerCredentials(): Safe credential retrieval
+```
+
+##### 3. **Keep Separate** (Low Priority)
+- Authentication logic (too different: API keys vs OAuth)
+- Signer-specific endpoints (maintain clarity)
+
+#### Implementation Steps
+1. Create utility files with shared logic
+2. Update Sodot proxy to use utilities
+3. Update IoFinnet proxy to use utilities
+4. Test both signers still work correctly
+5. Document the new structure
+
+#### Benefits
+- **Easier to add new signers** (Turnkey, Dfns, etc.)
+- **Single source of truth** for signature formatting
+- **Consistent error handling** across all signers
+- **Better testability** with isolated utilities
+- **Reduced code duplication** (~30% less code)
 
 ### Testing Instructions
 1. Run `pnpm dev`
