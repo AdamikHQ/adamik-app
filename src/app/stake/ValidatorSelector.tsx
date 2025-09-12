@@ -55,7 +55,7 @@ export function ValidatorSelector({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[580px] p-0">
+        <PopoverContent className="w-[600px] p-0">
           <ValidatorSelectorList
             setOpen={setOpen}
             setSelectedChoice={setSelectedChoice}
@@ -112,7 +112,7 @@ const ValidatorSelectorList = ({
       <CommandInput placeholder="Filter validators..." />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
-        <ScrollArea className="h-[240px] overflow-auto">
+        <ScrollArea className="h-[300px] overflow-auto">
           <CommandGroup>
             {validators.map((validator, i) => (
               <CommandItem
@@ -191,52 +191,47 @@ const ValidatorView = ({ validator, isSelected = false }: { validator: Validator
 
   // For list view
   return (
-    <div className="flex items-center gap-2 w-full">
-      {validator?.name ? (
-        <>
-          <div className="relative flex-shrink-0">
-            <Tooltip text={validator.address}>
-              <Avatar className="w-[32px] h-[32px]">
-                <AvatarFallback>
-                  {validator?.name[0].toUpperCase() ||
-                    validator.address[0].toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            </Tooltip>
-            {validator.chainLogo && (
-              <Tooltip text={validator.chainId}>
-                <div className="absolute w-4 h-4 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-[6px] -end-1">
-                  <Avatar className="h-3 w-3">
-                    <AvatarImage
-                      src={validator.chainLogo}
-                      alt={validator.chainId}
-                    />
-                    <AvatarFallback>{validator.chainId}</AvatarFallback>
-                  </Avatar>
-                </div>
+    <div className="flex items-center justify-between gap-2 w-full pr-2">
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        {validator?.name ? (
+          <>
+            <div className="relative flex-shrink-0">
+              <Tooltip text={validator.address}>
+                <Avatar className="w-[32px] h-[32px]">
+                  <AvatarFallback>
+                    {validator?.name[0].toUpperCase() ||
+                      validator.address[0].toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
               </Tooltip>
-            )}
-          </div>
-          <div className="flex-1 text-left truncate">{validator.name}</div>
-          {hasValidCommission && (
-            <div className="font-bold flex-shrink-0 text-right">
-              Commission: {validator.commission}%
+              {validator.chainLogo && (
+                <Tooltip text={validator.chainId}>
+                  <div className="absolute w-4 h-4 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-[6px] -end-1">
+                    <Avatar className="h-3 w-3">
+                      <AvatarImage
+                        src={validator.chainLogo}
+                        alt={validator.chainId}
+                      />
+                      <AvatarFallback>{validator.chainId}</AvatarFallback>
+                    </Avatar>
+                  </div>
+                </Tooltip>
+              )}
             </div>
-          )}
-        </>
-      ) : (
-        <>
+            <div className="text-left truncate">{validator.name}</div>
+          </>
+        ) : (
           <Tooltip text={validator.address}>
-            <div className="flex-1 text-left font-mono text-sm">
+            <div className="text-left font-mono text-sm truncate">
               {truncateAddress(validator.address)}
             </div>
           </Tooltip>
-          {hasValidCommission && (
-            <div className="font-bold flex-shrink-0 text-right">
-              Commission: {validator.commission}%
-            </div>
-          )}
-        </>
+        )}
+      </div>
+      {hasValidCommission && (
+        <div className="text-sm font-semibold flex-shrink-0 text-muted-foreground">
+          {validator.commission}%
+        </div>
       )}
     </div>
   );
