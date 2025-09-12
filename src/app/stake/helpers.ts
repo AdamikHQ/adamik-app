@@ -161,7 +161,9 @@ export const getAddressStakingPositions = (
             addresses: [accountData.accountId].concat(currentAddresses),
             stakeId: position.stakeId,
             validatorName: validatorInfo?.name,
-            commission: Number(validatorInfo?.commission),
+            commission: validatorInfo?.commission !== undefined && !isNaN(Number(validatorInfo?.commission)) 
+              ? Number(validatorInfo?.commission) 
+              : undefined,
             chainId: accountData.chainId,
             chainLogo: resolveLogo({
               asset: { name: chainDetails.name, ticker: chainDetails.ticker },
@@ -273,7 +275,9 @@ export const createValidatorList = (
             ...subAcc,
             {
               ...validator,
-              commission: Number(validator.commission),
+              commission: validator.commission !== undefined && !isNaN(Number(validator.commission)) 
+                ? Number(validator.commission) 
+                : undefined,
               chainId: current.chainId,
               chainName: chainDetails.name,
               chainLogo: resolveLogo({
