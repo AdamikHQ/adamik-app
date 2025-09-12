@@ -80,6 +80,7 @@ export const getAllValidators = async (
   let allValidators: ValidatorResponse["validators"] = [];
   let nextPage: string | undefined = undefined;
   let pageCount = 0;
+  const MAX_PAGES = 10; // Add a safety limit
 
   do {
     pageCount++;
@@ -94,9 +95,30 @@ export const getAllValidators = async (
     }
     
     console.log(`📊 [getAllValidators] Page ${pageCount} - Total validators so far: ${allValidators.length}`);
+    
+    // Safety check to prevent infinite loops
+    if (pageCount >= MAX_PAGES) {
+      console.warn(`⚠️ [getAllValidators] Reached max pages (${MAX_PAGES}) for ${chainId}`);
+      break;
+    }
   } while (nextPage !== undefined);
 
   console.log(`📊 [getAllValidators] Completed fetching ${allValidators.length} validators for ${chainId}`);
+  
+  // Special logging and limiting for Solana to debug
+  if (chainId === 'solana') {
+    console.log(`🔍 [getAllValidators] Solana validators before limiting:`, {
+      count: allValidators.length,
+      firstValidator: allValidators[0],
+      hasValidators: allValidators.length > 0
+    });
+    
+    // Temporarily limit Solana validators to test if size is the issue
+    if (allValidators.length > 100) {
+      console.warn(`⚠️ [getAllValidators] Limiting Solana validators from ${allValidators.length} to 100 for testing`);
+      allValidators = allValidators.slice(0, 100);
+    }
+  }
   
   return {
     chainId,
