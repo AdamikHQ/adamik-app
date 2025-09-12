@@ -18,6 +18,13 @@ export const useValidatorsBatch = (chainIds: string[]) => {
         validatorCount: d?.validators?.length || 0
       })));
       
+      // Special logging for Solana
+      const solanaData = data.find(d => d?.chainId === 'solana');
+      if (solanaData) {
+        console.log(`🔍 [useValidatorsBatch] Solana validators count:`, solanaData.validators?.length);
+        console.log(`🔍 [useValidatorsBatch] First 3 Solana validators:`, solanaData.validators?.slice(0, 3));
+      }
+      
       return {
         error: results.map((result) => result.error),
         data,

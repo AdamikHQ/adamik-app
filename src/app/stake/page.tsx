@@ -82,8 +82,15 @@ export default function Stake() {
 
   const stakingSupportedChainIds = useMemo(
     () => {
+      console.log(`🎯 [Stake Page] Total chains in details:`, chainsDetails?.length || 0);
+      console.log(`🎯 [Stake Page] Chain IDs available:`, chainsDetails?.map(c => c.id));
+      
       const stakingChains = chainsDetails
-        ?.filter((chain) => isStakingSupported(chain))
+        ?.filter((chain) => {
+          const supported = isStakingSupported(chain);
+          console.log(`🎯 [Stake Page] Chain ${chain.id} staking support:`, supported);
+          return supported;
+        })
         .map((chain) => chain.id) ?? [];
       
       console.log(`🎯 [Stake Page] Staking supported chains:`, stakingChains);
