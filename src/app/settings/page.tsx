@@ -147,6 +147,26 @@ export default function SettingsPage() {
             return acc;
           }
 
+          // Populate labels based on supported features
+          const labels: string[] = [];
+          
+          // Check for token support
+          if (chain.supportedFeatures?.read?.token || 
+              chain.supportedFeatures?.read?.account?.balances?.tokens) {
+            labels.push("token");
+          }
+          
+          // Check for staking support
+          if (isStakingSupported(chain)) {
+            labels.push("staking");
+          }
+          
+          // Check for transaction history support
+          if (chain.supportedFeatures?.read?.transaction?.native || 
+              chain.supportedFeatures?.read?.account?.transactions?.native) {
+            labels.push("history");
+          }
+
           const supportedChain: SupportedBlockchain = {
             ...chain,
             logo: resolveLogo({
@@ -154,7 +174,7 @@ export default function SettingsPage() {
               mobulaMarketData,
               mobulaBlockChainData: mobulaBlockchains,
             }),
-            labels: [], // Initialize with empty array; labels would be populated elsewhere
+            labels,
           };
           return [...acc, supportedChain];
         }, [])
