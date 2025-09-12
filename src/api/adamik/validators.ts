@@ -46,13 +46,31 @@ export const getValidators = async (
     return null;
   }
 
-  const data = (await response.json()) as ValidatorResponse;
-  console.log(`✅ [Validators API] Received ${data.validators?.length || 0} validators for ${chainId}`);
-  if (chainId.includes('solana')) {
-    console.log(`🔍 [Validators API] Solana response:`, JSON.stringify(data, null, 2));
+  const responseText = await response.text();
+  let data: ValidatorResponse;
+  
+  try {
+    data = JSON.parse(responseText) as ValidatorResponse;
+  } catch (error) {
+    console.error(`❌ [Validators API] Failed to parse response for ${chainId}:`, responseText);
+    return { chainId, validators: [] };
   }
   
-  return data;
+  console.log(`✅ [Validators API] Received ${data.validators?.length || 0} validators for ${chainId}`);
+  if (chainId.includes('solana')) {
+    console.log(`🔍 [Validators API] Solana raw response length:`, responseText.length);
+    console.log(`🔍 [Validators API] Solana parsed validators:`, data.validators?.length);
+    if (data.validators && data.validators.length > 0) {
+      console.log(`🔍 [Validators API] First Solana validator:`, data.validators[0]);
+    }
+  }
+  
+  // Ensure we always return a valid structure
+  return {
+    chainId: data.chainId || chainId,
+    validators: data.validators || [],
+    pagination: data.pagination
+  };
 };
 
 export const getAllValidators = async (
@@ -66,10 +84,15 @@ export const getAllValidators = async (
   do {
     pageCount++;
     const response = await getValidators(chainId, { nextPage });
-    allValidators = response
-      ? [...allValidators, ...response.validators]
-      : allValidators;
-    nextPage = (response && response.pagination?.nextPage) || undefined;
+    
+    if (response && response.validators) {
+      allValidators = [...allValidators, ...response.validators];
+      nextPage = response.pagination?.nextPage || undefined;
+    } else {
+      console.warn(`⚠️ [getAllValidators] No response or validators for ${chainId} on page ${pageCount}`);
+      nextPage = undefined;
+    }
+    
     console.log(`📊 [getAllValidators] Page ${pageCount} - Total validators so far: ${allValidators.length}`);
   } while (nextPage !== undefined);
 
