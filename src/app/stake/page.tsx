@@ -81,10 +81,16 @@ export default function Stake() {
   );
 
   const stakingSupportedChainIds = useMemo(
-    () =>
-      chainsDetails
+    () => {
+      const stakingChains = chainsDetails
         ?.filter((chain) => isStakingSupported(chain))
-        .map((chain) => chain.id) ?? [],
+        .map((chain) => chain.id) ?? [];
+      
+      console.log(`🎯 [Stake Page] Staking supported chains:`, stakingChains);
+      console.log(`🎯 [Stake Page] Has Solana?`, stakingChains.some(id => id.includes('solana')));
+      
+      return stakingChains;
+    },
     [chainsDetails]
   );
 
