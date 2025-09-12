@@ -110,10 +110,18 @@ export const resolveLogo = ({
 };
 
 export const isStakingSupported = (chain: Chain): boolean => {
-  return (
-    chain.supportedFeatures.read.account.balances.staking &&
-    chain.supportedFeatures.write.transaction.type.stake
-  );
+  const isSupported = chain.supportedFeatures.read.account.balances.staking &&
+    chain.supportedFeatures.write.transaction.type.stake;
+  
+  if (chain.id.includes('solana')) {
+    console.log(`🔍 [isStakingSupported] Solana chain ${chain.id}:`, {
+      hasStakingRead: chain.supportedFeatures.read.account.balances.staking,
+      hasStakingWrite: chain.supportedFeatures.write.transaction.type.stake,
+      isSupported
+    });
+  }
+  
+  return isSupported;
 };
 
 // Utility functions for asset avatar fallbacks
