@@ -22,7 +22,12 @@ export function SenderFormField({ form }: AssetFormFieldProps) {
         <FormItem>
           <FormLabel>Sender</FormLabel>
           <FormControl>
-            <Input readOnly placeholder="Sender" {...field} />
+            <Input 
+              readOnly 
+              placeholder="Sender" 
+              className="truncate"
+              {...field} 
+            />
           </FormControl>
           <FormMessage />
         </FormItem>

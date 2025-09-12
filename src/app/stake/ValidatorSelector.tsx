@@ -136,37 +136,56 @@ const ValidatorSelectorList = ({
 };
 
 const ValidatorView = ({ validator }: { validator: Validator }) => {
+  // Helper function to truncate address
+  const truncateAddress = (address: string, startLength = 10, endLength = 10) => {
+    if (address.length <= startLength + endLength + 3) return address;
+    return `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
+  };
+
   return (
-    <div className="flex items-center justify-between w-full">
-      {validator?.name && (
-        <div className="relative">
-          <Tooltip text={validator.address}>
-            <Avatar className="w-[32px] h-[32px]">
-              <AvatarFallback>
-                {validator?.name[0].toUpperCase() ||
-                  validator.address[0].toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-          </Tooltip>
-          {validator.chainLogo && (
-            <Tooltip text={validator.chainId}>
-              <div className="absolute w-4 h-4 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-[6px] -end-1">
-                <Avatar className="h-3 w-3">
-                  <AvatarImage
-                    src={validator.chainLogo}
-                    alt={validator.chainId}
-                  />
-                  <AvatarFallback>{validator.chainId}</AvatarFallback>
-                </Avatar>
-              </div>
+    <div className="flex items-center gap-2 w-full">
+      {validator?.name ? (
+        <>
+          <div className="relative flex-shrink-0">
+            <Tooltip text={validator.address}>
+              <Avatar className="w-[32px] h-[32px]">
+                <AvatarFallback>
+                  {validator?.name[0].toUpperCase() ||
+                    validator.address[0].toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
             </Tooltip>
-          )}
-        </div>
+            {validator.chainLogo && (
+              <Tooltip text={validator.chainId}>
+                <div className="absolute w-4 h-4 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-[6px] -end-1">
+                  <Avatar className="h-3 w-3">
+                    <AvatarImage
+                      src={validator.chainLogo}
+                      alt={validator.chainId}
+                    />
+                    <AvatarFallback>{validator.chainId}</AvatarFallback>
+                  </Avatar>
+                </div>
+              </Tooltip>
+            )}
+          </div>
+          <div className="flex-1 text-left truncate">{validator.name}</div>
+          <div className="font-bold flex-shrink-0 text-right">
+            Commission: {validator.commission}
+          </div>
+        </>
+      ) : (
+        <>
+          <Tooltip text={validator.address}>
+            <div className="flex-1 text-left font-mono text-sm">
+              {truncateAddress(validator.address)}
+            </div>
+          </Tooltip>
+          <div className="font-bold flex-shrink-0 text-right">
+            Commission: {validator.commission}
+          </div>
+        </>
       )}
-      <div className="flex-1 text-right">{validator.name}</div>
-      <div className="font-bold flex-1 text-right">
-        Commission: {validator.commission}
-      </div>
     </div>
   );
 };
