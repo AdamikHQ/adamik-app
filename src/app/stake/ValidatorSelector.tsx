@@ -142,8 +142,12 @@ const ValidatorView = ({ validator, isSelected = false }: { validator: Validator
     return `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
   };
 
-  // Check if commission is valid (not NaN or undefined)
-  const hasValidCommission = validator.commission && validator.commission !== 'NaN';
+  // Check if commission is valid (not NaN, undefined, or containing "NaN")
+  const hasValidCommission = 
+    validator.commission && 
+    validator.commission !== 'NaN' && 
+    !validator.commission.toString().includes('NaN') &&
+    !isNaN(parseFloat(validator.commission.toString().replace('%', '')));
 
   // For selected state, always show the truncated address
   if (isSelected) {
