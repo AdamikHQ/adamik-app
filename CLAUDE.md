@@ -529,7 +529,7 @@ Both Sodot and IoFinnet proxies have duplicated logic for:
   - IoFinnet: Signs with EDDSA (no pre-hashing) directly on the hash
 - **Result**: Both signers now work identically for Stellar transactions
 
-### 🎨 Recent UI/UX Improvements (2025-01-11)
+### 🎨 Recent UI/UX Improvements (2025-01-12)
 
 #### 1. **Signer Selector Moved to Header** ✅
 - **Previous**: Signer selection was buried in Settings page
@@ -575,7 +575,13 @@ Both Sodot and IoFinnet proxies have duplicated logic for:
 - Test buttons positioned consistently at card bottom
 - Removed unnecessary configuration warnings
 
-*Last Updated: 2025-01-11*
+#### 7. **IoFinnet Approval Modal Branding** ✅ (2025-01-12)
+- Added IoFinnet logo to approval modal header
+- Logo displayed next to "IoFinnet Approval Required" title
+- Clean, simple design with focused user experience
+- Modal shows when waiting for mobile app approval
+
+*Last Updated: 2025-01-12*
 *Author: Claude Assistant*
 *Status: Multi-Signer Support Fully Implemented - All Chain Signing Working*
 
