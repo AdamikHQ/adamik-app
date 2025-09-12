@@ -46,12 +46,12 @@ export function ValidatorSelector({
           <Button
             variant="outline"
             role="combobox"
-            className="w-full justify-between h-[64px] overflow-hidden"
+            className="w-full justify-start h-auto min-h-[64px] p-2 overflow-hidden"
           >
             {selectedChoice ? (
               <ValidatorView validator={selectedChoice} isSelected={true} />
             ) : (
-              <>Select a validator</>
+              <span className="text-muted-foreground">Select a validator</span>
             )}
           </Button>
         </PopoverTrigger>
@@ -73,12 +73,12 @@ export function ValidatorSelector({
         <Button
           variant="outline"
           role="combobox"
-          className="w-full justify-between h-[64px] overflow-hidden"
+          className="w-full justify-start h-auto min-h-[64px] p-2 overflow-hidden"
         >
           {selectedChoice ? (
             <ValidatorView validator={selectedChoice} isSelected={true} />
           ) : (
-            <>Select a validator</>
+            <span className="text-muted-foreground">Select a validator</span>
           )}
         </Button>
       </DrawerTrigger>
@@ -148,7 +148,7 @@ const ValidatorView = ({ validator, isSelected = false }: { validator: Validator
   // For selected state, always show the truncated address
   if (isSelected) {
     return (
-      <div className="flex items-center gap-2 w-full">
+      <div className="flex items-center gap-2 w-full overflow-hidden">
         <div className="relative flex-shrink-0">
           <Tooltip text={validator.address}>
             <Avatar className="w-[32px] h-[32px]">
@@ -172,18 +172,26 @@ const ValidatorView = ({ validator, isSelected = false }: { validator: Validator
             </Tooltip>
           )}
         </div>
-        <div className="flex-1 min-w-0 flex flex-col items-start">
-          {validator?.name && (
-            <div className="text-sm font-medium truncate max-w-full">{validator.name}</div>
+        <div className="flex-1 min-w-0 overflow-hidden">
+          {validator?.name ? (
+            <>
+              <div className="text-sm font-medium truncate">{validator.name}</div>
+              <Tooltip text={validator.address}>
+                <div className="text-xs text-muted-foreground font-mono truncate">
+                  {truncateAddress(validator.address, 8, 8)}
+                </div>
+              </Tooltip>
+            </>
+          ) : (
+            <Tooltip text={validator.address}>
+              <div className="text-sm font-mono truncate">
+                {truncateAddress(validator.address, 12, 12)}
+              </div>
+            </Tooltip>
           )}
-          <Tooltip text={validator.address}>
-            <div className="text-xs text-muted-foreground font-mono">
-              {truncateAddress(validator.address)}
-            </div>
-          </Tooltip>
         </div>
         {hasValidCommission && (
-          <div className="font-bold flex-shrink-0 text-right text-sm">
+          <div className="font-bold flex-shrink-0 text-right text-sm whitespace-nowrap">
             Commission: {validator.commission}
           </div>
         )}
