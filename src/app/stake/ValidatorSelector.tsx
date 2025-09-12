@@ -46,10 +46,10 @@ export function ValidatorSelector({
           <Button
             variant="outline"
             role="combobox"
-            className="w-full justify-between h-[64px]"
+            className="w-full justify-between h-[64px] overflow-hidden"
           >
             {selectedChoice ? (
-              <ValidatorView validator={selectedChoice} />
+              <ValidatorView validator={selectedChoice} isSelected={true} />
             ) : (
               <>Select a validator</>
             )}
@@ -73,10 +73,10 @@ export function ValidatorSelector({
         <Button
           variant="outline"
           role="combobox"
-          className="w-full justify-between h-[64px]"
+          className="w-full justify-between h-[64px] overflow-hidden"
         >
           {selectedChoice ? (
-            <ValidatorView validator={selectedChoice} />
+            <ValidatorView validator={selectedChoice} isSelected={true} />
           ) : (
             <>Select a validator</>
           )}
@@ -135,13 +135,63 @@ const ValidatorSelectorList = ({
   );
 };
 
-const ValidatorView = ({ validator }: { validator: Validator }) => {
+const ValidatorView = ({ validator, isSelected = false }: { validator: Validator; isSelected?: boolean }) => {
   // Helper function to truncate address
   const truncateAddress = (address: string, startLength = 10, endLength = 10) => {
     if (address.length <= startLength + endLength + 3) return address;
     return `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
   };
 
+  // Check if commission is valid (not NaN or undefined)
+  const hasValidCommission = validator.commission && validator.commission !== 'NaN';
+
+  // For selected state, always show the truncated address
+  if (isSelected) {
+    return (
+      <div className="flex items-center gap-2 w-full">
+        <div className="relative flex-shrink-0">
+          <Tooltip text={validator.address}>
+            <Avatar className="w-[32px] h-[32px]">
+              <AvatarFallback>
+                {validator?.name?.[0]?.toUpperCase() ||
+                  validator.address[0].toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </Tooltip>
+          {validator.chainLogo && (
+            <Tooltip text={validator.chainId}>
+              <div className="absolute w-4 h-4 text-xs font-bold text-primary bg-primary-foreground border-2 rounded-full -top-[6px] -end-1">
+                <Avatar className="h-3 w-3">
+                  <AvatarImage
+                    src={validator.chainLogo}
+                    alt={validator.chainId}
+                  />
+                  <AvatarFallback>{validator.chainId}</AvatarFallback>
+                </Avatar>
+              </div>
+            </Tooltip>
+          )}
+        </div>
+        <div className="flex-1 min-w-0 flex flex-col items-start">
+          {validator?.name && (
+            <div className="text-sm font-medium truncate max-w-full">{validator.name}</div>
+          )}
+          <Tooltip text={validator.address}>
+            <div className="text-xs text-muted-foreground font-mono">
+              {truncateAddress(validator.address)}
+            </div>
+          </Tooltip>
+        </div>
+        {hasValidCommission && (
+          <div className="font-bold flex-shrink-0 text-right text-sm">
+            Commission: {validator.commission}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // For list view
   return (
     <div className="flex items-center gap-2 w-full">
       {validator?.name ? (
@@ -170,9 +220,11 @@ const ValidatorView = ({ validator }: { validator: Validator }) => {
             )}
           </div>
           <div className="flex-1 text-left truncate">{validator.name}</div>
-          <div className="font-bold flex-shrink-0 text-right">
-            Commission: {validator.commission}
-          </div>
+          {hasValidCommission && (
+            <div className="font-bold flex-shrink-0 text-right">
+              Commission: {validator.commission}
+            </div>
+          )}
         </>
       ) : (
         <>
@@ -181,9 +233,11 @@ const ValidatorView = ({ validator }: { validator: Validator }) => {
               {truncateAddress(validator.address)}
             </div>
           </Tooltip>
-          <div className="font-bold flex-shrink-0 text-right">
-            Commission: {validator.commission}
-          </div>
+          {hasValidCommission && (
+            <div className="font-bold flex-shrink-0 text-right">
+              Commission: {validator.commission}
+            </div>
+          )}
         </>
       )}
     </div>
