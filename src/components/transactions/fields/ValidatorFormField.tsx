@@ -24,6 +24,17 @@ export function ValidatorFormField({
 }: ValidatorFormFieldProps) {
   // Watch the chainId to trigger re-render
   const chainId = form.watch("chainId");
+  
+  // Debug logging
+  console.log(`🔍 [ValidatorFormField] Current chainId:`, chainId);
+  console.log(`🔍 [ValidatorFormField] Total validators:`, validators.length);
+  const filteredValidators = validators.filter((validator) => {
+    return chainId === "" ? true : validator.chainId === chainId;
+  });
+  console.log(`🔍 [ValidatorFormField] Filtered validators for ${chainId}:`, filteredValidators.length);
+  if (chainId === 'solana') {
+    console.log(`🔍 [ValidatorFormField] Solana validators:`, filteredValidators.slice(0, 3));
+  }
 
   return (
     <FormField

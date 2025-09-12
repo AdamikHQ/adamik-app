@@ -40,14 +40,16 @@ export const getValidators = async (
   });
 
   if (!response.ok) {
+    const errorText = await response.text();
     console.error(`❌ [Validators API] Failed to fetch validators for ${chainId}: ${response.status} ${response.statusText}`);
+    console.error(`❌ [Validators API] Error details:`, errorText);
     return null;
   }
 
   const data = (await response.json()) as ValidatorResponse;
   console.log(`✅ [Validators API] Received ${data.validators?.length || 0} validators for ${chainId}`);
   if (chainId.includes('solana')) {
-    console.log(`🔍 [Validators API] Solana validators:`, data.validators?.slice(0, 3));
+    console.log(`🔍 [Validators API] Solana response:`, JSON.stringify(data, null, 2));
   }
   
   return data;
