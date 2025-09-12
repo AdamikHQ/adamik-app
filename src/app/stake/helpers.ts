@@ -260,21 +260,12 @@ export const createValidatorList = (
   chainsDetails: (Chain | undefined | null)[],
   mobulaMarketData: MobulaMarketMultiDataResponse | undefined | null
 ): Validator[] => {
-  console.log(`🔍 [createValidatorList] Processing validator data for chains:`, validatorData.map(v => v?.chainId));
-  
   return validatorData
     .reduce<Validator[]>((acc, current) => {
-      if (current?.chainId === 'solana') {
-        console.log(`🔍 [createValidatorList] Solana validators input:`, current.validators?.length);
-      }
-      
       const chainDetails = chainsDetails.find(
         (chainDetails) => chainDetails?.id === current?.chainId
       );
       if (!chainDetails) {
-        if (current?.chainId === 'solana') {
-          console.log(`❌ [createValidatorList] No chain details found for Solana!`);
-        }
         return acc;
       }
 
@@ -305,10 +296,6 @@ export const createValidatorList = (
       );
 
       if (!chainValidators) return acc;
-      
-      if (current?.chainId === 'solana') {
-        console.log(`🔍 [createValidatorList] Solana validators processed:`, chainValidators.length);
-      }
 
       return [...acc, ...chainValidators];
     }, [])

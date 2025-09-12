@@ -22,7 +22,7 @@ export const IoFinnetApprovalModal: React.FC<IoFinnetApprovalModalProps> = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Smartphone className="h-5 w-5 text-blue-500" />
+            <img src="/assets/iofinnet1.svg" alt="IoFinnet" className="h-6 w-6" />
             IoFinnet Approval Required
           </DialogTitle>
           <DialogDescription>
@@ -31,7 +31,7 @@ export const IoFinnetApprovalModal: React.FC<IoFinnetApprovalModalProps> = ({
         </DialogHeader>
         <div className="flex flex-col items-center gap-4 pt-4">
           <div className="relative">
-            <Smartphone className="h-16 w-16 text-blue-500" />
+            <Smartphone className="h-16 w-16 text-blue-500 animate-pulse" />
             <Loader2 className="absolute -bottom-1 -right-1 h-6 w-6 animate-spin text-blue-600" />
           </div>
           

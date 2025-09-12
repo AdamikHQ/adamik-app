@@ -29,8 +29,6 @@ export const getValidators = async (
     url.searchParams.set("nextPage", options.nextPage);
   }
 
-  console.log(`🔍 [Validators API] Fetching validators for chain: ${chainId}`);
-  console.log(`🔍 [Validators API] URL: ${url.toString()}`);
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -56,14 +54,6 @@ export const getValidators = async (
     return { chainId, validators: [] };
   }
   
-  console.log(`✅ [Validators API] Received ${data.validators?.length || 0} validators for ${chainId}`);
-  if (chainId.includes('solana')) {
-    console.log(`🔍 [Validators API] Solana raw response length:`, responseText.length);
-    console.log(`🔍 [Validators API] Solana parsed validators:`, data.validators?.length);
-    if (data.validators && data.validators.length > 0) {
-      console.log(`🔍 [Validators API] First Solana validator:`, data.validators[0]);
-    }
-  }
   
   // Ensure we always return a valid structure
   return {
@@ -76,7 +66,6 @@ export const getValidators = async (
 export const getAllValidators = async (
   chainId: string
 ): Promise<ValidatorResponse> => {
-  console.log(`📊 [getAllValidators] Starting to fetch all validators for: ${chainId}`);
   let allValidators: ValidatorResponse["validators"] = [];
   let nextPage: string | undefined = undefined;
   let pageCount = 0;
@@ -90,11 +79,8 @@ export const getAllValidators = async (
       allValidators = [...allValidators, ...response.validators];
       nextPage = response.pagination?.nextPage || undefined;
     } else {
-      console.warn(`⚠️ [getAllValidators] No response or validators for ${chainId} on page ${pageCount}`);
       nextPage = undefined;
     }
-    
-    console.log(`📊 [getAllValidators] Page ${pageCount} - Total validators so far: ${allValidators.length}`);
     
     // Safety check to prevent infinite loops
     if (pageCount >= MAX_PAGES) {
@@ -103,23 +89,6 @@ export const getAllValidators = async (
     }
   } while (nextPage !== undefined);
 
-  console.log(`📊 [getAllValidators] Completed fetching ${allValidators.length} validators for ${chainId}`);
-  
-  // Special logging and limiting for Solana to debug
-  if (chainId === 'solana') {
-    console.log(`🔍 [getAllValidators] Solana validators before limiting:`, {
-      count: allValidators.length,
-      firstValidator: allValidators[0],
-      hasValidators: allValidators.length > 0
-    });
-    
-    // Temporarily limit Solana validators to test if size is the issue
-    if (allValidators.length > 100) {
-      console.warn(`⚠️ [getAllValidators] Limiting Solana validators from ${allValidators.length} to 100 for testing`);
-      allValidators = allValidators.slice(0, 100);
-    }
-  }
-  
   return {
     chainId,
     validators: allValidators,
