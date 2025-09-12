@@ -237,7 +237,7 @@ export type Validator = {
   stakedAmount: number;
   address: string;
   name: string;
-  commission: number;
+  commission?: number;
   chainId: string;
   chainName: string;
   chainLogo?: string;
