@@ -316,6 +316,12 @@ export const clearAccountStateCache = ({
   chainId,
   address,
 }: GetAddressStateParams) => {
+  // Remove the query from cache entirely to force a fresh fetch
+  queryClientGlobal.removeQueries({
+    queryKey: ["accountState", chainId, address],
+  });
+  
+  // Also invalidate to ensure any active queries are marked as stale
   queryClientGlobal.invalidateQueries({
     queryKey: ["accountState", chainId, address],
   });
