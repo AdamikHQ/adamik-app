@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { UseFormReturn } from "react-hook-form";
 import { ValidatorSelector } from "~/app/stake/ValidatorSelector";
 import {

@@ -117,9 +117,10 @@ const ValidatorSelectorList = ({
             {validators.map((validator, i) => (
               <CommandItem
                 key={`${validator.address}_${i}`}
-                value={`${validator.name}_${i.toString()}`}
+                value={`validator_${i.toString()}`}
+                keywords={[validator.name || "", validator.address]}
                 onSelect={(value) => {
-                  const [name, index] = value.split("_");
+                  const index = value.replace("validator_", "");
                   setSelectedChoice(validators[Number(index)]);
                   setOpen(false);
                   onSelect(validator, i);
