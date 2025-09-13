@@ -38,6 +38,7 @@ import { WalletConnect } from "~/components";
 import { useQueryClient } from "@tanstack/react-query";
 import { accountState } from "~/api/adamik/accountState";
 import { CustomProgress } from "~/components/ui/custom-progress";
+import { refetchEventEmitter } from "~/utils/refetchEvent";
 import { PortfolioLoadingPlaceholder } from "./PortfolioLoadingPlaceholder";
 import { Account } from "~/components/wallets/types";
 import { Asset } from "~/utils/types";
@@ -235,6 +236,19 @@ export default function Portfolio() {
       if (timeoutId) clearTimeout(timeoutId);
     };
   }, [isLoading, forceRefresh]);
+
+  // Listen for global refetch events (e.g., from transaction success modal)
+  useEffect(() => {
+    const handleRefetchEvent = () => {
+      console.log("Global refetch event received, updating portfolio data");
+      if (refetchAccountState) {
+        refetchAccountState();
+      }
+    };
+
+    const unsubscribe = refetchEventEmitter.onRefetch(handleRefetchEvent);
+    return unsubscribe;
+  }, [refetchAccountState]);
 
   // Fix the loading toast useEffect to have consistent dependencies
   useEffect(() => {

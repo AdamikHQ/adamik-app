@@ -9,6 +9,7 @@ import { Modal } from "~/components/ui/modal";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { clearAccountStateCache } from "~/hooks/useAccountStateBatch";
+import { refetchEventEmitter } from "~/utils/refetchEvent";
 
 interface TransactionSuccessModalProps {
   open: boolean;
@@ -89,6 +90,9 @@ export const TransactionSuccessModal = ({
           queryKey: ["accountState"],
           type: "active",
         });
+        
+        // Trigger global refetch event to update useAccountStateBatch
+        refetchEventEmitter.triggerRefetch();
         
         // Show a subtle toast that data is being refreshed
         toast({
