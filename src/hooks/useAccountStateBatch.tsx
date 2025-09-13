@@ -1,7 +1,7 @@
 import { useQueries, useQueryClient, useQuery } from "@tanstack/react-query";
 import { accountState } from "~/api/adamik/accountState";
 import { queryCache, queryClientGlobal } from "~/providers/QueryProvider";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { AccountState, Chain } from "~/utils/types";
 import { getChains } from "~/api/adamik/chains";
 
@@ -84,6 +84,7 @@ export const useAccountStateBatch = (
   const [loadedAddresses, setLoadedAddresses] = useState<AccountState[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<unknown[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Get chain data to organize by family
   const { data: chainData } = useQuery({
@@ -216,14 +217,22 @@ export const useAccountStateBatch = (
           currentBatch.map(async ({ chainId, address }) => {
             try {
               console.log(`Fetching data for ${chainId}:${address}`);
-              // Check cache first
-              const cachedData = queryCache.find({
-                queryKey: ["accountState", chainId, address],
-              });
+              // Skip cache check when refreshTrigger has changed
+              // This forces a fresh fetch after refresh button is clicked
+              const shouldSkipCache = refreshTrigger > 0;
+              
+              if (!shouldSkipCache) {
+                // Check cache first
+                const cachedData = queryCache.find({
+                  queryKey: ["accountState", chainId, address],
+                });
 
-              if (cachedData?.state.data) {
-                console.log(`Using cached data for ${chainId}:${address}`);
-                return { data: cachedData.state.data, error: null };
+                if (cachedData?.state.data) {
+                  console.log(`Using cached data for ${chainId}:${address}`);
+                  return { data: cachedData.state.data, error: null };
+                }
+              } else {
+                console.log(`Skipping cache for ${chainId}:${address} due to refresh`);
               }
 
               // Fetch fresh data with timeout
@@ -301,7 +310,12 @@ export const useAccountStateBatch = (
     return () => {
       isCancelled = true;
     };
-  }, [batches, addressesParams, queryClient]);
+  }, [batches, addressesParams, queryClient, refreshTrigger]);
+
+  // Provide a way to trigger refresh
+  const refetch = useCallback(() => {
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
 
   // Return data in the same format as the original hook
   return {
@@ -309,6 +323,7 @@ export const useAccountStateBatch = (
     error,
     isLoading,
     progress: loadingProgress,
+    refetch,
   };
 };
 

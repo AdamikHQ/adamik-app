@@ -69,8 +69,11 @@ export default function Stake() {
       addressesChainIds.includes(chain.id)
     );
 
-  const { data: addressesData, isLoading: isAddressStateLoading } =
-    useAccountStateBatch(displayAddresses);
+  const { 
+    data: addressesData, 
+    isLoading: isAddressStateLoading,
+    refetch: refetchAccountState,
+  } = useAccountStateBatch(displayAddresses);
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
 
   const mainChainTickersIds = getTickers(chainsDetails || []);
@@ -224,7 +227,13 @@ export default function Stake() {
         });
       });
       
-      // Force React Query to refetch the cleared queries
+      // Force the useAccountStateBatch hook to refetch data
+      if (refetchAccountState) {
+        console.log("Triggering refetch of account state data for stake page");
+        refetchAccountState();
+      }
+      
+      // Also force React Query to refetch the cleared queries
       await queryClient.refetchQueries({
         queryKey: ["accountState"],
         type: "active",
@@ -343,7 +352,7 @@ export default function Stake() {
       isCancelled = true;
       progressToast.dismiss();
     };
-  }, [assets, queryClient, toast]);
+  }, [assets, queryClient, toast, refetchAccountState]);
 
   const handleModalClose = useCallback(
     (value: boolean | ((prevState: boolean) => boolean)) => {
