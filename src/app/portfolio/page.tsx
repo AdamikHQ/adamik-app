@@ -74,6 +74,7 @@ export default function Portfolio() {
     data: addressesData,
     isLoading: isAddressesLoading,
     progress: addressesLoadingProgress,
+    refetch: refetchAccountState,
   } = useAccountStateBatch(displayAddresses);
 
   const { data: mobulaBlockchainDetails } = useMobulaBlockchains();
@@ -183,7 +184,13 @@ export default function Portfolio() {
       });
     });
 
-    // Force immediate refetch of all active account state queries
+    // Force the useAccountStateBatch hook to refetch data
+    if (refetchAccountState) {
+      console.log("Force triggering refetch of account state data");
+      refetchAccountState();
+    }
+    
+    // Also force immediate refetch of all active account state queries
     await queryClient.refetchQueries({
       queryKey: ["accountState"],
       type: "active",
@@ -210,7 +217,7 @@ export default function Portfolio() {
     }, 15000);
 
     return () => clearTimeout(timeoutId);
-  }, [displayAddresses, queryClient, toast, isLoading]);
+  }, [displayAddresses, queryClient, toast, isLoading, refetchAccountState]);
 
   // Add long timeout to automatically recover from stuck loading states
   useEffect(() => {
@@ -394,7 +401,13 @@ export default function Portfolio() {
           });
         });
         
-        // Force React Query to refetch the cleared queries
+        // Force the useAccountStateBatch hook to refetch data
+        if (refetchAccountState) {
+          console.log("Triggering refetch of account state data");
+          refetchAccountState();
+        }
+        
+        // Also refetch queries for immediate update
         await queryClient.refetchQueries({
           queryKey: ["accountState"],
           type: "active",
@@ -553,6 +566,7 @@ export default function Portfolio() {
       toast,
       recentlyAddedAddresses,
       clearRecentlyAddedAddresses,
+      refetchAccountState,
     ]
   );
 
