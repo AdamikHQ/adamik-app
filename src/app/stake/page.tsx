@@ -42,6 +42,7 @@ import { isStakingSupported } from "~/utils/helper";
 import { WalletConnect } from "~/components";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { refetchEventEmitter } from "~/utils/refetchEvent";
 
 export default function Stake() {
   const { addresses, isShowroom, setWalletMenuOpen } = useWallet();
@@ -366,6 +367,19 @@ export default function Stake() {
   const handleTransactionComplete = useCallback(() => {
     setCurrentTransactionFlow(undefined);
   }, []);
+
+  // Listen for global refetch events (e.g., from transaction success modal)
+  useEffect(() => {
+    const handleRefetchEvent = () => {
+      console.log("Global refetch event received, updating stake data");
+      if (refetchAccountState) {
+        refetchAccountState();
+      }
+    };
+
+    const unsubscribe = refetchEventEmitter.onRefetch(handleRefetchEvent);
+    return unsubscribe;
+  }, [refetchAccountState]);
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 max-h-[100vh] overflow-y-auto">
