@@ -3,6 +3,14 @@
 ## Introduction
 
 The Adamik application is a boilerplate implementation of the main Adamik API endpoints. It serves as a starting point for developers looking to integrate with the Adamik API, providing essential functionalities and example usages of the API.
+
+### Key Features
+- **Multi-Signer Support**: Seamlessly switch between different signing providers (Sodot MPC, IoFinnet)
+- **Multi-Chain Portfolio Management**: Track and manage assets across 50+ blockchain networks
+- **Staking Operations**: Stake, unstake, and claim rewards across supported chains
+- **Real-time Balance Updates**: Automatic UI refresh after transactions without page reloads
+- **Developer-Friendly**: Clean architecture with signer-agnostic components
+
 As a truly open-source project licensed under the MIT License, Adamik encourages community contributions and collaboration.
 
 ### Useful links
@@ -55,7 +63,20 @@ Make sure you have the following installed on your development machine:
    ```
    NEXT_PUBLIC_ADAMIK_API_TEST_URL="https://api.adamik.io/api"
    ADAMIK_API_KEY="<your Adamik API key>"
-   MOBULA_API_KEY=""<your Mobula API key>"
+   MOBULA_API_KEY="<your Mobula API key>"
+   ```
+
+   For multi-signer support, you can also configure:
+   ```
+   # Sodot MPC Configuration (optional)
+   SODOT_VERTEX_URL_0="<vertex_url>"
+   SODOT_VERTEX_API_KEY_0="<api_key>"
+   
+   # IoFinnet Configuration (optional)
+   IOFINNET_BASE_URL="<base_url>"
+   IOFINNET_CLIENT_ID="<client_id>"
+   IOFINNET_CLIENT_SECRET="<client_secret>"
+   IOFINNET_VAULT_ID="<vault_id>"
    ```
 
 ### Running the Development Server
