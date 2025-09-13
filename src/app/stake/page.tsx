@@ -223,6 +223,12 @@ export default function Stake() {
           address,
         });
       });
+      
+      // Force React Query to refetch the cleared queries
+      await queryClient.refetchQueries({
+        queryKey: ["accountState"],
+        type: "active",
+      });
 
       try {
         await queryClient.invalidateQueries({

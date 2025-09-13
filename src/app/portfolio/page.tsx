@@ -167,7 +167,7 @@ export default function Portfolio() {
   ]);
 
   // Add a force refresh function for when the UI gets stuck
-  const forceRefresh = useCallback(() => {
+  const forceRefresh = useCallback(async () => {
     console.log("Force refreshing portfolio data...");
     // Force refresh Mobula data which often gets stuck
     queryClient.invalidateQueries({ queryKey: ["mobula"] });
@@ -175,16 +175,18 @@ export default function Portfolio() {
     // Force refresh chain data
     queryClient.invalidateQueries({ queryKey: ["chains"] });
 
-    // Force refresh all account state data
+    // Clear cache for all addresses
     displayAddresses.forEach(({ chainId, address }) => {
       clearAccountStateCache({
         chainId,
         address,
       });
-      queryClient.invalidateQueries({
-        queryKey: ["accountState", chainId, address],
-        refetchType: "active",
-      });
+    });
+
+    // Force immediate refetch of all active account state queries
+    await queryClient.refetchQueries({
+      queryKey: ["accountState"],
+      type: "active",
     });
 
     // Show a toast to inform the user
@@ -390,6 +392,12 @@ export default function Portfolio() {
             chainId,
             address,
           });
+        });
+        
+        // Force React Query to refetch the cleared queries
+        await queryClient.refetchQueries({
+          queryKey: ["accountState"],
+          type: "active",
         });
 
         // Invalidate queries but don't refetch yet
