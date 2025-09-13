@@ -27,6 +27,7 @@ export type Account = {
 export enum WalletName {
   SODOT = "sodot",
   IOFINNET = "iofinnet",
+  TURNKEY = "turnkey",
   KEPLR = "keplr",
 }
 

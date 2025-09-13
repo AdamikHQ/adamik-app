@@ -127,6 +127,8 @@ export const MultiChainConnect: React.FC<{
       const currentSigner = SignerFactory.getSelectedSignerType();
       const walletName = currentSigner === SignerType.IOFINNET 
         ? WalletName.IOFINNET 
+        : currentSigner === SignerType.TURNKEY
+        ? WalletName.TURNKEY
         : WalletName.SODOT;
       
       // Filter addresses to only those from the current signer
@@ -260,6 +262,8 @@ export const MultiChainConnect: React.FC<{
       const currentSigner = SignerFactory.getSelectedSignerType();
       const walletName = currentSigner === SignerType.IOFINNET 
         ? WalletName.IOFINNET 
+        : currentSigner === SignerType.TURNKEY
+        ? WalletName.TURNKEY
         : WalletName.SODOT;
         
       const account: Account = {
@@ -348,6 +352,8 @@ export const MultiChainConnect: React.FC<{
         const currentSigner = SignerFactory.getSelectedSignerType();
         const walletName = currentSigner === SignerType.IOFINNET 
           ? WalletName.IOFINNET 
+          : currentSigner === SignerType.TURNKEY
+          ? WalletName.TURNKEY
           : WalletName.SODOT;
           
         const account: Account = {
@@ -729,6 +735,8 @@ export const MultiChainConnect: React.FC<{
                               const currentSigner = SignerFactory.getSelectedSignerType();
                               const walletName = currentSigner === SignerType.IOFINNET 
                                 ? WalletName.IOFINNET 
+                                : currentSigner === SignerType.TURNKEY
+                                ? WalletName.TURNKEY
                                 : WalletName.SODOT;
                                 
                               const account: Account = {

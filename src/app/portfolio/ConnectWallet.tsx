@@ -48,6 +48,8 @@ export const ConnectWallet = ({ onNextStep }: { onNextStep: () => void }) => {
       const selectedSigner = SignerFactory.getSelectedSignerType();
       const walletName = selectedSigner === SignerType.IOFINNET 
         ? WalletName.IOFINNET 
+        : selectedSigner === SignerType.TURNKEY
+        ? WalletName.TURNKEY
         : WalletName.SODOT;
 
       // Connect to all chains in parallel

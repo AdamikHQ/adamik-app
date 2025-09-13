@@ -178,12 +178,17 @@ export default function Portfolio() {
     queryClient.invalidateQueries({ queryKey: ["chains"] });
 
     // Clear cache for all addresses
-    displayAddresses.forEach(({ chainId, address }) => {
-      clearAccountStateCache({
-        chainId,
-        address,
+    try {
+      displayAddresses.forEach(({ chainId, address }) => {
+        clearAccountStateCache({
+          chainId,
+          address,
+        });
       });
-    });
+    } catch (error) {
+      console.debug("Cache clearing error (non-critical):", error);
+      // Continue execution - cache clearing errors shouldn't stop the refresh
+    }
 
     // Force the useAccountStateBatch hook to refetch data
     if (refetchAccountState) {
@@ -407,13 +412,18 @@ export default function Portfolio() {
         }
 
         // Clear cache for targeted addresses
-        addressesToRefresh.forEach(({ chainId, address }) => {
-          console.log(`🗑️ Clearing cache for ${chainId}:${address}`);
-          clearAccountStateCache({
-            chainId,
-            address,
+        try {
+          addressesToRefresh.forEach(({ chainId, address }) => {
+            console.log(`🗑️ Clearing cache for ${chainId}:${address}`);
+            clearAccountStateCache({
+              chainId,
+              address,
+            });
           });
-        });
+        } catch (error) {
+          console.debug("Cache clearing error (non-critical):", error);
+          // Continue execution - cache clearing errors shouldn't stop the refresh
+        }
         
         // Force the useAccountStateBatch hook to refetch data
         if (refetchAccountState) {

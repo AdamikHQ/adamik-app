@@ -16,8 +16,8 @@ export interface BaseSigner {
 export enum SignerType {
   SODOT = "sodot",
   IOFINNET = "iofinnet",
+  TURNKEY = "turnkey",
   // Future signers can be added here
-  // TURNKEY = "turnkey",
   // DFNS = "dfns",
 }
 
@@ -48,6 +48,14 @@ export const SIGNER_CONFIGS: Record<SignerType, SignerConfig> = {
     description: "Enterprise MPC signing with approval workflows",
     requiresSetup: true,
     setupInstructions: "Requires IoFinnet vault configuration",
+    supportedCurves: ["secp256k1", "ed25519"],
+  },
+  [SignerType.TURNKEY]: {
+    type: SignerType.TURNKEY,
+    displayName: "Turnkey",
+    description: "Cloud-based key management with flexible wallet infrastructure",
+    requiresSetup: true,
+    setupInstructions: "Requires Turnkey organization and wallet configuration",
     supportedCurves: ["secp256k1", "ed25519"],
   },
 };
