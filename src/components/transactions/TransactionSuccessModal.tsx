@@ -7,6 +7,8 @@ import { toast } from "~/components/ui/use-toast";
 import { useTransaction } from "~/hooks/useTransaction";
 import { Modal } from "~/components/ui/modal";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
+import { clearAccountStateCache } from "~/hooks/useAccountStateBatch";
 
 interface TransactionSuccessModalProps {
   open: boolean;
@@ -22,10 +24,12 @@ export const TransactionSuccessModal = ({
   const {
     chainId,
     transactionHash,
+    transaction,
     setChainId,
     setTransaction,
     setTransactionHash,
   } = useTransaction();
+  const queryClient = useQueryClient();
 
   const handleCopyToClipboard = () => {
     if (transactionHash) {
@@ -50,16 +54,49 @@ export const TransactionSuccessModal = ({
     }
   };
 
-  const handleClose = () => {
+  const handleClose = async () => {
+    // Store transaction data before clearing
+    const senderAddress = transaction?.data?.senderAddress;
+    const recipientAddress = transaction?.data?.recipientAddress;
+    const currentChainId = chainId;
+    
+    // Clear transaction state
     onClose();
     setChainId(undefined);
     setTransaction(undefined);
     setTransactionHash(undefined);
 
-    // Refresh the page after a short delay to show updated balances
-    setTimeout(() => {
-      window.location.reload();
-    }, 2000);
+    // Refresh account data for affected addresses after a short delay
+    // This gives the blockchain time to process the transaction
+    setTimeout(async () => {
+      if (currentChainId && senderAddress) {
+        // Clear cache for sender
+        clearAccountStateCache({
+          chainId: currentChainId,
+          address: senderAddress,
+        });
+        
+        // Also clear cache for recipient if it's a transfer
+        if (recipientAddress && recipientAddress !== senderAddress) {
+          clearAccountStateCache({
+            chainId: currentChainId,
+            address: recipientAddress,
+          });
+        }
+        
+        // Trigger refetch for account state queries
+        await queryClient.refetchQueries({
+          queryKey: ["accountState"],
+          type: "active",
+        });
+        
+        // Show a subtle toast that data is being refreshed
+        toast({
+          description: "Updating balances...",
+          duration: 2000,
+        });
+      }
+    }, 3000); // Wait 3 seconds for blockchain confirmation
   };
 
   return (
