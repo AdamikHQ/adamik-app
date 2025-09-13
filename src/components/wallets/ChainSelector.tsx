@@ -55,6 +55,8 @@ export function ChainSelector() {
       const selectedSigner = SignerFactory.getSelectedSignerType();
       const walletName = selectedSigner === SignerType.IOFINNET 
         ? WalletName.IOFINNET 
+        : selectedSigner === SignerType.TURNKEY
+        ? WalletName.TURNKEY
         : WalletName.SODOT;
 
       // Get chain public key using the selected signer

@@ -44,6 +44,12 @@ export function SignerConfigurationContent() {
     testResult: null,
     selectedChain: "",
   });
+  
+  const [turnkeyState, setTurnkeyState] = useState<SignerTestState>({
+    testing: false,
+    testResult: null,
+    selectedChain: "",
+  });
 
   // Test Sodot connection
   const testSodotConnection = async () => {
@@ -142,6 +148,45 @@ export function SignerConfigurationContent() {
     }
   };
 
+  // Test Turnkey connection
+  const testTurnkeyConnection = async () => {
+    setTurnkeyState(prev => ({ ...prev, testing: true, testResult: null }));
+
+    try {
+      const response = await fetch("/api/turnkey-proxy/test-connection", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message || "Connection test failed");
+      }
+
+      setTurnkeyState(prev => ({
+        ...prev,
+        testResult: {
+          success: true,
+          message: data.message,
+          details: data.details,
+        }
+      }));
+    } catch (error: any) {
+      setTurnkeyState(prev => ({
+        ...prev,
+        testResult: {
+          success: false,
+          message: error.message || "Connection test failed",
+        }
+      }));
+    } finally {
+      setTurnkeyState(prev => ({ ...prev, testing: false }));
+    }
+  };
+
   const getSignerIcon = (signer: SignerType) => {
     return <Shield className="h-5 w-5" />;
   };
@@ -151,7 +196,7 @@ export function SignerConfigurationContent() {
       {/* Test Signers Section */}
       <div>
         <h3 className="text-lg font-semibold mb-4">Test Signer Connections</h3>
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {/* Sodot Test Card */}
           <Card className={currentSigner === SignerType.SODOT ? "ring-2 ring-primary" : ""}>
             <CardHeader>
@@ -338,6 +383,92 @@ export function SignerConfigurationContent() {
                 variant="outline"
               >
                 {iofinnetState.testing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Testing...
+                  </>
+                ) : (
+                  "Test Connection"
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Turnkey Test Card */}
+          <Card className={currentSigner === SignerType.TURNKEY ? "ring-2 ring-primary" : ""}>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Turnkey
+                </div>
+                {currentSigner === SignerType.TURNKEY && (
+                  <Badge variant="default" className="text-xs">Active</Badge>
+                )}
+              </CardTitle>
+              <CardDescription>
+                {SIGNER_CONFIGS[SignerType.TURNKEY].description}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col space-y-4">
+              <div className="flex-1 space-y-4">
+                <div className="text-sm space-y-2">
+                  <div>
+                    <span className="font-medium">Type:</span>{" "}
+                    <span className="text-muted-foreground">Cloud-based key management</span>
+                  </div>
+                  <div>
+                    <span className="font-medium">Curves:</span>{" "}
+                    <span className="text-muted-foreground">
+                      {SIGNER_CONFIGS[SignerType.TURNKEY].supportedCurves.join(", ")}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Spacer to match other cards' height */}
+                <div className="h-[70px]" />
+
+                {/* Test Result */}
+                {turnkeyState.testResult && (
+                  <div
+                    className={`p-3 rounded-lg text-sm ${
+                      turnkeyState.testResult.success
+                        ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+                        : "bg-destructive/10 text-destructive"
+                    }`}
+                  >
+                    <div className="flex items-start gap-2">
+                      {turnkeyState.testResult.success ? (
+                        <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      )}
+                      <div className="flex-1">
+                        <p className="font-medium">{turnkeyState.testResult.message}</p>
+                        {turnkeyState.testResult.success && turnkeyState.testResult.details && (
+                          <div className="mt-1 text-xs opacity-80 space-y-1">
+                            {turnkeyState.testResult.details.walletName && (
+                              <p>Wallet: {turnkeyState.testResult.details.walletName}</p>
+                            )}
+                            {turnkeyState.testResult.details.accountCount !== undefined && (
+                              <p>Accounts: {turnkeyState.testResult.details.accountCount}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Test Button at bottom */}
+              <Button 
+                onClick={testTurnkeyConnection} 
+                disabled={turnkeyState.testing}
+                className="w-full mt-auto"
+                variant="outline"
+              >
+                {turnkeyState.testing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Testing...

@@ -220,13 +220,18 @@ export default function Stake() {
         console.log("Query cancellation:", cancelError);
       }
 
-      stakableAssets.forEach(({ chainId, address }) => {
-        console.log(`🗑️ Clearing cache for ${chainId}:${address}`);
-        clearAccountStateCache({
-          chainId,
-          address,
+      try {
+        stakableAssets.forEach(({ chainId, address }) => {
+          console.log(`🗑️ Clearing cache for ${chainId}:${address}`);
+          clearAccountStateCache({
+            chainId,
+            address,
+          });
         });
-      });
+      } catch (error) {
+        console.debug("Cache clearing error (non-critical):", error);
+        // Continue execution - cache clearing errors shouldn't stop the refresh
+      }
       
       // Force the useAccountStateBatch hook to refetch data
       if (refetchAccountState) {

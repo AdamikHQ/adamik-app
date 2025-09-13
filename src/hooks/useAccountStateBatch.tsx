@@ -331,13 +331,30 @@ export const clearAccountStateCache = ({
   chainId,
   address,
 }: GetAddressStateParams) => {
-  // Remove the query from cache entirely to force a fresh fetch
-  queryClientGlobal.removeQueries({
-    queryKey: ["accountState", chainId, address],
-  });
-  
-  // Also invalidate to ensure any active queries are marked as stale
-  queryClientGlobal.invalidateQueries({
-    queryKey: ["accountState", chainId, address],
-  });
+  try {
+    // First, try to cancel any in-flight queries gracefully
+    queryClientGlobal.cancelQueries({
+      queryKey: ["accountState", chainId, address],
+    }).catch(() => {
+      // Silently ignore cancellation errors
+    });
+    
+    // Then invalidate to mark as stale (doesn't throw errors)
+    queryClientGlobal.invalidateQueries({
+      queryKey: ["accountState", chainId, address],
+      refetchType: "none", // Don't trigger immediate refetch
+    });
+    
+    // Finally, remove from cache (after cancellation is complete)
+    // Wrap in setTimeout to ensure cancellation has finished
+    setTimeout(() => {
+      queryClientGlobal.removeQueries({
+        queryKey: ["accountState", chainId, address],
+      });
+    }, 0);
+  } catch (error) {
+    // Silently handle any errors - the goal is to refresh data, 
+    // not to crash the app
+    console.debug("Cache clear operation:", error);
+  }
 };

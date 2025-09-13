@@ -34,6 +34,8 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
     // Get the wallet name that corresponds to the current signer
     const walletName = currentSigner === SignerType.IOFINNET 
       ? WalletName.IOFINNET 
+      : currentSigner === SignerType.TURNKEY
+      ? WalletName.TURNKEY
       : WalletName.SODOT;
     
     // Filter addresses to only show those from the current signer

@@ -253,7 +253,7 @@ NEXT_PUBLIC_DEFAULT_SIGNER=sodot
 ## Future Enhancements
 
 ### Additional Signers
-- **Turnkey**: Cloud-based key management
+- **Turnkey**: Cloud-based key management ✅ IMPLEMENTED (2025-01-13)
 - **Dfns**: Enterprise security features
 - **Local Signer**: Development mode only
 - **Hardware Wallets**: Ledger, Trezor integration
@@ -266,9 +266,9 @@ NEXT_PUBLIC_DEFAULT_SIGNER=sodot
 
 ## Success Criteria
 
-1. ✅ Users can switch between Sodot and IoFinnet
-2. ✅ All existing functionality works with both signers
-3. ✅ Settings page allows signer configuration
+1. ✅ Users can switch between Sodot, IoFinnet, and Turnkey
+2. ✅ All existing functionality works with all three signers
+3. ✅ Settings page allows signer configuration and testing
 4. ✅ No breaking changes for existing users
 5. ✅ Clear documentation and error messages
 6. ✅ Secure handling of all credentials
@@ -583,6 +583,31 @@ Both Sodot and IoFinnet proxies have duplicated logic for:
 
 ### 🚀 Recent Improvements (2025-01-13)
 
+#### 0. **Added Turnkey Signer Support** ✅ NEW!
+- **Implementation**: Ported complete Turnkey signer from adamik-link
+- **Features**:
+  - Cloud-based key management with Turnkey API
+  - Support for both ECDSA (secp256k1) and EdDSA (ed25519) curves
+  - Automatic wallet account creation per chain
+  - Public key caching to minimize API calls
+- **API Endpoints Created**:
+  - `/api/turnkey-proxy/get-pubkey` - Retrieves/creates wallet accounts
+  - `/api/turnkey-proxy/sign-transaction` - Signs transactions
+  - `/api/turnkey-proxy/sign-hash` - Signs pre-computed hashes
+  - `/api/turnkey-proxy/test-connection` - Tests Turnkey configuration
+- **UI Updates**:
+  - Added Turnkey to signer selector dropdown
+  - Added Turnkey test card in settings
+  - Full integration with all components
+- **Configuration**: Requires environment variables:
+  ```
+  TURNKEY_BASE_URL=
+  TURNKEY_API_PUBLIC_KEY=
+  TURNKEY_API_PRIVATE_KEY=
+  TURNKEY_ORGANIZATION_ID=
+  TURNKEY_WALLET_ID=
+  ```
+
 #### 1. **Fixed Solana Validator Display Issue** ✅
 - **Problem**: Solana validators weren't displaying in the dropdown despite API returning data
 - **Root Cause**: Special characters in validator names (emojis, pipes) breaking the Command component's search
@@ -620,6 +645,14 @@ Both Sodot and IoFinnet proxies have duplicated logic for:
 - Proper cascade of cache clearing → refetch → UI update
 - 3-second delay after transactions for blockchain confirmation
 
+#### 6. **Fixed React Query CancelledError** ✅ NEW!
+- **Problem**: `CancelledError` thrown when clearing cache during active queries
+- **Solution**: Improved `clearAccountStateCache` function with:
+  - Graceful query cancellation with error catching
+  - Deferred cache removal using setTimeout
+  - Try-catch wrapping in all calling locations
+- **Result**: No more error popups during refresh operations
+
 *Last Updated: 2025-01-13*
 *Author: Claude Assistant*
 *Status: Multi-Signer Support Fully Implemented - All Refresh Issues Fixed*
@@ -628,13 +661,14 @@ Both Sodot and IoFinnet proxies have duplicated logic for:
 
 ### ✅ COMPLETE - Core Functionality
 - Full multi-signer architecture implemented
-- Both Sodot and IoFinnet signers fully integrated
-- Transaction signing works with both signers
-- Settings-based signer selection
+- Three signers fully integrated: Sodot, IoFinnet, and Turnkey
+- Transaction signing works with all signers
+- Settings-based signer selection and testing
 - Signer-agnostic UI components
+- Seamless signer switching with address isolation
 
 ### ✅ TRANSACTION SIGNING FULLY WORKING
-**Confirmed**: Both Sodot and IoFinnet successfully sign and broadcast transactions on all supported chains!
+**Confirmed**: All three signers (Sodot, IoFinnet, and Turnkey) successfully sign and broadcast transactions on all supported chains!
 
 #### Key Implementation Details:
 - **EVM Chains**: IoFinnet receives raw RLP-encoded transaction, applies Keccak256 internally
@@ -670,15 +704,25 @@ Both Sodot and IoFinnet proxies have duplicated logic for:
 - Maintains original implementation unchanged
 - Proven and tested in production
 
+#### Turnkey Specifics
+- Cloud-based key management service
+- RESTful API with API key authentication
+- Automatic wallet account creation per chain
+- Supports both ECDSA and EdDSA curves
+- No mobile approval required (direct API signing)
+
 ### 📋 What Works Now
-1. **Signer Selection**: Switch between Sodot and IoFinnet in Settings
+1. **Signer Selection**: Switch between Sodot, IoFinnet, and Turnkey in header dropdown
 2. **Address Derivation**: Get addresses for any supported chain
 3. **Transaction Signing**: Sign transactions with the selected signer
    - Sodot: Direct signing with MPC
    - IoFinnet: Mobile approval flow with proper UI feedback
-4. **Wallet Management**: Connect and manage wallets with either signer
+   - Turnkey: Cloud-based signing via API
+4. **Wallet Management**: Connect and manage wallets with any signer
 5. **Chain Support**: Full support for EVM, Bitcoin, Cosmos, and other chains
 6. **Transfer Form**: Automatically uses the correct signer based on settings
 7. **Signature Formatting**: Proper formatting for all chain types (RS, RSV, DER)
 8. **Error Handling**: Enhanced logging and error reporting throughout
+9. **Address Isolation**: Each signer maintains separate address lists
+10. **Smooth UI Updates**: No page reloads, proper cache management
 

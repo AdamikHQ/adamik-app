@@ -5,11 +5,13 @@
 The Adamik application is a boilerplate implementation of the main Adamik API endpoints. It serves as a starting point for developers looking to integrate with the Adamik API, providing essential functionalities and example usages of the API.
 
 ### Key Features
-- **Multi-Signer Support**: Seamlessly switch between different signing providers (Sodot MPC, IoFinnet)
+- **Multi-Signer Support**: Seamlessly switch between different signing providers (Sodot MPC, IoFinnet, Turnkey)
 - **Multi-Chain Portfolio Management**: Track and manage assets across 50+ blockchain networks
 - **Staking Operations**: Stake, unstake, and claim rewards across supported chains
 - **Real-time Balance Updates**: Automatic UI refresh after transactions without page reloads
 - **Developer-Friendly**: Clean architecture with signer-agnostic components
+- **Smart Caching**: Optimized data fetching with proper cache invalidation
+- **Address Isolation**: Each signer maintains separate address lists and configurations
 
 As a truly open-source project licensed under the MIT License, Adamik encourages community contributions and collaboration.
 
@@ -77,6 +79,13 @@ Make sure you have the following installed on your development machine:
    IOFINNET_CLIENT_ID="<client_id>"
    IOFINNET_CLIENT_SECRET="<client_secret>"
    IOFINNET_VAULT_ID="<vault_id>"
+   
+   # Turnkey Configuration (optional)
+   TURNKEY_BASE_URL="<base_url>"
+   TURNKEY_API_PUBLIC_KEY="<api_public_key>"
+   TURNKEY_API_PRIVATE_KEY="<api_private_key>"
+   TURNKEY_ORGANIZATION_ID="<organization_id>"
+   TURNKEY_WALLET_ID="<wallet_id>"
    ```
 
 ### Running the Development Server

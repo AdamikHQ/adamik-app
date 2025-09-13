@@ -71,18 +71,23 @@ export const TransactionSuccessModal = ({
     // This gives the blockchain time to process the transaction
     setTimeout(async () => {
       if (currentChainId && senderAddress) {
-        // Clear cache for sender
-        clearAccountStateCache({
-          chainId: currentChainId,
-          address: senderAddress,
-        });
-        
-        // Also clear cache for recipient if it's a transfer
-        if (recipientAddress && recipientAddress !== senderAddress) {
+        try {
+          // Clear cache for sender
           clearAccountStateCache({
             chainId: currentChainId,
-            address: recipientAddress,
+            address: senderAddress,
           });
+          
+          // Also clear cache for recipient if it's a transfer
+          if (recipientAddress && recipientAddress !== senderAddress) {
+            clearAccountStateCache({
+              chainId: currentChainId,
+              address: recipientAddress,
+            });
+          }
+        } catch (error) {
+          console.debug("Cache clearing error (non-critical):", error);
+          // Continue execution - cache clearing errors shouldn't stop the modal from closing
         }
         
         // Trigger refetch for account state queries

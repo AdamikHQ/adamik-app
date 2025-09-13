@@ -151,7 +151,7 @@ export function TransferTransactionForm({
           hash: transactionHash,
           usePrecomputedHash: shouldUseHash,
         };
-      } else {
+      } else if (signerType === SignerType.IOFINNET) {
         // IoFinnet signing endpoint
         // Get chain config for signerSpec
         const chains = await getChains();
@@ -169,6 +169,29 @@ export function TransferTransactionForm({
           message: messageToSign,
           signerSpec: chainConfig.signerSpec,
         };
+      } else if (signerType === SignerType.TURNKEY) {
+        // Turnkey signing endpoint
+        const chains = await getChains();
+        const chainConfig = chains?.[chainId];
+        if (!chainConfig) {
+          throw new Error(`Chain ${chainId} not found`);
+        }
+        
+        const pubKey = await SignerFactory.getChainPubkey(chainId, SignerType.TURNKEY);
+        
+        // For Ed25519 chains (like Stellar), sign the hash directly
+        const isHashSigning = shouldUseHash || (chainConfig.signerSpec?.curve === "ed25519" && transactionHash);
+        
+        signEndpoint = isHashSigning ? `/api/turnkey-proxy/sign-hash` : `/api/turnkey-proxy/sign-transaction`;
+        signPayload = {
+          chainId,
+          encodedMessage: isHashSigning ? transactionHash : transactionRaw,
+          hash: isHashSigning ? transactionHash : undefined,
+          pubKey,
+          signerSpec: chainConfig.signerSpec,
+        };
+      } else {
+        throw new Error(`Unsupported signer type: ${signerType}`);
       }
 
 

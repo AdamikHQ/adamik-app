@@ -34,7 +34,9 @@ export const SignerConnect: React.FC<SignerConnectProps> = ({
   
   // Get the selected signer type from settings
   const signerType = SignerFactory.getSelectedSignerType();
-  const signerName = signerType === SignerType.SODOT ? "Sodot" : "IoFinnet";
+  const signerName = signerType === SignerType.SODOT ? "Sodot" : 
+                     signerType === SignerType.IOFINNET ? "IoFinnet" :
+                     signerType === SignerType.TURNKEY ? "Turnkey" : "Unknown";
 
   const autoBroadcastTransaction = useCallback(
     (signedTransaction: any, chainId: string) => {
@@ -143,7 +145,7 @@ export const SignerConnect: React.FC<SignerConnectProps> = ({
           hash: transactionHash,
           usePrecomputedHash: !!transactionHash,
         };
-      } else {
+      } else if (signerType === SignerType.IOFINNET) {
         // IoFinnet signing endpoint
         const chainConfig = chains[providedChainId];
         if (!chainConfig) {
@@ -156,6 +158,29 @@ export const SignerConnect: React.FC<SignerConnectProps> = ({
           message: transactionHash || transactionRaw,
           signerSpec: chainConfig.signerSpec,
         };
+      } else if (signerType === SignerType.TURNKEY) {
+        // Turnkey signing endpoint
+        const chainConfig = chains[providedChainId];
+        if (!chainConfig) {
+          throw new Error(`Chain ${providedChainId} not found`);
+        }
+        
+        // Get the public key for this chain
+        const pubKey = await SignerFactory.getChainPubkey(providedChainId, SignerType.TURNKEY);
+        
+        // Determine whether to sign hash or raw transaction
+        const isHashSigning = !!transactionHash && chainConfig.signerSpec?.curve === "ed25519";
+        
+        signEndpoint = isHashSigning ? `/api/turnkey-proxy/sign-hash` : `/api/turnkey-proxy/sign-transaction`;
+        signPayload = {
+          chainId: providedChainId,
+          encodedMessage: isHashSigning ? transactionHash : transactionRaw,
+          hash: isHashSigning ? transactionHash : undefined,
+          pubKey,
+          signerSpec: chainConfig.signerSpec,
+        };
+      } else {
+        throw new Error(`Unsupported signer type: ${signerType}`);
       }
 
       // Set waiting state for IoFinnet
