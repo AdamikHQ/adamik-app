@@ -581,9 +581,48 @@ Both Sodot and IoFinnet proxies have duplicated logic for:
 - Clean, simple design with focused user experience
 - Modal shows when waiting for mobile app approval
 
-*Last Updated: 2025-01-12*
+### 🚀 Recent Improvements (2025-01-13)
+
+#### 1. **Fixed Solana Validator Display Issue** ✅
+- **Problem**: Solana validators weren't displaying in the dropdown despite API returning data
+- **Root Cause**: Special characters in validator names (emojis, pipes) breaking the Command component's search
+- **Solution**: Changed CommandItem to use index-based values with keywords for searchability
+- **Result**: All 900+ Solana validators now display correctly
+
+#### 2. **Fixed Refresh Button Functionality** ✅
+- **Problem**: Refresh button showed toast but didn't update displayed values
+- **Root Cause**: `clearAccountStateCache` only invalidated queries without removing cached data
+- **Solutions**:
+  - Updated to use `removeQueries` to completely clear cache
+  - Added explicit `refetchQueries` calls after clearing
+  - Made `forceRefresh` async to properly await completion
+- **Result**: Refresh button now properly updates all displayed values
+
+#### 3. **Removed Full Page Reloads** ✅
+- **Problem**: Page was reloading after transaction completion (jarring UX)
+- **Location**: `TransactionSuccessModal` had `window.location.reload()`
+- **Solution**: Replaced with proper cache clearing and data refetching
+- **Result**: Smooth updates without page reload after transactions
+
+#### 4. **Fixed UI Refresh After Transactions** ✅
+- **Problem**: "Updating balances..." toast appeared but UI didn't update
+- **Root Cause**: `useAccountStateBatch` wasn't responding to cache invalidations
+- **Solutions**:
+  - Added `refreshTrigger` state to force refetch
+  - Exposed `refetch` function from the hook
+  - Created global event emitter for cross-component communication
+  - Transaction modal now triggers global refetch event
+- **Result**: UI properly updates after transaction completion
+
+#### 5. **Improved Data Fetching Architecture** ✅
+- Added mechanism to skip cache when refresh is triggered
+- Portfolio and stake pages listen for global refetch events
+- Proper cascade of cache clearing → refetch → UI update
+- 3-second delay after transactions for blockchain confirmation
+
+*Last Updated: 2025-01-13*
 *Author: Claude Assistant*
-*Status: Multi-Signer Support Fully Implemented - All Chain Signing Working*
+*Status: Multi-Signer Support Fully Implemented - All Refresh Issues Fixed*
 
 ## 🎉 Implementation Status
 
