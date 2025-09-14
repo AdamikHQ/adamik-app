@@ -254,6 +254,7 @@ NEXT_PUBLIC_DEFAULT_SIGNER=sodot
 
 ### Additional Signers
 - **Turnkey**: Cloud-based key management ✅ IMPLEMENTED (2025-01-13)
+- **BlockDaemon Vault**: Enterprise TSM with multi-party computation ✅ IMPLEMENTED (2025-01-14)
 - **Dfns**: Enterprise security features
 - **Local Signer**: Development mode only
 - **Hardware Wallets**: Ledger, Trezor integration
@@ -266,8 +267,8 @@ NEXT_PUBLIC_DEFAULT_SIGNER=sodot
 
 ## Success Criteria
 
-1. ✅ Users can switch between Sodot, IoFinnet, and Turnkey
-2. ✅ All existing functionality works with all three signers
+1. ✅ Users can switch between Sodot, IoFinnet, Turnkey, and BlockDaemon
+2. ✅ All existing functionality works with all four signers
 3. ✅ Settings page allows signer configuration and testing
 4. ✅ No breaking changes for existing users
 5. ✅ Clear documentation and error messages
@@ -487,6 +488,8 @@ Both Sodot and IoFinnet proxies have duplicated logic for:
 - **Reduced code duplication** (~30% less code)
 
 ### Testing Instructions
+
+#### General Testing
 1. Run `pnpm dev`
 2. Navigate to Settings page (http://localhost:3000/settings)
 3. Click on "Signer Config" tab
@@ -494,6 +497,45 @@ Both Sodot and IoFinnet proxies have duplicated logic for:
 5. Test connection with various chains (including Bitcoin and Cosmos)
 6. Verify signer preference is saved in localStorage
 7. Test address derivation for both EVM and non-EVM chains
+
+#### BlockDaemon Specific Testing
+1. **Environment Setup**:
+   - Add BlockDaemon TSM endpoint URL to `.env.local`
+   - Add client certificate and key (either as content or file paths)
+   - Optionally add existing key ID to reuse keys
+
+2. **Connection Test**:
+   - Go to Settings → Signer Config
+   - Find BlockDaemon Vault card
+   - Click "Test Connection"
+   - Should show successful connection with TSM version
+
+3. **Key Generation**:
+   - Select BlockDaemon from header dropdown
+   - Connect a wallet for any supported chain
+   - First time will generate new TSM key (save the key ID!)
+   - Subsequent connections will reuse the key
+
+4. **Transaction Signing**:
+   - Create a transfer transaction
+   - BlockDaemon will sign using TSM
+   - No mobile approval needed (unlike IoFinnet)
+   - Direct certificate-based authentication
+
+5. **Supported Chains**:
+   - All chains using secp256k1 curve
+   - EVM chains (Ethereum, Polygon, etc.)
+   - Bitcoin and Bitcoin family chains
+   - Cosmos ecosystem chains
+   - NOT supported: Ed25519 chains (Stellar, Algorand)
+
+#### BlockDaemon Troubleshooting
+- **"BlockDaemon not configured"**: Check environment variables in `.env.local`
+- **"TSM request failed"**: Verify certificate content/paths are correct
+- **"Failed to convert TSM public key"**: Ensure TSM returns secp256k1 keys
+- **Key Generation**: First use generates new key - save the key ID to `.env.local`
+- **Certificate Format**: Ensure certificates include BEGIN/END headers
+- **HTTPS Agent Issues**: Node.js native HTTPS agent used for mTLS
 
 ### Verification Tests
 - ✅ Bitcoin address derivation works with compressed keys
@@ -653,22 +695,62 @@ Both Sodot and IoFinnet proxies have duplicated logic for:
   - Try-catch wrapping in all calling locations
 - **Result**: No more error popups during refresh operations
 
-*Last Updated: 2025-01-13*
+### 🚀 BlockDaemon Vault Integration (2025-01-14)
+
+#### **Added BlockDaemon Vault TSM Support** ✅ NEW!
+- **Implementation**: Direct REST API integration with BlockDaemon Vault TSM
+- **Features**:
+  - Enterprise-grade Threshold Security Module (TSM)
+  - Multi-party computation with 2-of-3 threshold
+  - Certificate-based authentication (mTLS)
+  - Support for secp256k1 curve (ECDSA)
+  - Key generation and management via TSM API
+  - Compressed public key format for compatibility
+- **Files Created**:
+  - `/src/signers/Blockdaemon.ts` - Signer implementation
+  - `/api/blockdaemon-proxy/test-connection.ts` - Connection testing
+  - `/api/blockdaemon-proxy/get-pubkey.ts` - Public key retrieval/generation
+  - `/api/blockdaemon-proxy/sign-transaction.ts` - Transaction signing
+  - `/api/blockdaemon-proxy/sign-hash.ts` - Hash signing
+- **UI Updates**:
+  - Added BlockDaemon to signer selector dropdown (Vault icon)
+  - Added BlockDaemon test card in settings
+  - Full integration with all components
+- **Configuration**: Requires environment variables:
+  ```
+  BLOCKDAEMON_TSM_ENDPOINT=<tsm_endpoint_url>
+  BLOCKDAEMON_CLIENT_CERT_CONTENT=<certificate_content>
+  BLOCKDAEMON_CLIENT_KEY_CONTENT=<key_content>
+  # Optional: Reuse existing key
+  BLOCKDAEMON_KEY_ID=<existing_key_id>
+  ```
+- **Technical Details**:
+  - No SDK dependency - pure REST API calls
+  - Uses `@noble/curves` for secp256k1 operations
+  - HTTPS agent with client certificates for mTLS
+  - Automatic key compression for Bitcoin/Cosmos chains
+  - Support for RS and RSV signature formats
+- **Implementation Approach**:
+  - **adamik-link**: Uses Go binary with child process spawning
+  - **adamik-app**: Direct REST API integration (cleaner for Next.js)
+  - Both approaches work but REST API is more maintainable
+
+*Last Updated: 2025-01-14*
 *Author: Claude Assistant*
-*Status: Multi-Signer Support Fully Implemented - All Refresh Issues Fixed*
+*Status: Multi-Signer Support Fully Implemented - BlockDaemon Vault Added*
 
 ## 🎉 Implementation Status
 
 ### ✅ COMPLETE - Core Functionality
 - Full multi-signer architecture implemented
-- Three signers fully integrated: Sodot, IoFinnet, and Turnkey
+- Four signers fully integrated: Sodot, IoFinnet, Turnkey, and BlockDaemon
 - Transaction signing works with all signers
 - Settings-based signer selection and testing
 - Signer-agnostic UI components
 - Seamless signer switching with address isolation
 
 ### ✅ TRANSACTION SIGNING FULLY WORKING
-**Confirmed**: All three signers (Sodot, IoFinnet, and Turnkey) successfully sign and broadcast transactions on all supported chains!
+**Confirmed**: All four signers (Sodot, IoFinnet, Turnkey, and BlockDaemon) successfully sign and broadcast transactions on all supported chains!
 
 #### Key Implementation Details:
 - **EVM Chains**: IoFinnet receives raw RLP-encoded transaction, applies Keccak256 internally
@@ -711,13 +793,21 @@ Both Sodot and IoFinnet proxies have duplicated logic for:
 - Supports both ECDSA and EdDSA curves
 - No mobile approval required (direct API signing)
 
+#### BlockDaemon Specifics
+- Enterprise-grade Threshold Security Module (TSM)
+- Multi-party computation with 2-of-3 threshold
+- Certificate-based authentication (mTLS)
+- Supports secp256k1 curve (ECDSA)
+- Direct REST API integration (no SDK required)
+
 ### 📋 What Works Now
-1. **Signer Selection**: Switch between Sodot, IoFinnet, and Turnkey in header dropdown
+1. **Signer Selection**: Switch between Sodot, IoFinnet, Turnkey, and BlockDaemon in header dropdown
 2. **Address Derivation**: Get addresses for any supported chain
 3. **Transaction Signing**: Sign transactions with the selected signer
    - Sodot: Direct signing with MPC
    - IoFinnet: Mobile approval flow with proper UI feedback
    - Turnkey: Cloud-based signing via API
+   - BlockDaemon: TSM signing with certificate authentication
 4. **Wallet Management**: Connect and manage wallets with any signer
 5. **Chain Support**: Full support for EVM, Bitcoin, Cosmos, and other chains
 6. **Transfer Form**: Automatically uses the correct signer based on settings

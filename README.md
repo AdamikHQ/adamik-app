@@ -5,7 +5,7 @@
 The Adamik application is a boilerplate implementation of the main Adamik API endpoints. It serves as a starting point for developers looking to integrate with the Adamik API, providing essential functionalities and example usages of the API.
 
 ### Key Features
-- **Multi-Signer Support**: Seamlessly switch between different signing providers (Sodot MPC, IoFinnet, Turnkey)
+- **Multi-Signer Support**: Seamlessly switch between different signing providers (Sodot MPC, IoFinnet, Turnkey, BlockDaemon Vault)
 - **Multi-Chain Portfolio Management**: Track and manage assets across 50+ blockchain networks
 - **Staking Operations**: Stake, unstake, and claim rewards across supported chains
 - **Real-time Balance Updates**: Automatic UI refresh after transactions without page reloads
@@ -86,6 +86,16 @@ Make sure you have the following installed on your development machine:
    TURNKEY_API_PRIVATE_KEY="<api_private_key>"
    TURNKEY_ORGANIZATION_ID="<organization_id>"
    TURNKEY_WALLET_ID="<wallet_id>"
+   
+   # BlockDaemon Vault TSM Configuration (optional)
+   BLOCKDAEMON_TSM_ENDPOINT="<tsm_endpoint_url>"
+   BLOCKDAEMON_CLIENT_CERT_CONTENT="<client_certificate_content>"
+   BLOCKDAEMON_CLIENT_KEY_CONTENT="<client_key_content>"
+   # Or use file paths instead:
+   # BLOCKDAEMON_CLIENT_CERT_PATH="<path_to_client_cert>"
+   # BLOCKDAEMON_CLIENT_KEY_PATH="<path_to_client_key>"
+   # Optional: Reuse existing key ID
+   # BLOCKDAEMON_KEY_ID="<existing_key_id>"
    ```
 
 ### Running the Development Server

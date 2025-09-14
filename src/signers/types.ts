@@ -17,6 +17,7 @@ export enum SignerType {
   SODOT = "sodot",
   IOFINNET = "iofinnet",
   TURNKEY = "turnkey",
+  BLOCKDAEMON = "blockdaemon",
   // Future signers can be added here
   // DFNS = "dfns",
 }
@@ -57,5 +58,13 @@ export const SIGNER_CONFIGS: Record<SignerType, SignerConfig> = {
     requiresSetup: true,
     setupInstructions: "Requires Turnkey organization and wallet configuration",
     supportedCurves: ["secp256k1", "ed25519"],
+  },
+  [SignerType.BLOCKDAEMON]: {
+    type: SignerType.BLOCKDAEMON,
+    displayName: "BlockDaemon Vault",
+    description: "Enterprise-grade TSM with multi-party computation",
+    requiresSetup: true,
+    setupInstructions: "Requires BlockDaemon Vault TSM certificates and configuration",
+    supportedCurves: ["secp256k1"],
   },
 };

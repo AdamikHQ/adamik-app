@@ -3,6 +3,7 @@ import { AdamikSignerSpec, AdamikCurve } from "~/utils/types";
 import { SodotSigner } from "./Sodot";
 import { IoFinnetSigner } from "./IoFinnet";
 import { TurnkeySigner } from "./Turnkey";
+import { BlockdaemonSigner } from "./Blockdaemon";
 import { getChains } from "~/api/adamik/chains";
 import { compressPublicKey, doesChainNeedCompressedKey } from "~/utils/publicKeyUtils";
 
@@ -48,6 +49,9 @@ export class SignerFactory {
           throw new Error(`Chain ${chainId} not found`);
         }
         return new TurnkeySigner(chainId, signerSpec, chain);
+      
+      case SignerType.BLOCKDAEMON:
+        return new BlockdaemonSigner(chainId, signerSpec);
       
       default:
         throw new Error(`Unsupported signer type: ${signerType}`);
@@ -290,6 +294,52 @@ export class SignerFactory {
       }
 
       console.log(`Turnkey: Final pubkey for ${chainId}: ${pubkey.substring(0, 20)}... (length: ${pubkey.length})`);
+      return pubkey;
+    } else if (selectedSigner === SignerType.BLOCKDAEMON) {
+      // Get chain data to determine curve
+      const chains = await getChains();
+      if (!chains || !chains[chainId]) {
+        throw new Error(`Chain ${chainId} not found`);
+      }
+
+      const chain = chains[chainId];
+      const signerSpec = chain.signerSpec;
+      
+      if (!signerSpec) {
+        throw new Error(`No signer spec for chain ${chainId}`);
+      }
+
+      // Fetch pubkey from BlockDaemon
+      const response = await fetch('/api/blockdaemon-proxy/get-pubkey', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chainId,
+          curve: signerSpec.curve,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || `Failed to get BlockDaemon pubkey for ${chainId}`);
+      }
+
+      const data = await response.json();
+      let pubkey = data.publicKey;
+
+      // BlockDaemon returns compressed keys by default
+      // Handle 0x prefix based on chain requirements
+      const isEVMChain = chain.family === 'evm';
+      
+      if (!isEVMChain && pubkey.startsWith('0x')) {
+        pubkey = pubkey.slice(2);
+        console.log(`BlockDaemon: Removed 0x prefix for ${chainId}`);
+      } else if (isEVMChain && !pubkey.startsWith('0x')) {
+        pubkey = `0x${pubkey}`;
+        console.log(`BlockDaemon: Added 0x prefix for ${chainId}`);
+      }
+
+      console.log(`BlockDaemon: Final pubkey for ${chainId}: ${pubkey.substring(0, 20)}... (length: ${pubkey.length})`);
       return pubkey;
     } else {
       throw new Error(`Unsupported signer type: ${selectedSigner}`);

@@ -45,6 +45,8 @@ export function SignerSelector({
         return <Shield className="h-3 w-3" />;
       case SignerType.TURNKEY:
         return <Shield className="h-3 w-3" />;
+      case SignerType.BLOCKDAEMON:
+        return <Vault className="h-3 w-3" />;
       default:
         return null;
     }
@@ -69,7 +71,8 @@ export function SignerSelector({
               <span>
                 {currentSigner === SignerType.SODOT ? "Sodot" : 
                  currentSigner === SignerType.IOFINNET ? "IoFinnet" :
-                 currentSigner === SignerType.TURNKEY ? "Turnkey" : "Unknown"}
+                 currentSigner === SignerType.TURNKEY ? "Turnkey" :
+                 currentSigner === SignerType.BLOCKDAEMON ? "BlockDaemon" : "Unknown"}
               </span>
             </div>
           </SelectValue>
@@ -91,6 +94,12 @@ export function SignerSelector({
             <div className="flex items-center gap-2">
               <Shield className="h-3 w-3" />
               <span>Turnkey</span>
+            </div>
+          </SelectItem>
+          <SelectItem value={SignerType.BLOCKDAEMON}>
+            <div className="flex items-center gap-2">
+              <Vault className="h-3 w-3" />
+              <span>BlockDaemon</span>
             </div>
           </SelectItem>
         </SelectContent>
