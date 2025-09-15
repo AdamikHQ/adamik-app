@@ -107,24 +107,32 @@ export default async function handler(
   try {
     const { 
       chainId, 
-      message, 
+      message,
+      encodedMessage, // TransferTransactionForm sends encodedMessage 
       keyId, 
       curve, 
       hashFunction, 
-      signatureFormat 
+      signatureFormat,
+      signerSpec // TransferTransactionForm sends signerSpec object
     } = req.body;
+
+    // Extract values from signerSpec if individual fields aren't provided
+    const actualCurve = curve || signerSpec?.curve;
+    const actualHashFunction = hashFunction || signerSpec?.hashFunction;
+    const actualSignatureFormat = signatureFormat || signerSpec?.signatureFormat;
+    const actualMessage = message || encodedMessage;
 
     console.log("BlockDaemon sign-transaction request:", { 
       chainId, 
       keyId, 
-      curve, 
-      hashFunction,
-      signatureFormat,
-      messageLength: message?.length 
+      curve: actualCurve, 
+      hashFunction: actualHashFunction,
+      signatureFormat: actualSignatureFormat,
+      messageLength: actualMessage?.length 
     });
 
     // Validate required parameters
-    if (!message) {
+    if (!actualMessage) {
       return res.status(400).json({ 
         error: "No message provided for signing" 
       });
@@ -136,29 +144,17 @@ export default async function handler(
         error: "No key ID provided. Please connect wallet first to generate or retrieve a key." 
       });
     }
-    
-    // Note: BlockDaemon TSM doesn't expose REST endpoints for signing
-    // The TSM requires either:
-    // 1. The Go SDK (gitlab.com/Blockdaemon/go-tsm-sdkv2)
-    // 2. The Node.js SDK (@sepior/tsmsdkv2) - not publicly available on npm
-    // 3. Direct MPC protocol implementation (complex)
-    // 
-    // Without access to the Node.js SDK or REST endpoints, signing cannot be implemented
-    // in pure JavaScript/TypeScript. The Go client from adamik-link remains the only option.
-    return res.status(501).json({ 
-      error: "BlockDaemon signing requires the TSM SDK which is not available as a public npm package. Please contact BlockDaemon for SDK access or use the Go client from adamik-link." 
-    });
 
     // Remove 0x prefix if present
-    const cleanMessage = message.replace(/^0x/, "");
+    const cleanMessage = actualMessage.replace(/^0x/, "");
     
     // Apply hash function if needed
     let messageToSign = cleanMessage;
-    if (hashFunction && hashFunction !== "none") {
+    if (actualHashFunction && actualHashFunction !== "none") {
       const hashBuffer = Buffer.from(cleanMessage, "hex");
       let hashedMessage: Buffer;
       
-      switch (hashFunction) {
+      switch (actualHashFunction) {
         case "keccak256":
           hashedMessage = crypto.createHash("sha3-256").update(hashBuffer).digest();
           break;
@@ -191,7 +187,7 @@ export default async function handler(
     // Format signature based on required format
     let formattedSignature: string;
     
-    if (signatureFormat === "rsv") {
+    if (actualSignatureFormat === "rsv") {
       // Get public key to calculate recovery ID
       const keyInfo = await makeTSMRequest(`/keys/${actualKeyId}`);
       const publicKeyHex = convertTSMPublicKey(keyInfo.publicKey);
@@ -208,7 +204,7 @@ export default async function handler(
           s: signResult.s,
           v: recoveryId.toString(16),
         },
-        signatureFormat
+        actualSignatureFormat
       );
     } else {
       // RS format
@@ -217,7 +213,7 @@ export default async function handler(
           r: signResult.r,
           s: signResult.s,
         },
-        signatureFormat
+        actualSignatureFormat
       );
     }
 

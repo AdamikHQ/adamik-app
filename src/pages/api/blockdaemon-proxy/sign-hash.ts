@@ -64,28 +64,26 @@ export default async function handler(
   }
 
   try {
-    const { chainId, hash, keyId, curve, signatureFormat } = req.body;
+    const { chainId, hash, keyId, curve, signatureFormat, signerSpec } = req.body;
+
+    // Extract values from signerSpec if individual fields aren't provided
+    const actualCurve = curve || signerSpec?.curve;
+    const actualSignatureFormat = signatureFormat || signerSpec?.signatureFormat;
 
     console.log("BlockDaemon sign-hash request:", { 
       chainId, 
       keyId, 
-      curve, 
-      signatureFormat,
+      curve: actualCurve, 
+      signatureFormat: actualSignatureFormat,
       hashLength: hash?.length 
     });
 
-    const actualKeyId = keyId || process.env.BLOCKDAEMON_KEY_ID;
+    const actualKeyId = keyId || process.env.BLOCKDAEMON_KEY_ID || process.env.BLOCKDAEMON_EXISTING_KEY_IDS;
     if (!actualKeyId) {
       return res.status(400).json({ 
         error: "No key ID provided. Generate a key first." 
       });
     }
-
-    // Note: BlockDaemon TSM doesn't expose REST endpoints for signing
-    // The TSM requires the SDK which is not publicly available
-    return res.status(501).json({ 
-      error: "BlockDaemon signing requires the TSM SDK which is not available as a public npm package. Please contact BlockDaemon for SDK access or use the Go client from adamik-link." 
-    });
 
     // The code below would work if we had access to the TSM signing endpoint
     // Remove 0x prefix if present
@@ -110,7 +108,7 @@ export default async function handler(
     // Format signature based on required format
     let formattedSignature: string;
     
-    if (signatureFormat === "rsv") {
+    if (actualSignatureFormat === "rsv") {
       // For RSV format, we would need the public key to calculate recovery ID
       // For now, use recovery ID 0 as default
       formattedSignature = formatSignature(
@@ -119,7 +117,7 @@ export default async function handler(
           s: signResult.s,
           v: "0",
         },
-        signatureFormat
+        actualSignatureFormat
       );
     } else {
       // RS format
@@ -128,7 +126,7 @@ export default async function handler(
           r: signResult.r,
           s: signResult.s,
         },
-        signatureFormat
+        actualSignatureFormat
       );
     }
 
