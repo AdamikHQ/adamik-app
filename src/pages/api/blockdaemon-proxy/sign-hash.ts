@@ -29,7 +29,7 @@ async function makeTSMRequest(
   const agent = new https.Agent({
     cert,
     key,
-    rejectUnauthorized: true,
+    rejectUnauthorized: false, // TSM uses self-signed or internal CA certificates
   });
 
   const url = `${endpoint}${path}`;

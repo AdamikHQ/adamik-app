@@ -62,7 +62,7 @@ export default async function handler(
         method: 'GET',
         cert: cert,
         key: key,
-        rejectUnauthorized: process.env.NODE_ENV === 'production', // Only verify in production
+        rejectUnauthorized: false, // TSM uses self-signed or internal CA certificates
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
