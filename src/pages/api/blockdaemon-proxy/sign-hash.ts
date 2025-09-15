@@ -8,7 +8,7 @@ async function makeTSMRequest(
   path: string,
   method: string = "GET",
   body?: any
-) {
+): Promise<any> {
   const endpoint = process.env.BLOCKDAEMON_TSM_ENDPOINT;
   if (!endpoint) throw new Error("BLOCKDAEMON_TSM_ENDPOINT not configured");
 
@@ -26,33 +26,54 @@ async function makeTSMRequest(
     throw new Error("BlockDaemon certificates not configured");
   }
 
-  const agent = new https.Agent({
-    cert,
-    key,
-    rejectUnauthorized: false, // TSM uses self-signed or internal CA certificates
+  return new Promise((resolve, reject) => {
+    const url = new URL(`${endpoint}${path}`);
+    const postData = body ? JSON.stringify(body) : undefined;
+
+    const options = {
+      hostname: url.hostname,
+      port: url.port || 443,
+      path: url.pathname + url.search,
+      method,
+      cert,
+      key,
+      rejectUnauthorized: false, // TSM uses self-signed or internal CA certificates
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        ...(postData && { "Content-Length": Buffer.byteLength(postData) }),
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+          try {
+            resolve(JSON.parse(data));
+          } catch (e) {
+            resolve(data);
+          }
+        } else {
+          reject(new Error(`TSM request failed: ${res.statusCode} ${data}`));
+        }
+      });
+    });
+
+    req.on('error', (e) => {
+      reject(e);
+    });
+
+    if (postData) {
+      req.write(postData);
+    }
+    req.end();
   });
-
-  const url = `${endpoint}${path}`;
-  const options: any = {
-    method,
-    agent,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  };
-
-  if (body) {
-    options.body = JSON.stringify(body);
-  }
-
-  const response = await fetch(url, options);
-  
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`TSM request failed: ${response.status} ${errorText}`);
-  }
-
-  return response.json();
 }
 
 export default async function handler(
