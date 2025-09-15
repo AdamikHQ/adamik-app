@@ -1,96 +1,15 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { handleApiError } from "~/utils/api/signerProxyUtils";
-import https from "https";
-import crypto from "crypto";
-import { secp256k1 } from "@noble/curves/secp256k1";
 
-// Helper to make authenticated requests to BlockDaemon TSM
-async function makeTSMRequest(
-  path: string,
-  method: string = "GET",
-  body?: any
-) {
-  const endpoint = process.env.BLOCKDAEMON_TSM_ENDPOINT;
-  if (!endpoint) throw new Error("BLOCKDAEMON_TSM_ENDPOINT not configured");
-
-  const cert = process.env.BLOCKDAEMON_CLIENT_CERT_CONTENT || 
-              (process.env.BLOCKDAEMON_CLIENT_CERT_PATH ? 
-                require('fs').readFileSync(process.env.BLOCKDAEMON_CLIENT_CERT_PATH, 'utf8') : 
-                undefined);
-  
-  const key = process.env.BLOCKDAEMON_CLIENT_KEY_CONTENT || 
-              (process.env.BLOCKDAEMON_CLIENT_KEY_PATH ? 
-                require('fs').readFileSync(process.env.BLOCKDAEMON_CLIENT_KEY_PATH, 'utf8') : 
-                undefined);
-
-  if (!cert || !key) {
-    throw new Error("BlockDaemon certificates not configured");
-  }
-
-  const agent = new https.Agent({
-    cert,
-    key,
-    rejectUnauthorized: true,
-  });
-
-  const url = `${endpoint}${path}`;
-  const options: any = {
-    method,
-    agent,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  };
-
-  if (body) {
-    options.body = JSON.stringify(body);
-  }
-
-  const response = await fetch(url, options);
-  
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`TSM request failed: ${response.status} ${errorText}`);
-  }
-
-  return response.json();
-}
-
-// Convert TSM public key format to compressed hex
-function convertTSMPublicKey(tsmPublicKey: any): string {
-  try {
-    // TSM returns public key in a specific format
-    // We need to convert it to compressed secp256k1 format
-    if (tsmPublicKey.scheme !== "ECDSA" || tsmPublicKey.curve !== "secp256k1") {
-      throw new Error(`Unsupported key type: ${tsmPublicKey.scheme}/${tsmPublicKey.curve}`);
-    }
-
-    // Decode the point from base64
-    const pointBuffer = Buffer.from(tsmPublicKey.point, "base64");
-    
-    // Ensure it's in the right format (may need 0x04 prefix for uncompressed)
-    let fullKey: Uint8Array;
-    if (pointBuffer.length === 64) {
-      // Add uncompressed prefix
-      fullKey = new Uint8Array(65);
-      fullKey[0] = 0x04;
-      fullKey.set(pointBuffer, 1);
-    } else if (pointBuffer.length === 65) {
-      fullKey = pointBuffer;
-    } else {
-      throw new Error(`Invalid public key length: ${pointBuffer.length}`);
-    }
-
-    // Convert to compressed format using noble-curves
-    const point = (secp256k1 as any).ProjectivePoint.fromHex(fullKey);
-    const compressedKey = point.toRawBytes(true);
-    
-    return Buffer.from(compressedKey).toString("hex");
-  } catch (error) {
-    console.error("Failed to convert TSM public key:", error);
-    throw error;
-  }
-}
+// Hardcoded public key for the existing key ID
+// You need to run this command once to get the public key:
+// cd /Users/fabricedautriat/Documents/GitHub/adamik-link/blockdaemon_client
+// go run main.go get-pubkey cXRuAcUZLMwmHnY6zv9geIabb67j
+// Then add the base64 public key here
+const BLOCKDAEMON_KEYS: Record<string, string> = {
+  // Example format - replace with your actual public key after running the Go command
+  "cXRuAcUZLMwmHnY6zv9geIabb67j": process.env.BLOCKDAEMON_PUBLIC_KEY || "",
+};
 
 export default async function handler(
   req: NextApiRequest,
@@ -105,49 +24,161 @@ export default async function handler(
 
     console.log("BlockDaemon get-pubkey request:", { chainId, curve, keyId });
 
-    // Check if we have an existing key ID
-    let actualKeyId = keyId || process.env.BLOCKDAEMON_KEY_ID;
-
-    if (actualKeyId) {
-      // Retrieve existing public key
-      console.log("Retrieving existing key:", actualKeyId);
-      
-      const keyInfo = await makeTSMRequest(`/keys/${actualKeyId}`);
-      const publicKey = convertTSMPublicKey(keyInfo.publicKey);
-      
-      return res.status(200).json({
-        publicKey,
-        keyId: actualKeyId,
-      });
-    } else {
-      // Generate new key
-      console.log("Generating new BlockDaemon TSM key...");
-      
-      // Key generation parameters
-      const keyGenParams = {
-        curve: curve === "ed25519" ? "ed25519" : "secp256k1",
-        threshold: 2,  // 2-of-3 threshold
-        keyShares: 3,  // Total shares
-      };
-
-      const keyGenResult = await makeTSMRequest("/keygen", "POST", keyGenParams);
-      
-      console.log("Key generated successfully:", keyGenResult.keyId);
-      
-      const publicKey = convertTSMPublicKey(keyGenResult.publicKey);
-      
-      // Store the key ID for future use
-      console.log("IMPORTANT: Add this to your .env.local file:");
-      console.log(`BLOCKDAEMON_KEY_ID=${keyGenResult.keyId}`);
-      
-      return res.status(200).json({
-        publicKey,
-        keyId: keyGenResult.keyId,
-        message: "New key generated. Please save the keyId to your environment variables.",
-      });
+    // Check if BlockDaemon is configured
+    if (!process.env.BLOCKDAEMON_TSM_ENDPOINT) {
+      throw new Error("BLOCKDAEMON_TSM_ENDPOINT not configured");
     }
+
+    // For now, BlockDaemon TSM only supports secp256k1
+    if (curve === "ed25519") {
+      throw new Error("BlockDaemon TSM does not support ed25519 curves yet");
+    }
+
+    // Use the existing key ID from env
+    const actualKeyId = keyId || process.env.BLOCKDAEMON_EXISTING_KEY_IDS || "cXRuAcUZLMwmHnY6zv9geIabb67j";
+    
+    // Get the public key for this key ID
+    let preGeneratedPubKey = BLOCKDAEMON_KEYS[actualKeyId] || process.env.BLOCKDAEMON_PUBLIC_KEY;
+    
+    if (!preGeneratedPubKey) {
+      throw new Error(
+        `BlockDaemon public key not found for key ID: ${actualKeyId}\n` +
+        "Please run the following command to get the public key:\n" +
+        `cd /Users/fabricedautriat/Documents/GitHub/adamik-link/blockdaemon_client\n` +
+        `go run main.go get-pubkey ${actualKeyId}\n` +
+        "Then add to .env.local: BLOCKDAEMON_PUBLIC_KEY=<base64-public-key>"
+      );
+    }
+
+    // Convert the base64 public key to compressed hex format
+    // First, decode the base64 to see what format we have
+    const decodedKey = Buffer.from(preGeneratedPubKey, 'base64').toString('utf8');
+    
+    let publicKeyHex: string;
+    
+    // Check if it's JSON format (newer BlockDaemon format)
+    if (decodedKey.startsWith('{') && decodedKey.includes('"point"')) {
+      try {
+        const keyData = JSON.parse(decodedKey);
+        console.log("BlockDaemon key data:", keyData);
+        
+        if (keyData.scheme !== "ECDSA" || keyData.curve !== "secp256k1") {
+          throw new Error(`Unsupported key type: ${keyData.scheme}/${keyData.curve}`);
+        }
+        
+        // The point is base64 encoded
+        const pointBuffer = Buffer.from(keyData.point, 'base64');
+        
+        // Check if it's already compressed (33 bytes starting with 0x02 or 0x03)
+        if ((pointBuffer[0] === 0x02 || pointBuffer[0] === 0x03) && pointBuffer.length === 33) {
+          publicKeyHex = pointBuffer.toString('hex');
+        } else if (pointBuffer[0] === 0x04 && pointBuffer.length === 65) {
+          // Uncompressed, need to compress
+          const x = pointBuffer.slice(1, 33);
+          const y = pointBuffer.slice(33, 65);
+          const prefix = (y[31] & 1) === 0 ? 0x02 : 0x03;
+          const compressed = Buffer.concat([Buffer.from([prefix]), x]);
+          publicKeyHex = compressed.toString('hex');
+        } else if (pointBuffer.length === 64) {
+          // Raw x,y coordinates without prefix
+          const x = pointBuffer.slice(0, 32);
+          const y = pointBuffer.slice(32, 64);
+          const prefix = (y[31] & 1) === 0 ? 0x02 : 0x03;
+          const compressed = Buffer.concat([Buffer.from([prefix]), x]);
+          publicKeyHex = compressed.toString('hex');
+        } else {
+          throw new Error(`Unexpected point format from BlockDaemon. Length: ${pointBuffer.length}`);
+        }
+      } catch (jsonError) {
+        console.error("Failed to parse JSON key data:", jsonError);
+        throw new Error("Failed to parse BlockDaemon public key JSON format");
+      }
+    } else {
+      // Fallback to DER format parsing (older format)
+      const pubKeyBuffer = Buffer.from(preGeneratedPubKey, 'base64');
+      
+      if (pubKeyBuffer[0] === 0x30) {
+        // DER-encoded key - find the uncompressed point
+        // Look for the 0x04 marker (uncompressed point)
+        let pointStart = -1;
+        for (let i = 0; i < pubKeyBuffer.length - 65; i++) {
+          if (pubKeyBuffer[i] === 0x04 && 
+              (i === pubKeyBuffer.length - 65 || // At the end
+               (i > 0 && pubKeyBuffer[i-1] === 0x41))) { // Or preceded by length byte 0x41 (65)
+            pointStart = i;
+            break;
+          }
+        }
+        
+        if (pointStart !== -1) {
+          const uncompressed = pubKeyBuffer.slice(pointStart, pointStart + 65);
+          const x = uncompressed.slice(1, 33);
+          const y = uncompressed.slice(33, 65);
+          // Determine prefix based on y coordinate parity
+          const prefix = (y[31] & 1) === 0 ? 0x02 : 0x03;
+          const compressed = Buffer.concat([Buffer.from([prefix]), x]);
+          publicKeyHex = compressed.toString('hex');
+        } else {
+          // If we can't find uncompressed point, try to extract from the end
+          // Sometimes the key is at the end of the DER structure
+          const lastBytes = pubKeyBuffer.slice(-65);
+          if (lastBytes[0] === 0x04) {
+            const x = lastBytes.slice(1, 33);
+            const y = lastBytes.slice(33, 65);
+            const prefix = (y[31] & 1) === 0 ? 0x02 : 0x03;
+            const compressed = Buffer.concat([Buffer.from([prefix]), x]);
+            publicKeyHex = compressed.toString('hex');
+          } else {
+            throw new Error("Unable to parse BlockDaemon public key - no uncompressed point found");
+          }
+        }
+      } else if (pubKeyBuffer[0] === 0x04 && pubKeyBuffer.length === 65) {
+        // Already an uncompressed public key
+        const x = pubKeyBuffer.slice(1, 33);
+        const y = pubKeyBuffer.slice(33, 65);
+        const prefix = (y[31] & 1) === 0 ? 0x02 : 0x03;
+        const compressed = Buffer.concat([Buffer.from([prefix]), x]);
+        publicKeyHex = compressed.toString('hex');
+      } else if ((pubKeyBuffer[0] === 0x02 || pubKeyBuffer[0] === 0x03) && pubKeyBuffer.length === 33) {
+        // Already compressed
+        publicKeyHex = pubKeyBuffer.toString('hex');
+      } else {
+        // Try one more strategy - sometimes the key is wrapped in additional encoding
+        // Look for any occurrence of 65 consecutive bytes starting with 0x04
+        let found = false;
+        for (let i = 0; i <= pubKeyBuffer.length - 65; i++) {
+          if (pubKeyBuffer[i] === 0x04) {
+            const candidate = pubKeyBuffer.slice(i, i + 65);
+            // Verify it looks like a valid key (x and y should be 32 bytes each)
+            const x = candidate.slice(1, 33);
+            const y = candidate.slice(33, 65);
+            // Basic sanity check - at least one byte should be non-zero
+            if (x.some(b => b !== 0) && y.some(b => b !== 0)) {
+              const prefix = (y[31] & 1) === 0 ? 0x02 : 0x03;
+              const compressed = Buffer.concat([Buffer.from([prefix]), x]);
+              publicKeyHex = compressed.toString('hex');
+              found = true;
+              break;
+            }
+          }
+        }
+        
+        if (!found) {
+          console.error("Unable to parse public key. Buffer:", pubKeyBuffer.toString('hex'));
+          throw new Error(`Unsupported public key format from BlockDaemon. Length: ${pubKeyBuffer.length}, First byte: 0x${pubKeyBuffer[0].toString(16)}`);
+        }
+      }
+    }
+
+    console.log("BlockDaemon public key retrieved:", publicKeyHex);
+    
+    return res.status(200).json({
+      publicKey: publicKeyHex,
+      keyId: actualKeyId,
+      message: "Using pre-generated BlockDaemon key",
+    });
   } catch (error) {
     console.error("BlockDaemon get-pubkey error:", error);
-    return handleApiError(error, "blockdaemon");
+    return handleApiError(res, error, "blockdaemon");
   }
 }

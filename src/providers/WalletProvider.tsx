@@ -28,6 +28,7 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
   // Filter addresses based on current signer
   const addresses = useMemo(() => {
     if (isShowroom) {
+      console.log('[WalletProvider] Using showroom addresses');
       return showroomAddresses;
     }
     
@@ -36,10 +37,34 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
       ? WalletName.IOFINNET 
       : currentSigner === SignerType.TURNKEY
       ? WalletName.TURNKEY
+      : currentSigner === SignerType.BLOCKDAEMON
+      ? WalletName.BLOCKDAEMON
       : WalletName.SODOT;
     
+    console.log('[WalletProvider] Filtering addresses:', {
+      currentSigner,
+      walletName,
+      totalAddresses: allAddresses.length,
+      addressesWithSigners: allAddresses.map(a => ({
+        chainId: a.chainId,
+        address: a.address.substring(0, 10) + '...',
+        signer: a.signer
+      }))
+    });
+    
     // Filter addresses to only show those from the current signer
-    return allAddresses.filter(addr => addr.signer === walletName);
+    const filtered = allAddresses.filter(addr => addr.signer === walletName);
+    
+    console.log('[WalletProvider] After filtering:', {
+      filteredCount: filtered.length,
+      filteredAddresses: filtered.map(a => ({
+        chainId: a.chainId,
+        address: a.address.substring(0, 10) + '...',
+        signer: a.signer
+      }))
+    });
+    
+    return filtered;
   }, [allAddresses, currentSigner, isShowroom]);
 
   useEffect(() => {
@@ -54,6 +79,15 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
 
     // Get the current signer type
     const savedSigner = SignerFactory.getSelectedSignerType();
+    console.log('[WalletProvider] Initial setup:', {
+      savedSigner,
+      parsedAddressesCount: parsedAddresses.length,
+      addresses: parsedAddresses.map((a: any) => ({
+        chainId: a.chainId,
+        address: a.address?.substring(0, 10) + '...',
+        signer: a.signer
+      }))
+    });
     setCurrentSigner(savedSigner);
 
     // Store the real wallet addresses separately
@@ -73,6 +107,11 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
   useEffect(() => {
     const handleSignerChange = () => {
       const newSigner = SignerFactory.getSelectedSignerType();
+      console.log('[WalletProvider] Signer change detected:', {
+        oldSigner: currentSigner,
+        newSigner,
+        changed: newSigner !== currentSigner
+      });
       setCurrentSigner(newSigner);
     };
 
@@ -92,6 +131,15 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
   };
 
   const addAddresses = (newAddresses: Account[]) => {
+    console.log('[WalletProvider] addAddresses called with:', {
+      count: newAddresses.length,
+      addresses: newAddresses.map(a => ({
+        chainId: a.chainId,
+        address: a.address.substring(0, 10) + '...',
+        signer: a.signer
+      }))
+    });
+    
     // First identify which addresses are actually new
     const actuallyNewAddresses: Account[] = [];
 
@@ -103,6 +151,15 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
       if (!exists) {
         actuallyNewAddresses.push(newAddr);
       }
+    });
+
+    console.log('[WalletProvider] Actually new addresses:', {
+      count: actuallyNewAddresses.length,
+      addresses: actuallyNewAddresses.map(a => ({
+        chainId: a.chainId,
+        address: a.address.substring(0, 10) + '...',
+        signer: a.signer
+      }))
     });
 
     // Set the recently added addresses for optimized portfolio refresh

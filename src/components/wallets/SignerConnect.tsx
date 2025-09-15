@@ -36,7 +36,8 @@ export const SignerConnect: React.FC<SignerConnectProps> = ({
   const signerType = SignerFactory.getSelectedSignerType();
   const signerName = signerType === SignerType.SODOT ? "Sodot" : 
                      signerType === SignerType.IOFINNET ? "IoFinnet" :
-                     signerType === SignerType.TURNKEY ? "Turnkey" : "Unknown";
+                     signerType === SignerType.TURNKEY ? "Turnkey" :
+                     signerType === SignerType.BLOCKDAEMON ? "BlockDaemon" : "Unknown";
 
   const autoBroadcastTransaction = useCallback(
     (signedTransaction: any, chainId: string) => {

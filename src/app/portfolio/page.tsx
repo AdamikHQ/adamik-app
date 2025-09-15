@@ -55,6 +55,17 @@ export default function Portfolio() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const displayAddresses = isShowroom ? showroomAddresses : walletAddresses;
+  
+  console.log('[Portfolio] Display addresses:', {
+    isShowroom,
+    count: displayAddresses.length,
+    addresses: displayAddresses.map(a => ({
+      chainId: a.chainId,
+      address: a.address.substring(0, 10) + '...',
+      signer: a.signer
+    }))
+  });
+  
   const addressesChainIds = displayAddresses.reduce<string[]>(
     (acc, { chainId }) => {
       if (acc.includes(chainId)) return acc;
@@ -179,12 +190,14 @@ export default function Portfolio() {
 
     // Clear cache for all addresses
     try {
-      displayAddresses.forEach(({ chainId, address }) => {
-        clearAccountStateCache({
-          chainId,
-          address,
-        });
-      });
+      await Promise.all(
+        displayAddresses.map(({ chainId, address }) => 
+          clearAccountStateCache({
+            chainId,
+            address,
+          })
+        )
+      );
     } catch (error) {
       console.debug("Cache clearing error (non-critical):", error);
       // Continue execution - cache clearing errors shouldn't stop the refresh
@@ -413,13 +426,15 @@ export default function Portfolio() {
 
         // Clear cache for targeted addresses
         try {
-          addressesToRefresh.forEach(({ chainId, address }) => {
-            console.log(`🗑️ Clearing cache for ${chainId}:${address}`);
-            clearAccountStateCache({
-              chainId,
-              address,
-            });
-          });
+          await Promise.all(
+            addressesToRefresh.map(async ({ chainId, address }) => {
+              console.log(`🗑️ Clearing cache for ${chainId}:${address}`);
+              await clearAccountStateCache({
+                chainId,
+                address,
+              });
+            })
+          );
         } catch (error) {
           console.debug("Cache clearing error (non-critical):", error);
           // Continue execution - cache clearing errors shouldn't stop the refresh

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
-import { AlertCircle, CheckCircle2, Loader2, Shield, Vault } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, Shield, Server, Cloud, Lock } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -26,6 +26,37 @@ type SignerTestState = {
   testing: boolean;
   testResult: TestResult | null;
   selectedChain: string;
+};
+
+const signerInfo = {
+  [SignerType.SODOT]: {
+    icon: Shield,
+    name: "Sodot MPC",
+    shortDesc: "Secure multi-party computation",
+    type: "2-of-3 threshold MPC",
+    color: "blue",
+  },
+  [SignerType.IOFINNET]: {
+    icon: Lock,
+    name: "IoFinnet Vault",
+    shortDesc: "Enterprise MPC with approvals",
+    type: "Mobile approval required",
+    color: "purple",
+  },
+  [SignerType.TURNKEY]: {
+    icon: Cloud,
+    name: "Turnkey",
+    shortDesc: "Cloud-based key management",
+    type: "API-based signing",
+    color: "green",
+  },
+  [SignerType.BLOCKDAEMON]: {
+    icon: Server,
+    name: "BlockDaemon Vault",
+    shortDesc: "Enterprise TSM",
+    type: "2-of-3 threshold signing",
+    color: "orange",
+  },
 };
 
 export function SignerConfigurationContent() {
@@ -103,7 +134,7 @@ export function SignerConfigurationContent() {
         ...prev,
         testResult: {
           success: false,
-          message: error.message || "Connection test failed",
+          message: error.message || "Failed to test Sodot connection",
         }
       }));
     } finally {
@@ -116,8 +147,8 @@ export function SignerConfigurationContent() {
     setIofinnetState(prev => ({ ...prev, testing: true, testResult: null }));
 
     try {
-      const response = await fetch("/api/iofinnet-proxy/get-all-pubkeys", {
-        method: "GET",
+      const response = await fetch("/api/iofinnet-proxy/test-connection", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -125,20 +156,16 @@ export function SignerConfigurationContent() {
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || `Connection test failed: ${response.status}`);
+      if (!data.success) {
+        throw new Error(data.message || "Connection test failed");
       }
 
       setIofinnetState(prev => ({
         ...prev,
         testResult: {
           success: true,
-          message: "Successfully connected to IoFinnet",
-          details: {
-            ecdsa: data.publicKeys?.ECDSA_SECP256K1,
-            eddsa: data.publicKeys?.EDDSA_ED25519,
-            vaultId: data.vaultId,
-          }
+          message: data.message || "Successfully connected to IoFinnet",
+          details: data.details,
         }
       }));
     } catch (error: any) {
@@ -146,7 +173,7 @@ export function SignerConfigurationContent() {
         ...prev,
         testResult: {
           success: false,
-          message: error.message || "Connection test failed",
+          message: error.message || "Failed to test IoFinnet connection",
         }
       }));
     } finally {
@@ -176,7 +203,7 @@ export function SignerConfigurationContent() {
         ...prev,
         testResult: {
           success: true,
-          message: data.message,
+          message: data.message || "Successfully connected to Turnkey",
           details: data.details,
         }
       }));
@@ -185,7 +212,7 @@ export function SignerConfigurationContent() {
         ...prev,
         testResult: {
           success: false,
-          message: error.message || "Connection test failed",
+          message: error.message || "Failed to test Turnkey connection",
         }
       }));
     } finally {
@@ -215,7 +242,7 @@ export function SignerConfigurationContent() {
         ...prev,
         testResult: {
           success: true,
-          message: data.message,
+          message: data.message || "Successfully connected to BlockDaemon TSM",
           details: data.details,
         }
       }));
@@ -224,7 +251,7 @@ export function SignerConfigurationContent() {
         ...prev,
         testResult: {
           success: false,
-          message: error.message || "Connection test failed",
+          message: error.message || "Failed to test BlockDaemon connection",
         }
       }));
     } finally {
@@ -232,373 +259,206 @@ export function SignerConfigurationContent() {
     }
   };
 
-  const getSignerIcon = (signer: SignerType) => {
-    if (signer === SignerType.BLOCKDAEMON) {
-      return <Vault className="h-5 w-5" />;
+  const getStateForSigner = (signer: SignerType) => {
+    switch (signer) {
+      case SignerType.SODOT:
+        return sodotState;
+      case SignerType.IOFINNET:
+        return iofinnetState;
+      case SignerType.TURNKEY:
+        return turnkeyState;
+      case SignerType.BLOCKDAEMON:
+        return blockdaemonState;
+      default:
+        return { testing: false, testResult: null, selectedChain: "" };
     }
-    return <Shield className="h-5 w-5" />;
+  };
+
+  const getTestFunction = (signer: SignerType) => {
+    switch (signer) {
+      case SignerType.SODOT:
+        return testSodotConnection;
+      case SignerType.IOFINNET:
+        return testIoFinnetConnection;
+      case SignerType.TURNKEY:
+        return testTurnkeyConnection;
+      case SignerType.BLOCKDAEMON:
+        return testBlockdaemonConnection;
+      default:
+        return () => {};
+    }
+  };
+
+  const SignerCard = ({ signer }: { signer: SignerType }) => {
+    const info = signerInfo[signer];
+    const config = SIGNER_CONFIGS[signer];
+    const state = getStateForSigner(signer);
+    const testFunction = getTestFunction(signer);
+    const isActive = currentSigner === signer;
+    const Icon = info.icon;
+
+    return (
+      <Card className={`relative overflow-hidden transition-all duration-200 ${
+        isActive 
+          ? 'ring-2 ring-primary shadow-lg' 
+          : 'hover:shadow-md'
+      }`}>
+        {/* Active indicator bar */}
+        {isActive && (
+          <div className="absolute top-0 left-0 right-0 h-1 bg-primary" />
+        )}
+        
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className={
+                info.color === 'blue' ? 'p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20' :
+                info.color === 'purple' ? 'p-2 rounded-lg bg-purple-100 dark:bg-purple-900/20' :
+                info.color === 'green' ? 'p-2 rounded-lg bg-green-100 dark:bg-green-900/20' :
+                'p-2 rounded-lg bg-orange-100 dark:bg-orange-900/20'
+              }>
+                <Icon className={
+                  info.color === 'blue' ? 'h-5 w-5 text-blue-600 dark:text-blue-400' :
+                  info.color === 'purple' ? 'h-5 w-5 text-purple-600 dark:text-purple-400' :
+                  info.color === 'green' ? 'h-5 w-5 text-green-600 dark:text-green-400' :
+                  'h-5 w-5 text-orange-600 dark:text-orange-400'
+                } />
+              </div>
+              <div>
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  {info.name}
+                  {isActive && (
+                    <Badge variant="default" className="text-xs">Active</Badge>
+                  )}
+                </CardTitle>
+                <CardDescription className="text-sm mt-0.5">
+                  {info.shortDesc}
+                </CardDescription>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          {/* Signer details */}
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center justify-between py-1">
+              <span className="text-muted-foreground">Type</span>
+              <span className="font-medium">{info.type}</span>
+            </div>
+            <div className="flex items-center justify-between py-1">
+              <span className="text-muted-foreground">Supported curves</span>
+              <span className="font-medium">{config.supportedCurves.length} curves</span>
+            </div>
+          </div>
+
+          <div className="border-t" />
+
+          {/* Chain selector for Sodot */}
+          {signer === SignerType.SODOT && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Test Chain</label>
+              <Select
+                value={sodotState.selectedChain}
+                onValueChange={(value) => setSodotState(prev => ({ ...prev, selectedChain: value }))}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a chain to test" />
+                </SelectTrigger>
+                <SelectContent>
+                  {chains && Object.entries(chains).map(([chainId, chain]) => (
+                    <SelectItem key={chainId} value={chainId}>
+                      {chain.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Test result */}
+          {state.testResult && (
+            <div className={`p-3 rounded-lg border ${
+              state.testResult.success 
+                ? 'border-green-200 bg-green-50 dark:bg-green-900/10' 
+                : 'border-destructive/50 bg-destructive/5'
+            }`}>
+              <div className="flex items-start gap-2">
+                {state.testResult.success ? (
+                  <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-destructive mt-0.5" />
+                )}
+                <div className="text-sm flex-1">
+                  {state.testResult.message}
+                  {state.testResult.success && state.testResult.details && (
+                    <div className="mt-2 text-xs opacity-80 space-y-0.5">
+                      {state.testResult.details.vaultId && (
+                        <div>Vault: {state.testResult.details.vaultId}</div>
+                      )}
+                      {state.testResult.details.walletName && (
+                        <div>Wallet: {state.testResult.details.walletName}</div>
+                      )}
+                      {state.testResult.details.endpoint && (
+                        <div>Endpoint: {state.testResult.details.endpoint}</div>
+                      )}
+                      {state.testResult.details.chain && (
+                        <div>Chain: {chains?.[state.testResult.details.chain]?.name}</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Test button */}
+          <Button 
+            onClick={testFunction} 
+            disabled={state.testing || (signer === SignerType.SODOT && !state.selectedChain)}
+            className="w-full"
+            variant={isActive ? "default" : "outline"}
+          >
+            {state.testing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Testing Connection...
+              </>
+            ) : (
+              "Test Connection"
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
     <div className="space-y-6">
-      {/* Test Signers Section */}
+      {/* Header */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">Test Signer Connections</h3>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {/* Sodot Test Card */}
-          <Card className={currentSigner === SignerType.SODOT ? "ring-2 ring-primary" : ""}>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Sodot MPC
-                </div>
-                {currentSigner === SignerType.SODOT && (
-                  <Badge variant="default" className="text-xs">Active</Badge>
-                )}
-              </CardTitle>
-              <CardDescription>
-                {SIGNER_CONFIGS[SignerType.SODOT].description}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col space-y-4">
-              <div className="flex-1 space-y-4">
-                <div className="text-sm space-y-2">
-                  <div>
-                    <span className="font-medium">Type:</span>{" "}
-                    <span className="text-muted-foreground">2-of-3 threshold MPC</span>
-                  </div>
-                  <div>
-                    <span className="font-medium">Curves:</span>{" "}
-                    <span className="text-muted-foreground">
-                      {SIGNER_CONFIGS[SignerType.SODOT].supportedCurves.join(", ")}
-                    </span>
-                  </div>
-                </div>
+        <h3 className="text-lg font-semibold">Signer Connections</h3>
+        <p className="text-sm text-muted-foreground mt-1">
+          Test connectivity with different signing providers. The active signer is used for all transactions.
+        </p>
+      </div>
 
-                {/* Chain Selection for Sodot */}
-                {chains && (
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Test Chain</label>
-                    <Select
-                      value={sodotState.selectedChain}
-                      onValueChange={(value) => setSodotState(prev => ({ ...prev, selectedChain: value }))}
-                      disabled={sodotState.testing}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a chain to test" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(chains)
-                          .filter(([_, chain]) => {
-                            const curveType = chain.signerSpec?.curve === "secp256k1" 
-                              ? "secp256k1" 
-                              : "ed25519";
-                            return SIGNER_CONFIGS[SignerType.SODOT].supportedCurves.includes(curveType);
-                          })
-                          .sort(([, a], [, b]) => a.name.localeCompare(b.name))
-                          .map(([chainId, chain]) => (
-                            <SelectItem key={chainId} value={chainId}>
-                              {chain.name}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+      {/* Signer cards grid */}
+      <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
+        <SignerCard signer={SignerType.SODOT} />
+        <SignerCard signer={SignerType.IOFINNET} />
+        <SignerCard signer={SignerType.TURNKEY} />
+        <SignerCard signer={SignerType.BLOCKDAEMON} />
+      </div>
 
-                {/* Test Result */}
-                {sodotState.testResult && (
-                  <div
-                    className={`p-3 rounded-lg text-sm ${
-                      sodotState.testResult.success
-                        ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                        : "bg-destructive/10 text-destructive"
-                    }`}
-                  >
-                    <div className="flex items-start gap-2">
-                      {sodotState.testResult.success ? (
-                        <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      ) : (
-                        <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      )}
-                      <div className="flex-1">
-                        <p className="font-medium">{sodotState.testResult.message}</p>
-                        {sodotState.testResult.success && sodotState.testResult.details?.pubkey && (
-                          <p className="mt-1 text-xs break-all opacity-80">
-                            Pubkey: {sodotState.testResult.details.pubkey.substring(0, 20)}...
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Test Button at bottom */}
-              <Button 
-                onClick={testSodotConnection} 
-                disabled={sodotState.testing || !sodotState.selectedChain}
-                className="w-full mt-auto"
-                variant="outline"
-              >
-                {sodotState.testing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Testing...
-                  </>
-                ) : (
-                  "Test Connection"
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* IoFinnet Test Card */}
-          <Card className={currentSigner === SignerType.IOFINNET ? "ring-2 ring-primary" : ""}>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  IoFinnet Vault
-                </div>
-                {currentSigner === SignerType.IOFINNET && (
-                  <Badge variant="default" className="text-xs">Active</Badge>
-                )}
-              </CardTitle>
-              <CardDescription>
-                {SIGNER_CONFIGS[SignerType.IOFINNET].description}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col space-y-4">
-              <div className="flex-1 space-y-4">
-                <div className="text-sm space-y-2">
-                  <div>
-                    <span className="font-medium">Type:</span>{" "}
-                    <span className="text-muted-foreground">Enterprise MPC with approvals</span>
-                  </div>
-                  <div>
-                    <span className="font-medium">Curves:</span>{" "}
-                    <span className="text-muted-foreground">
-                      {SIGNER_CONFIGS[SignerType.IOFINNET].supportedCurves.join(", ")}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Spacer to match Sodot's chain selector height */}
-                <div className="h-[70px]" />
-
-                {/* Test Result */}
-                {iofinnetState.testResult && (
-                  <div
-                    className={`p-3 rounded-lg text-sm ${
-                      iofinnetState.testResult.success
-                        ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                        : "bg-destructive/10 text-destructive"
-                    }`}
-                  >
-                    <div className="flex items-start gap-2">
-                      {iofinnetState.testResult.success ? (
-                        <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      ) : (
-                        <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      )}
-                      <div className="flex-1">
-                        <p className="font-medium">{iofinnetState.testResult.message}</p>
-                        {iofinnetState.testResult.success && iofinnetState.testResult.details && (
-                          <div className="mt-1 text-xs opacity-80 space-y-1">
-                            {iofinnetState.testResult.details.vaultId && (
-                              <p>Vault ID: {iofinnetState.testResult.details.vaultId}</p>
-                            )}
-                            {iofinnetState.testResult.details.ecdsa && (
-                              <p className="break-all">
-                                ECDSA: {iofinnetState.testResult.details.ecdsa.substring(0, 20)}...
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Test Button at bottom */}
-              <Button 
-                onClick={testIoFinnetConnection} 
-                disabled={iofinnetState.testing}
-                className="w-full mt-auto"
-                variant="outline"
-              >
-                {iofinnetState.testing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Testing...
-                  </>
-                ) : (
-                  "Test Connection"
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Turnkey Test Card */}
-          <Card className={currentSigner === SignerType.TURNKEY ? "ring-2 ring-primary" : ""}>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Turnkey
-                </div>
-                {currentSigner === SignerType.TURNKEY && (
-                  <Badge variant="default" className="text-xs">Active</Badge>
-                )}
-              </CardTitle>
-              <CardDescription>
-                {SIGNER_CONFIGS[SignerType.TURNKEY].description}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col space-y-4">
-              <div className="flex-1 space-y-4">
-                <div className="text-sm space-y-2">
-                  <div>
-                    <span className="font-medium">Type:</span>{" "}
-                    <span className="text-muted-foreground">Cloud-based key management</span>
-                  </div>
-                  <div>
-                    <span className="font-medium">Curves:</span>{" "}
-                    <span className="text-muted-foreground">
-                      {SIGNER_CONFIGS[SignerType.TURNKEY].supportedCurves.join(", ")}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Spacer to match other cards' height */}
-                <div className="h-[70px]" />
-
-                {/* Test Result */}
-                {turnkeyState.testResult && (
-                  <div
-                    className={`p-3 rounded-lg text-sm ${
-                      turnkeyState.testResult.success
-                        ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                        : "bg-destructive/10 text-destructive"
-                    }`}
-                  >
-                    <div className="flex items-start gap-2">
-                      {turnkeyState.testResult.success ? (
-                        <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      ) : (
-                        <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      )}
-                      <div className="flex-1">
-                        <p className="font-medium">{turnkeyState.testResult.message}</p>
-                        {turnkeyState.testResult.success && turnkeyState.testResult.details && (
-                          <div className="mt-1 text-xs opacity-80 space-y-1">
-                            {turnkeyState.testResult.details.walletName && (
-                              <p>Wallet: {turnkeyState.testResult.details.walletName}</p>
-                            )}
-                            {turnkeyState.testResult.details.accountCount !== undefined && (
-                              <p>Accounts: {turnkeyState.testResult.details.accountCount}</p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Test Button at bottom */}
-              <Button 
-                onClick={testTurnkeyConnection} 
-                disabled={turnkeyState.testing}
-                className="w-full mt-auto"
-                variant="outline"
-              >
-                {turnkeyState.testing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Testing...
-                  </>
-                ) : (
-                  "Test Connection"
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* BlockDaemon Test Card */}
-          <Card className={currentSigner === SignerType.BLOCKDAEMON ? "ring-2 ring-primary" : ""}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Vault className="h-5 w-5" />
-                  <CardTitle className="text-base">BlockDaemon Vault</CardTitle>
-                </div>
-                {currentSigner === SignerType.BLOCKDAEMON && (
-                  <Badge variant="default" className="h-5 px-2 text-xs">
-                    Active
-                  </Badge>
-                )}
-              </div>
-              <CardDescription className="text-xs">
-                Enterprise TSM with multi-party computation
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col space-y-4">
-              {/* Test Results */}
-              <div className="flex-1 min-h-[80px]">
-                {blockdaemonState.testResult && (
-                  <div
-                    className={`p-3 rounded-lg text-sm ${
-                      blockdaemonState.testResult.success
-                        ? "bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300"
-                        : "bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-300"
-                    }`}
-                  >
-                    <div className="flex items-start gap-2">
-                      {blockdaemonState.testResult.success ? (
-                        <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      ) : (
-                        <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      )}
-                      <div className="flex-1">
-                        <p className="font-medium">{blockdaemonState.testResult.message}</p>
-                        {blockdaemonState.testResult.success && blockdaemonState.testResult.details && (
-                          <div className="mt-1 text-xs opacity-80 space-y-1">
-                            {blockdaemonState.testResult.details.endpoint && (
-                              <p>Endpoint: {blockdaemonState.testResult.details.endpoint}</p>
-                            )}
-                            {blockdaemonState.testResult.details.version && (
-                              <p>Version: {blockdaemonState.testResult.details.version}</p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Test Button at bottom */}
-              <Button 
-                onClick={testBlockdaemonConnection} 
-                disabled={blockdaemonState.testing}
-                className="w-full mt-auto"
-                variant="outline"
-              >
-                {blockdaemonState.testing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Testing...
-                  </>
-                ) : (
-                  "Test Connection"
-                )}
-              </Button>
-            </CardContent>
-          </Card>
+      {/* Info section */}
+      <div className="p-4 rounded-lg border bg-muted/50">
+        <div className="flex items-start gap-2">
+          <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5" />
+          <p className="text-sm text-muted-foreground">
+            To switch between signers, use the signer selector in the application header. 
+            Each signer maintains its own set of addresses and configurations.
+          </p>
         </div>
       </div>
     </div>

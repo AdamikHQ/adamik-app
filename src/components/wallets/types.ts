@@ -28,6 +28,7 @@ export enum WalletName {
   SODOT = "sodot",
   IOFINNET = "iofinnet",
   TURNKEY = "turnkey",
+  BLOCKDAEMON = "blockdaemon",
   KEPLR = "keplr",
 }
 

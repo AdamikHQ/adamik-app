@@ -190,6 +190,27 @@ export function TransferTransactionForm({
           pubKey,
           signerSpec: chainConfig.signerSpec,
         };
+      } else if (signerType === SignerType.BLOCKDAEMON) {
+        // BlockDaemon signing endpoint
+        const chains = await getChains();
+        const chainConfig = chains?.[chainId];
+        if (!chainConfig) {
+          throw new Error(`Chain ${chainId} not found`);
+        }
+        
+        const pubKey = await SignerFactory.getChainPubkey(chainId, SignerType.BLOCKDAEMON);
+        
+        // For Ed25519 chains (like Stellar), sign the hash directly
+        const isHashSigning = shouldUseHash || (chainConfig.signerSpec?.curve === "ed25519" && transactionHash);
+        
+        signEndpoint = isHashSigning ? `/api/blockdaemon-proxy/sign-hash` : `/api/blockdaemon-proxy/sign-transaction`;
+        signPayload = {
+          chainId,
+          encodedMessage: isHashSigning ? transactionHash : transactionRaw,
+          hash: isHashSigning ? transactionHash : undefined,
+          pubKey,
+          signerSpec: chainConfig.signerSpec,
+        };
       } else {
         throw new Error(`Unsupported signer type: ${signerType}`);
       }

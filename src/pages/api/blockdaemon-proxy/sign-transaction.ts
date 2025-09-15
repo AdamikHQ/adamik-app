@@ -123,12 +123,31 @@ export default async function handler(
       messageLength: message?.length 
     });
 
-    const actualKeyId = keyId || process.env.BLOCKDAEMON_KEY_ID;
-    if (!actualKeyId) {
+    // Validate required parameters
+    if (!message) {
       return res.status(400).json({ 
-        error: "No key ID provided. Generate a key first." 
+        error: "No message provided for signing" 
       });
     }
+
+    const actualKeyId = keyId || process.env.BLOCKDAEMON_KEY_ID || process.env.BLOCKDAEMON_EXISTING_KEY_IDS;
+    if (!actualKeyId) {
+      return res.status(400).json({ 
+        error: "No key ID provided. Please connect wallet first to generate or retrieve a key." 
+      });
+    }
+    
+    // Note: BlockDaemon TSM doesn't expose REST endpoints for signing
+    // The TSM requires either:
+    // 1. The Go SDK (gitlab.com/Blockdaemon/go-tsm-sdkv2)
+    // 2. The Node.js SDK (@sepior/tsmsdkv2) - not publicly available on npm
+    // 3. Direct MPC protocol implementation (complex)
+    // 
+    // Without access to the Node.js SDK or REST endpoints, signing cannot be implemented
+    // in pure JavaScript/TypeScript. The Go client from adamik-link remains the only option.
+    return res.status(501).json({ 
+      error: "BlockDaemon signing requires the TSM SDK which is not available as a public npm package. Please contact BlockDaemon for SDK access or use the Go client from adamik-link." 
+    });
 
     // Remove 0x prefix if present
     const cleanMessage = message.replace(/^0x/, "");
@@ -209,7 +228,7 @@ export default async function handler(
     });
   } catch (error) {
     console.error("BlockDaemon sign-transaction error:", error);
-    return handleApiError(error, "blockdaemon");
+    return handleApiError(res, error, "blockdaemon");
   }
 }
 

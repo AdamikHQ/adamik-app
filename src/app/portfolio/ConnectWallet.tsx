@@ -50,26 +50,43 @@ export const ConnectWallet = ({ onNextStep }: { onNextStep: () => void }) => {
         ? WalletName.IOFINNET 
         : selectedSigner === SignerType.TURNKEY
         ? WalletName.TURNKEY
+        : selectedSigner === SignerType.BLOCKDAEMON
+        ? WalletName.BLOCKDAEMON
         : WalletName.SODOT;
+      
+      console.log('[ConnectWallet] Connecting with:', {
+        selectedSigner,
+        walletName,
+        chainsToConnect: preferredChains
+      });
 
       // Connect to all chains in parallel
       const connectionPromises = preferredChains.map(async (chainId) => {
         try {
           // Get chain public key using the selected signer
           const pubkey = await SignerFactory.getChainPubkey(chainId);
+          console.log(`[ConnectWallet] Got pubkey for ${chainId}:`, pubkey.substring(0, 20) + '...');
 
           // Derive address from pubkey
           const { address } = await encodePubKeyToAddress(pubkey, chainId);
+          console.log(`[ConnectWallet] Derived address for ${chainId}:`, address);
 
           // Return account object
+          const account = {
+            address,
+            chainId,
+            pubKey: pubkey,
+            signer: walletName,
+          };
+          
+          console.log(`[ConnectWallet] Created account for ${chainId}:`, {
+            address: address.substring(0, 10) + '...',
+            signer: walletName
+          });
+          
           return {
             success: true,
-            account: {
-              address,
-              chainId,
-              pubKey: pubkey,
-              signer: walletName,
-            },
+            account,
           };
         } catch (err) {
           console.error(`Failed to connect to ${chainId}:`, err);

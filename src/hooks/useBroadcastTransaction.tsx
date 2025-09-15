@@ -7,12 +7,12 @@ export const useBroadcastTransaction = () => {
   return useMutation({
     mutationFn: (transaction: Transaction) => broadcast(transaction),
     onSuccess: (_, transaction: Transaction) => {
-      setTimeout(() => {
+      setTimeout(async () => {
         const addressParam = {
           chainId: transaction.data.chainId,
           address: transaction.data.senderAddress,
         };
-        clearAccountStateCache(addressParam);
+        await clearAccountStateCache(addressParam);
       }, 10000); // Timeout it may seems that broadcast isn't reflected instantly
     },
   });

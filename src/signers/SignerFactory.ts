@@ -65,10 +65,17 @@ export class SignerFactory {
    */
   static getSelectedSignerType(): SignerType {
     if (typeof window === "undefined") {
+      console.log('[SignerFactory] SSR mode, returning default SODOT');
       return SignerType.SODOT; // Default for SSR
     }
     
     const saved = localStorage.getItem("preferredSigner") as SignerType;
+    console.log('[SignerFactory] Getting selected signer:', {
+      saved,
+      isValid: saved && Object.values(SignerType).includes(saved),
+      defaulting: !saved || !Object.values(SignerType).includes(saved)
+    });
+    
     if (saved && Object.values(SignerType).includes(saved)) {
       return saved;
     }

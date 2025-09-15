@@ -73,14 +73,14 @@ export const TransactionSuccessModal = ({
       if (currentChainId && senderAddress) {
         try {
           // Clear cache for sender
-          clearAccountStateCache({
+          await clearAccountStateCache({
             chainId: currentChainId,
             address: senderAddress,
           });
           
           // Also clear cache for recipient if it's a transfer
           if (recipientAddress && recipientAddress !== senderAddress) {
-            clearAccountStateCache({
+            await clearAccountStateCache({
               chainId: currentChainId,
               address: recipientAddress,
             });

@@ -20,6 +20,7 @@ import { ScrollArea } from "~/components/ui/scroll-area";
 import { CustomProgress } from "~/components/ui/custom-progress";
 import { SignerFactory } from "~/signers/SignerFactory";
 import { SIGNER_CONFIGS, SignerType } from "~/signers/types";
+import { isChainCompatibleWithSigner, getIncompatibilityReason } from "~/utils/signerChainCompatibility";
 
 /**
  * ChainItem component for rendering individual chain items
@@ -31,18 +32,22 @@ const ChainItem = forwardRef<
     chain: ExtendedChain;
     isSelected: boolean;
     isConnected?: boolean;
+    isIncompatible?: boolean;
+    incompatibilityReason?: string;
     onToggle: () => void;
   }
->(({ chainId, chain, isSelected, isConnected = false, onToggle }, ref) => {
+>(({ chainId, chain, isSelected, isConnected = false, isIncompatible = false, incompatibilityReason, onToggle }, ref) => {
   const isComingSoon = "comingSoon" in chain && chain.comingSoon;
+  const isDisabled = isComingSoon || isIncompatible;
 
   return (
     <div
       ref={ref}
       className={`flex items-center justify-between p-3 rounded-lg ${
-        isSelected ? "bg-accent" : ""
-      } ${isComingSoon ? "opacity-60" : "cursor-pointer hover:bg-accent"}`}
-      onClick={!isComingSoon ? onToggle : undefined}
+        isSelected && !isDisabled ? "bg-accent" : ""
+      } ${isDisabled ? "opacity-50" : "cursor-pointer hover:bg-accent"}`}
+      onClick={!isDisabled ? onToggle : undefined}
+      title={isIncompatible ? incompatibilityReason : undefined}
     >
       <div className="flex items-center gap-3">
         {chain.logo && (
@@ -53,16 +58,21 @@ const ChainItem = forwardRef<
           />
         )}
         <div className="flex items-center">
-          <span>{chain.name}</span>
+          <span className={isIncompatible ? "line-through" : ""}>{chain.name}</span>
           {isComingSoon && (
             <div className="flex items-center text-xs text-muted-foreground space-x-1 ml-2">
               <Clock className="h-3 w-3" />
               <span>Soon</span>
             </div>
           )}
+          {isIncompatible && (
+            <div className="flex items-center text-xs text-muted-foreground space-x-1 ml-2">
+              <span className="text-orange-500">Unsupported</span>
+            </div>
+          )}
         </div>
       </div>
-      {isSelected && !isComingSoon && (
+      {isSelected && !isDisabled && (
         <Check className="w-4 h-4 text-primary" />
       )}
     </div>
@@ -129,6 +139,8 @@ export const MultiChainConnect: React.FC<{
         ? WalletName.IOFINNET 
         : currentSigner === SignerType.TURNKEY
         ? WalletName.TURNKEY
+        : currentSigner === SignerType.BLOCKDAEMON
+        ? WalletName.BLOCKDAEMON
         : WalletName.SODOT;
       
       // Filter addresses to only those from the current signer
@@ -175,12 +187,12 @@ export const MultiChainConnect: React.FC<{
   }, [isSelectionOpen, isShowroom, addresses]);
 
   // Filter and sort chains based on search query and selection status
-  const { selectedChainsList, unselectedChainsList } = React.useMemo(() => {
-    if (!chains) return { selectedChainsList: [], unselectedChainsList: [] };
+  const { selectedChainsList, unselectedChainsList, incompatibleChains } = React.useMemo(() => {
+    if (!chains) return { selectedChainsList: [], unselectedChainsList: [], incompatibleChains: new Map() };
 
-    // Check if IoFinnet is selected and filter out unsupported chains
+    // Get current signer for compatibility check
     const selectedSigner = SignerFactory.getSelectedSignerType();
-    const isIoFinnet = selectedSigner === SignerType.IOFINNET;
+    const incompatibleChainsMap = new Map<string, string>();
 
     const allChains = Object.entries(chains)
       .filter(([chainId, chain]) => {
@@ -188,16 +200,17 @@ export const MultiChainConnect: React.FC<{
           .toLowerCase()
           .includes(searchQuery.toLowerCase());
 
-        // Filter out Starknet chains when using IoFinnet (unsupported curve)
-        if (isIoFinnet && (chainId === 'starknet' || chainId === 'starknet-sepolia')) {
-          return false;
-        }
-
-        // Filter out "coming soon" chains from selected list
-        const isComingSoon = "comingSoon" in chain && chain.comingSoon;
         return matchesSearch;
       })
       .sort((a, b) => a[1].name.localeCompare(b[1].name));
+
+    // Check compatibility for each chain
+    allChains.forEach(([chainId, chain]) => {
+      const incompatibilityReason = getIncompatibilityReason(chain, selectedSigner);
+      if (incompatibilityReason) {
+        incompatibleChainsMap.set(chainId, incompatibilityReason);
+      }
+    });
 
     return {
       selectedChainsList: allChains.filter(([chainId, chain]) => {
@@ -210,6 +223,7 @@ export const MultiChainConnect: React.FC<{
         const isComingSoon = "comingSoon" in chain && chain.comingSoon;
         return !selectedChains.includes(chainId) || isComingSoon;
       }),
+      incompatibleChains: incompatibleChainsMap,
     };
   }, [chains, searchQuery, selectedChains]);
 
@@ -222,6 +236,15 @@ export const MultiChainConnect: React.FC<{
     ) {
       toast({
         description: `${chains[chainId].name} is coming soon and not available yet`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Don't allow toggling incompatible chains
+    if (incompatibleChains.has(chainId)) {
+      toast({
+        description: incompatibleChains.get(chainId),
         variant: "destructive",
       });
       return;
@@ -264,6 +287,8 @@ export const MultiChainConnect: React.FC<{
         ? WalletName.IOFINNET 
         : currentSigner === SignerType.TURNKEY
         ? WalletName.TURNKEY
+        : currentSigner === SignerType.BLOCKDAEMON
+        ? WalletName.BLOCKDAEMON
         : WalletName.SODOT;
         
       const account: Account = {
@@ -354,6 +379,8 @@ export const MultiChainConnect: React.FC<{
           ? WalletName.IOFINNET 
           : currentSigner === SignerType.TURNKEY
           ? WalletName.TURNKEY
+          : currentSigner === SignerType.BLOCKDAEMON
+          ? WalletName.BLOCKDAEMON
           : WalletName.SODOT;
           
         const account: Account = {
@@ -543,6 +570,8 @@ export const MultiChainConnect: React.FC<{
                         chain={chain}
                         isSelected={true}
                         isConnected={uniqueConnectedChainIds.includes(chainId)}
+                        isIncompatible={incompatibleChains.has(chainId)}
+                        incompatibilityReason={incompatibleChains.get(chainId)}
                         onToggle={() => toggleChain(chainId)}
                       />
                     ))}
@@ -561,6 +590,8 @@ export const MultiChainConnect: React.FC<{
                       chain={chain}
                       isSelected={false}
                       isConnected={uniqueConnectedChainIds.includes(chainId)}
+                      isIncompatible={incompatibleChains.has(chainId)}
+                      incompatibilityReason={incompatibleChains.get(chainId)}
                       onToggle={() => toggleChain(chainId)}
                     />
                   ))}
@@ -737,6 +768,8 @@ export const MultiChainConnect: React.FC<{
                                 ? WalletName.IOFINNET 
                                 : currentSigner === SignerType.TURNKEY
                                 ? WalletName.TURNKEY
+                                : currentSigner === SignerType.BLOCKDAEMON
+                                ? WalletName.BLOCKDAEMON
                                 : WalletName.SODOT;
                                 
                               const account: Account = {

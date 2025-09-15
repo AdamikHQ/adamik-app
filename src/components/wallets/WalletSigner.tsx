@@ -39,7 +39,7 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
     const signerType = SignerFactory.getSelectedSignerType();
     
     // Check if the account uses a supported signer
-    if (signer?.signer === WalletName.SODOT || signer?.signer === WalletName.IOFINNET || signer?.signer === WalletName.TURNKEY) {
+    if (signer?.signer === WalletName.SODOT || signer?.signer === WalletName.IOFINNET || signer?.signer === WalletName.TURNKEY || signer?.signer === WalletName.BLOCKDAEMON) {
       // Use the generic SignerConnect component that works with any signer
       return (
         <SignerConnect chainId={chainId} transactionPayload={transaction} />

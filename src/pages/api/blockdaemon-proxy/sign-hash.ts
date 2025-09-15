@@ -81,6 +81,13 @@ export default async function handler(
       });
     }
 
+    // Note: BlockDaemon TSM doesn't expose REST endpoints for signing
+    // The TSM requires the SDK which is not publicly available
+    return res.status(501).json({ 
+      error: "BlockDaemon signing requires the TSM SDK which is not available as a public npm package. Please contact BlockDaemon for SDK access or use the Go client from adamik-link." 
+    });
+
+    // The code below would work if we had access to the TSM signing endpoint
     // Remove 0x prefix if present
     const cleanHash = hash.replace(/^0x/, "");
 
@@ -132,6 +139,6 @@ export default async function handler(
     });
   } catch (error) {
     console.error("BlockDaemon sign-hash error:", error);
-    return handleApiError(error, "blockdaemon");
+    return handleApiError(res, error, "blockdaemon");
   }
 }

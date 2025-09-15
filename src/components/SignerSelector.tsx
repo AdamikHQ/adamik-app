@@ -10,7 +10,7 @@ import {
 } from "~/components/ui/select";
 import { SignerFactory } from "~/signers/SignerFactory";
 import { SignerType } from "~/signers/types";
-import { Shield, Vault } from "lucide-react";
+import { Shield } from "lucide-react";
 import { useWallet } from "~/hooks/useWallet";
 
 interface SignerSelectorProps {
@@ -46,7 +46,7 @@ export function SignerSelector({
       case SignerType.TURNKEY:
         return <Shield className="h-3 w-3" />;
       case SignerType.BLOCKDAEMON:
-        return <Vault className="h-3 w-3" />;
+        return <Shield className="h-3 w-3" />;
       default:
         return null;
     }
@@ -98,7 +98,7 @@ export function SignerSelector({
           </SelectItem>
           <SelectItem value={SignerType.BLOCKDAEMON}>
             <div className="flex items-center gap-2">
-              <Vault className="h-3 w-3" />
+              <Shield className="h-3 w-3" />
               <span>BlockDaemon</span>
             </div>
           </SelectItem>

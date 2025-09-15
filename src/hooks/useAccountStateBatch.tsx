@@ -327,34 +327,45 @@ export const useAccountStateBatch = (
   };
 };
 
-export const clearAccountStateCache = ({
+export const clearAccountStateCache = async ({
   chainId,
   address,
 }: GetAddressStateParams) => {
+  // Wrap everything to catch both sync and async errors
   try {
-    // First, try to cancel any in-flight queries gracefully
-    queryClientGlobal.cancelQueries({
-      queryKey: ["accountState", chainId, address],
-    }).catch(() => {
-      // Silently ignore cancellation errors
-    });
-    
-    // Then invalidate to mark as stale (doesn't throw errors)
-    queryClientGlobal.invalidateQueries({
-      queryKey: ["accountState", chainId, address],
-      refetchType: "none", // Don't trigger immediate refetch
-    });
-    
-    // Finally, remove from cache (after cancellation is complete)
-    // Wrap in setTimeout to ensure cancellation has finished
-    setTimeout(() => {
-      queryClientGlobal.removeQueries({
+    // Try to cancel queries, but don't let it fail the whole operation
+    try {
+      await queryClientGlobal.cancelQueries({
         queryKey: ["accountState", chainId, address],
       });
-    }, 0);
-  } catch (error) {
-    // Silently handle any errors - the goal is to refresh data, 
-    // not to crash the app
-    console.debug("Cache clear operation:", error);
+    } catch (cancelError: any) {
+      // Completely ignore cancellation errors - they're expected when queries are running
+      // Don't even log them as they're normal behavior
+    }
+    
+    // Small delay to let cancellation complete
+    await new Promise(resolve => setTimeout(resolve, 10));
+    
+    // Then invalidate to mark as stale (this is safe and doesn't throw)
+    try {
+      await queryClientGlobal.invalidateQueries({
+        queryKey: ["accountState", chainId, address],
+        refetchType: "none", // Don't trigger immediate refetch
+      });
+    } catch (invalidateError) {
+      console.debug("Invalidate queries error (non-critical):", invalidateError);
+    }
+    
+    // Finally, remove from cache
+    try {
+      await queryClientGlobal.removeQueries({
+        queryKey: ["accountState", chainId, address],
+      });
+    } catch (removeError) {
+      console.debug("Remove queries error (non-critical):", removeError);
+    }
+  } catch (error: any) {
+    // Final catch-all for any unexpected errors
+    console.debug("Cache clear operation error (non-critical):", error);
   }
 };

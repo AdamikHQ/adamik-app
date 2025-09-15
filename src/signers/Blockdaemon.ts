@@ -14,8 +14,20 @@ export class BlockdaemonSigner implements BaseSigner {
     this.chainId = chainId;
     this.signerSpec = signerSpec;
     
-    // Get existing key ID from environment if available
-    this.keyId = process.env.BLOCKDAEMON_KEY_ID || null;
+    // Try to get key ID from localStorage first (client-side persistence)
+    if (typeof window !== 'undefined') {
+      const storedKeyId = localStorage.getItem('blockdaemon_key_id');
+      if (storedKeyId) {
+        this.keyId = storedKeyId;
+        console.log('[BlockdaemonSigner] Loaded keyId from localStorage:', this.keyId);
+      }
+    }
+    
+    // Fallback to environment variable if available
+    if (!this.keyId) {
+      this.keyId = process.env.NEXT_PUBLIC_BLOCKDAEMON_KEY_ID || null;
+      console.log('[BlockdaemonSigner] Using env keyId:', this.keyId);
+    }
   }
 
   async getAddress(): Promise<string> {
@@ -74,7 +86,17 @@ export class BlockdaemonSigner implements BaseSigner {
 
       const data = await response.json();
       this.cachedPublicKey = data.publicKey;
-      this.keyId = data.keyId;
+      
+      // Update and persist keyId if returned
+      if (data.keyId) {
+        this.keyId = data.keyId;
+        console.log('[BlockdaemonSigner] Received keyId from server:', this.keyId);
+        
+        // Store in localStorage for persistence
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('blockdaemon_key_id', data.keyId);
+        }
+      }
       
       return data.publicKey;
     } catch (error) {
@@ -85,22 +107,43 @@ export class BlockdaemonSigner implements BaseSigner {
 
   async signTransaction(encodedMessage: string): Promise<string> {
     try {
+      // Ensure we have a key ID before signing
+      if (!this.keyId) {
+        // Try to get public key first which will set the keyId
+        await this.getPubkey();
+        
+        if (!this.keyId) {
+          throw new Error("No key ID available for signing. Please connect wallet first.");
+        }
+      }
+      
+      const requestBody = {
+        chainId: this.chainId,
+        message: encodedMessage,
+        keyId: this.keyId,
+        curve: this.signerSpec.curve,
+        hashFunction: this.signerSpec.hashFunction,
+        signatureFormat: this.signerSpec.signatureFormat,
+      };
+      
+      console.log('[BlockdaemonSigner] Signing transaction with:', {
+        chainId: this.chainId,
+        keyId: this.keyId,
+        curve: this.signerSpec.curve,
+        hashFunction: this.signerSpec.hashFunction,
+        signatureFormat: this.signerSpec.signatureFormat,
+        messageLength: encodedMessage?.length
+      });
+      
       const response = await fetch("/api/blockdaemon-proxy/sign-transaction", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chainId: this.chainId,
-          message: encodedMessage,
-          keyId: this.keyId,
-          curve: this.signerSpec.curve,
-          hashFunction: this.signerSpec.hashFunction,
-          signatureFormat: this.signerSpec.signatureFormat,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Failed to sign transaction: ${error}`);
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(errorData.error || `Failed to sign transaction: ${response.statusText}`);
       }
 
       const data = await response.json();

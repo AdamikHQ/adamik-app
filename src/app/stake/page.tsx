@@ -221,13 +221,15 @@ export default function Stake() {
       }
 
       try {
-        stakableAssets.forEach(({ chainId, address }) => {
-          console.log(`🗑️ Clearing cache for ${chainId}:${address}`);
-          clearAccountStateCache({
-            chainId,
-            address,
-          });
-        });
+        await Promise.all(
+          stakableAssets.map(async ({ chainId, address }) => {
+            console.log(`🗑️ Clearing cache for ${chainId}:${address}`);
+            await clearAccountStateCache({
+              chainId,
+              address,
+            });
+          })
+        );
       } catch (error) {
         console.debug("Cache clearing error (non-critical):", error);
         // Continue execution - cache clearing errors shouldn't stop the refresh
