@@ -37,7 +37,7 @@ export function isChainCompatibleWithSigner(
     // case SignerType.DFNS:
     //   // DFNS will support secp256k1, ed25519, and stark
     //   return curve === "secp256k1" || curve === "ed25519" || curve === "stark";
-      
+
     default:
       // Unknown signer, assume basic support
       return curve === "secp256k1" || curve === "ed25519";

@@ -331,41 +331,46 @@ export const clearAccountStateCache = async ({
   chainId,
   address,
 }: GetAddressStateParams) => {
-  // Wrap everything to catch both sync and async errors
-  try {
-    // Try to cancel queries, but don't let it fail the whole operation
+  // Wrap in Promise to ensure no synchronous errors escape
+  return Promise.resolve().then(async () => {
     try {
-      await queryClientGlobal.cancelQueries({
-        queryKey: ["accountState", chainId, address],
-      });
-    } catch (cancelError: any) {
-      // Completely ignore cancellation errors - they're expected when queries are running
-      // Don't even log them as they're normal behavior
+      // Try to cancel queries, but don't let it fail the whole operation
+      try {
+        await queryClientGlobal.cancelQueries({
+          queryKey: ["accountState", chainId, address],
+        });
+      } catch (cancelError: any) {
+        // Completely ignore cancellation errors - they're expected when queries are running
+        // Don't even log them as they're normal behavior
+      }
+      
+      // Small delay to let cancellation complete
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      // Then invalidate to mark as stale (this is safe and doesn't throw)
+      try {
+        await queryClientGlobal.invalidateQueries({
+          queryKey: ["accountState", chainId, address],
+          refetchType: "none", // Don't trigger immediate refetch
+        });
+      } catch (invalidateError) {
+        console.debug("Invalidate queries error (non-critical):", invalidateError);
+      }
+      
+      // Finally, remove from cache
+      try {
+        await queryClientGlobal.removeQueries({
+          queryKey: ["accountState", chainId, address],
+        });
+      } catch (removeError) {
+        console.debug("Remove queries error (non-critical):", removeError);
+      }
+    } catch (error: any) {
+      // Final catch-all for any unexpected errors
+      console.debug("Cache clear operation error (non-critical):", error);
     }
-    
-    // Small delay to let cancellation complete
-    await new Promise(resolve => setTimeout(resolve, 10));
-    
-    // Then invalidate to mark as stale (this is safe and doesn't throw)
-    try {
-      await queryClientGlobal.invalidateQueries({
-        queryKey: ["accountState", chainId, address],
-        refetchType: "none", // Don't trigger immediate refetch
-      });
-    } catch (invalidateError) {
-      console.debug("Invalidate queries error (non-critical):", invalidateError);
-    }
-    
-    // Finally, remove from cache
-    try {
-      await queryClientGlobal.removeQueries({
-        queryKey: ["accountState", chainId, address],
-      });
-    } catch (removeError) {
-      console.debug("Remove queries error (non-critical):", removeError);
-    }
-  } catch (error: any) {
-    // Final catch-all for any unexpected errors
-    console.debug("Cache clear operation error (non-critical):", error);
-  }
+  }).catch((error) => {
+    // Extra safety: catch any error that might escape
+    console.debug("Cache clear operation error caught at top level:", error);
+  });
 };

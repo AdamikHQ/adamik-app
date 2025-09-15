@@ -190,13 +190,18 @@ export default function Portfolio() {
 
     // Clear cache for all addresses
     try {
-      await Promise.all(
-        displayAddresses.map(({ chainId, address }) => 
-          clearAccountStateCache({
-            chainId,
-            address,
-          })
-        )
+      await Promise.allSettled(
+        displayAddresses.map(async ({ chainId, address }) => {
+          try {
+            await clearAccountStateCache({
+              chainId,
+              address,
+            });
+          } catch (error) {
+            console.debug(`Cache clear failed for ${chainId}:${address}:`, error);
+            // Don't throw - let other addresses continue
+          }
+        })
       );
     } catch (error) {
       console.debug("Cache clearing error (non-critical):", error);
@@ -426,13 +431,18 @@ export default function Portfolio() {
 
         // Clear cache for targeted addresses
         try {
-          await Promise.all(
+          await Promise.allSettled(
             addressesToRefresh.map(async ({ chainId, address }) => {
               console.log(`🗑️ Clearing cache for ${chainId}:${address}`);
-              await clearAccountStateCache({
-                chainId,
-                address,
-              });
+              try {
+                await clearAccountStateCache({
+                  chainId,
+                  address,
+                });
+              } catch (error) {
+                console.debug(`Cache clear failed for ${chainId}:${address}:`, error);
+                // Don't throw - let other addresses continue
+              }
             })
           );
         } catch (error) {
