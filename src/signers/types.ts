@@ -18,8 +18,7 @@ export enum SignerType {
   IOFINNET = "iofinnet",
   TURNKEY = "turnkey",
   BLOCKDAEMON = "blockdaemon",
-  // Future signers can be added here
-  // DFNS = "dfns",
+  DFNS = "dfns",
 }
 
 // Configuration for each signer
@@ -66,5 +65,13 @@ export const SIGNER_CONFIGS: Record<SignerType, SignerConfig> = {
     requiresSetup: true,
     setupInstructions: "Requires BlockDaemon Vault TSM certificates and configuration",
     supportedCurves: ["secp256k1"],
+  },
+  [SignerType.DFNS]: {
+    type: SignerType.DFNS,
+    displayName: "Dfns",
+    description: "Secure key management with flexible wallet infrastructure",
+    requiresSetup: true,
+    setupInstructions: "Requires Dfns app credentials and API configuration",
+    supportedCurves: ["secp256k1", "ed25519", "stark"],
   },
 };

@@ -426,7 +426,10 @@ export const MultiChainConnect: React.FC<{
 
     // Only after all chains are processed, update the wallet state once
     if (allNewAccounts.length > 0) {
-      addAddresses(allNewAccounts);
+      // Add a small delay before adding addresses to ensure UI has settled
+      setTimeout(() => {
+        addAddresses(allNewAccounts);
+      }, 50);
     }
 
     // Show final summary toast
@@ -834,7 +837,10 @@ export const MultiChainConnect: React.FC<{
 
                           // Only after all chains are processed, update the wallet state once
                           if (allNewAccounts.length > 0) {
-                            addChainAddresses(allNewAccounts);
+                            // Add a small delay before adding addresses to ensure UI has settled
+                            setTimeout(() => {
+                              addChainAddresses(allNewAccounts);
+                            }, 50);
                           }
 
                           // Show the completion toast

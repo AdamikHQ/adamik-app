@@ -57,6 +57,13 @@ const signerInfo = {
     type: "2-of-3 threshold signing",
     color: "orange",
   },
+  [SignerType.DFNS]: {
+    icon: Shield,
+    name: "Dfns",
+    shortDesc: "Secure key management",
+    type: "Flexible wallet infrastructure",
+    color: "indigo",
+  },
 };
 
 export function SignerConfigurationContent() {
@@ -83,6 +90,12 @@ export function SignerConfigurationContent() {
   });
   
   const [blockdaemonState, setBlockdaemonState] = useState<SignerTestState>({
+    testing: false,
+    testResult: null,
+    selectedChain: "",
+  });
+  
+  const [dfnsState, setDfnsState] = useState<SignerTestState>({
     testing: false,
     testResult: null,
     selectedChain: "",
@@ -259,6 +272,44 @@ export function SignerConfigurationContent() {
     }
   };
 
+  // Test DFNS connection
+  const testDfnsConnection = async () => {
+    setDfnsState(prev => ({ ...prev, testing: true, testResult: null }));
+    try {
+      const response = await fetch("/api/dfns-proxy/test-connection", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || "Connection test failed");
+      }
+      setDfnsState(prev => ({
+        ...prev,
+        testResult: {
+          success: true,
+          message: data.message || "Successfully connected to DFNS",
+          details: {
+            walletsCount: data.walletsCount,
+            wallets: data.wallets,
+          },
+        }
+      }));
+    } catch (error: any) {
+      setDfnsState(prev => ({
+        ...prev,
+        testResult: {
+          success: false,
+          message: error.message || "Failed to test DFNS connection",
+        }
+      }));
+    } finally {
+      setDfnsState(prev => ({ ...prev, testing: false }));
+    }
+  };
+
   const getStateForSigner = (signer: SignerType) => {
     switch (signer) {
       case SignerType.SODOT:
@@ -269,6 +320,8 @@ export function SignerConfigurationContent() {
         return turnkeyState;
       case SignerType.BLOCKDAEMON:
         return blockdaemonState;
+      case SignerType.DFNS:
+        return dfnsState;
       default:
         return { testing: false, testResult: null, selectedChain: "" };
     }
@@ -284,6 +337,8 @@ export function SignerConfigurationContent() {
         return testTurnkeyConnection;
       case SignerType.BLOCKDAEMON:
         return testBlockdaemonConnection;
+      case SignerType.DFNS:
+        return testDfnsConnection;
       default:
         return () => {};
     }
@@ -315,13 +370,15 @@ export function SignerConfigurationContent() {
                 info.color === 'blue' ? 'p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20' :
                 info.color === 'purple' ? 'p-2 rounded-lg bg-purple-100 dark:bg-purple-900/20' :
                 info.color === 'green' ? 'p-2 rounded-lg bg-green-100 dark:bg-green-900/20' :
-                'p-2 rounded-lg bg-orange-100 dark:bg-orange-900/20'
+                info.color === 'orange' ? 'p-2 rounded-lg bg-orange-100 dark:bg-orange-900/20' :
+                'p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/20'
               }>
                 <Icon className={
                   info.color === 'blue' ? 'h-5 w-5 text-blue-600 dark:text-blue-400' :
                   info.color === 'purple' ? 'h-5 w-5 text-purple-600 dark:text-purple-400' :
                   info.color === 'green' ? 'h-5 w-5 text-green-600 dark:text-green-400' :
-                  'h-5 w-5 text-orange-600 dark:text-orange-400'
+                  info.color === 'orange' ? 'h-5 w-5 text-orange-600 dark:text-orange-400' :
+                  'h-5 w-5 text-indigo-600 dark:text-indigo-400'
                 } />
               </div>
               <div>
@@ -449,6 +506,7 @@ export function SignerConfigurationContent() {
         <SignerCard signer={SignerType.IOFINNET} />
         <SignerCard signer={SignerType.TURNKEY} />
         <SignerCard signer={SignerType.BLOCKDAEMON} />
+        <SignerCard signer={SignerType.DFNS} />
       </div>
 
       {/* Info section */}

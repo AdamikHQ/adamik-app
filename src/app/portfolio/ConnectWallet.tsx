@@ -52,6 +52,8 @@ export const ConnectWallet = ({ onNextStep }: { onNextStep: () => void }) => {
         ? WalletName.TURNKEY
         : selectedSigner === SignerType.BLOCKDAEMON
         ? WalletName.BLOCKDAEMON
+        : selectedSigner === SignerType.DFNS
+        ? WalletName.DFNS
         : WalletName.SODOT;
       
       console.log('[ConnectWallet] Connecting with:', {

@@ -4,6 +4,7 @@ import { SodotSigner } from "./Sodot";
 import { IoFinnetSigner } from "./IoFinnet";
 import { TurnkeySigner } from "./Turnkey";
 import { BlockdaemonSigner } from "./Blockdaemon";
+import { DfnsSigner } from "./Dfns";
 import { getChains } from "~/api/adamik/chains";
 import { compressPublicKey, doesChainNeedCompressedKey } from "~/utils/publicKeyUtils";
 
@@ -52,6 +53,12 @@ export class SignerFactory {
       
       case SignerType.BLOCKDAEMON:
         return new BlockdaemonSigner(chainId, signerSpec);
+      
+      case SignerType.DFNS:
+        if (!chain) {
+          throw new Error(`Chain ${chainId} not found`);
+        }
+        return new DfnsSigner(chainId, signerSpec, chain);
       
       default:
         throw new Error(`Unsupported signer type: ${signerType}`);
@@ -347,6 +354,68 @@ export class SignerFactory {
       }
 
       console.log(`BlockDaemon: Final pubkey for ${chainId}: ${pubkey.substring(0, 20)}... (length: ${pubkey.length})`);
+      return pubkey;
+    } else if (selectedSigner === SignerType.DFNS) {
+      // Get chain data to determine curve
+      const chains = await getChains();
+      if (!chains || !chains[chainId]) {
+        throw new Error(`Chain ${chainId} not found`);
+      }
+
+      const chain = chains[chainId];
+      const signerSpec = chain.signerSpec;
+      
+      if (!signerSpec) {
+        throw new Error(`No signer spec for chain ${chainId}`);
+      }
+
+      // Fetch pubkey from DFNS
+      const response = await fetch('/api/dfns-proxy/get-pubkey', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chainId,
+          curve: signerSpec.curve,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || `Failed to get DFNS pubkey for ${chainId}`);
+      }
+
+      const data = await response.json();
+      let pubkey = data.publicKey;
+
+      // Handle Starknet public key formatting
+      if (signerSpec.curve === "stark") {
+        // Strip leading zeros for Starknet
+        const hex = pubkey.substring(2);
+        const stripped = hex.replace(/^0+/gm, "");
+        pubkey = `0x${stripped}`;
+      }
+
+      // Handle key compression for chains that need it
+      const needsCompression = chain.family === 'cosmos' || 
+                              chain.family === 'bitcoin';
+      
+      if (needsCompression && pubkey.startsWith('0x04')) {
+        pubkey = compressPublicKey(pubkey);
+        console.log(`DFNS: Compressed pubkey for ${chainId}`);
+      }
+
+      // Handle 0x prefix based on chain requirements
+      const isEVMChain = chain.family === 'evm';
+      
+      if (!isEVMChain && pubkey.startsWith('0x')) {
+        pubkey = pubkey.slice(2);
+        console.log(`DFNS: Removed 0x prefix for ${chainId}`);
+      } else if (isEVMChain && !pubkey.startsWith('0x')) {
+        pubkey = `0x${pubkey}`;
+        console.log(`DFNS: Added 0x prefix for ${chainId}`);
+      }
+
+      console.log(`DFNS: Final pubkey for ${chainId}: ${pubkey.substring(0, 20)}... (length: ${pubkey.length})`);
       return pubkey;
     } else {
       throw new Error(`Unsupported signer type: ${selectedSigner}`);

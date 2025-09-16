@@ -5,6 +5,7 @@ import "./globals.css";
 import { Menu } from "~/components/layout/Menu/Menu";
 import { Toaster } from "~/components/ui/toaster";
 import { WalletModal } from "~/components/wallets/WalletModal";
+import "~/utils/suppressErrors"; // Import early to suppress errors
 
 export const metadata: Metadata = {
   title: "Adamik App",

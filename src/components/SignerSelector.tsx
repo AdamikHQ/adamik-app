@@ -47,6 +47,8 @@ export function SignerSelector({
         return <Shield className="h-3 w-3" />;
       case SignerType.BLOCKDAEMON:
         return <Shield className="h-3 w-3" />;
+      case SignerType.DFNS:
+        return <Shield className="h-3 w-3" />;
       default:
         return null;
     }
@@ -72,7 +74,8 @@ export function SignerSelector({
                 {currentSigner === SignerType.SODOT ? "Sodot" : 
                  currentSigner === SignerType.IOFINNET ? "IoFinnet" :
                  currentSigner === SignerType.TURNKEY ? "Turnkey" :
-                 currentSigner === SignerType.BLOCKDAEMON ? "BlockDaemon" : "Unknown"}
+                 currentSigner === SignerType.BLOCKDAEMON ? "BlockDaemon" :
+                 currentSigner === SignerType.DFNS ? "Dfns" : "Unknown"}
               </span>
             </div>
           </SelectValue>
@@ -100,6 +103,12 @@ export function SignerSelector({
             <div className="flex items-center gap-2">
               <Shield className="h-3 w-3" />
               <span>BlockDaemon</span>
+            </div>
+          </SelectItem>
+          <SelectItem value={SignerType.DFNS}>
+            <div className="flex items-center gap-2">
+              <Shield className="h-3 w-3" />
+              <span>Dfns</span>
             </div>
           </SelectItem>
         </SelectContent>

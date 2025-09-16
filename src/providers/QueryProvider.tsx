@@ -5,14 +5,31 @@ import { useState, useEffect } from "react";
 import { CHAINS_QUERY_KEY } from "~/hooks/useChains";
 import { getChains } from "~/api/adamik/chains";
 
-export const queryCache = new QueryCache();
+export const queryCache = new QueryCache({
+  onError: (error: any) => {
+    // Suppress CancelledError from being logged or shown
+    if (error?.name === "CancelledError") {
+      return; // Don't log or handle CancelledError
+    }
+    console.error("Query error:", error);
+  },
+});
 
 export const queryClientGlobal = new QueryClient({
+  queryCache,
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 60, // 1 hour in ms
       refetchOnWindowFocus: false,
       gcTime: 1000 * 60 * 60, // 1 hour
+      retry: (failureCount: number, error: any) => {
+        // Don't retry on CancelledError
+        if (error?.name === "CancelledError") {
+          return false;
+        }
+        // Default retry logic
+        return failureCount < 3;
+      },
     },
   },
 });

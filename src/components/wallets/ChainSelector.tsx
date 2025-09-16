@@ -59,6 +59,8 @@ export function ChainSelector() {
         ? WalletName.TURNKEY
         : selectedSigner === SignerType.BLOCKDAEMON
         ? WalletName.BLOCKDAEMON
+        : selectedSigner === SignerType.DFNS
+        ? WalletName.DFNS
         : WalletName.SODOT;
 
       // Get chain public key using the selected signer

@@ -213,11 +213,18 @@ export default function Stake() {
     });
 
     try {
+      // Don't cancel queries - just invalidate them to avoid CancelledError
       try {
-        await queryClient.cancelQueries({ queryKey: ["accountState"] });
-        await queryClient.cancelQueries({ queryKey: ["validators"] });
-      } catch (cancelError) {
-        console.log("Query cancellation:", cancelError);
+        await queryClient.invalidateQueries({ 
+          queryKey: ["accountState"],
+          refetchType: "none" 
+        });
+        await queryClient.invalidateQueries({ 
+          queryKey: ["validators"],
+          refetchType: "none"
+        });
+      } catch (invalidateError) {
+        console.log("Query invalidation:", invalidateError);
       }
 
       try {
