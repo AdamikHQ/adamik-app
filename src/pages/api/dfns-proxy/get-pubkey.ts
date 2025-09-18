@@ -79,6 +79,7 @@ export default async function handler(
       console.log(`Using existing DFNS wallet for ${network}: ${existingWallet.id}`);
       walletId = existingWallet.id;
       publicKey = existingWallet.signingKey.publicKey;
+      console.log(`Raw DFNS public key for ${network}:`, publicKey);
     } else {
       console.log(`Creating new DFNS wallet for ${network}`);
       

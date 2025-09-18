@@ -390,11 +390,23 @@ export class SignerFactory {
       // Handle Starknet public key formatting
       if (signerSpec.curve === "stark") {
         console.log("[SignerFactory] Starknet raw pubkey:", pubkey);
-        // Strip leading zeros for Starknet
-        const hex = pubkey.startsWith("0x") ? pubkey.substring(2) : pubkey;
+        
+        // DFNS returns compressed Starknet keys with a prefix byte (0x20 or 0x02/0x03)
+        // We need to extract just the X coordinate (32 bytes after the prefix)
+        let hex = pubkey.startsWith("0x") ? pubkey.substring(2) : pubkey;
         console.log("[SignerFactory] Hex after removing 0x:", hex);
+        
+        // Check if this looks like a compressed key (33 bytes = 66 hex chars)
+        if (hex.length === 66) {
+          // Remove the first byte (compression prefix)
+          hex = hex.substring(2);
+          console.log("[SignerFactory] Removed compression prefix, X coordinate:", hex);
+        }
+        
+        // Strip leading zeros (Starknet doesn't want them)
         const stripped = hex.replace(/^0+/, "") || "0"; // Keep at least one 0
         console.log("[SignerFactory] Hex after stripping leading zeros:", stripped);
+        
         pubkey = `0x${stripped}`;
         console.log("[SignerFactory] Final Starknet pubkey:", pubkey);
       }
