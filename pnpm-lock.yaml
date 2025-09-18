@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@adamik/sdk':
-        specifier: ^1.0.2
-        version: 1.0.2(bufferutil@4.0.8)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.2)(utf-8-validate@5.0.10)
+        specifier: ^1.0.3
+        version: 1.0.3(bufferutil@4.0.8)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.2)(utf-8-validate@5.0.10)
       '@dfns/sdk':
         specifier: 0.7.11-rc.1
         version: 0.7.11-rc.1(encoding@0.1.13)
@@ -195,8 +195,8 @@ importers:
 
 packages:
 
-  '@adamik/sdk@1.0.2':
-    resolution: {integrity: sha512-sYpni7J+DFnZtGfUi1wxRdwKXMheeqkOBmh5BA9/2gboC5DY8NTAMfb6QkN7sg8DFkYuDk+lN7x/cj+tsh7wig==}
+  '@adamik/sdk@1.0.3':
+    resolution: {integrity: sha512-kfB0HwOV0TjST6yr0v3aT1dpgHgjy2/yfGNvBaNFV694F2UGM5E97mFqjnPDl6lD9hWHgaVUFzqxwW244uFRRg==}
     engines: {node: '>=18.0.0'}
 
   '@adraffy/ens-normalize@1.10.1':
@@ -3658,7 +3658,7 @@ packages:
 
 snapshots:
 
-  '@adamik/sdk@1.0.2(bufferutil@4.0.8)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.2)(utf-8-validate@5.0.10)':
+  '@adamik/sdk@1.0.3(bufferutil@4.0.8)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.2)(utf-8-validate@5.0.10)':
     dependencies:
       '@cosmjs/encoding': 0.34.0
       '@cosmjs/proto-signing': 0.34.0
