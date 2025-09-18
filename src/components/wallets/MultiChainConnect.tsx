@@ -118,10 +118,14 @@ export const MultiChainConnect: React.FC<{
   const { data: chains, isLoading: chainsLoading } = useExtendedChains();
 
   // Get unique chain IDs from connected addresses
+  // This will be filtered by current signer from WalletProvider
   const uniqueConnectedChainIds = useMemo(
     () => [...new Set(addresses.map((addr) => addr.chainId))],
     [addresses]
   );
+  
+  // Also track the current signer to trigger re-renders when it changes
+  const currentSigner = SignerFactory.getSelectedSignerType();
 
   useEffect(() => {
     if (chains) {
@@ -186,11 +190,14 @@ export const MultiChainConnect: React.FC<{
       // For new signers with no connections, start with empty selection
       setSelectedChains([]);
     }
-  }, [isSelectionOpen, isShowroom, addresses]);
+  }, [isSelectionOpen, isShowroom, addresses, currentSigner]);
 
   // Listen for signer changes and update UI accordingly
   useEffect(() => {
     const handleSignerChange = () => {
+      // Reset search query when signer changes
+      setSearchQuery("");
+      
       // Reset selected chains when signer changes to force re-evaluation
       if (isSelectionOpen) {
         setIsSelectionOpen(false);
@@ -524,24 +531,24 @@ export const MultiChainConnect: React.FC<{
   }
 
   // Calculate the count for display based on mode
-  let chainCount = 0;
-  let buttonText = "Select Chains";
-
-  if (isShowroom) {
-    // In showroom mode, just count the unique chains from addresses
-    chainCount = uniqueConnectedChainIds.length;
-  } else if (uniqueConnectedChainIds.length > 0) {
-    // In regular mode with connected wallets, show actual connected chains
-    chainCount = uniqueConnectedChainIds.length;
-  } else if (selectedChains.length > 0) {
-    // In regular mode with no connections but selections made
-    chainCount = selectedChains.length;
-  }
+  // Use a key-based approach to force recalculation when signer changes
+  const chainCount = useMemo(() => {
+    if (isShowroom) {
+      // In showroom mode, just count the unique chains from addresses
+      return uniqueConnectedChainIds.length;
+    } else if (uniqueConnectedChainIds.length > 0) {
+      // In regular mode with connected wallets, show actual connected chains
+      // This will already be filtered by current signer from WalletProvider
+      return uniqueConnectedChainIds.length;
+    } else if (selectedChains.length > 0) {
+      // In regular mode with no connections but selections made
+      return selectedChains.length;
+    }
+    return 0;
+  }, [isShowroom, uniqueConnectedChainIds, selectedChains, currentSigner]);
 
   // Set button text based on count
-  if (chainCount > 0) {
-    buttonText = `${chainCount} Chains Selected`;
-  }
+  const buttonText = chainCount > 0 ? `${chainCount} Chains Selected` : "Select Chains";
 
   // Button is only visible when not hidden with hideButton prop
   return (
