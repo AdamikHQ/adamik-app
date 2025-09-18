@@ -1,12 +1,7 @@
 "use client";
 
-import { ChevronDown, CheckCircle, Loader2, OctagonX } from "lucide-react";
+import { CheckCircle, Loader2, OctagonX, ShieldQuestion } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "~/components/ui/collapsible";
 import { Textarea } from "~/components/ui/textarea";
 import { TransactionEncodeResponse } from "~/utils/types";
 import { AdamikSDK, VerificationResult } from "@adamik/sdk";
@@ -48,6 +43,7 @@ export function TransactionVerification({
     verifyTransaction();
   }, [adamikSDK, apiResponse]);
 
+  const sdkErrors = verificationResult?.errors || [];
   const verificationErrors = verificationResult?.criticalErrors || [];
   return (
     <>
@@ -58,7 +54,12 @@ export function TransactionVerification({
             <span>Verifying transaction...</span>
           </div>
         ) : verificationResult ? (
-          verificationErrors?.length > 0 ? (
+          sdkErrors?.length > 0 ? (
+            <div className="flex items-center gap-2 text-sm text-yellow-600">
+              <ShieldQuestion className="h-4 w-4" />
+              <span>Could not be verified locally with Adamik decoder</span>
+            </div>
+          ) : verificationErrors?.length > 0 ? (
             <div className="w-full mb-4">
               <div className="flex items-center justify-center gap-2 text-sm text-red-600 mb-3">
                 <OctagonX className="h-4 w-4" />
