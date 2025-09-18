@@ -45,6 +45,7 @@ const stellarChain: Chain = {
           deployAccount: false,
           transfer: false,
           transferToken: false,
+          enableToken: false,
           stake: false,
           unstake: false,
           claimRewards: false,

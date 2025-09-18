@@ -34,6 +34,7 @@ import { getChains } from "~/api/adamik/chains";
 import { useToast } from "~/components/ui/use-toast";
 import { TransactionSuccessModal } from "./TransactionSuccessModal";
 import { IoFinnetApprovalModal } from "~/components/modals/IoFinnetApprovalModal";
+import { TransactionVerification } from "./TransactionVerification";
 
 type TransactionProps = {
   onNextStep: () => void;
@@ -72,11 +73,11 @@ export function TransferTransactionForm({
   const [errors, setErrors] = useState("");
   const [signing, setSigning] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showIoFinnetApprovalModal, setShowIoFinnetApprovalModal] = useState(false);
+  const [showIoFinnetApprovalModal, setShowIoFinnetApprovalModal] =
+    useState(false);
 
   // Add debugging effect to monitor transaction and chainId
-  useEffect(() => {
-  }, [transaction, chainId]);
+  useEffect(() => {}, [transaction, chainId]);
 
   const signAndBroadcast = async () => {
     if (!transaction) {
@@ -137,7 +138,7 @@ export function TransferTransactionForm({
 
       // Get the selected signer type from settings
       const signerType = SignerFactory.getSelectedSignerType();
-      
+
       // Determine the correct API endpoint based on signer type
       let signEndpoint: string;
       let signPayload: any;
@@ -159,10 +160,11 @@ export function TransferTransactionForm({
         if (!chainConfig) {
           throw new Error(`Chain ${chainId} not found`);
         }
-        
+
         // Use hash for Stellar, raw transaction for others
-        const messageToSign = (isStellar && transactionHash) ? transactionHash : transactionRaw;
-        
+        const messageToSign =
+          isStellar && transactionHash ? transactionHash : transactionRaw;
+
         signEndpoint = `/api/iofinnet-proxy/sign-transaction`;
         signPayload = {
           chain: chainId,
@@ -176,13 +178,20 @@ export function TransferTransactionForm({
         if (!chainConfig) {
           throw new Error(`Chain ${chainId} not found`);
         }
-        
-        const pubKey = await SignerFactory.getChainPubkey(chainId, SignerType.TURNKEY);
-        
+
+        const pubKey = await SignerFactory.getChainPubkey(
+          chainId,
+          SignerType.TURNKEY
+        );
+
         // For Ed25519 chains (like Stellar), sign the hash directly
-        const isHashSigning = shouldUseHash || (chainConfig.signerSpec?.curve === "ed25519" && transactionHash);
-        
-        signEndpoint = isHashSigning ? `/api/turnkey-proxy/sign-hash` : `/api/turnkey-proxy/sign-transaction`;
+        const isHashSigning =
+          shouldUseHash ||
+          (chainConfig.signerSpec?.curve === "ed25519" && transactionHash);
+
+        signEndpoint = isHashSigning
+          ? `/api/turnkey-proxy/sign-hash`
+          : `/api/turnkey-proxy/sign-transaction`;
         signPayload = {
           chainId,
           encodedMessage: isHashSigning ? transactionHash : transactionRaw,
@@ -197,13 +206,20 @@ export function TransferTransactionForm({
         if (!chainConfig) {
           throw new Error(`Chain ${chainId} not found`);
         }
-        
-        const pubKey = await SignerFactory.getChainPubkey(chainId, SignerType.BLOCKDAEMON);
-        
+
+        const pubKey = await SignerFactory.getChainPubkey(
+          chainId,
+          SignerType.BLOCKDAEMON
+        );
+
         // For Ed25519 chains (like Stellar), sign the hash directly
-        const isHashSigning = shouldUseHash || (chainConfig.signerSpec?.curve === "ed25519" && transactionHash);
-        
-        signEndpoint = isHashSigning ? `/api/blockdaemon-proxy/sign-hash` : `/api/blockdaemon-proxy/sign-transaction`;
+        const isHashSigning =
+          shouldUseHash ||
+          (chainConfig.signerSpec?.curve === "ed25519" && transactionHash);
+
+        signEndpoint = isHashSigning
+          ? `/api/blockdaemon-proxy/sign-hash`
+          : `/api/blockdaemon-proxy/sign-transaction`;
         signPayload = {
           chainId,
           encodedMessage: isHashSigning ? transactionHash : transactionRaw,
@@ -214,7 +230,6 @@ export function TransferTransactionForm({
       } else {
         throw new Error(`Unsupported signer type: ${signerType}`);
       }
-
 
       // Show IoFinnet approval modal
       if (signerType === SignerType.IOFINNET) {
@@ -229,7 +244,7 @@ export function TransferTransactionForm({
         },
         body: JSON.stringify(signPayload),
       });
-      
+
       // Hide IoFinnet approval modal
       setShowIoFinnetApprovalModal(false);
 
@@ -242,7 +257,6 @@ export function TransferTransactionForm({
 
       const data = await response.json();
       const signature = data.signature;
-
 
       if (!signature) {
         throw new Error("No signature returned from signing");
@@ -343,7 +357,6 @@ export function TransferTransactionForm({
 
   const onSubmit = useCallback(
     (formInput: TransactionFormInput) => {
-
       const transactionData: TransactionData = {
         mode: formInput.mode,
         chainId: formInput.chainId,
@@ -434,19 +447,12 @@ export function TransferTransactionForm({
             {errors}
           </div>
         )}
-        <Collapsible>
-          <CollapsibleTrigger className="text-xs text-gray-400 text-center mx-auto flex items-center justify-center mt-4 hover:text-gray-500 transition-colors">
-            <ChevronDown className="mr-1" size={12} />
-            Show unsigned transaction
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <Textarea
-              readOnly
-              value={JSON.stringify(transaction)}
-              className="h-32 text-xs text-gray-500 mt-2"
-            />
-          </CollapsibleContent>
-        </Collapsible>
+        <TransactionVerification
+          apiResponse={{
+            chainId: chainId!,
+            transaction,
+          }}
+        />
         <TransactionSuccessModal
           open={showSuccessModal}
           setOpen={setShowSuccessModal}
@@ -487,7 +493,7 @@ export function TransferTransactionForm({
           </Button>
         </form>
       </Form>
-      
+
       {/* IoFinnet Approval Modal */}
       <IoFinnetApprovalModal
         open={showIoFinnetApprovalModal}

@@ -38,6 +38,7 @@ import { SignerFactory } from "~/signers/SignerFactory";
 import { SignerType } from "~/signers/types";
 import { getChains } from "~/api/adamik/chains";
 import { IoFinnetApprovalModal } from "~/components/modals/IoFinnetApprovalModal";
+import { TransactionVerification } from "./TransactionVerification";
 
 type StakingTransactionProps = {
   mode: TransactionMode;
@@ -278,7 +279,7 @@ export function StakingTransactionForm({
 
       // Get the selected signer type from settings
       const signerType = SignerFactory.getSelectedSignerType();
-      
+
       // Determine the correct API endpoint based on signer type
       let signEndpoint: string;
       let signPayload: any;
@@ -299,7 +300,7 @@ export function StakingTransactionForm({
         if (!chainConfig) {
           throw new Error(`Chain ${chainId} not found`);
         }
-        
+
         signEndpoint = `/api/iofinnet-proxy/sign-transaction`;
         signPayload = {
           chain: chainId,
@@ -467,28 +468,18 @@ export function StakingTransactionForm({
             {errors}
           </div>
         )}
-        <Collapsible>
-          <CollapsibleTrigger className="text-xs text-gray-400 text-center mx-auto flex items-center justify-center mt-4 hover:text-gray-500 transition-colors">
-            <ChevronDown className="mr-1" size={12} />
-            Show unsigned transaction
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <Textarea
-              readOnly
-              value={JSON.stringify(transaction)}
-              className="h-32 text-xs text-gray-500 mt-2"
-            />
-          </CollapsibleContent>
-        </Collapsible>
+        <TransactionVerification
+          apiResponse={{
+            chainId: chainId!,
+            transaction,
+          }}
+        />
         <TransactionSuccessModal
           open={showSuccessModal}
           setOpen={setShowSuccessModal}
           onClose={onNextStep}
         />
-        <IoFinnetApprovalModal
-          open={showIoFinnetApproval}
-          chainId={chainId}
-        />
+        <IoFinnetApprovalModal open={showIoFinnetApproval} chainId={chainId} />
       </>
     );
   }
