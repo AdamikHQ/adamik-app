@@ -443,9 +443,7 @@ export function StakingTransactionForm({
           Your transaction is ready
         </h1>
         <p className="text-center text-sm text-gray-400">
-          Adamik has converted your intent into a blockchain transaction. <br />
-          Review your transaction details before signing. After signing, the
-          transaction will be automatically broadcasted.
+          Review and sign to broadcast your transaction
         </p>
         <div className="w-full mt-8">
           <Button
