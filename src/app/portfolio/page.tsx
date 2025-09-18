@@ -56,16 +56,6 @@ export default function Portfolio() {
   const queryClient = useQueryClient();
   const displayAddresses = isShowroom ? showroomAddresses : walletAddresses;
   
-  console.log('[Portfolio] Display addresses:', {
-    isShowroom,
-    count: displayAddresses.length,
-    addresses: displayAddresses.map(a => ({
-      chainId: a.chainId,
-      address: a.address.substring(0, 10) + '...',
-      signer: a.signer
-    }))
-  });
-  
   const addressesChainIds = displayAddresses.reduce<string[]>(
     (acc, { chainId }) => {
       if (acc.includes(chainId)) return acc;

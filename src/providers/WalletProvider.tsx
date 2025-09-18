@@ -43,28 +43,8 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
       ? WalletName.DFNS
       : WalletName.SODOT;
     
-    console.log('[WalletProvider] Filtering addresses:', {
-      currentSigner,
-      walletName,
-      totalAddresses: allAddresses.length,
-      addressesWithSigners: allAddresses.map(a => ({
-        chainId: a.chainId,
-        address: a.address.substring(0, 10) + '...',
-        signer: a.signer
-      }))
-    });
-    
     // Filter addresses to only show those from the current signer
     const filtered = allAddresses.filter(addr => addr.signer === walletName);
-    
-    console.log('[WalletProvider] After filtering:', {
-      filteredCount: filtered.length,
-      filteredAddresses: filtered.map(a => ({
-        chainId: a.chainId,
-        address: a.address.substring(0, 10) + '...',
-        signer: a.signer
-      }))
-    });
     
     return filtered;
   }, [allAddresses, currentSigner, isShowroom]);
