@@ -273,12 +273,24 @@ export default function Portfolio() {
     return unsubscribe;
   }, [refetchAccountState]);
 
+  // Check if data is already cached to avoid showing unnecessary toast
+  const [shouldShowLoadingToast, setShouldShowLoadingToast] = useState(false);
+  
+  useEffect(() => {
+    // Check if all addresses are already in cache
+    const allDataCached = displayAddresses.length > 0 && 
+                         isInAccountStateBatchCache(displayAddresses);
+    
+    // Only show loading toast if we're loading AND data is not fully cached
+    setShouldShowLoadingToast(isLoading && !allDataCached);
+  }, [isLoading, displayAddresses]);
+
   // Fix the loading toast useEffect to have consistent dependencies
   useEffect(() => {
     let loadingToast: ReturnType<typeof toast> | undefined;
 
-    // Now that wallet connections are batched, we can safely show data loading toast
-    if (isLoading) {
+    // Only show toast if we actually need to load data (not cached)
+    if (shouldShowLoadingToast) {
       loadingToast = toast({
         description: (
           <div className="flex flex-col gap-2 w-full min-w-[300px]">
@@ -297,11 +309,13 @@ export default function Portfolio() {
       // Dismiss the loading toast
       loadingToast.dismiss();
 
-      // Show completion toast
-      toast({
-        description: "Portfolio loaded successfully",
-        duration: 2000,
-      });
+      // Only show completion toast if we were actually showing a loading toast
+      if (shouldShowLoadingToast === false && addressesLoadingProgress === 100) {
+        toast({
+          description: "Portfolio loaded successfully",
+          duration: 2000,
+        });
+      }
     }
 
     return () => {
@@ -309,7 +323,7 @@ export default function Portfolio() {
         loadingToast.dismiss();
       }
     };
-  }, [isLoading, isAddressesLoading, toast, addressesLoadingProgress]);
+  }, [shouldShowLoadingToast, toast, addressesLoadingProgress]);
 
   const assets = useMemo(() => {
     return filterAndSortAssets(

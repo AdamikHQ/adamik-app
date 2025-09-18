@@ -242,7 +242,7 @@ export const useAccountStateBatch = (
               const data = await queryClient.fetchQuery({
                 queryKey: ["accountState", chainId, address],
                 queryFn: () => accountState(chainId, address),
-                staleTime: 30000,
+                staleTime: 60000, // Data is fresh for 1 minute
                 gcTime: 5 * 60 * 1000, // Keep unused data in cache for 5 minutes
                 retry: 1,
               });
