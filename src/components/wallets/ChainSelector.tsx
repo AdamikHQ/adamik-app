@@ -17,6 +17,7 @@ import { Account, WalletName } from "./types";
 import { ChevronDown, Clock, Shield } from "lucide-react";
 import { SignerFactory } from "~/signers/SignerFactory";
 import { SignerType, SIGNER_CONFIGS } from "~/signers/types";
+import { isChainCompatibleWithSigner } from "~/utils/signerChainCompatibility";
 
 export function ChainSelector() {
   const { toast } = useToast();
@@ -153,13 +154,9 @@ export function ChainSelector() {
         <ScrollArea className="h-[300px] p-2">
           <div className="space-y-2">
             {Object.entries(chains)
-              .filter(([chainId]) => {
-                // Filter out Starknet chains when using IoFinnet (unsupported curve)
-                if (currentSigner === SignerType.IOFINNET && 
-                    (chainId === 'starknet' || chainId === 'starknet-sepolia')) {
-                  return false;
-                }
-                return true;
+              .filter(([chainId, chain]) => {
+                // Use proper compatibility check instead of hardcoded filter
+                return isChainCompatibleWithSigner(chain, currentSigner);
               })
               .sort(([, a], [, b]) => a.name.localeCompare(b.name))
               .map(([chainId, chain]) => {

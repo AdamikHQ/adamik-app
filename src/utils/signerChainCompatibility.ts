@@ -33,10 +33,9 @@ export function isChainCompatibleWithSigner(
       // BlockDaemon only supports secp256k1
       return curve === "secp256k1";
       
-    // Future signers
-    // case SignerType.DFNS:
-    //   // DFNS will support secp256k1, ed25519, and stark
-    //   return curve === "secp256k1" || curve === "ed25519" || curve === "stark";
+    case SignerType.DFNS:
+      // DFNS supports secp256k1, ed25519, and stark curves
+      return curve === "secp256k1" || curve === "ed25519" || curve === "stark";
 
     default:
       // Unknown signer, assume basic support
@@ -82,9 +81,8 @@ export function getSignerSupportedCurves(signerType: SignerType): string {
     case SignerType.BLOCKDAEMON:
       return "ECDSA (secp256k1) only";
       
-    // Future signers
-    // case SignerType.DFNS:
-    //   return "ECDSA (secp256k1), EdDSA (ed25519), and STARK";
+    case SignerType.DFNS:
+      return "ECDSA (secp256k1), EdDSA (ed25519), and STARK";
       
     default:
       return "ECDSA (secp256k1) and EdDSA (ed25519)";
@@ -118,8 +116,8 @@ export function getIncompatibilityReason(
     return "BlockDaemon does not support EdDSA (ed25519) curves";
   }
   
-  if (curve === "stark") {
-    return `${signerType} does not support STARK curves yet`;
+  if (curve === "stark" && signerType !== SignerType.DFNS) {
+    return `${signerType} does not support STARK curves`;
   }
   
   return `${signerType} does not support ${curve} curve`;
