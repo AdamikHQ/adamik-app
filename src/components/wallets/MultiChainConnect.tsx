@@ -116,16 +116,53 @@ export const MultiChainConnect: React.FC<{
   const [selectedChains, setSelectedChains] = useState<string[]>([]);
   const [isSelectionOpen, setIsSelectionOpen] = useState(false);
   const { data: chains, isLoading: chainsLoading } = useExtendedChains();
-
-  // Get unique chain IDs from connected addresses
-  // This will be filtered by current signer from WalletProvider
-  const uniqueConnectedChainIds = useMemo(
-    () => [...new Set(addresses.map((addr) => addr.chainId))],
-    [addresses]
+  
+  // Track current signer in state to ensure re-renders on change
+  const [currentSigner, setCurrentSigner] = useState<SignerType>(() => 
+    SignerFactory.getSelectedSignerType()
   );
   
-  // Also track the current signer to trigger re-renders when it changes
-  const currentSigner = SignerFactory.getSelectedSignerType();
+  // Update current signer when it changes
+  useEffect(() => {
+    const checkSigner = () => {
+      const newSigner = SignerFactory.getSelectedSignerType();
+      if (newSigner !== currentSigner) {
+        setCurrentSigner(newSigner);
+      }
+    };
+    
+    // Check on mount
+    checkSigner();
+    
+    // Check on storage events (for cross-tab sync)
+    const handleStorageChange = () => checkSigner();
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [currentSigner]);
+
+  // Get unique chain IDs from connected addresses
+  // Filter by current signer explicitly to ensure correct count
+  const uniqueConnectedChainIds = useMemo(() => {
+    // Map signer type to wallet name
+    const walletName = currentSigner === SignerType.IOFINNET 
+      ? WalletName.IOFINNET 
+      : currentSigner === SignerType.TURNKEY
+      ? WalletName.TURNKEY
+      : currentSigner === SignerType.BLOCKDAEMON
+      ? WalletName.BLOCKDAEMON
+      : currentSigner === SignerType.DFNS
+      ? WalletName.DFNS
+      : WalletName.SODOT;
+    
+    // Filter addresses by current signer
+    const signerAddresses = addresses.filter(addr => addr.signer === walletName);
+    
+    // Return unique chain IDs
+    return [...new Set(signerAddresses.map((addr) => addr.chainId))];
+  }, [addresses, currentSigner]);
 
   useEffect(() => {
     if (chains) {
@@ -195,6 +232,10 @@ export const MultiChainConnect: React.FC<{
   // Listen for signer changes and update UI accordingly
   useEffect(() => {
     const handleSignerChange = () => {
+      // Update the current signer state
+      const newSigner = SignerFactory.getSelectedSignerType();
+      setCurrentSigner(newSigner);
+      
       // Reset search query when signer changes
       setSearchQuery("");
       
