@@ -24,6 +24,27 @@ export function ChainSelector() {
   const [loading, setLoading] = useState(false);
   const [selectedChains, setSelectedChains] = useState<string[]>([]);
   const { data: chains, isLoading: chainsLoading } = useExtendedChains();
+  const [currentSigner, setCurrentSigner] = useState<SignerType>(SignerType.SODOT);
+
+  useEffect(() => {
+    // Initialize current signer
+    setCurrentSigner(SignerFactory.getSelectedSignerType());
+  }, []);
+
+  useEffect(() => {
+    // Listen for signer changes
+    const handleSignerChange = () => {
+      setCurrentSigner(SignerFactory.getSelectedSignerType());
+    };
+
+    window.addEventListener("adamik-signer-changed", handleSignerChange);
+    window.addEventListener("adamik-settings-changed", handleSignerChange);
+    
+    return () => {
+      window.removeEventListener("adamik-signer-changed", handleSignerChange);
+      window.removeEventListener("adamik-settings-changed", handleSignerChange);
+    };
+  }, []);
 
   useEffect(() => {
     if (chains) {
@@ -134,8 +155,7 @@ export function ChainSelector() {
             {Object.entries(chains)
               .filter(([chainId]) => {
                 // Filter out Starknet chains when using IoFinnet (unsupported curve)
-                const selectedSigner = SignerFactory.getSelectedSignerType();
-                if (selectedSigner === SignerType.IOFINNET && 
+                if (currentSigner === SignerType.IOFINNET && 
                     (chainId === 'starknet' || chainId === 'starknet-sepolia')) {
                   return false;
                 }
@@ -178,7 +198,7 @@ export function ChainSelector() {
         <div className="flex items-center justify-center gap-2 px-4 py-3 border-t bg-muted/50">
           <Shield className="h-3 w-3 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">
-            Powered by {SIGNER_CONFIGS[SignerFactory.getSelectedSignerType()].displayName}
+            Powered by {SIGNER_CONFIGS[currentSigner].displayName}
           </span>
         </div>
       </DropdownMenuContent>

@@ -32,9 +32,22 @@ export function SignerSelector({
   }, []);
 
   const handleSignerChange = (value: string) => {
-    SignerFactory.setSelectedSignerType(value as SignerType);
-    // Reload to apply the new signer
-    window.location.reload();
+    const newSigner = value as SignerType;
+    const oldSigner = currentSigner;
+    
+    // Update the local state immediately for UI responsiveness
+    setCurrentSigner(newSigner);
+    
+    // Save to SignerFactory (localStorage)
+    SignerFactory.setSelectedSignerType(newSigner);
+    
+    // Dispatch custom events to notify all components
+    window.dispatchEvent(new CustomEvent("adamik-signer-changed", { 
+      detail: { oldSigner, newSigner } 
+    }));
+    
+    // Also dispatch the settings changed event for backward compatibility
+    window.dispatchEvent(new Event("adamik-settings-changed"));
   };
 
   const getSignerIcon = (signer: SignerType) => {

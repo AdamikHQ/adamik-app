@@ -186,6 +186,26 @@ export const MultiChainConnect: React.FC<{
     }
   }, [isSelectionOpen, isShowroom, addresses]);
 
+  // Listen for signer changes and update UI accordingly
+  useEffect(() => {
+    const handleSignerChange = () => {
+      // Reset selected chains when signer changes to force re-evaluation
+      if (isSelectionOpen) {
+        setIsSelectionOpen(false);
+        // Small delay to allow state to settle before reopening if needed
+        setTimeout(() => {
+          setIsSelectionOpen(true);
+        }, 100);
+      }
+    };
+
+    window.addEventListener("adamik-signer-changed", handleSignerChange);
+    
+    return () => {
+      window.removeEventListener("adamik-signer-changed", handleSignerChange);
+    };
+  }, [isSelectionOpen]);
+
   // Filter and sort chains based on search query and selection status
   const { selectedChainsList, unselectedChainsList, incompatibleChains } = React.useMemo(() => {
     if (!chains) return { selectedChainsList: [], unselectedChainsList: [], incompatibleChains: new Map() };
