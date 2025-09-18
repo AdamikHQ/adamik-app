@@ -69,7 +69,9 @@ export const getAllValidators = async (
   let allValidators: ValidatorResponse["validators"] = [];
   let nextPage: string | undefined = undefined;
   let pageCount = 0;
-  const MAX_PAGES = 10; // Add a safety limit
+  // Increased limit for chains with many validators (e.g., Solana has 900+)
+  // This is still a safety mechanism to prevent infinite loops
+  const MAX_PAGES = 50;
 
   do {
     pageCount++;
@@ -84,7 +86,7 @@ export const getAllValidators = async (
     
     // Safety check to prevent infinite loops
     if (pageCount >= MAX_PAGES) {
-      console.warn(`⚠️ [getAllValidators] Reached max pages (${MAX_PAGES}) for ${chainId}`);
+      console.warn(`⚠️ [getAllValidators] Reached max pages (${MAX_PAGES}) for ${chainId}. Some validators may not be loaded.`);
       break;
     }
   } while (nextPage !== undefined);
