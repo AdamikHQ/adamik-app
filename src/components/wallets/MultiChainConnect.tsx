@@ -141,6 +141,8 @@ export const MultiChainConnect: React.FC<{
         ? WalletName.TURNKEY
         : currentSigner === SignerType.BLOCKDAEMON
         ? WalletName.BLOCKDAEMON
+        : currentSigner === SignerType.DFNS
+        ? WalletName.DFNS
         : WalletName.SODOT;
       
       // Filter addresses to only those from the current signer
@@ -309,6 +311,8 @@ export const MultiChainConnect: React.FC<{
         ? WalletName.TURNKEY
         : currentSigner === SignerType.BLOCKDAEMON
         ? WalletName.BLOCKDAEMON
+        : currentSigner === SignerType.DFNS
+        ? WalletName.DFNS
         : WalletName.SODOT;
         
       const account: Account = {
@@ -401,6 +405,8 @@ export const MultiChainConnect: React.FC<{
           ? WalletName.TURNKEY
           : currentSigner === SignerType.BLOCKDAEMON
           ? WalletName.BLOCKDAEMON
+          : currentSigner === SignerType.DFNS
+          ? WalletName.DFNS
           : WalletName.SODOT;
           
         const account: Account = {
@@ -793,6 +799,8 @@ export const MultiChainConnect: React.FC<{
                                 ? WalletName.TURNKEY
                                 : currentSigner === SignerType.BLOCKDAEMON
                                 ? WalletName.BLOCKDAEMON
+                                : currentSigner === SignerType.DFNS
+                                ? WalletName.DFNS
                                 : WalletName.SODOT;
                                 
                               const account: Account = {

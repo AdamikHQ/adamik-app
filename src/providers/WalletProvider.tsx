@@ -39,6 +39,8 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
       ? WalletName.TURNKEY
       : currentSigner === SignerType.BLOCKDAEMON
       ? WalletName.BLOCKDAEMON
+      : currentSigner === SignerType.DFNS
+      ? WalletName.DFNS
       : WalletName.SODOT;
     
     console.log('[WalletProvider] Filtering addresses:', {
