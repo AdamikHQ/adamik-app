@@ -239,6 +239,9 @@ export const MultiChainConnect: React.FC<{
       // Reset search query when signer changes
       setSearchQuery("");
       
+      // Reset selected chains to prevent stale data from previous signer
+      setSelectedChains([]);
+      
       // Reset selected chains when signer changes to force re-evaluation
       if (isSelectionOpen) {
         setIsSelectionOpen(false);
@@ -556,16 +559,12 @@ export const MultiChainConnect: React.FC<{
     if (isShowroom) {
       // In showroom mode, just count the unique chains from addresses
       return uniqueConnectedChainIds.length;
-    } else if (uniqueConnectedChainIds.length > 0) {
-      // In regular mode with connected wallets, show actual connected chains
-      // This will already be filtered by current signer from WalletProvider
+    } else {
+      // In regular mode, ALWAYS show the actual connected chains count
+      // Never use selectedChains as it might contain stale data from previous signers
       return uniqueConnectedChainIds.length;
-    } else if (selectedChains.length > 0) {
-      // In regular mode with no connections but selections made
-      return selectedChains.length;
     }
-    return 0;
-  }, [isShowroom, uniqueConnectedChainIds, selectedChains, currentSigner]);
+  }, [isShowroom, uniqueConnectedChainIds, currentSigner]);
 
   // Set button text based on count
   const buttonText = chainCount > 0 ? `${chainCount} Chains Selected` : "Select Chains";
