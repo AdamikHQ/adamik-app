@@ -59,10 +59,12 @@ export class DfnsSigner implements BaseSigner {
 
       // Handle Starknet public key formatting
       if (this.signerSpec.curve === "stark") {
-        // Strip leading zeros for Starknet
-        const hex = publicKey.substring(2);
-        const stripped = hex.replace(/^0+/gm, "");
+        console.log("DFNS Starknet raw public key:", publicKey);
+        // Strip leading zeros for Starknet (matching adamik-link behavior exactly)
+        const hex = publicKey.startsWith("0x") ? publicKey.substring(2) : publicKey;
+        const stripped = hex.replace(/^0+/, "") || "0"; // strip leading 0s, keep at least one 0
         publicKey = `0x${stripped}`;
+        console.log("DFNS Starknet formatted public key:", publicKey);
       }
 
       // Apply compression based on chain requirements

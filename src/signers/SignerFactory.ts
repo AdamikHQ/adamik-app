@@ -390,8 +390,8 @@ export class SignerFactory {
       // Handle Starknet public key formatting
       if (signerSpec.curve === "stark") {
         // Strip leading zeros for Starknet
-        const hex = pubkey.substring(2);
-        const stripped = hex.replace(/^0+/gm, "");
+        const hex = pubkey.startsWith("0x") ? pubkey.substring(2) : pubkey;
+        const stripped = hex.replace(/^0+/, "") || "0"; // Keep at least one 0
         pubkey = `0x${stripped}`;
       }
 
