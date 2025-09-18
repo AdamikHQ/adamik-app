@@ -99,11 +99,28 @@ export type TransactionData = {
   memo?: string;
 };
 
+export type TransactionEncoded = {
+  raw: {
+    type: string;
+    value: string;
+  };
+  hash: {
+    type: string;
+    value: string;
+  };
+};
+
 // Full transaction object
 export type Transaction = {
   data: TransactionData;
-  encoded: string;
+  encoded: TransactionEncoded[];
   signature: string;
+};
+
+export type TransactionEncodeResponse = {
+  chainId: string;
+  transaction: Transaction;
+  status?: Status;
 };
 
 // Response status for any request to the Adamik API
