@@ -389,10 +389,14 @@ export class SignerFactory {
 
       // Handle Starknet public key formatting
       if (signerSpec.curve === "stark") {
+        console.log("[SignerFactory] Starknet raw pubkey:", pubkey);
         // Strip leading zeros for Starknet
         const hex = pubkey.startsWith("0x") ? pubkey.substring(2) : pubkey;
+        console.log("[SignerFactory] Hex after removing 0x:", hex);
         const stripped = hex.replace(/^0+/, "") || "0"; // Keep at least one 0
+        console.log("[SignerFactory] Hex after stripping leading zeros:", stripped);
         pubkey = `0x${stripped}`;
+        console.log("[SignerFactory] Final Starknet pubkey:", pubkey);
       }
 
       // Handle key compression for chains that need it
@@ -405,12 +409,14 @@ export class SignerFactory {
       }
 
       // Handle 0x prefix based on chain requirements
+      // Starknet always needs 0x prefix, regardless of chain family
       const isEVMChain = chain.family === 'evm';
+      const isStarknet = signerSpec.curve === 'stark';
       
-      if (!isEVMChain && pubkey.startsWith('0x')) {
+      if (!isEVMChain && !isStarknet && pubkey.startsWith('0x')) {
         pubkey = pubkey.slice(2);
         console.log(`DFNS: Removed 0x prefix for ${chainId}`);
-      } else if (isEVMChain && !pubkey.startsWith('0x')) {
+      } else if ((isEVMChain || isStarknet) && !pubkey.startsWith('0x')) {
         pubkey = `0x${pubkey}`;
         console.log(`DFNS: Added 0x prefix for ${chainId}`);
       }
