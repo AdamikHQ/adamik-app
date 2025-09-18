@@ -10,25 +10,16 @@ export const transactionEncode = async (
   status: Status;
   // TODO Better API error management, consistent for all endpoints
 }> => {
-  // Log the request being sent to Adamik API
-  console.log("📤 [Adamik Encode API] Sending request:", {
-    url: `${ADAMIK_API_URL}/${transactionData.chainId}/transaction/encode`,
-    transactionData: {
+  // Log only Solana staking requests for debugging
+  if (transactionData.chainId === "solana" && transactionData.mode === "stake") {
+    console.log("📤 [Adamik Encode API] Solana staking request:", {
       mode: transactionData.mode,
       chainId: transactionData.chainId,
       senderAddress: transactionData.senderAddress,
-      senderPubKey: transactionData.senderPubKey ? `${transactionData.senderPubKey.substring(0, 20)}...` : undefined,
       validatorAddress: transactionData.validatorAddress,
-      targetValidatorAddress: transactionData.targetValidatorAddress,
-      recipientAddress: transactionData.recipientAddress,
       amount: transactionData.amount,
-      useMaxAmount: transactionData.useMaxAmount,
-      format: transactionData.format,
-      stakeId: transactionData.stakeId,
-      tokenId: transactionData.tokenId,
-    },
-    fullData: JSON.stringify(transactionData, null, 2)
-  });
+    });
+  }
   
   const response = await fetch(
     `${ADAMIK_API_URL}/${transactionData.chainId}/transaction/encode`,
@@ -60,34 +51,28 @@ export const transactionEncode = async (
     status: Status;
   };
   
-  // Detailed logging for debugging Adamik API responses
-  console.log("🔍 [Adamik Encode API] Full response:", {
-    chainId: result.chainId,
-    status: result.status,
-    transactionData: {
-      mode: result.transaction?.data?.mode,
-      chainId: result.transaction?.data?.chainId,
-      senderAddress: result.transaction?.data?.senderAddress,
-      validatorAddress: result.transaction?.data?.validatorAddress,
-      targetValidatorAddress: result.transaction?.data?.targetValidatorAddress,
-      amount: result.transaction?.data?.amount,
-      useMaxAmount: result.transaction?.data?.useMaxAmount,
-      format: result.transaction?.data?.format,
-      stakeId: result.transaction?.data?.stakeId,
-    },
-    encoded: result.transaction?.encoded ? {
-      length: Array.isArray(result.transaction.encoded) ? result.transaction.encoded.length : 1,
-      firstEncoded: Array.isArray(result.transaction.encoded) && result.transaction.encoded[0] ? {
-        hasHash: !!result.transaction.encoded[0].hash,
-        hasRaw: !!result.transaction.encoded[0].raw,
-        hashValue: result.transaction.encoded[0].hash?.value ? 
-          `${String(result.transaction.encoded[0].hash.value).substring(0, 20)}...` : undefined,
-        rawValue: result.transaction.encoded[0].raw?.value ? 
-          `${String(result.transaction.encoded[0].raw.value).substring(0, 50)}...` : undefined,
-      } : 'Not an array or empty'
-    } : 'No encoded field',
-    fullTransaction: JSON.stringify(result.transaction, null, 2)
-  });
+  // Check for suspicious pre-generated signatures in the response
+  if (result.transaction?.data?.params?.signature) {
+    console.warn("⚠️ [Adamik Encode API] WARNING: Response contains pre-generated signature!", {
+      chainId: result.chainId,
+      mode: result.transaction.data.mode,
+      signature: result.transaction.data.params.signature?.substring(0, 20) + "...",
+      publicKey: result.transaction.data.params.publicKey,
+      message: "This may indicate the API returned a test/mock transaction instead of encoding the actual request"
+    });
+  }
+  
+  // Log only if there's an issue or for Solana staking
+  if (result.chainId === "solana" && result.transaction?.data?.mode === "stake") {
+    console.log("🔍 [Adamik Encode API] Solana staking response:", {
+      requestedAmount: transactionData.amount,
+      responseAmount: result.transaction?.data?.amount,
+      requestedValidator: transactionData.validatorAddress,
+      responseValidator: result.transaction?.data?.targetValidatorAddress,
+      hasSuspiciousSignature: !!result.transaction?.data?.params?.signature,
+      fullResponse: JSON.stringify(result.transaction, null, 2)
+    });
+  }
   
   return result;
 };
