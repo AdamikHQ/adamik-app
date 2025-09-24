@@ -37,21 +37,27 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
   const getSignerComponent = () => {
     // Get the selected signer type from settings
     const signerType = SignerFactory.getSelectedSignerType();
-    
+
     // Check if the account uses a supported signer
-    if (signer?.signer === WalletName.SODOT || signer?.signer === WalletName.IOFINNET || signer?.signer === WalletName.TURNKEY || signer?.signer === WalletName.BLOCKDAEMON) {
+    if (
+      signer?.signer === WalletName.SODOT ||
+      signer?.signer === WalletName.IOFINNET ||
+      signer?.signer === WalletName.TURNKEY ||
+      signer?.signer === WalletName.BLOCKDAEMON
+    ) {
       // Use the generic SignerConnect component that works with any signer
       return (
         <SignerConnect chainId={chainId} transactionPayload={transaction} />
       );
     }
-    
+
     // No supported signer found
     return (
       <div className="text-center text-muted-foreground">
         No compatible signer found for this transaction.
         <br />
-        Please connect a wallet using {signerType === SignerType.SODOT ? "Sodot" : "IoFinnet"} signer.
+        Please connect a wallet using{" "}
+        {signerType === SignerType.SODOT ? "Sodot" : "IoFinnet"} signer.
       </div>
     );
   };
@@ -114,7 +120,9 @@ export const WalletSigner = ({ onNextStep }: { onNextStep: () => void }) => {
             </div>
             <div className="flex gap-4 w-full">
               <Link
-                href={`/data?chainId=${chainId}&transactionId=${transactionHash}`}
+                href={`/data?chainId=${chainId}&transactionId=${encodeURIComponent(
+                  transactionHash || ""
+                )}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1"

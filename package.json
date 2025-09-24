@@ -10,7 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@adamik/sdk": "^1.0.3",
+    "@adamik/sdk": "^1.0.5",
     "@dfns/sdk": "0.7.11-rc.1",
     "@dfns/sdk-keysigner": "0.7.11-rc.1",
     "@hookform/resolvers": "^3.9.1",

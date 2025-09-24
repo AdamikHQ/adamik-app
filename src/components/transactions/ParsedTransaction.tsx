@@ -75,7 +75,9 @@ export function ParsedTransactionComponent({
             })}
           </span>
           <Link
-            href={`/data?chainId=${selectedAccountChainId}&transactionId=${tx.id}`}
+            href={`/data?chainId=${selectedAccountChainId}&transactionId=${encodeURIComponent(
+              tx.id || ""
+            )}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-muted-foreground hover:text-foreground transition-colors"

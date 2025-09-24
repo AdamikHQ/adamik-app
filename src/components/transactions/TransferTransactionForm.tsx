@@ -132,9 +132,19 @@ export function TransferTransactionForm({
         transactionRaw = JSON.stringify(transactionEncoded);
       }
 
-      // For Stellar, we should prioritize using the hash for signing
-      const isStellar = chainId.includes("stellar");
-      const shouldUseHash = isStellar && transactionHash;
+      // Get chain config for signerSpec
+      const chains = await getChains();
+      const chainConfig = chains?.[chainId];
+      if (!chainConfig) {
+        throw new Error(`Chain ${chainId} not found`);
+      }
+
+      const isHashSigning =
+        chainConfig.signerSpec?.curve === "ed25519" && !!transactionHash;
+
+      // For Ed25519 chains (like Stellar), sign the hash directly
+      const messageToSign =
+        isHashSigning && transactionHash ? transactionHash : transactionRaw;
 
       // Get the selected signer type from settings
       const signerType = SignerFactory.getSelectedSignerType();
@@ -148,22 +158,12 @@ export function TransferTransactionForm({
         signEndpoint = `/api/sodot-proxy/${chainId}/sign`;
         signPayload = {
           // For Stellar, prioritize hash over raw
-          transaction: shouldUseHash ? undefined : transactionRaw,
+          transaction: messageToSign,
           hash: transactionHash,
-          usePrecomputedHash: shouldUseHash,
+          usePrecomputedHash: isHashSigning,
         };
       } else if (signerType === SignerType.IOFINNET) {
         // IoFinnet signing endpoint
-        // Get chain config for signerSpec
-        const chains = await getChains();
-        const chainConfig = chains?.[chainId];
-        if (!chainConfig) {
-          throw new Error(`Chain ${chainId} not found`);
-        }
-
-        // Use hash for Stellar, raw transaction for others
-        const messageToSign =
-          isStellar && transactionHash ? transactionHash : transactionRaw;
 
         signEndpoint = `/api/iofinnet-proxy/sign-transaction`;
         signPayload = {
@@ -173,21 +173,11 @@ export function TransferTransactionForm({
         };
       } else if (signerType === SignerType.TURNKEY) {
         // Turnkey signing endpoint
-        const chains = await getChains();
-        const chainConfig = chains?.[chainId];
-        if (!chainConfig) {
-          throw new Error(`Chain ${chainId} not found`);
-        }
 
         const pubKey = await SignerFactory.getChainPubkey(
           chainId,
           SignerType.TURNKEY
         );
-
-        // For Ed25519 chains (like Stellar), sign the hash directly
-        const isHashSigning =
-          shouldUseHash ||
-          (chainConfig.signerSpec?.curve === "ed25519" && transactionHash);
 
         signEndpoint = isHashSigning
           ? `/api/turnkey-proxy/sign-hash`
@@ -201,21 +191,11 @@ export function TransferTransactionForm({
         };
       } else if (signerType === SignerType.BLOCKDAEMON) {
         // BlockDaemon signing endpoint
-        const chains = await getChains();
-        const chainConfig = chains?.[chainId];
-        if (!chainConfig) {
-          throw new Error(`Chain ${chainId} not found`);
-        }
 
         const pubKey = await SignerFactory.getChainPubkey(
           chainId,
           SignerType.BLOCKDAEMON
         );
-
-        // For Ed25519 chains (like Stellar), sign the hash directly
-        const isHashSigning =
-          shouldUseHash ||
-          (chainConfig.signerSpec?.curve === "ed25519" && transactionHash);
 
         signEndpoint = isHashSigning
           ? `/api/blockdaemon-proxy/sign-hash`

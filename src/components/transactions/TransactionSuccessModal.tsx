@@ -60,7 +60,7 @@ export const TransactionSuccessModal = ({
     const senderAddress = transaction?.data?.senderAddress;
     const recipientAddress = transaction?.data?.recipientAddress;
     const currentChainId = chainId;
-    
+
     // Clear transaction state
     onClose();
     setChainId(undefined);
@@ -77,7 +77,7 @@ export const TransactionSuccessModal = ({
             chainId: currentChainId,
             address: senderAddress,
           });
-          
+
           // Also clear cache for recipient if it's a transfer
           if (recipientAddress && recipientAddress !== senderAddress) {
             await clearAccountStateCache({
@@ -89,16 +89,16 @@ export const TransactionSuccessModal = ({
           console.debug("Cache clearing error (non-critical):", error);
           // Continue execution - cache clearing errors shouldn't stop the modal from closing
         }
-        
+
         // Trigger refetch for account state queries
         await queryClient.refetchQueries({
           queryKey: ["accountState"],
           type: "active",
         });
-        
+
         // Trigger global refetch event to update useAccountStateBatch
         refetchEventEmitter.triggerRefetch();
-        
+
         // Show a subtle toast that data is being refreshed
         toast({
           description: "Updating balances...",
@@ -135,7 +135,9 @@ export const TransactionSuccessModal = ({
           </div>
           <div className="flex gap-4 w-full">
             <Link
-              href={`/data?chainId=${chainId}&transactionId=${transactionHash}`}
+              href={`/data?chainId=${chainId}&transactionId=${encodeURIComponent(
+                transactionHash || ""
+              )}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1"
