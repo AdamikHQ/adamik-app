@@ -184,7 +184,7 @@ export function TransferTransactionForm({
           : `/api/turnkey-proxy/sign-transaction`;
         signPayload = {
           chainId,
-          encodedMessage: isHashSigning ? transactionHash : transactionRaw,
+          encodedMessage: messageToSign,
           hash: isHashSigning ? transactionHash : undefined,
           pubKey,
           signerSpec: chainConfig.signerSpec,
@@ -202,7 +202,7 @@ export function TransferTransactionForm({
           : `/api/blockdaemon-proxy/sign-transaction`;
         signPayload = {
           chainId,
-          encodedMessage: isHashSigning ? transactionHash : transactionRaw,
+          encodedMessage: messageToSign,
           hash: isHashSigning ? transactionHash : undefined,
           pubKey,
           signerSpec: chainConfig.signerSpec,
