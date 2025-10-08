@@ -103,7 +103,7 @@ export const WalletProvider: React.FC<React.PropsWithChildren> = ({
     return () => {
       window.removeEventListener("adamik-settings-changed", handleSignerChange);
     };
-  }, []);
+  }, [currentSigner]);
 
   const addWallet = (wallet: IWallet) => {
     const exist = wallets.find((w) => w.id === wallet.id);

@@ -553,7 +553,7 @@ export const MultiChainConnect: React.FC<{
   ]);
 
   // Calculate the count for display based on mode
-  // Use a key-based approach to force recalculation when signer changes
+  // uniqueConnectedChainIds already updates when signer changes
   // MUST be before any returns to maintain hooks order
   const chainCount = useMemo(() => {
     if (isShowroom) {
@@ -564,7 +564,7 @@ export const MultiChainConnect: React.FC<{
       // Never use selectedChains as it might contain stale data from previous signers
       return uniqueConnectedChainIds.length;
     }
-  }, [isShowroom, uniqueConnectedChainIds, currentSigner]);
+  }, [isShowroom, uniqueConnectedChainIds]);
 
   // Set button text based on count
   const buttonText = chainCount > 0 ? `${chainCount} Chains Selected` : "Select Chains";
