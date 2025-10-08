@@ -20,42 +20,13 @@ type SignerTestState = {
   selectedChain: string;
 };
 
-const signerInfo = {
-  [SignerType.SODOT]: {
-    icon: Shield,
-    name: "Sodot MPC",
-    shortDesc: "Secure multi-party computation",
-    type: "2-of-3 threshold MPC",
-    color: "blue",
-  },
-  [SignerType.IOFINNET]: {
-    icon: Lock,
-    name: "IoFinnet Vault",
-    shortDesc: "Enterprise MPC with approvals",
-    type: "Mobile approval required",
-    color: "purple",
-  },
-  [SignerType.TURNKEY]: {
-    icon: Cloud,
-    name: "Turnkey",
-    shortDesc: "Cloud-based key management",
-    type: "API-based signing",
-    color: "green",
-  },
-  [SignerType.BLOCKDAEMON]: {
-    icon: Server,
-    name: "BlockDaemon Vault",
-    shortDesc: "Enterprise TSM",
-    type: "2-of-3 threshold signing",
-    color: "orange",
-  },
-  [SignerType.DFNS]: {
-    icon: Shield,
-    name: "Dfns",
-    shortDesc: "Secure key management",
-    type: "Flexible wallet infrastructure",
-    color: "indigo",
-  },
+// BlockDaemon Demo: Only BlockDaemon info needed
+const blockdaemonInfo = {
+  icon: Server,
+  name: "BlockDaemon Vault",
+  shortDesc: "Enterprise TSM",
+  type: "2-of-3 threshold signing",
+  color: "orange",
 };
 
 export function SignerConfigurationContent() {
@@ -110,9 +81,8 @@ export function SignerConfigurationContent() {
 
 
   // BlockDaemon Demo: Simplified component - only BlockDaemon card
-  const info = signerInfo[SignerType.BLOCKDAEMON];
   const config = SIGNER_CONFIGS[SignerType.BLOCKDAEMON];
-  const Icon = info.icon;
+  const Icon = blockdaemonInfo.icon;
 
   return (
     <div className="space-y-6">
@@ -137,11 +107,11 @@ export function SignerConfigurationContent() {
               </div>
               <div>
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  {info.name}
+                  {blockdaemonInfo.name}
                   <Badge variant="default" className="text-xs">Active</Badge>
                 </CardTitle>
                 <CardDescription className="text-sm mt-0.5">
-                  {info.shortDesc}
+                  {blockdaemonInfo.shortDesc}
                 </CardDescription>
               </div>
             </div>
@@ -153,7 +123,7 @@ export function SignerConfigurationContent() {
           <div className="space-y-2 text-sm">
             <div className="flex items-center justify-between py-1">
               <span className="text-muted-foreground">Type</span>
-              <span className="font-medium">{info.type}</span>
+              <span className="font-medium">{blockdaemonInfo.type}</span>
             </div>
             <div className="flex items-center justify-between py-1">
               <span className="text-muted-foreground">Supported curves</span>
