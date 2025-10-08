@@ -60,16 +60,16 @@ export class ErrorBoundary extends Component<Props, State> {
       
       // Also patch Promise.reject to catch CancelledErrors at the source
       const originalReject = Promise.reject;
-      Promise.reject = function(reason) {
+      Promise.reject = function<T = never>(reason?: any): Promise<T> {
         if (
           reason?.name === "CancelledError" ||
           reason?.message?.includes("CancelledError")
         ) {
           console.debug("Suppressed CancelledError at Promise.reject:", reason);
           // Return a resolved promise instead of rejecting
-          return Promise.resolve();
+          return Promise.resolve() as Promise<T>;
         }
-        return originalReject.call(Promise, reason);
+        return originalReject.call(Promise, reason) as Promise<T>;
       };
     }
   }

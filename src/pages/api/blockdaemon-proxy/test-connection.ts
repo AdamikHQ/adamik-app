@@ -51,6 +51,9 @@ export default async function handler(
 
     // Parse the endpoint URL
     const endpoint = process.env.BLOCKDAEMON_TSM_ENDPOINT;
+    if (!endpoint) {
+      throw new Error("BLOCKDAEMON_TSM_ENDPOINT not configured");
+    }
     const url = new URL(endpoint);
     
     // Use native https module for better certificate handling

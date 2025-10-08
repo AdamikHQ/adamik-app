@@ -201,7 +201,7 @@ export const SignerConnect: React.FC<SignerConnectProps> = ({
           "Content-Type": "application/json",
         },
         body: JSON.stringify(signPayload),
-        signal: controller.signal,
+        signal: controller.signal as any,
       }).finally(() => {
         clearTimeout(timeoutId);
         // Clear waiting state

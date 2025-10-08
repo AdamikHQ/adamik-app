@@ -28,10 +28,10 @@ export default async function handler(
 
     // Initialize Turnkey client
     const turnkeyClient = new Turnkey({
-      apiBaseUrl: process.env.TURNKEY_BASE_URL,
-      apiPublicKey: process.env.TURNKEY_API_PUBLIC_KEY,
-      apiPrivateKey: process.env.TURNKEY_API_PRIVATE_KEY,
-      defaultOrganizationId: process.env.TURNKEY_ORGANIZATION_ID,
+      apiBaseUrl: process.env.TURNKEY_BASE_URL!,
+      apiPublicKey: process.env.TURNKEY_API_PUBLIC_KEY!,
+      apiPrivateKey: process.env.TURNKEY_API_PRIVATE_KEY!,
+      defaultOrganizationId: process.env.TURNKEY_ORGANIZATION_ID!,
     });
 
     console.log("Testing Turnkey connection...");
@@ -40,7 +40,7 @@ export default async function handler(
     const walletInfo = await turnkeyClient
       .apiClient()
       .getWallet({
-        walletId: process.env.TURNKEY_WALLET_ID,
+        walletId: process.env.TURNKEY_WALLET_ID!,
       });
 
     console.log("Turnkey connection successful. Wallet:", walletInfo.wallet.walletName);

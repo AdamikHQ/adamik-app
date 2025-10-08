@@ -42,6 +42,39 @@ const SIGNER_CONFIGS: Record<SignerType, SignerConfigSpec> = {
     optional: [],
     description: "IoFinnet Vault Signer",
   },
+
+  [SignerType.TURNKEY]: {
+    required: [
+      "TURNKEY_BASE_URL",
+      "TURNKEY_API_PUBLIC_KEY",
+      "TURNKEY_API_PRIVATE_KEY",
+      "TURNKEY_ORGANIZATION_ID",
+      "TURNKEY_WALLET_ID",
+    ],
+    optional: [],
+    description: "Turnkey Signer",
+  },
+
+  [SignerType.BLOCKDAEMON]: {
+    required: [
+      "BLOCKDAEMON_TSM_ENDPOINT",
+      "BLOCKDAEMON_PUBLIC_KEY",
+      "BLOCKDAEMON_EXISTING_KEY_IDS",
+    ],
+    optional: [],
+    description: "BlockDaemon TSM Signer",
+  },
+
+  [SignerType.DFNS]: {
+    required: [
+      "DFNS_BASE_URL",
+      "DFNS_APP_ID",
+      "DFNS_AUTH_TOKEN",
+      "DFNS_WALLET_ID",
+    ],
+    optional: [],
+    description: "DFNS Signer",
+  },
 };
 
 /**

@@ -52,24 +52,25 @@ export const transactionEncode = async (
   };
   
   // Check for suspicious pre-generated signatures in the response
-  if (result.transaction?.data?.params?.signature) {
+  const txData = result.transaction?.data as any;
+  if (txData?.params?.signature) {
     console.warn("⚠️ [Adamik Encode API] WARNING: Response contains pre-generated signature!", {
       chainId: result.chainId,
-      mode: result.transaction.data.mode,
-      signature: result.transaction.data.params.signature?.substring(0, 20) + "...",
-      publicKey: result.transaction.data.params.publicKey,
+      mode: txData.mode,
+      signature: txData.params.signature?.substring(0, 20) + "...",
+      publicKey: txData.params.publicKey,
       message: "This may indicate the API returned a test/mock transaction instead of encoding the actual request"
     });
   }
-  
+
   // Log only if there's an issue or for Solana staking
-  if (result.chainId === "solana" && result.transaction?.data?.mode === "stake") {
+  if (result.chainId === "solana" && txData?.mode === "stake") {
     console.log("🔍 [Adamik Encode API] Solana staking response:", {
       requestedAmount: transactionData.amount,
-      responseAmount: result.transaction?.data?.amount,
+      responseAmount: txData?.amount,
       requestedValidator: transactionData.validatorAddress,
-      responseValidator: result.transaction?.data?.targetValidatorAddress,
-      hasSuspiciousSignature: !!result.transaction?.data?.params?.signature,
+      responseValidator: txData?.targetValidatorAddress,
+      hasSuspiciousSignature: !!txData?.params?.signature,
       fullResponse: JSON.stringify(result.transaction, null, 2)
     });
   }

@@ -67,7 +67,7 @@ export default async function handler(
     const convertHashFunction = (
       hashFunction: string,
       curve: string
-    ): string => {
+    ): "HASH_FUNCTION_NOT_APPLICABLE" | "HASH_FUNCTION_NO_OP" | "HASH_FUNCTION_SHA256" | "HASH_FUNCTION_KECCAK256" => {
       if (curve === "ed25519") {
         return "HASH_FUNCTION_NOT_APPLICABLE";
       }

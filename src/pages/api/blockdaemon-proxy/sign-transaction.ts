@@ -87,7 +87,7 @@ function calculateRecoveryId(
     const pubKeyBytes = Buffer.from(publicKeyHex, "hex");
     const pubKeyPoint = (secp256k1 as any).ProjectivePoint.fromHex(pubKeyBytes);
 
-    const sig = secp256k1.Signature.fromCompact(
+    const sig = (secp256k1.Signature as any).fromCompact(
       Buffer.concat([
         Buffer.from(signature.r.padStart(64, "0"), "hex"),
         Buffer.from(signature.s.padStart(64, "0"), "hex"),

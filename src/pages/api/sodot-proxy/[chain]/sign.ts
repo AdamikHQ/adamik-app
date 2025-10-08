@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { env } from "~/env";
+import { Chain } from "~/utils/types";
 import {
   getChainConfig,
   formatSignature,
@@ -52,7 +53,7 @@ export default async function handler(
     }
 
     // Get curve type using shared utility
-    const curveType = getCurveTypeForChain(chainConfig);
+    const curveType = getCurveTypeForChain(chainConfig as Chain);
 
     // Determine what to sign based on curve type and available data
     let messageToSign;
@@ -89,7 +90,7 @@ export default async function handler(
     }
 
     // Build derivation path using shared utility
-    const derivationPath = buildDerivationPath(chainConfig.signerSpec.coinType);
+    const derivationPath = buildDerivationPath((chainConfig as Chain).signerSpec.coinType);
 
     // Step 1: Create a signing room
     const createRoomResponse = await fetch(
@@ -146,7 +147,7 @@ export default async function handler(
         } else {
           // If no pre-computed hash, let Sodot hash the message with the appropriate algorithm
           // Determine the hash algorithm from the chain configuration
-          const hashAlgo = chainConfig.signerSpec?.hashFunction === "sha256" ? "sha256" : "keccak256";
+          const hashAlgo = (chainConfig as Chain).signerSpec?.hashFunction === "sha256" ? "sha256" : "keccak256";
           requestBody.msg = messageToSign;
           requestBody.hash_algo = hashAlgo; // Use chain-specific hash algorithm
         }
@@ -182,7 +183,7 @@ export default async function handler(
     // Format signature using shared utility
     const formattedSignature = formatSignature(
       signature,
-      chainConfig.signerSpec.signatureFormat,
+      (chainConfig as Chain).signerSpec.signatureFormat,
       chain
     );
 

@@ -32,7 +32,7 @@ export const getChains = async (): Promise<Record<string, Chain> | null> => {
         Authorization: env.ADAMIK_API_KEY,
       },
       method: "GET",
-      signal: controller.signal,
+      signal: controller.signal as any,
     });
 
     clearTimeout(timeout);

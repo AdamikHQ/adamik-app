@@ -21,7 +21,7 @@ export const accountState = async (
       headers: {
         Authorization: env.ADAMIK_API_KEY,
       },
-      signal: controller.signal,
+      signal: controller.signal as any,
     });
 
     clearTimeout(timeoutId);
