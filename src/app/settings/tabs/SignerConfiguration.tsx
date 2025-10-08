@@ -30,9 +30,6 @@ const blockdaemonInfo = {
 };
 
 export function SignerConfigurationContent() {
-  const currentSigner = SignerFactory.getSelectedSignerType();
-  const { data: chains } = useFilteredChains();
-
   // BlockDaemon Demo: Only BlockDaemon state needed
   const [blockdaemonState, setBlockdaemonState] = useState<SignerTestState>({
     testing: false,
