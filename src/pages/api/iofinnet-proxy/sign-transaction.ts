@@ -1,16 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-// Extend API route timeout to 11 minutes for IoFinnet signatures
+// Extend API route timeout to 5 minutes for IoFinnet signatures
 export const config = {
   api: {
     bodyParser: {
       sizeLimit: '1mb',
     },
     responseLimit: false,
-    // Set timeout to 11 minutes (660 seconds) to accommodate IoFinnet's approval process
+    // Set timeout to 5 minutes (300 seconds) - Vercel Pro plan limit
     externalResolver: true,
   },
-  maxDuration: 660, // Vercel serverless function timeout (if deployed on Vercel)
+  maxDuration: 300, // Vercel serverless function timeout (max for Pro plan)
 };
 import { AdamikSignerSpec } from "~/utils/types";
 import {
