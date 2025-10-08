@@ -326,10 +326,29 @@ export class SignerFactory {
       const data = await response.json();
       let pubkey = data.publicKey;
 
-      // BlockDaemon returns compressed keys by default
+      console.log(`BlockDaemon: Raw pubkey for ${chainId}: ${pubkey.substring(0, 20)}... (length: ${pubkey.length}, curve: ${signerSpec.curve})`);
+
+      // Handle ED25519 chains (Algorand, Solana, Stellar, etc.)
+      if (signerSpec.curve === AdamikCurve.ED25519) {
+        // ED25519 public keys should be 32 bytes (64 hex chars) without any prefix
+        let hex = pubkey.startsWith('0x') ? pubkey.slice(2) : pubkey;
+
+        // If key is 66 chars (33 bytes), it might have a compression prefix byte - remove it
+        if (hex.length === 66) {
+          hex = hex.slice(2);
+          console.log(`BlockDaemon: Removed compression prefix for ED25519 chain ${chainId}`);
+        }
+
+        // Algorand and other ED25519 chains don't use 0x prefix
+        pubkey = hex;
+        console.log(`BlockDaemon: ED25519 pubkey for ${chainId}: ${pubkey.substring(0, 20)}... (length: ${pubkey.length})`);
+        return pubkey;
+      }
+
+      // BlockDaemon returns compressed keys by default for ECDSA
       // Handle 0x prefix based on chain requirements
       const isEVMChain = chain.family === 'evm';
-      
+
       if (!isEVMChain && pubkey.startsWith('0x')) {
         pubkey = pubkey.slice(2);
         console.log(`BlockDaemon: Removed 0x prefix for ${chainId}`);
