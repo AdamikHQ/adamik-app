@@ -84,10 +84,9 @@ export const useExtendedChains = () => {
     // Create a copy of the chains data
     const newChains: Record<string, ExtendedChain> = { ...chainsQuery.data };
 
-    // Add Stellar with comingSoon flag
+    // Add Stellar chain (now enabled)
     newChains.stellar = {
       ...stellarChain,
-      comingSoon: true,
     };
 
     return newChains;
