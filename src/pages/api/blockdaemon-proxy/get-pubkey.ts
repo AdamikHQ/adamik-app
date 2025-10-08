@@ -40,51 +40,46 @@ export default async function handler(
       "utf8"
     );
 
-    let publicKeyHex: string;
+    let publicKeyHex: string | undefined;
 
     // Check if it's JSON format (newer BlockDaemon format)
     if (decodedKey.startsWith("{") && decodedKey.includes('"point"')) {
-      try {
-        const keyData = JSON.parse(decodedKey);
-        console.log("BlockDaemon key data:", keyData);
+      const keyData = JSON.parse(decodedKey);
+      console.log("BlockDaemon key data:", keyData);
 
-        if (keyData.scheme !== "ECDSA" || keyData.curve !== "secp256k1") {
-          throw new Error(
-            `Unsupported key type: ${keyData.scheme}/${keyData.curve}`
-          );
-        }
+      if (keyData.scheme !== "ECDSA" || keyData.curve !== "secp256k1") {
+        throw new Error(
+          `Unsupported key type: ${keyData.scheme}/${keyData.curve}`
+        );
+      }
 
-        // The point is base64 encoded
-        const pointBuffer = Buffer.from(keyData.point, "base64");
+      // The point is base64 encoded
+      const pointBuffer = Buffer.from(keyData.point, "base64");
 
-        // Check if it's already compressed (33 bytes starting with 0x02 or 0x03)
-        if (
-          (pointBuffer[0] === 0x02 || pointBuffer[0] === 0x03) &&
-          pointBuffer.length === 33
-        ) {
-          publicKeyHex = pointBuffer.toString("hex");
-        } else if (pointBuffer[0] === 0x04 && pointBuffer.length === 65) {
-          // Uncompressed, need to compress
-          const x = pointBuffer.slice(1, 33);
-          const y = pointBuffer.slice(33, 65);
-          const prefix = (y[31] & 1) === 0 ? 0x02 : 0x03;
-          const compressed = Buffer.concat([Buffer.from([prefix]), x]);
-          publicKeyHex = compressed.toString("hex");
-        } else if (pointBuffer.length === 64) {
-          // Raw x,y coordinates without prefix
-          const x = pointBuffer.slice(0, 32);
-          const y = pointBuffer.slice(32, 64);
-          const prefix = (y[31] & 1) === 0 ? 0x02 : 0x03;
-          const compressed = Buffer.concat([Buffer.from([prefix]), x]);
-          publicKeyHex = compressed.toString("hex");
-        } else {
-          throw new Error(
-            `Unexpected point format from BlockDaemon. Length: ${pointBuffer.length}`
-          );
-        }
-      } catch (jsonError) {
-        console.error("Failed to parse JSON key data:", jsonError);
-        throw new Error("Failed to parse BlockDaemon public key JSON format");
+      // Check if it's already compressed (33 bytes starting with 0x02 or 0x03)
+      if (
+        (pointBuffer[0] === 0x02 || pointBuffer[0] === 0x03) &&
+        pointBuffer.length === 33
+      ) {
+        publicKeyHex = pointBuffer.toString("hex");
+      } else if (pointBuffer[0] === 0x04 && pointBuffer.length === 65) {
+        // Uncompressed, need to compress
+        const x = pointBuffer.slice(1, 33);
+        const y = pointBuffer.slice(33, 65);
+        const prefix = (y[31] & 1) === 0 ? 0x02 : 0x03;
+        const compressed = Buffer.concat([Buffer.from([prefix]), x]);
+        publicKeyHex = compressed.toString("hex");
+      } else if (pointBuffer.length === 64) {
+        // Raw x,y coordinates without prefix
+        const x = pointBuffer.slice(0, 32);
+        const y = pointBuffer.slice(32, 64);
+        const prefix = (y[31] & 1) === 0 ? 0x02 : 0x03;
+        const compressed = Buffer.concat([Buffer.from([prefix]), x]);
+        publicKeyHex = compressed.toString("hex");
+      } else {
+        throw new Error(
+          `Unexpected point format from BlockDaemon. Length: ${pointBuffer.length}`
+        );
       }
     } else {
       // Fallback to DER format parsing (older format)
@@ -176,6 +171,10 @@ export default async function handler(
           );
         }
       }
+    }
+
+    if (!publicKeyHex) {
+      throw new Error("Failed to extract public key from BlockDaemon response");
     }
 
     console.log("BlockDaemon public key retrieved:", publicKeyHex);
