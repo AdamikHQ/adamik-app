@@ -3,14 +3,13 @@
 import React from "react";
 import { useWallet } from "~/hooks/useWallet";
 import { MultiChainConnect } from "./wallets/MultiChainConnect";
-import { SignerSelector } from "./SignerSelector";
 
 /**
  * WalletConnect
  * The unified wallet connection component for the entire application
  * - Shows connection status and chain count
  * - Provides access to wallet connection modal
- * - Shows current signer selection
+ * - BlockDaemon Demo: Signer selection removed (only BlockDaemon supported)
  */
 export function WalletConnect() {
   const { addresses } = useWallet();
@@ -25,9 +24,6 @@ export function WalletConnect() {
         className="font-medium"
         variant={hasConnectedWallets ? "secondary" : "default"}
       />
-
-      {/* Signer Selection */}
-      <SignerSelector showLabel={false} />
     </div>
   );
 }

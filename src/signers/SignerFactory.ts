@@ -67,21 +67,12 @@ export class SignerFactory {
 
   /**
    * Get the currently selected signer type from localStorage
-   * 
-   * @returns The selected signer type, defaults to SODOT
+   *
+   * @returns The selected signer type, defaults to BLOCKDAEMON (BlockDaemon Demo)
    */
   static getSelectedSignerType(): SignerType {
-    if (typeof window === "undefined") {
-      return SignerType.SODOT; // Default for SSR
-    }
-    
-    const saved = localStorage.getItem("preferredSigner") as SignerType;
-    
-    if (saved && Object.values(SignerType).includes(saved)) {
-      return saved;
-    }
-    
-    return SignerType.SODOT; // Default
+    // BlockDaemon Demo: Always use BlockDaemon signer
+    return SignerType.BLOCKDAEMON;
   }
 
   /**
