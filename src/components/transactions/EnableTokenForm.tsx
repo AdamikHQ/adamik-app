@@ -132,6 +132,17 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
       let signEndpoint: string;
       let signPayload: any;
 
+      // Get chain config for signerSpec (needed for multiple signers)
+      const chains = await getChains();
+      const chainConfig = chains?.[chainId];
+      if (!chainConfig) {
+        throw new Error(`Chain ${chainId} not found`);
+      }
+
+      // Determine message to sign based on chain type
+      const messageToSign =
+        isStellar && transactionHash ? transactionHash : transactionRaw;
+
       if (signerType === SignerType.SODOT) {
         // Sodot signing endpoint
         signEndpoint = `/api/sodot-proxy/${chainId}/sign`;
@@ -141,19 +152,8 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
           hash: transactionHash,
           usePrecomputedHash: shouldUseHash,
         };
-      } else {
+      } else if (signerType === SignerType.IOFINNET) {
         // IoFinnet signing endpoint
-        // Get chain config for signerSpec
-        const chains = await getChains();
-        const chainConfig = chains?.[chainId];
-        if (!chainConfig) {
-          throw new Error(`Chain ${chainId} not found`);
-        }
-
-        // Use hash for Stellar, raw transaction for others
-        const messageToSign =
-          isStellar && transactionHash ? transactionHash : transactionRaw;
-
         signEndpoint = `/api/iofinnet-proxy/sign-transaction`;
         signPayload = {
           chain: chainId,
@@ -163,6 +163,42 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
 
         // Show IoFinnet approval modal
         setShowIoFinnetApproval(true);
+      } else if (signerType === SignerType.TURNKEY) {
+        // Turnkey signing endpoint
+        const pubKey = await SignerFactory.getChainPubkey(
+          chainId,
+          SignerType.TURNKEY
+        );
+
+        signEndpoint = shouldUseHash
+          ? `/api/turnkey-proxy/sign-hash`
+          : `/api/turnkey-proxy/sign-transaction`;
+        signPayload = {
+          chainId,
+          encodedMessage: messageToSign,
+          hash: shouldUseHash ? transactionHash : undefined,
+          pubKey,
+          signerSpec: chainConfig.signerSpec,
+        };
+      } else if (signerType === SignerType.BLOCKDAEMON) {
+        // BlockDaemon signing endpoint
+        const pubKey = await SignerFactory.getChainPubkey(
+          chainId,
+          SignerType.BLOCKDAEMON
+        );
+
+        signEndpoint = shouldUseHash
+          ? `/api/blockdaemon-proxy/sign-hash`
+          : `/api/blockdaemon-proxy/sign-transaction`;
+        signPayload = {
+          chainId,
+          encodedMessage: messageToSign,
+          hash: shouldUseHash ? transactionHash : undefined,
+          pubKey,
+          signerSpec: chainConfig.signerSpec,
+        };
+      } else {
+        throw new Error(`Unsupported signer type: ${signerType}`);
       }
 
       // Sign the transaction
@@ -185,9 +221,7 @@ export function EnableTokenForm({ onNextStep, asset }: EnableTokenFormProps) {
       const signature = data.signature;
 
       // Hide IoFinnet approval modal if it was shown
-      if (signerType === SignerType.IOFINNET) {
-        setShowIoFinnetApproval(false);
-      }
+      setShowIoFinnetApproval(false);
 
       if (!signature) {
         throw new Error("No signature returned from signing");
